@@ -43,13 +43,13 @@ void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void AGunnerCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	AddDefaultMappingContext();
+	SetupMappingContext();
 }
 
 void AGunnerCharacterBase::OnRep_Controller()
 {
 	Super::OnRep_Controller();
-	AddDefaultMappingContext();
+	SetupMappingContext();
 }
 
 void AGunnerCharacterBase::Move(const FInputActionValue& Value)
@@ -72,7 +72,7 @@ void AGunnerCharacterBase::Look(const FInputActionValue& Value)
 	}
 }
 
-void AGunnerCharacterBase::AddDefaultMappingContext()
+void AGunnerCharacterBase::SetupMappingContext()
 {
 	const APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (PlayerController && PlayerController->IsLocalController())

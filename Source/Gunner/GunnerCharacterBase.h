@@ -26,7 +26,7 @@ public:
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	void AddDefaultMappingContext();
+	void SetupMappingContext();
 
 public:
 	UPROPERTY(EditAnywhere)
