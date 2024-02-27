@@ -37,6 +37,8 @@ public:
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> LookAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> CrouchAction;
 	
 	UPROPERTY(EditDefaultsOnly)
 	float BaseTurnRate = 30.0f;

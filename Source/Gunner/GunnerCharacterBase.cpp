@@ -22,10 +22,11 @@ AGunnerCharacterBase::AGunnerCharacterBase()
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
 	
 	GetCharacterMovement()->MaxWalkSpeed = 675.0f;
-
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	
 }
 
 void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -33,11 +34,14 @@ void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
 	}
+	
 }
 
 void AGunnerCharacterBase::PossessedBy(AController* NewController)
