@@ -5,11 +5,13 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
-AGunnerCharacterBase::AGunnerCharacterBase()
+AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
@@ -20,13 +22,12 @@ AGunnerCharacterBase::AGunnerCharacterBase()
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
-	
+
 	GetCharacterMovement()->MaxWalkSpeed = 675.0f;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	
 }
 
 void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -41,7 +42,6 @@ void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
 	}
-	
 }
 
 void AGunnerCharacterBase::PossessedBy(AController* NewController)
@@ -54,6 +54,11 @@ void AGunnerCharacterBase::OnRep_Controller()
 {
 	Super::OnRep_Controller();
 	SetupMappingContext();
+}
+
+bool AGunnerCharacterBase::CanJumpInternal_Implementation() const
+{
+	return JumpIsAllowedInternal();
 }
 
 void AGunnerCharacterBase::Move(const FInputActionValue& Value)

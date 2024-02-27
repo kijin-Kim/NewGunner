@@ -17,11 +17,15 @@ class GUNNER_API AGunnerCharacterBase : public ACharacter
 	GENERATED_BODY()
 
 public:
-	AGunnerCharacterBase();
+	AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
+
+protected:
+	virtual bool CanJumpInternal_Implementation() const override;
+	
 
 private:
 	void Move(const FInputActionValue& Value);
