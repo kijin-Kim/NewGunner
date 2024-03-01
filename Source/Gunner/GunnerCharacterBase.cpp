@@ -24,6 +24,7 @@ AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectIniti
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
 
 	GetCharacterMovement()->MaxWalkSpeed = 675.0f;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 250.0f;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
@@ -41,7 +42,15 @@ void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::Walk);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::Run);
 	}
+}
+
+void AGunnerCharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+	MaxWalkSpeedCache = GetCharacterMovement()->MaxWalkSpeed;
 }
 
 void AGunnerCharacterBase::PossessedBy(AController* NewController)
@@ -60,6 +69,48 @@ bool AGunnerCharacterBase::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
 }
+
+void AGunnerCharacterBase::Walk()
+{
+	if (!HasAuthority() && IsLocallyControlled())
+	{
+		LocalWalk();
+	}
+
+	ServerWalk();
+}
+
+void AGunnerCharacterBase::LocalWalk()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache * WalkSpeedMultiplier;
+}
+
+void AGunnerCharacterBase::ServerWalk_Implementation()
+{
+	LocalWalk();
+}
+
+void AGunnerCharacterBase::Run()
+{
+	if (!HasAuthority() && IsLocallyControlled())
+	{
+		LocalRun();
+	}
+
+	ServerRun();
+}
+
+void AGunnerCharacterBase::LocalRun()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache;
+}
+
+void AGunnerCharacterBase::ServerRun_Implementation()
+{
+	LocalRun();
+}
+
+
 
 void AGunnerCharacterBase::Move(const FInputActionValue& Value)
 {

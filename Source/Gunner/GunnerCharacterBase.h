@@ -19,6 +19,7 @@ class GUNNER_API AGunnerCharacterBase : public ACharacter
 public:
 	AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void BeginPlay() override;
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
@@ -28,6 +29,16 @@ protected:
 	
 
 private:
+	void Walk();
+	void LocalWalk();
+	UFUNCTION(Server, Reliable)
+	void ServerWalk();
+	void Run();
+	void LocalRun();
+	UFUNCTION(Server, Reliable)
+	void ServerRun();
+
+	
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void SetupMappingContext();
@@ -43,11 +54,17 @@ public:
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> CrouchAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> WalkAction;
 	
 	UPROPERTY(EditDefaultsOnly)
 	float BaseTurnRate = 30.0f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float WalkSpeedMultiplier = 0.6f;
+	float MaxWalkSpeedCache = 0.0f;
+	
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
