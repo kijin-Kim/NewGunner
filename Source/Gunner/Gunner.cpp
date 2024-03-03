@@ -4,4 +4,4 @@
 #include "Modules/ModuleManager.h"
 
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, Gunner, "Gunner" );
- 
+DEFINE_LOG_CATEGORY(LogGunner);
