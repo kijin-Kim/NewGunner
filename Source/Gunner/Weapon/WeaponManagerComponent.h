@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Gunner/Core/GunnerCharacterComponent.h"
 #include "WeaponManagerComponent.generated.h"
 
 
@@ -11,7 +12,7 @@ class AGunnerCharacterBase;
 class AWeapon;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UWeaponManagerComponent : public UActorComponent
+class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 {
 	GENERATED_BODY()
 
@@ -22,25 +23,20 @@ public:
 	
 	void ChangeCurrentWeapon(uint32 WeaponIndex);
 	
-	
-
 private:
-	bool CanChangeCurrentWeapon(uint32 WeaponIndex) const;
-	void LocalChangeCurrentWeapon(uint32 WeaponIndex);
-	UFUNCTION(Server, Reliable)
-	void ServerChangeCurrentWeapon(uint32 WeaponIndex);
 	AWeapon* SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass);
-
-	
 	UFUNCTION()
 	void OnRep_Weapons();
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	
-	
+	bool CanChangeCurrentWeapon(uint32 WeaponIndex) const;
+	void LocalChangeCurrentWeapon(uint32 WeaponIndex);
+	UFUNCTION(Server, Reliable)
+	void ServerChangeCurrentWeapon(uint32 WeaponIndex);
+
 
 public:
-
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultPrimaryWeaponClass;
 	UPROPERTY(EditAnywhere, Category = "Weapon")

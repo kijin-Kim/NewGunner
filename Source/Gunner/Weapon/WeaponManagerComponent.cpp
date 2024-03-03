@@ -29,7 +29,7 @@ void UWeaponManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GunnerCharacterOwner = CastChecked<AGunnerCharacterBase>(GetOwner());
+	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacterBase>();
 	if (GunnerCharacterOwner->HasAuthority())
 	{
 		Weapons[0] = SpawnWeaponByClass(DefaultPrimaryWeaponClass);
@@ -37,6 +37,44 @@ void UWeaponManagerComponent::BeginPlay()
 		Weapons[2] = SpawnWeaponByClass(DefaultMeleeWeaponClass);
 	}
 	ChangeCurrentWeapon(1);
+}
+
+
+AWeapon* UWeaponManagerComponent::SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass)
+{
+	if (!WeaponClass)
+	{
+		return nullptr;
+	}
+
+	FActorSpawnParameters ActorSpawnParameters;
+	ActorSpawnParameters.Owner = GetOwner();
+	ActorSpawnParameters.Instigator = Cast<APawn>(GetOwner());
+	AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass, ActorSpawnParameters);
+	Weapon->Unequip();
+	return Weapon;
+}
+
+void UWeaponManagerComponent::OnRep_Weapons()
+{
+	for(AWeapon* Weapon : Weapons)
+	{
+		if(!Weapon || Weapon == CurrentWeapon)
+		{
+			continue;
+		}
+		Weapon->Unequip();
+	}
+}
+
+
+void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
+{
+	if(LastWeapon)
+	{
+		LastWeapon->Unequip();
+	}
+	CurrentWeapon->Equip();
 }
 
 void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
@@ -88,41 +126,4 @@ void UWeaponManagerComponent::LocalChangeCurrentWeapon(uint32 WeaponIndex)
 void UWeaponManagerComponent::ServerChangeCurrentWeapon_Implementation(uint32 WeaponIndex)
 {
 	LocalChangeCurrentWeapon(WeaponIndex);
-}
-
-AWeapon* UWeaponManagerComponent::SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass)
-{
-	if (!WeaponClass)
-	{
-		return nullptr;
-	}
-
-	FActorSpawnParameters ActorSpawnParameters;
-	ActorSpawnParameters.Owner = GetOwner();
-	ActorSpawnParameters.Instigator = Cast<APawn>(GetOwner());
-	AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass, ActorSpawnParameters);
-	Weapon->Unequip();
-	return Weapon;
-}
-
-void UWeaponManagerComponent::OnRep_Weapons()
-{
-	for(AWeapon* Weapon : Weapons)
-	{
-		if(!Weapon || Weapon == CurrentWeapon)
-		{
-			continue;
-		}
-		Weapon->Unequip();
-	}
-}
-
-
-void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
-{
-	if(LastWeapon)
-	{
-		LastWeapon->Unequip();
-	}
-	CurrentWeapon->Equip();
 }
