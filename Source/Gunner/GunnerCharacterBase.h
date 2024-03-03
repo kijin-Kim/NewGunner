@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "GunnerCharacterBase.generated.h"
 
+class UWeaponManagerComponent;
 class UInputAction;
 class UInputMappingContext;
 class UCameraComponent;
@@ -20,9 +21,11 @@ public:
 	AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
-	
+
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
+
+	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
 
 protected:
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -56,7 +59,16 @@ public:
 	TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> WalkAction;
-	
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> PrimaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
+
+
+
 	UPROPERTY(EditDefaultsOnly)
 	float BaseTurnRate = 30.0f;
 	UPROPERTY(EditDefaultsOnly)
@@ -64,11 +76,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float WalkSpeedMultiplier = 0.6f;
 	float MaxWalkSpeedCache = 0.0f;
-	
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
 };

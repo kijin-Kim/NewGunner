@@ -8,12 +8,14 @@
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Weapon/WeaponManagerComponent.h"
 
 
 AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
@@ -29,7 +31,11 @@ AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectIniti
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
+	
 }
+
 
 void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -44,6 +50,10 @@ void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::Walk);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::Run);
+		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(0));
+		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(1));
+		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(2));
+		
 	}
 }
 
@@ -109,7 +119,6 @@ void AGunnerCharacterBase::ServerRun_Implementation()
 {
 	LocalRun();
 }
-
 
 
 void AGunnerCharacterBase::Move(const FInputActionValue& Value)
