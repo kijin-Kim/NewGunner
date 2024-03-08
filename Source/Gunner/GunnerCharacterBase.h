@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "GunnerCharacterBase.generated.h"
 
+class USpringArmComponent;
 class UWeaponManagerComponent;
 class UInputAction;
 class UInputMappingContext;
@@ -70,7 +71,7 @@ public:
 
 
 	UPROPERTY(EditDefaultsOnly)
-	float BaseTurnRate = 30.0f;
+	float BaseTurnRate = 45.0f;
 	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
 	UPROPERTY(EditDefaultsOnly)
@@ -80,6 +81,8 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<USpringArmComponent> FirstPersonSpringArmComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

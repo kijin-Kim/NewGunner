@@ -7,6 +7,7 @@
 #include "Weapon.generated.h"
 
 
+class UWeaponData;
 class AGunnerCharacterBase;
 
 UCLASS()
@@ -22,14 +23,19 @@ public:
 	void Unequip();
 	AGunnerCharacterBase* GetGunnerCharacterOwner() const;
 
+	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
+
+	
+
+	
+
 private:
 	void AttachMeshes();
 
 public:
 	UPROPERTY(EditDefaultsOnly)
-	FName FirstPersonWeaponSocketName = TEXT("R_WeaponPointSocket");
-	UPROPERTY(EditDefaultsOnly)
-	FName ThirdPersonWeaponSocketName = TEXT("WeaponPoint");
+	TObjectPtr<UWeaponData> WeaponData;
+
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -38,8 +44,6 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
-	
-
 	
 
 private:

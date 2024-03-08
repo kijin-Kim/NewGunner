@@ -20,21 +20,21 @@ public:
 	UWeaponManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
-	
+
 	void ChangeCurrentWeapon(uint32 WeaponIndex);
-	
+
+	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 private:
 	AWeapon* SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass);
 	UFUNCTION()
 	void OnRep_Weapons();
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
-	
+
 	bool CanChangeCurrentWeapon(uint32 WeaponIndex) const;
 	void LocalChangeCurrentWeapon(uint32 WeaponIndex);
 	UFUNCTION(Server, Reliable)
 	void ServerChangeCurrentWeapon(uint32 WeaponIndex);
-
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Weapon")
@@ -43,7 +43,6 @@ public:
 	TSubclassOf<AWeapon> DefaultSecondaryWeaponClass;
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultMeleeWeaponClass;
-
 
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Weapons)

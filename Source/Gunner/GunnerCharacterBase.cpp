@@ -8,6 +8,7 @@
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Weapon/WeaponManagerComponent.h"
 
 
@@ -16,10 +17,19 @@ AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectIniti
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+
+
+	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
+	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
+	FirstPersonSpringArmComponent->TargetArmLength = 0.0f;
+	FirstPersonSpringArmComponent->bDoCollisionTest = false;
+	FirstPersonSpringArmComponent->bUsePawnControlRotation = true;
+	
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
-	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
+	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
 	GetMesh()->SetOwnerNoSee(true);
+	
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
@@ -33,7 +43,6 @@ AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectIniti
 	bUseControllerRotationRoll = false;
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
-	
 }
 
 

@@ -3,6 +3,7 @@
 
 #include "Weapon.h"
 
+#include "WeaponData.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/GunnerCharacterBase.h"
 
@@ -23,7 +24,6 @@ AWeapon::AWeapon()
 	// TP메쉬는 Autonomous Proxy에서만 보이지 않음.
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
-	
 }
 
 void AWeapon::SetOwner(AActor* NewOwner)
@@ -42,20 +42,71 @@ void AWeapon::Equip()
 {
 	FirstPersonMeshComponent->SetVisibility(true);
 	ThirdPersonMeshComponent->SetVisibility(true);
+	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
+
+	if (GunnerCharacterOwner && WeaponData && WeaponData->FPCharacterAnimInstanceClass)
+	{
+		USkeletalMeshComponent* GunnerFirstPersonMeshComponent = GunnerCharacterOwner->GetFirstPersonMeshComponent();
+		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(WeaponData->FPCharacterAnimInstanceClass);
+		if (UAnimInstance* AnimInstance = GunnerFirstPersonMeshComponent->GetAnimInstance())
+		{
+			if (WeaponData->FPCharacterEquipMontage)
+			{
+				AnimInstance->Montage_Play(WeaponData->FPCharacterEquipMontage);
+			}
+		}
+
+		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
+		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstanceClass);
+		if (UAnimInstance* AnimInstance = GunnerThirdPersonMeshComponent->GetAnimInstance())
+		{
+			if (WeaponData->TPCharacterEquipMontage)
+			{
+				AnimInstance->Montage_Play(WeaponData->TPCharacterEquipMontage);
+			}
+		}
+	}
+
+
+	if (WeaponData->FPWeaponEquipMontage)
+	{
+		if (UAnimInstance* AnimInstance = FirstPersonMeshComponent->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(WeaponData->FPWeaponEquipMontage);
+		}
+	}
+	if (WeaponData->TPWeaponEquipMontage)
+	{
+		if (UAnimInstance* AnimInstance = ThirdPersonMeshComponent->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(WeaponData->TPWeaponEquipMontage);
+		}
+	}
 }
 
 void AWeapon::Unequip()
 {
 	FirstPersonMeshComponent->SetVisibility(false);
 	ThirdPersonMeshComponent->SetVisibility(false);
+	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
+	if (GunnerCharacterOwner)
+	{
+		GetGunnerCharacterOwner()->GetFirstPersonMeshComponent()->SetAnimInstanceClass(nullptr);
+		GetGunnerCharacterOwner()->GetMesh()->SetAnimInstanceClass(nullptr);
+	}
 }
 
 void AWeapon::AttachMeshes()
 {
+	if (!WeaponData)
+	{
+		return;
+	}
+
 	if (AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner())
 	{
-		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale, FirstPersonWeaponSocketName);
-		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, ThirdPersonWeaponSocketName);
+		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->FPWeaponSocketName);
+		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->TPWeaponSocketName);
 	}
 }
 
