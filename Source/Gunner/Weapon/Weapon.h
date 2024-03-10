@@ -15,6 +15,7 @@ class GUNNER_API AWeapon : public AActor
 {
 	GENERATED_BODY()
 
+	friend class UGunnerCheatManagerExtension;
 public:
 	AWeapon();
 	void SetOwner(AActor* NewOwner) override;

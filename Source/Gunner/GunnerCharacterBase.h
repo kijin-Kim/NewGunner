@@ -18,6 +18,7 @@ class GUNNER_API AGunnerCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
+	friend class UGunnerCheatManagerExtension;
 public:
 	AGunnerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -30,7 +31,6 @@ public:
 
 protected:
 	virtual bool CanJumpInternal_Implementation() const override;
-	
 
 private:
 	void Walk();
@@ -42,7 +42,7 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRun();
 
-	
+
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void SetupMappingContext();
@@ -67,7 +67,6 @@ public:
 	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
-
 
 
 	UPROPERTY(EditDefaultsOnly)

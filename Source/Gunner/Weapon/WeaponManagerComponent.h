@@ -16,6 +16,8 @@ class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 {
 	GENERATED_BODY()
 
+	friend class UGunnerCheatManagerExtension;
+
 public:
 	UWeaponManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -24,6 +26,7 @@ public:
 	void ChangeCurrentWeapon(uint32 WeaponIndex);
 
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
+
 private:
 	AWeapon* SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass);
 	UFUNCTION()
