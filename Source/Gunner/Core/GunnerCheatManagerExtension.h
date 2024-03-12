@@ -15,7 +15,7 @@ class GUNNER_API UGunnerCheatManagerExtension : public UCheatManagerExtension
 	GENERATED_BODY()
 public:
 	UGunnerCheatManagerExtension();
-	UFUNCTION(Exec, BlueprintAuthorityOnly)
+	UFUNCTION(Exec)
 	void ToggleThirdPersonMode();
 
 
