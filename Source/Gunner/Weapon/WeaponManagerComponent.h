@@ -8,7 +8,7 @@
 #include "WeaponManagerComponent.generated.h"
 
 
-class AGunnerCharacterBase;
+class AGunnerCharacter;
 class AWeapon;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -21,8 +21,8 @@ class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 public:
 	UWeaponManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void BeginPlay() override;
 
+	void SetupWeaponManager();
 	void ChangeCurrentWeapon(uint32 WeaponIndex);
 
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
@@ -39,6 +39,8 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerChangeCurrentWeapon(uint32 WeaponIndex);
 
+
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultPrimaryWeaponClass;
@@ -50,8 +52,8 @@ public:
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Weapons)
 	TArray<TObjectPtr<AWeapon>> Weapons;
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
 	TObjectPtr<AWeapon> CurrentWeapon;
 	UPROPERTY()
-	TObjectPtr<AGunnerCharacterBase> GunnerCharacterOwner;
+	TObjectPtr<AGunnerCharacter> GunnerCharacterOwner;
 };

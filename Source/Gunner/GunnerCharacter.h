@@ -1,87 +1,107 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/Character.h"
-#include "Logging/LogMacros.h"
 #include "GunnerCharacter.generated.h"
 
-class UInputComponent;
-class USkeletalMeshComponent;
-class UCameraComponent;
+class USpringArmComponent;
+class UWeaponManagerComponent;
 class UInputAction;
 class UInputMappingContext;
-struct FInputActionValue;
+class UCameraComponent;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFirePressedSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFireReleasedSignature);
 
-UCLASS(config=Game)
-class AGunnerCharacter : public ACharacter
+
+
+UCLASS()
+class GUNNER_API AGunnerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
-	USkeletalMeshComponent* Mesh1P;
-
-	/** First person camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FirstPersonCameraComponent;
-
-	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
-
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
+	friend class UGunnerCheatManagerExtension;
+public:
+	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
-public:
-	AGunnerCharacter();
+	void OnFirePressed();
+	void OnFireReleased();
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void BeginPlay() override;
+
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_Controller() override;
+
+	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
 
 protected:
-	virtual void BeginPlay();
+	virtual bool CanJumpInternal_Implementation() const override;
 
-public:
-		
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+private:
+	void Walk();
+	void LocalWalk();
+	UFUNCTION(Server, Reliable)
+	void ServerWalk();
+	void Run();
+	void LocalRun();
+	UFUNCTION(Server, Reliable)
+	void ServerRun();
 
-	/** Bool for AnimBP to switch to another animation set */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
-	bool bHasRifle;
 
-	/** Setter to set the bool */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
-	void SetHasRifle(bool bNewHasRifle);
-
-	/** Getter for the bool */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
-	bool GetHasRifle();
-
-protected:
-	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
-
-	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	// End of APawn interface
+	void SetupMappingContext();
 
 public:
-	/** Returns Mesh1P subobject **/
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-	/** Returns FirstPersonCameraComponent subobject **/
-	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> MoveAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> LookAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> CrouchAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> WalkAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> FireAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> AltFireAction;
 
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> PrimaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
+
+
+	UPROPERTY(EditDefaultsOnly)
+	float BaseTurnRate = 45.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float MouseSensitivity = 1.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float WalkSpeedMultiplier = 0.6f;
+	float MaxWalkSpeedCache = 0.0f;
+
+
+	UPROPERTY(BlueprintAssignable)
+	FOnFirePressedSignature OnFirePressedDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnFirePressedSignature OnFireReleasedDelegate;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<USpringArmComponent> FirstPersonSpringArmComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
 };
-

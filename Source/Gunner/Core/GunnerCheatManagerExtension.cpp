@@ -4,7 +4,7 @@
 #include "GunnerCheatManagerExtension.h"
 
 #include "GameFramework/SpringArmComponent.h"
-#include "Gunner/GunnerCharacterBase.h"
+#include "..\GunnerCharacter.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponManagerComponent.h"
 
@@ -13,7 +13,7 @@ UGunnerCheatManagerExtension::UGunnerCheatManagerExtension()
 #if UE_WITH_CHEAT_MANAGER
 	if (HasAnyFlags(RF_ClassDefaultObject))
 	{
-		UCheatManager::RegisterForOnCheatManagerCreated(FOnCheatManagerCreated::FDelegate::CreateLambda([](UCheatManager* CheatManager)
+		UCheatManager::RegisterForOnCheatManagerCreated(FOnCheatManagerCreated::FDelegate::CreateLambda([this](UCheatManager* CheatManager)
 		{
 			CheatManager->AddCheatManagerExtension(NewObject<ThisClass>(CheatManager));
 		}));
@@ -29,23 +29,23 @@ void UGunnerCheatManagerExtension::ToggleThirdPersonMode()
 		return;
 	}
 
-	AGunnerCharacterBase* GunnerCharacter = Cast<AGunnerCharacterBase>(PC->GetPawn());
+	AGunnerCharacter* GunnerCharacter = Cast<AGunnerCharacter>(PC->GetPawn());
 	if (!GunnerCharacter)
 	{
 		return;
 	}
 
 	bIsTPMode = !bIsTPMode;
-	
-	GunnerCharacter->FirstPersonMeshComponent->SetHiddenInGame(bIsTPMode);
+
 	GunnerCharacter->GetMesh()->SetOwnerNoSee(!bIsTPMode);
+	GunnerCharacter->FirstPersonMeshComponent->SetHiddenInGame(bIsTPMode);
 	GunnerCharacter->FirstPersonSpringArmComponent->TargetArmLength = bIsTPMode ? 500.0f : 0.0f;
 	GunnerCharacter->FirstPersonSpringArmComponent->SocketOffset = bIsTPMode ? FVector{0.0f, 50.0f, 0.0f} : FVector::ZeroVector;
-	
+
+
 	if (GunnerCharacter->WeaponManagerComponent->CurrentWeapon) // TODO: Signaled By Weapon Change
 	{
 		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->FirstPersonMeshComponent->SetHiddenInGame(bIsTPMode);
 		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->ThirdPersonMeshComponent->SetOwnerNoSee(!bIsTPMode);
-		
 	}
 }

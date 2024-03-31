@@ -4,8 +4,7 @@
 #include "Weapon.h"
 
 #include "WeaponData.h"
-#include "Gunner/Gunner.h"
-#include "Gunner/GunnerCharacterBase.h"
+#include "Gunner/GunnerCharacter.h"
 
 
 AWeapon::AWeapon()
@@ -19,9 +18,6 @@ AWeapon::AWeapon()
 	ThirdPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonMesh"));
 	ThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
 
-
-	// FP메쉬는 Autonomous Proxy에서만 보임.
-	// TP메쉬는 Autonomous Proxy에서만 보이지 않음.
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
 }
@@ -42,12 +38,12 @@ void AWeapon::Equip()
 {
 	FirstPersonMeshComponent->SetVisibility(true);
 	ThirdPersonMeshComponent->SetVisibility(true);
-	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
+	AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner();
 
-	if (GunnerCharacterOwner && WeaponData && WeaponData->FPCharacterAnimInstanceClass)
+	if (GunnerCharacterOwner && WeaponData)
 	{
 		USkeletalMeshComponent* GunnerFirstPersonMeshComponent = GunnerCharacterOwner->GetFirstPersonMeshComponent();
-		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(WeaponData->FPCharacterAnimInstanceClass);
+		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(WeaponData->FPCharacterAnimInstance);
 		if (UAnimInstance* AnimInstance = GunnerFirstPersonMeshComponent->GetAnimInstance())
 		{
 			if (WeaponData->FPCharacterEquipMontage)
@@ -57,7 +53,7 @@ void AWeapon::Equip()
 		}
 
 		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
-		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstanceClass);
+		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstance);
 		if (UAnimInstance* AnimInstance = GunnerThirdPersonMeshComponent->GetAnimInstance())
 		{
 			if (WeaponData->TPCharacterEquipMontage)
@@ -82,17 +78,30 @@ void AWeapon::Equip()
 			AnimInstance->Montage_Play(WeaponData->TPWeaponEquipMontage);
 		}
 	}
+
+
+	if (OnWeaponEquipDelegate.IsBound())
+	{
+		OnWeaponEquipDelegate.Broadcast();
+	}
 }
 
 void AWeapon::Unequip()
 {
+	if (AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner())
+	{
+		USkeletalMeshComponent* GunnerFirstPersonMeshComponent = GunnerCharacterOwner->GetFirstPersonMeshComponent();
+		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(nullptr);
+		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
+		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(nullptr);
+	}
+
 	FirstPersonMeshComponent->SetVisibility(false);
 	ThirdPersonMeshComponent->SetVisibility(false);
-	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
-	if (GunnerCharacterOwner)
+
+	if (OnWeaponUnequipDelegate.IsBound())
 	{
-		GetGunnerCharacterOwner()->GetFirstPersonMeshComponent()->SetAnimInstanceClass(nullptr);
-		GetGunnerCharacterOwner()->GetMesh()->SetAnimInstanceClass(nullptr);
+		OnWeaponUnequipDelegate.Broadcast();
 	}
 }
 
@@ -103,14 +112,14 @@ void AWeapon::AttachMeshes()
 		return;
 	}
 
-	if (AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner())
+	if (AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner())
 	{
-		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->FPWeaponSocketName);
-		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->TPWeaponSocketName);
+		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::KeepRelativeTransform, WeaponData->FPWeaponSocketName);
+		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, WeaponData->TPWeaponSocketName);
 	}
 }
 
-AGunnerCharacterBase* AWeapon::GetGunnerCharacterOwner() const
+AGunnerCharacter* AWeapon::GetGunnerCharacterOwner() const
 {
-	return PrivateGunnerCharacterOwner = PrivateGunnerCharacterOwner ? PrivateGunnerCharacterOwner.Get() : Cast<AGunnerCharacterBase>(GetOwner());
+	return PrivateGunnerCharacterOwner = PrivateGunnerCharacterOwner ? PrivateGunnerCharacterOwner.Get() : Cast<AGunnerCharacter>(GetOwner());
 }

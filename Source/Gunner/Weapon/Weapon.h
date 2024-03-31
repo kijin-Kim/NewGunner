@@ -8,7 +8,10 @@
 
 
 class UWeaponData;
-class AGunnerCharacterBase;
+class AGunnerCharacter;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponEquipSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnequipSignature);
 
 UCLASS()
 class GUNNER_API AWeapon : public AActor
@@ -22,21 +25,20 @@ public:
 	void OnRep_Owner() override;
 	void Equip();
 	void Unequip();
-	AGunnerCharacterBase* GetGunnerCharacterOwner() const;
-
+	AGunnerCharacter* GetGunnerCharacterOwner() const;
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
 
-	
-
-	
 
 private:
 	void AttachMeshes();
 
 public:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWeaponData> WeaponData;
-
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponEquipSignature OnWeaponEquipDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponUnequipSignature OnWeaponUnequipDelegate;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -49,5 +51,5 @@ protected:
 
 private:
 	UPROPERTY()
-	mutable TObjectPtr<AGunnerCharacterBase> PrivateGunnerCharacterOwner;
+	mutable TObjectPtr<AGunnerCharacter> PrivateGunnerCharacterOwner;
 };

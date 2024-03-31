@@ -6,7 +6,7 @@
 #include "Gun.h"
 #include "Weapon.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/GunnerCharacterBase.h"
+#include "..\GunnerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -15,7 +15,6 @@ UWeaponManagerComponent::UWeaponManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	Weapons.SetNum(3);
-	
 }
 
 void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -25,11 +24,9 @@ void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(UWeaponManagerComponent, CurrentWeapon);
 }
 
-void UWeaponManagerComponent::BeginPlay()
+void UWeaponManagerComponent::SetupWeaponManager()
 {
-	Super::BeginPlay();
-
-	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacterBase>();
+	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacter>();
 	if (GunnerCharacterOwner->HasAuthority())
 	{
 		Weapons[0] = SpawnWeaponByClass(DefaultPrimaryWeaponClass);
@@ -57,9 +54,9 @@ AWeapon* UWeaponManagerComponent::SpawnWeaponByClass(TSubclassOf<AWeapon> Weapon
 
 void UWeaponManagerComponent::OnRep_Weapons()
 {
-	for(AWeapon* Weapon : Weapons)
+	for (AWeapon* Weapon : Weapons)
 	{
-		if(!Weapon || Weapon == CurrentWeapon)
+		if (!Weapon || Weapon == CurrentWeapon)
 		{
 			continue;
 		}
@@ -70,7 +67,7 @@ void UWeaponManagerComponent::OnRep_Weapons()
 
 void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
-	if(LastWeapon)
+	if (LastWeapon)
 	{
 		LastWeapon->Unequip();
 	}
@@ -79,12 +76,12 @@ void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 
 void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
 {
-	if(!CanChangeCurrentWeapon(WeaponIndex))
+	if (!CanChangeCurrentWeapon(WeaponIndex))
 	{
 		return;
 	}
 
-	if(GunnerCharacterOwner->IsLocallyControlled() && !GunnerCharacterOwner->HasAuthority()) // ROLE_Autonmous
+	if (GunnerCharacterOwner->IsLocallyControlled() && !GunnerCharacterOwner->HasAuthority()) // ROLE_Autonomous
 	{
 		LocalChangeCurrentWeapon(WeaponIndex);
 		ServerChangeCurrentWeapon(WeaponIndex);
@@ -101,7 +98,7 @@ bool UWeaponManagerComponent::CanChangeCurrentWeapon(uint32 WeaponIndex) const
 	{
 		return false;
 	}
-	
+
 	AWeapon* NewWeapon = Weapons[WeaponIndex];
 	if (!NewWeapon)
 	{
@@ -117,7 +114,7 @@ void UWeaponManagerComponent::LocalChangeCurrentWeapon(uint32 WeaponIndex)
 	{
 		CurrentWeapon->Unequip();
 	}
-	
+
 	AWeapon* NewWeapon = Weapons[WeaponIndex];
 	NewWeapon->Equip();
 	CurrentWeapon = NewWeapon;

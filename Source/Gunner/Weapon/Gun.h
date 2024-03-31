@@ -15,9 +15,4 @@ class GUNNER_API AGun : public AWeapon
 
 public:
 	AGun();
-
-	
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UPickupComponent> PickupComponent;
 };

@@ -1,94 +1,158 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #include "GunnerCharacter.h"
-#include "GunnerProjectile.h"
-#include "Animation/AnimInstance.h"
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
-#include "Engine/LocalPlayer.h"
+#include "Gunner.h"
+#include "GunnerCharacterMovementComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Weapon/WeaponManagerComponent.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// AGunnerCharacter
-
-AGunnerCharacter::AGunnerCharacter()
+AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
-	// Character doesnt have a rifle at start
-	bHasRifle = false;
-	
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-		
-	// Create a CameraComponent	
+	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+
+	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
+	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
+	FirstPersonSpringArmComponent->TargetArmLength = 0.0f;
+	FirstPersonSpringArmComponent->bDoCollisionTest = false;
+	FirstPersonSpringArmComponent->bUsePawnControlRotation = true;
+
+	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
+	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
+	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
+	GetMesh()->SetOwnerNoSee(true);
+
+
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
+	FirstPersonCameraComponent->SetFieldOfView(71.0f);
 
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
-	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
-	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+	GetCharacterMovement()->MaxWalkSpeed = 675.0f;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 250.0f;
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 
+	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
+}
+
+void AGunnerCharacter::OnFirePressed()
+{
+	if (OnFirePressedDelegate.IsBound())
+	{
+		OnFirePressedDelegate.Broadcast();
+	}
+}
+
+void AGunnerCharacter::OnFireReleased()
+{
+	if (OnFireReleasedDelegate.IsBound())
+	{
+		OnFireReleasedDelegate.Broadcast();
+	}
+}
+
+void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::Walk);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::Run);
+		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(0));
+		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(1));
+		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(2));
+
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::OnFireReleased);
+	}
 }
 
 void AGunnerCharacter::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
-
-	// Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
-
+	MaxWalkSpeedCache = GetCharacterMovement()->MaxWalkSpeed;
 }
 
-//////////////////////////////////////////////////////////////////////////// Input
-
-void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AGunnerCharacter::PossessedBy(AController* NewController)
 {
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+	Super::PossessedBy(NewController);
+	SetupMappingContext();
+	WeaponManagerComponent->SetupWeaponManager();
+}
 
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGunnerCharacter::Move);
+void AGunnerCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	SetupMappingContext();
+	WeaponManagerComponent->SetupWeaponManager();
+}
 
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGunnerCharacter::Look);
-	}
-	else
+bool AGunnerCharacter::CanJumpInternal_Implementation() const
+{
+	return JumpIsAllowedInternal();
+}
+
+void AGunnerCharacter::Walk()
+{
+	if (!HasAuthority() && IsLocallyControlled())
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		LocalWalk();
 	}
+
+	ServerWalk();
+}
+
+void AGunnerCharacter::LocalWalk()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache * WalkSpeedMultiplier;
+}
+
+void AGunnerCharacter::ServerWalk_Implementation()
+{
+	LocalWalk();
+}
+
+void AGunnerCharacter::Run()
+{
+	if (!HasAuthority() && IsLocallyControlled())
+	{
+		LocalRun();
+	}
+
+	ServerRun();
+}
+
+void AGunnerCharacter::LocalRun()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache;
+}
+
+void AGunnerCharacter::ServerRun_Implementation()
+{
+	LocalRun();
 }
 
 
 void AGunnerCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
-		// add movement 
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
@@ -96,22 +160,22 @@ void AGunnerCharacter::Move(const FInputActionValue& Value)
 
 void AGunnerCharacter::Look(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput(LookAxisVector.X * BaseTurnRate * MouseSensitivity);
+		AddControllerPitchInput(LookAxisVector.Y * BaseTurnRate * MouseSensitivity);
 	}
 }
 
-void AGunnerCharacter::SetHasRifle(bool bNewHasRifle)
+void AGunnerCharacter::SetupMappingContext()
 {
-	bHasRifle = bNewHasRifle;
-}
-
-bool AGunnerCharacter::GetHasRifle()
-{
-	return bHasRifle;
+	const APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (PlayerController && PlayerController->IsLocalController())
+	{
+		UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+		check(Subsystem);
+		check(DefaultMappingContext);
+		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+	}
 }

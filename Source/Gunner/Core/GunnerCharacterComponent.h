@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/GunnerCharacterBase.h"
+#include "Gunner/GunnerCharacter.h"
 #include "GunnerCharacterComponent.generated.h"
 
 
@@ -20,14 +20,14 @@ public:
 	template <class T>
 	T* GetGunnerCharacterOwner() const
 	{
-		static_assert(TPointerIsConvertibleFromTo<T, AGunnerCharacterBase>::Value, "'T' template parameter to GetPawn must be derived from AGunnerCharacter");
+		static_assert(TPointerIsConvertibleFromTo<T, AGunnerCharacter>::Value, "'T' template parameter to GetPawn must be derived from AGunnerCharacter");
 		return Cast<T>(GetOwner());
 	}
 
 	template <class T>
 	T* GetGunnerCharacterOwnerChecked() const
 	{
-		static_assert(TPointerIsConvertibleFromTo<T, AGunnerCharacterBase>::Value, "'T' template parameter to GetPawnChecked must be derived from AGunnerCharacter");
+		static_assert(TPointerIsConvertibleFromTo<T, AGunnerCharacter>::Value, "'T' template parameter to GetPawnChecked must be derived from AGunnerCharacter");
 		return CastChecked<T>(GetOwner());
 	}
 };
