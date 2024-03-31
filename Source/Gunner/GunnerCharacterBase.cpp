@@ -47,7 +47,6 @@ AGunnerCharacterBase::AGunnerCharacterBase(const FObjectInitializer& ObjectIniti
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 }
 
-
 void AGunnerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);

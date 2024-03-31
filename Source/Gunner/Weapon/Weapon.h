@@ -26,16 +26,14 @@ public:
 
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
 
-	
-
-	
 
 private:
 	void AttachMeshes();
 
 public:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWeaponData> WeaponData;
+	
 
 
 protected:

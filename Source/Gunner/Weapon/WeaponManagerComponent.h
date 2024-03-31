@@ -50,7 +50,7 @@ public:
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Weapons)
 	TArray<TObjectPtr<AWeapon>> Weapons;
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
 	TObjectPtr<AWeapon> CurrentWeapon;
 	UPROPERTY()
 	TObjectPtr<AGunnerCharacterBase> GunnerCharacterOwner;

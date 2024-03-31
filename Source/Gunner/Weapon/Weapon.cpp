@@ -4,7 +4,6 @@
 #include "Weapon.h"
 
 #include "WeaponData.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/GunnerCharacterBase.h"
 
 
@@ -44,10 +43,9 @@ void AWeapon::Equip()
 	ThirdPersonMeshComponent->SetVisibility(true);
 	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
 
-	if (GunnerCharacterOwner && WeaponData && WeaponData->FPCharacterAnimInstanceClass)
+	if (GunnerCharacterOwner && WeaponData)
 	{
 		USkeletalMeshComponent* GunnerFirstPersonMeshComponent = GunnerCharacterOwner->GetFirstPersonMeshComponent();
-		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(WeaponData->FPCharacterAnimInstanceClass);
 		if (UAnimInstance* AnimInstance = GunnerFirstPersonMeshComponent->GetAnimInstance())
 		{
 			if (WeaponData->FPCharacterEquipMontage)
@@ -57,7 +55,6 @@ void AWeapon::Equip()
 		}
 
 		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
-		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstanceClass);
 		if (UAnimInstance* AnimInstance = GunnerThirdPersonMeshComponent->GetAnimInstance())
 		{
 			if (WeaponData->TPCharacterEquipMontage)
@@ -88,12 +85,6 @@ void AWeapon::Unequip()
 {
 	FirstPersonMeshComponent->SetVisibility(false);
 	ThirdPersonMeshComponent->SetVisibility(false);
-	AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner();
-	if (GunnerCharacterOwner)
-	{
-		GetGunnerCharacterOwner()->GetFirstPersonMeshComponent()->SetAnimInstanceClass(nullptr);
-		GetGunnerCharacterOwner()->GetMesh()->SetAnimInstanceClass(nullptr);
-	}
 }
 
 void AWeapon::AttachMeshes()
@@ -105,8 +96,8 @@ void AWeapon::AttachMeshes()
 
 	if (AGunnerCharacterBase* GunnerCharacterOwner = GetGunnerCharacterOwner())
 	{
-		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->FPWeaponSocketName);
-		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponData->TPWeaponSocketName);
+		FirstPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetFirstPersonMeshComponent(), FAttachmentTransformRules::KeepRelativeTransform, WeaponData->FPWeaponSocketName);
+		ThirdPersonMeshComponent->AttachToComponent(GunnerCharacterOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, WeaponData->TPWeaponSocketName);
 	}
 }
 

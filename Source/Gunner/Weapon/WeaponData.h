@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "WeaponData.generated.h"
 
+class UAimOffsetBlendSpace;
 /**
  * 
  */
@@ -13,7 +14,6 @@ UCLASS()
 class GUNNER_API UWeaponData : public UDataAsset
 {
 	GENERATED_BODY()
-
 public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
@@ -24,14 +24,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|FirstPerson|Weapon")
 	TObjectPtr<UAnimMontage> FPWeaponEquipMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|FirstPerson|Character")
-	TSubclassOf<UAnimInstance> FPCharacterAnimInstanceClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|FirstPerson|Character")
 	TObjectPtr<UAnimMontage> FPCharacterEquipMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Weapon")
 	TObjectPtr<UAnimMontage> TPWeaponEquipMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
-	TSubclassOf<UAnimInstance> TPCharacterAnimInstanceClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
 	TObjectPtr<UAnimMontage> TPCharacterEquipMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAnimSequenceBase> TPIdlePoseUB;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAnimSequenceBase> TPCrouchPoseUB;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAimOffsetBlendSpace> TPAimOffsetUB;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAimOffsetBlendSpace> TPCrouchAimOffsetUB;
+	
 };
