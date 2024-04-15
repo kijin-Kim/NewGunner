@@ -21,6 +21,7 @@ class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 public:
 	UWeaponManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void InitializeComponent() override;
 
 	void SetupWeaponManager();
 	void ChangeCurrentWeapon(uint32 WeaponIndex);

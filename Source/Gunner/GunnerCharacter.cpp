@@ -4,7 +4,6 @@
 #include "GunnerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Gunner.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -73,10 +72,10 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::Walk);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::Run);
+		
 		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(0));
 		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(1));
 		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(2));
-
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::OnFireReleased);
 	}
@@ -109,12 +108,11 @@ bool AGunnerCharacter::CanJumpInternal_Implementation() const
 
 void AGunnerCharacter::Walk()
 {
-	if (!HasAuthority() && IsLocallyControlled())
+	LocalWalk();
+	if (GetLocalRole() < ROLE_Authority)
 	{
-		LocalWalk();
+		ServerWalk();	
 	}
-
-	ServerWalk();
 }
 
 void AGunnerCharacter::LocalWalk()
@@ -129,12 +127,11 @@ void AGunnerCharacter::ServerWalk_Implementation()
 
 void AGunnerCharacter::Run()
 {
-	if (!HasAuthority() && IsLocallyControlled())
+	LocalRun();
+	if (GetLocalRole() < ROLE_Authority)
 	{
-		LocalRun();
+		ServerRun();	
 	}
-
-	ServerRun();
 }
 
 void AGunnerCharacter::LocalRun()
@@ -146,7 +143,6 @@ void AGunnerCharacter::ServerRun_Implementation()
 {
 	LocalRun();
 }
-
 
 void AGunnerCharacter::Move(const FInputActionValue& Value)
 {

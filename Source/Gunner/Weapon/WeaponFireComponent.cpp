@@ -46,5 +46,5 @@ void UWeaponFireComponent::OnWeaponUnequip()
 
 void UWeaponFireComponent::Fire()
 {
-	GR_LOG(LogGunner, Warning, TEXT("Fire"));
+	
 }

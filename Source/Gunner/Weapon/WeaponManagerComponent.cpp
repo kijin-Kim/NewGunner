@@ -3,16 +3,14 @@
 
 #include "WeaponManagerComponent.h"
 
-#include "Gun.h"
 #include "Weapon.h"
-#include "Gunner/Gunner.h"
-#include "..\GunnerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 
 UWeaponManagerComponent::UWeaponManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
 	Weapons.SetNum(3);
 }
@@ -22,6 +20,12 @@ void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UWeaponManagerComponent, Weapons);
 	DOREPLIFETIME(UWeaponManagerComponent, CurrentWeapon);
+}
+
+void UWeaponManagerComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacter>();
 }
 
 void UWeaponManagerComponent::SetupWeaponManager()
