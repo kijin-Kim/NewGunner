@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Weapon/WeaponManagerComponent.h"
@@ -16,6 +17,10 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+
+	GetCapsuleComponent()->SetCapsuleHalfHeight(118.0f);
+	GetCapsuleComponent()->SetCapsuleRadius(42.0f);
+	
 
 	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
 	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
@@ -39,6 +44,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 }

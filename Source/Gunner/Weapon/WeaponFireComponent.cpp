@@ -3,9 +3,7 @@
 
 #include "WeaponFireComponent.h"
 
-#include "EnhancedInputComponent.h"
 #include "Weapon.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/GunnerCharacter.h"
 
 
@@ -46,5 +44,21 @@ void UWeaponFireComponent::OnWeaponUnequip()
 
 void UWeaponFireComponent::Fire()
 {
-	
+	TArray<FHitResult> HitResults;
+	AWeapon* Weapon = GetOwner<AWeapon>();
+	FVector CameraLocation = Cast<APlayerController>(Weapon->GetGunnerCharacterOwner()->GetController())->PlayerCameraManager->GetCameraLocation();
+	FVector Forward = Cast<APlayerController>(Weapon->GetGunnerCharacterOwner()->GetController())->PlayerCameraManager->GetCameraRotation().Vector();
+
+	FCollisionResponseParams ResponseParams;
+	ResponseParams.CollisionResponse.SetAllChannels(ECR_Overlap);
+	GetWorld()->LineTraceMultiByChannel(HitResults, CameraLocation, CameraLocation + Forward * 100000.0f, ECC_Pawn, FCollisionQueryParams::DefaultQueryParam, ResponseParams);
+
+	for(const FHitResult& Hit : HitResults)
+	{
+		if(Hit.GetActor())
+		{
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 16.0f, 16, FColor::Red, false, 3.0f);
+		}
+	}
 }
+;
