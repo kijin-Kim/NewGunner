@@ -18,7 +18,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
-	GetCapsuleComponent()->SetCapsuleHalfHeight(118.0f);
+	GetCapsuleComponent()->SetCapsuleHalfHeight(98.0f);
 	GetCapsuleComponent()->SetCapsuleRadius(42.0f);
 	
 
@@ -37,10 +37,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
-
-	GetCharacterMovement()->MaxWalkSpeed = 675.0f;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = 250.0f;
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
@@ -76,8 +73,8 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::Walk);
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::Run);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::SetRunning, false);
+		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::SetRunning, true);
 		
 		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(0));
 		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, WeaponManagerComponent.Get(), &UWeaponManagerComponent::ChangeCurrentWeapon, static_cast<uint32>(1));
@@ -85,12 +82,6 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::OnFireReleased);
 	}
-}
-
-void AGunnerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	MaxWalkSpeedCache = GetCharacterMovement()->MaxWalkSpeed;
 }
 
 void AGunnerCharacter::PossessedBy(AController* NewController)
@@ -107,47 +98,23 @@ void AGunnerCharacter::OnRep_Controller()
 	WeaponManagerComponent->SetupWeaponManager();
 }
 
-bool AGunnerCharacter::CanJumpInternal_Implementation() const
+bool AGunnerCharacter::IsRunning() const
 {
-	return JumpIsAllowedInternal();
+	return bIsRunning;
 }
 
-void AGunnerCharacter::Walk()
+void AGunnerCharacter::SetRunning(bool bNewRunning)
 {
-	LocalWalk();
+	bIsRunning = bNewRunning;
 	if (GetLocalRole() < ROLE_Authority)
 	{
-		ServerWalk();	
+		ServerRun(bNewRunning);	
 	}
 }
 
-void AGunnerCharacter::LocalWalk()
+void AGunnerCharacter::ServerRun_Implementation(bool bNewRunning)
 {
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache * WalkSpeedMultiplier;
-}
-
-void AGunnerCharacter::ServerWalk_Implementation()
-{
-	LocalWalk();
-}
-
-void AGunnerCharacter::Run()
-{
-	LocalRun();
-	if (GetLocalRole() < ROLE_Authority)
-	{
-		ServerRun();	
-	}
-}
-
-void AGunnerCharacter::LocalRun()
-{
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeedCache;
-}
-
-void AGunnerCharacter::ServerRun_Implementation()
-{
-	LocalRun();
+	SetRunning(bNewRunning);
 }
 
 void AGunnerCharacter::Move(const FInputActionValue& Value)
