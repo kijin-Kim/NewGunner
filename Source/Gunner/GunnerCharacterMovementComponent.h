@@ -15,4 +15,5 @@ class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementCo
 public:
 	UGunnerCharacterMovementComponent();
 	virtual bool CanAttemptJump() const override;
+	virtual float GetMaxSpeed() const override;
 };

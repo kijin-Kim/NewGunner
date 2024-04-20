@@ -30,25 +30,18 @@ public:
 	void OnFirePressed();
 	void OnFireReleased();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
 
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
-
-protected:
-	virtual bool CanJumpInternal_Implementation() const override;
+	bool IsRunning() const;
 
 private:
-	void Walk();
-	void LocalWalk();
+	void SetRunning(bool bNewRunning);
+	void LocalRun(bool bNewRunning);
 	UFUNCTION(Server, Reliable)
-	void ServerWalk();
-	void Run();
-	void LocalRun();
-	UFUNCTION(Server, Reliable)
-	void ServerRun();
+	void ServerRun(bool bNewRunning);
 
 
 	void Move(const FInputActionValue& Value);
@@ -85,11 +78,7 @@ public:
 	float BaseTurnRate = 45.0f;
 	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
-	UPROPERTY(EditDefaultsOnly)
-	float WalkSpeedMultiplier = 0.6f;
-	float MaxWalkSpeedCache = 0.0f;
-
-
+	
 	UPROPERTY(BlueprintAssignable)
 	FOnFirePressedSignature OnFirePressedDelegate;
 	UPROPERTY(BlueprintAssignable)
@@ -104,4 +93,7 @@ protected:
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
+
+private:
+	bool bIsRunning = true;
 };
