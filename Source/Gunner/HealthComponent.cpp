@@ -17,7 +17,7 @@ void UHealthComponent::OnDamage(AActor* DamagedActor, float Damage, AController*
 	FVector Location;
 	FRotator Rotation;
 	InstigatedBy->GetPlayerViewPoint(Location, Rotation);
-	GR_LOG(LogGunner, Warning, TEXT("Distance: %fm, Bone: %s"), FVector::Distance(HitLocation, Location) / 100.0f,*BoneName.ToString());
+//	GR_LOG(LogGunner, Warning, TEXT("Distance: %fm, Bone: %s"), FVector::Distance(HitLocation, Location) / 100.0f,*BoneName.ToString());
 	Health -= Damage;
 	Health = FMath::Max(Health, 0.0f);
 }

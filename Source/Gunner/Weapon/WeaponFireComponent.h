@@ -25,8 +25,10 @@ public:
 	void Fire();
 	UFUNCTION(Server, Reliable)
 	void ServerFire();
-
 	void WeaponLineTrace();
+
+	UFUNCTION(Client, Reliable)
+	void ClientDrawServerRegisteredHitBox(const TArray<FTransform>& HitBoxTransforms, const TArray<FVector2D>& Sizes);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
