@@ -61,8 +61,10 @@ void UWeaponFireComponent::WeaponLineTrace()
 {
 	TArray<FHitResult> HitResults;
 	AWeapon* Weapon = GetOwner<AWeapon>();
-	FVector CameraLocation = Cast<APlayerController>(Weapon->GetGunnerCharacterOwner()->GetController())->PlayerCameraManager->GetCameraLocation();
-	FVector Forward = Cast<APlayerController>(Weapon->GetGunnerCharacterOwner()->GetController())->PlayerCameraManager->GetCameraRotation().Vector();
+	AGunnerCharacter* GunnerCharacterOwner = Weapon->GetGunnerCharacterOwner();
+	APlayerCameraManager* PlayerCameraManager = Cast<APlayerController>(GunnerCharacterOwner->GetController())->PlayerCameraManager;
+	FVector CameraLocation = PlayerCameraManager->GetCameraLocation();
+	FVector Forward = PlayerCameraManager->GetCameraRotation().Vector();
 
 	FCollisionResponseParams ResponseParams;
 	ResponseParams.CollisionResponse.SetAllChannels(ECR_Overlap);
@@ -73,57 +75,49 @@ void UWeaponFireComponent::WeaponLineTrace()
 	for (const FHitResult& Hit : HitResults)
 	{
 		AActor* HitActor = Hit.GetActor();
-		if (HitActor == Weapon || HitActor == Weapon->GetGunnerCharacterOwner() || AlreadyHitRegisteredActors.Find(HitActor) != INDEX_NONE)
+		if (HitActor == Weapon || HitActor == GunnerCharacterOwner || AlreadyHitRegisteredActors.Find(HitActor) != INDEX_NONE)
 		{
 			continue;
 		}
 
 
 		AlreadyHitRegisteredActors.Add(HitActor);
-		UGameplayStatics::ApplyPointDamage(HitActor, 10.0f, Forward, Hit, Weapon->GetGunnerCharacterOwner()->GetController(), Weapon, UDamageType::StaticClass());
+		UGameplayStatics::ApplyPointDamage(HitActor, 10.0f, Forward, Hit, GunnerCharacterOwner->GetController(), Weapon, UDamageType::StaticClass());
 	}
 
 
 	TArray<AActor*> GunnerActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), GunnerActors);
-	GunnerActors.Remove(Weapon->GetGunnerCharacterOwner());
+	GunnerActors.Remove(GunnerCharacterOwner);
 	for (AActor* GunnerActor : GunnerActors)
 	{
-		if (AGunnerCharacter* HitGunner = Cast<AGunnerCharacter>(GunnerActor))
+		AGunnerCharacter* HitGunner = Cast<AGunnerCharacter>(GunnerActor);
+		check(HitGunner);
+		UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset();
+		check(PhysAsset);
+
+		TArray<FTransform> HitBoxTransforms;
+		TArray<FVector2D> Sizes;
+		for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
 		{
-			if (Weapon->GetGunnerCharacterOwner()->GetLocalRole() == ROLE_Authority)
+			FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
+			for (const FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
 			{
-				if (UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset())
+				FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
+				if (GunnerCharacterOwner->GetLocalRole() == ROLE_Authority)
 				{
-					TArray<FTransform> HitBoxTransforms;
-					TArray<FVector2D> Sizes;
-					for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-					{
-						FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
-						for (const FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-						{
-							FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-							HitBoxTransforms.Add(HitBoxTransform);
-							Sizes.Add(FVector2D(SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)), SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f))));
-						}
-					}
-					ClientDrawServerRegisteredHitBox(HitBoxTransforms, Sizes);
+					HitBoxTransforms.Add(HitBoxTransform);
+					Sizes.Add(FVector2D(SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)), SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f))));
+				}
+				else
+				{
+					DrawDebugCapsule(GetWorld(), HitBoxTransform.GetLocation(), SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)), SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)), HitBoxTransform.GetRotation(), FColor::Blue, true);
 				}
 			}
-			else
+
+			if (GunnerCharacterOwner->GetLocalRole() == ROLE_Authority)
 			{
-				if (UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset())
-				{
-					for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-					{
-						FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
-						for (const FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-						{
-							FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-							DrawDebugCapsule(GetWorld(), HitBoxTransform.GetLocation(), SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)), SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)), HitBoxTransform.GetRotation(), FColor::Blue, true);
-						}
-					}
-				}
+				ClientDrawServerRegisteredHitBox(HitBoxTransforms, Sizes);
 			}
 		}
 	}

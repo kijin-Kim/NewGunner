@@ -26,7 +26,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerFire();
 	void WeaponLineTrace();
-
+	
 	UFUNCTION(Client, Reliable)
 	void ClientDrawServerRegisteredHitBox(const TArray<FTransform>& HitBoxTransforms, const TArray<FVector2D>& Sizes);
 
