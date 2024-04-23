@@ -22,6 +22,7 @@ public:
 	UWeaponManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
 
 	void SetupWeaponManager();
 	void ChangeCurrentWeapon(uint32 WeaponIndex);

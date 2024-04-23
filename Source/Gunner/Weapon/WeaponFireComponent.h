@@ -23,4 +23,12 @@ public:
 	void OnWeaponUnequip();
 	UFUNCTION()
 	void Fire();
+	UFUNCTION(Server, Reliable)
+	void ServerFire();
+
+	void WeaponLineTrace();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAnimMontage> TPCharacterFireMontage;
 };

@@ -5,6 +5,7 @@
 
 #include "Weapon.h"
 #include "Gunner/GunnerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values for this component's properties
@@ -44,6 +45,17 @@ void UWeaponFireComponent::OnWeaponUnequip()
 
 void UWeaponFireComponent::Fire()
 {
+	AWeapon* Weapon = GetOwner<AWeapon>();
+	Weapon->GetGunnerCharacterOwner()->PlayAnimMontage(TPCharacterFireMontage);
+	WeaponLineTrace();
+	if(GetOwner<AWeapon>()->GetGunnerCharacterOwner()->GetLocalRole() < ROLE_Authority)
+	{
+		ServerFire();
+	}
+}
+
+void UWeaponFireComponent::WeaponLineTrace()
+{
 	TArray<FHitResult> HitResults;
 	AWeapon* Weapon = GetOwner<AWeapon>();
 	FVector CameraLocation = Cast<APlayerController>(Weapon->GetGunnerCharacterOwner()->GetController())->PlayerCameraManager->GetCameraLocation();
@@ -51,14 +63,25 @@ void UWeaponFireComponent::Fire()
 
 	FCollisionResponseParams ResponseParams;
 	ResponseParams.CollisionResponse.SetAllChannels(ECR_Overlap);
-	GetWorld()->LineTraceMultiByChannel(HitResults, CameraLocation, CameraLocation + Forward * 100000.0f, ECC_Pawn, FCollisionQueryParams::DefaultQueryParam, ResponseParams);
+	GetWorld()->LineTraceMultiByChannel(HitResults, CameraLocation, CameraLocation + Forward * 100000.0f, ECC_Visibility, FCollisionQueryParams::DefaultQueryParam, ResponseParams);
 
+	TArray<AActor*> AlreadyHitRegisteredActors;
 	for(const FHitResult& Hit : HitResults)
 	{
-		if(Hit.GetActor())
+		AActor* HitActor = Hit.GetActor();
+		if(HitActor == Weapon || HitActor == Weapon->GetGunnerCharacterOwner() || AlreadyHitRegisteredActors.Find(HitActor) != INDEX_NONE)
 		{
-			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 16.0f, 16, FColor::Red, false, 3.0f);
+			continue;
 		}
+		
+		
+		AlreadyHitRegisteredActors.Add(HitActor);
+		UGameplayStatics::ApplyPointDamage(HitActor, 10.0f,  Forward, Hit, Weapon->GetGunnerCharacterOwner()->GetController(), Weapon, UDamageType::StaticClass());
+		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 13.0f, 13, Weapon->GetGunnerCharacterOwner()->GetLocalRole() < ROLE_Authority ? FColor::Blue : FColor::Red, false, 3.0f);
 	}
 }
-;
+
+void UWeaponFireComponent::ServerFire_Implementation()
+{
+	WeaponLineTrace();
+}

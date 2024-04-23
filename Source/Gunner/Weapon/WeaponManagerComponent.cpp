@@ -28,6 +28,12 @@ void UWeaponManagerComponent::InitializeComponent()
 	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacter>();
 }
 
+void UWeaponManagerComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	SetupWeaponManager();
+}
+
 void UWeaponManagerComponent::SetupWeaponManager()
 {
 	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacter>();

@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
+class UHealthComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
 class UInputAction;
@@ -30,7 +31,7 @@ public:
 	void OnFirePressed();
 	void OnFireReleased();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
 
@@ -51,7 +52,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> MoveAction;
+	TObjectPtr<UInputAction> MoveForwardRightAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> MoveBackwardLeftAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere)
@@ -92,6 +95,8 @@ protected:
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UHealthComponent> HealthComponent;
 
 private:
 	bool bIsRunning = true;

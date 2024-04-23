@@ -33,8 +33,20 @@ private:
 	void AttachMeshes();
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UWeaponData> WeaponData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
+	FName FPWeaponSocketName = TEXT("WeaponPoint");
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
+	FName TPWeaponSocketName = TEXT("WeaponPoint");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Weapon")
+	TObjectPtr<UAnimMontage> TPWeaponEquipMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TSubclassOf<UAnimInstance> TPCharacterAnimInstance;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
+	TObjectPtr<UAnimMontage> TPCharacterEquipMontage;
+
+	
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponEquipSignature OnWeaponEquipDelegate;
 	UPROPERTY(BlueprintAssignable)

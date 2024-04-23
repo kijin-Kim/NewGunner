@@ -4,7 +4,9 @@
 #include "GunnerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Gunner.h"
 #include "GunnerCharacterMovementComponent.h"
+#include "HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -44,6 +46,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 }
 
 void AGunnerCharacter::OnFirePressed()
@@ -69,7 +72,8 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	{
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		EnhancedInputComponent->BindAction(MoveForwardRightAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		EnhancedInputComponent->BindAction(MoveBackwardLeftAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ThisClass::Crouch, false);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::UnCrouch, false);
@@ -84,18 +88,17 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+
 void AGunnerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	SetupMappingContext();
-	WeaponManagerComponent->SetupWeaponManager();
 }
 
 void AGunnerCharacter::OnRep_Controller()
 {
 	Super::OnRep_Controller();
 	SetupMappingContext();
-	WeaponManagerComponent->SetupWeaponManager();
 }
 
 bool AGunnerCharacter::IsRunning() const
