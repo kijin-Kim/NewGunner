@@ -33,6 +33,67 @@ void UWeaponFireComponent::DestroyComponent(bool bPromoteChildren)
 	Weapon->OnWeaponUnequipDelegate.RemoveDynamic(this, &ThisClass::OnWeaponUnequip);
 }
 
+void UWeaponFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	const double MaxRewindTime = 0.14;
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		AGunnerCharacter* GunnerCharacterOwner = GetOwner<AWeapon>()->GetGunnerCharacterOwner();
+		TArray<AActor*> GunnerActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), GunnerActors);
+		GunnerActors.Remove(GunnerCharacterOwner);
+
+		if(GunnerActors.IsEmpty())
+		{
+			return;
+		}
+		
+		FHitBoxHistory OldestHistory;
+		const bool bOldestIsStaled = HitBoxHistories.Peek(OldestHistory) && (GetWorld()->GetTimeSeconds() - OldestHistory.Time >= MaxRewindTime);
+		while (!HitBoxHistories.IsEmpty() && (HitBoxHistories.IsFull() || bOldestIsStaled))
+		{
+			check(HitBoxHistories.Dequeue());
+		}
+
+
+		for (AActor* GunnerActor : GunnerActors)
+		{
+			AGunnerCharacter* HitGunner = Cast<AGunnerCharacter>(GunnerActor);
+			check(HitGunner);
+			UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset();
+			check(PhysAsset);
+
+			TArray<FHitBox> HitBoxes;
+			for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
+			{
+				FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
+				for (const FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
+				{
+					FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
+					HitBoxes.Add({
+						.Transform = HitBoxTransform,
+						.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
+						.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
+						.BoneName = BodySetup->BoneName,
+					});
+				}
+			}
+
+			for (const auto& [Transform, HalfHeight, Radius, BoneName] : HitBoxes)
+			{
+				DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), FColor::Green, false, MaxRewindTime);
+			}
+
+			check(HitBoxHistories.Enqueue({
+				.Time = GetWorld()->GetTimeSeconds(),
+				.HitBoxes = HitBoxes
+				}));
+		}
+	}
+}
+
 void UWeaponFireComponent::OnWeaponEquip()
 {
 	AWeapon* Weapon = GetOwner<AWeapon>();
@@ -96,8 +157,7 @@ void UWeaponFireComponent::WeaponLineTrace()
 		UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset();
 		check(PhysAsset);
 
-		TArray<FTransform> HitBoxTransforms;
-		TArray<FVector2D> Sizes;
+		TArray<FHitBox> HitBoxes;
 		for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
 		{
 			FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
@@ -106,8 +166,12 @@ void UWeaponFireComponent::WeaponLineTrace()
 				FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
 				if (GunnerCharacterOwner->GetLocalRole() == ROLE_Authority)
 				{
-					HitBoxTransforms.Add(HitBoxTransform);
-					Sizes.Add(FVector2D(SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)), SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f))));
+					HitBoxes.Add({
+						.Transform = HitBoxTransform,
+						.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
+						.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
+						.BoneName = BodySetup->BoneName,
+					});
 				}
 				else
 				{
@@ -117,17 +181,17 @@ void UWeaponFireComponent::WeaponLineTrace()
 
 			if (GunnerCharacterOwner->GetLocalRole() == ROLE_Authority)
 			{
-				ClientDrawServerRegisteredHitBox(HitBoxTransforms, Sizes);
+				ClientDrawServerRegisteredHitBox(HitBoxes);
 			}
 		}
 	}
 }
 
-void UWeaponFireComponent::ClientDrawServerRegisteredHitBox_Implementation(const TArray<FTransform>& HitBoxTransforms, const TArray<FVector2D>& Sizes)
+void UWeaponFireComponent::ClientDrawServerRegisteredHitBox_Implementation(const TArray<FHitBox>& HitBoxes)
 {
-	for (int i = 0; i < HitBoxTransforms.Num(); ++i)
+	for (const auto& [Transform, HalfHeight, Radius, BoneName] : HitBoxes)
 	{
-		DrawDebugCapsule(GetWorld(), HitBoxTransforms[i].GetLocation(), Sizes[i].X, Sizes[i].Y, HitBoxTransforms[i].GetRotation(), FColor::Yellow, true);
+		DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), FColor::Yellow, true);
 	}
 }
 

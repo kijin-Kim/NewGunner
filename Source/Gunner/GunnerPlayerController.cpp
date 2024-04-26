@@ -2,18 +2,22 @@
 
 
 #include "GunnerPlayerController.h"
-#include "EnhancedInputSubsystems.h"
+
+#include "Gunner.h"
+#include "GameFramework/PlayerState.h"
 
 void AGunnerPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	// get the enhanced input subsystem
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-	{
-		// add the mapping context so we get controls
-		Subsystem->AddMappingContext(InputMappingContext, 0);
+void AGunnerPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	ClientSendServerTime(GetWorld()->GetTimeSeconds());
+}
 
-		UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
-	}
+void AGunnerPlayerController::ClientSendServerTime_Implementation(float ServerTime)
+{
+	ServerTimeDelta = ServerTime - GetWorld()->GetTimeSeconds();
 }

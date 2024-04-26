@@ -15,17 +15,13 @@ UCLASS()
 class GUNNER_API AGunnerPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-protected:
-
-	/** Input Mapping Context to be used for player input */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputMappingContext* InputMappingContext;
-
-	// Begin Actor interface
-protected:
-
+public:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 
-	// End Actor interface
+	UFUNCTION(Client, Reliable)
+	void ClientSendServerTime(float ServerTime);
+	
+private:
+	float ServerTimeDelta = 0.0f;
 };

@@ -4,7 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Containers/CircularQueue.h"
 #include "WeaponFireComponent.generated.h"
+
+
+USTRUCT()
+struct FHitBox
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FTransform Transform;
+	UPROPERTY()
+	float HalfHeight;
+	UPROPERTY()
+	float Radius;
+	UPROPERTY()
+	FName BoneName;
+};
+
+USTRUCT()
+struct FHitBoxHistory
+{
+	GENERATED_BODY()
+	double Time;
+	TArray<FHitBox> HitBoxes;
+};
 
 
 
@@ -17,6 +41,8 @@ public:
 	UWeaponFireComponent();
 	void InitializeComponent() override;
 	void DestroyComponent(bool bPromoteChildren) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
 	UFUNCTION()
 	void OnWeaponEquip();
 	UFUNCTION()
@@ -28,9 +54,15 @@ public:
 	void WeaponLineTrace();
 	
 	UFUNCTION(Client, Reliable)
-	void ClientDrawServerRegisteredHitBox(const TArray<FTransform>& HitBoxTransforms, const TArray<FVector2D>& Sizes);
+	void ClientDrawServerRegisteredHitBox(const TArray<FHitBox>& HitBoxes);
+
+
+private:
+	void SaveHitBoxes();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
 	TObjectPtr<UAnimMontage> TPCharacterFireMontage;
+
+	TCircularQueue<FHitBoxHistory> HitBoxHistories{9};
 };
