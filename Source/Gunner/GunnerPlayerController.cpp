@@ -4,20 +4,69 @@
 #include "GunnerPlayerController.h"
 
 #include "Gunner.h"
+#include "Engine/Canvas.h"
+#include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
 
-void AGunnerPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-}
 
 void AGunnerPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	ClientSendServerTime(GetWorld()->GetTimeSeconds());
+	if (IsLocalController())
+	{
+		if (OnShowDebugInfoDelegateHandle.IsValid())
+		{
+			AHUD::OnShowDebugInfo.Remove(OnShowDebugInfoDelegateHandle);
+		}
+		OnShowDebugInfoDelegateHandle = AHUD::OnShowDebugInfo.AddUObject(this, &ThisClass::OnShowDebugInfo);
+	}
 }
 
-void AGunnerPlayerController::ClientSendServerTime_Implementation(float ServerTime)
+void AGunnerPlayerController::OnRep_PlayerState()
 {
-	ServerTimeDelta = ServerTime - GetWorld()->GetTimeSeconds();
+	Super::OnRep_PlayerState();
+	if (IsLocalController())
+	{
+		if (OnShowDebugInfoDelegateHandle.IsValid())
+		{
+			AHUD::OnShowDebugInfo.Remove(OnShowDebugInfoDelegateHandle);
+		}
+		OnShowDebugInfoDelegateHandle = AHUD::OnShowDebugInfo.AddUObject(this, &ThisClass::OnShowDebugInfo);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			ServerRTT(GetWorld()->GetTimeSeconds());
+		}, 1.0f, true, 0.0f);
+	}
+}
+
+void AGunnerPlayerController::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
+{
+	if (HUD->GetCurrentDebugTargetActor() == GetPawn())
+	{
+		Canvas->DisplayDebugManager.DrawString(FString::Printf(TEXT("Ping: %f"), GetPlayerState<APlayerState>()->GetPingInMilliseconds()));
+		Canvas->DisplayDebugManager.DrawString(FString::Printf(TEXT("RTT: %f"), RoundTripTime * 1000));
+	}
+}
+
+double AGunnerPlayerController::GetLocalServerTime() const
+{
+	return GetWorld()->GetTimeSeconds() + ServerTimeDelta;
+}
+
+double AGunnerPlayerController::GetRoundTripTime() const
+{
+	return RoundTripTime;
+}
+
+void AGunnerPlayerController::ServerRTT_Implementation(double ClientTime)
+{
+	ClientRTT(ClientTime, GetWorld()->GetTimeSeconds());
+}
+
+void AGunnerPlayerController::ClientRTT_Implementation(double ClientTime, double ServerTime)
+{
+	RoundTripTime = GetWorld()->GetTimeSeconds() - ClientTime;
+	ServerTimeDelta = ServerTime - GetWorld()->GetTimeSeconds() + RoundTripTime * 0.5;
 }

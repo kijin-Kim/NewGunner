@@ -4,8 +4,12 @@
 #include "WeaponFireComponent.h"
 
 #include "Weapon.h"
+#include "GameFramework/GameModeBase.h"
+#include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/GunnerCharacter.h"
+#include "Gunner/GunnerPlayerController.h"
+#include "Gunner/Core/LagCompensationComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 
@@ -36,62 +40,6 @@ void UWeaponFireComponent::DestroyComponent(bool bPromoteChildren)
 void UWeaponFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	const double MaxRewindTime = 0.14;
-	if (GetOwner() && GetOwner()->HasAuthority())
-	{
-		AGunnerCharacter* GunnerCharacterOwner = GetOwner<AWeapon>()->GetGunnerCharacterOwner();
-		TArray<AActor*> GunnerActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), GunnerActors);
-		GunnerActors.Remove(GunnerCharacterOwner);
-
-		if(GunnerActors.IsEmpty())
-		{
-			return;
-		}
-		
-		FHitBoxHistory OldestHistory;
-		const bool bOldestIsStaled = HitBoxHistories.Peek(OldestHistory) && (GetWorld()->GetTimeSeconds() - OldestHistory.Time >= MaxRewindTime);
-		while (!HitBoxHistories.IsEmpty() && (HitBoxHistories.IsFull() || bOldestIsStaled))
-		{
-			check(HitBoxHistories.Dequeue());
-		}
-
-
-		for (AActor* GunnerActor : GunnerActors)
-		{
-			AGunnerCharacter* HitGunner = Cast<AGunnerCharacter>(GunnerActor);
-			check(HitGunner);
-			UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset();
-			check(PhysAsset);
-
-			TArray<FHitBox> HitBoxes;
-			for (const USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-			{
-				FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
-				for (const FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-				{
-					FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-					HitBoxes.Add({
-						.Transform = HitBoxTransform,
-						.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
-						.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
-						.BoneName = BodySetup->BoneName,
-					});
-				}
-			}
-
-			for (const auto& [Transform, HalfHeight, Radius, BoneName] : HitBoxes)
-			{
-				DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), FColor::Green, false, MaxRewindTime);
-			}
-
-			check(HitBoxHistories.Enqueue({
-				.Time = GetWorld()->GetTimeSeconds(),
-				.HitBoxes = HitBoxes
-				}));
-		}
-	}
 }
 
 void UWeaponFireComponent::OnWeaponEquip()
@@ -111,14 +59,15 @@ void UWeaponFireComponent::Fire()
 	FlushPersistentDebugLines(GetWorld());
 	AWeapon* Weapon = GetOwner<AWeapon>();
 	Weapon->GetGunnerCharacterOwner()->PlayAnimMontage(TPCharacterFireMontage);
-	WeaponLineTrace();
+	AGunnerPlayerController* GunnerPlayerController = Weapon->GetGunnerCharacterOwner()->GetController<AGunnerPlayerController>();
+	WeaponLineTrace(GunnerPlayerController->GetLocalServerTime());
 	if (GetOwner<AWeapon>()->GetGunnerCharacterOwner()->GetLocalRole() < ROLE_Authority)
 	{
-		ServerFire();
+		ServerFire(GunnerPlayerController->GetLocalServerTime());
 	}
 }
 
-void UWeaponFireComponent::WeaponLineTrace()
+void UWeaponFireComponent::WeaponLineTrace(double TimeStamp)
 {
 	TArray<FHitResult> HitResults;
 	AWeapon* Weapon = GetOwner<AWeapon>();
@@ -181,21 +130,49 @@ void UWeaponFireComponent::WeaponLineTrace()
 
 			if (GunnerCharacterOwner->GetLocalRole() == ROLE_Authority)
 			{
-				ClientDrawServerRegisteredHitBox(HitBoxes);
+				//ClientDrawServerRegisteredHitBox(HitBoxes);
+			}
+		}
+	}
+
+	if (GunnerCharacterOwner->HasAuthority())
+	{
+		double SingleTripTimeFromClient = GetWorld()->GetTimeSeconds() - TimeStamp;
+		double AdjustedClientTimeStamp = TimeStamp - SingleTripTimeFromClient; // 클라이언트가 Remote Client에 대해 서버보다 과거 위치를 보는 것을 반영합니다.
+		double TargetTime = FMath::Min(GetWorld()->GetTimeSeconds(), AdjustedClientTimeStamp);
+		const auto& Hists = GetWorld()->GetAuthGameMode()->GetComponentByClass<ULagCompensationComponent>()->HitBoxHistories;
+		if (!Hists.IsEmpty())
+		{
+			for (AActor* GunnerActor : GunnerActors)
+			{
+				ClientDrawServerRegisteredHitBox(Hists.First().HitBoxes[GunnerActor], FColor::Magenta);
+				ClientDrawServerRegisteredHitBox(Hists.Last().HitBoxes[GunnerActor], FColor::Red);
+			}
+		}
+
+		for (const auto& History : Hists)
+		{
+			if(History.Time <= TargetTime)
+			{
+				for (AActor* GunnerActor : GunnerActors)
+				{
+					ClientDrawServerRegisteredHitBox(History.HitBoxes[GunnerActor], FColor::Orange);
+				}
+				break;
 			}
 		}
 	}
 }
 
-void UWeaponFireComponent::ClientDrawServerRegisteredHitBox_Implementation(const TArray<FHitBox>& HitBoxes)
+void UWeaponFireComponent::ClientDrawServerRegisteredHitBox_Implementation(const TArray<FHitBox>& HitBoxes, FColor Color)
 {
 	for (const auto& [Transform, HalfHeight, Radius, BoneName] : HitBoxes)
 	{
-		DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), FColor::Yellow, true);
+		DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), Color, true);
 	}
 }
 
-void UWeaponFireComponent::ServerFire_Implementation()
+void UWeaponFireComponent::ServerFire_Implementation(double TimeStamp)
 {
-	WeaponLineTrace();
+	WeaponLineTrace(TimeStamp);
 }

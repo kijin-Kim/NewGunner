@@ -27,7 +27,7 @@ struct FHitBoxHistory
 {
 	GENERATED_BODY()
 	double Time;
-	TArray<FHitBox> HitBoxes;
+	TMap<AActor*, TArray<FHitBox>> HitBoxes;
 };
 
 
@@ -50,11 +50,11 @@ public:
 	UFUNCTION()
 	void Fire();
 	UFUNCTION(Server, Reliable)
-	void ServerFire();
-	void WeaponLineTrace();
+	void ServerFire(double TimeStamp);
+	void WeaponLineTrace(double TimeStamp);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientDrawServerRegisteredHitBox(const TArray<FHitBox>& HitBoxes);
+	void ClientDrawServerRegisteredHitBox(const TArray<FHitBox>& HitBoxes, FColor Color);
 
 
 private:
