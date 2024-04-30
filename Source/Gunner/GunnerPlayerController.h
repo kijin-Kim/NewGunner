@@ -21,7 +21,6 @@ public:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 	
 	double GetLocalServerTime() const;
-	double GetRoundTripTime() const;
 
 private:
 	UFUNCTION(Server, Reliable)

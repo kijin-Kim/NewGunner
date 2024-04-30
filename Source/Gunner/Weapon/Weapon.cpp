@@ -20,6 +20,23 @@ AWeapon::AWeapon()
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
 }
 
+void AWeapon::OnPrimaryActionButtonPressed()
+{
+	if (OnPrimaryActionDelegate.IsBound())
+	{
+		OnPrimaryActionDelegate.Broadcast(true);
+	}
+}
+
+void AWeapon::OnPrimaryActionButtonReleased()
+{
+	if (OnPrimaryActionDelegate.IsBound())
+	{
+		OnPrimaryActionDelegate.Broadcast(false);
+	}
+}
+
+
 void AWeapon::SetOwner(AActor* NewOwner)
 {
 	Super::SetOwner(NewOwner);
@@ -51,19 +68,13 @@ void AWeapon::Equip()
 		}
 	}
 
-	
+
 	if (TPWeaponEquipMontage)
 	{
 		if (UAnimInstance* AnimInstance = ThirdPersonMeshComponent->GetAnimInstance())
 		{
 			AnimInstance->Montage_Play(TPWeaponEquipMontage);
 		}
-	}
-
-
-	if (OnWeaponEquipDelegate.IsBound())
-	{
-		OnWeaponEquipDelegate.Broadcast();
 	}
 }
 
@@ -79,11 +90,6 @@ void AWeapon::Unequip()
 
 	FirstPersonMeshComponent->SetVisibility(false);
 	ThirdPersonMeshComponent->SetVisibility(false);
-
-	if (OnWeaponUnequipDelegate.IsBound())
-	{
-		OnWeaponUnequipDelegate.Broadcast();
-	}
 }
 
 void AWeapon::AttachMeshes()

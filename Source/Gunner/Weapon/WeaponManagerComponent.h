@@ -8,6 +8,10 @@
 #include "WeaponManagerComponent.generated.h"
 
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponChangedSignature, AWeapon*, LastWeapon, AWeapon*, NewWeapon);
+
+
 class AGunnerCharacter;
 class AWeapon;
 
@@ -20,6 +24,7 @@ class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 
 public:
 	UWeaponManagerComponent();
+	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void InitializeComponent() override;
 	virtual void BeginPlay() override;
@@ -28,6 +33,9 @@ public:
 	void ChangeCurrentWeapon(uint32 WeaponIndex);
 
 	AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
+
+	void OnPrimaryButtonPressed();
+	void OnPrimaryButtonReleased();
 
 private:
 	AWeapon* SpawnWeaponByClass(TSubclassOf<AWeapon> WeaponClass);
@@ -43,13 +51,28 @@ private:
 
 
 
+
 public:
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponChangedSignature OnWeaponChangedDelegate;
+	
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultPrimaryWeaponClass;
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultSecondaryWeaponClass;
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<AWeapon> DefaultMeleeWeaponClass;
+	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> PrimaryAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> PrimaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
+
+
 
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Weapons)
@@ -58,4 +81,5 @@ protected:
 	TObjectPtr<AWeapon> CurrentWeapon;
 	UPROPERTY()
 	TObjectPtr<AGunnerCharacter> GunnerCharacterOwner;
+	
 };

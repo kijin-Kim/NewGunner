@@ -14,9 +14,6 @@ class UInputAction;
 class UInputMappingContext;
 class UCameraComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFirePressedSignature);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFireReleasedSignature);
-
 
 
 UCLASS()
@@ -28,8 +25,7 @@ class GUNNER_API AGunnerCharacter : public ACharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
-	void OnFirePressed();
-	void OnFireReleased();
+	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	virtual void PossessedBy(AController* NewController) override;
@@ -63,17 +59,10 @@ public:
 	TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> WalkAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> FireAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> AltFireAction;
+	
+	
 
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> PrimaryWeaponEquipAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
+	
 
 
 	UPROPERTY(EditDefaultsOnly)
@@ -81,10 +70,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
 	
-	UPROPERTY(BlueprintAssignable)
-	FOnFirePressedSignature OnFirePressedDelegate;
-	UPROPERTY(BlueprintAssignable)
-	FOnFirePressedSignature OnFireReleasedDelegate;
+	
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")

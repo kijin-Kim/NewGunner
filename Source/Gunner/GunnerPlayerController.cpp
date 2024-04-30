@@ -4,6 +4,7 @@
 #include "GunnerPlayerController.h"
 
 #include "Gunner.h"
+#include "GunnerHUD.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
@@ -19,6 +20,10 @@ void AGunnerPlayerController::OnPossess(APawn* InPawn)
 			AHUD::OnShowDebugInfo.Remove(OnShowDebugInfoDelegateHandle);
 		}
 		OnShowDebugInfoDelegateHandle = AHUD::OnShowDebugInfo.AddUObject(this, &ThisClass::OnShowDebugInfo);
+
+		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
+		check(GunnerHUD)
+		GunnerHUD->SetupHUD();
 	}
 }
 
@@ -38,6 +43,10 @@ void AGunnerPlayerController::OnRep_PlayerState()
 		{
 			ServerRTT(GetWorld()->GetTimeSeconds());
 		}, 1.0f, true, 0.0f);
+		
+		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
+		check(GunnerHUD)
+		GunnerHUD->SetupHUD();
 	}
 }
 
@@ -53,11 +62,6 @@ void AGunnerPlayerController::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const 
 double AGunnerPlayerController::GetLocalServerTime() const
 {
 	return GetWorld()->GetTimeSeconds() + ServerTimeDelta;
-}
-
-double AGunnerPlayerController::GetRoundTripTime() const
-{
-	return RoundTripTime;
 }
 
 void AGunnerPlayerController::ServerRTT_Implementation(double ClientTime)

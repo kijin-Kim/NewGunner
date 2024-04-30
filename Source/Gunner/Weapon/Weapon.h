@@ -12,6 +12,8 @@ class AGunnerCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponEquipSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnequipSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryActionSignature, bool, bPressed);
+
 
 UCLASS()
 class GUNNER_API AWeapon : public AActor
@@ -21,6 +23,8 @@ class GUNNER_API AWeapon : public AActor
 	friend class UGunnerCheatManagerExtension;
 public:
 	AWeapon();
+	void OnPrimaryActionButtonPressed();
+	void OnPrimaryActionButtonReleased();
 	void SetOwner(AActor* NewOwner) override;
 	void OnRep_Owner() override;
 	void Equip();
@@ -45,12 +49,9 @@ public:
 	TSubclassOf<UAnimInstance> TPCharacterAnimInstance;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
 	TObjectPtr<UAnimMontage> TPCharacterEquipMontage;
-
 	
 	UPROPERTY(BlueprintAssignable)
-	FOnWeaponEquipSignature OnWeaponEquipDelegate;
-	UPROPERTY(BlueprintAssignable)
-	FOnWeaponUnequipSignature OnWeaponUnequipDelegate;
+	FOnPrimaryActionSignature OnPrimaryActionDelegate;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

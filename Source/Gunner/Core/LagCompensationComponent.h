@@ -5,9 +5,29 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Containers/RingBuffer.h"
-#include "Gunner/Weapon/WeaponFireComponent.h"
 #include "LagCompensationComponent.generated.h"
 
+USTRUCT()
+struct FHitBox
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FTransform Transform;
+	UPROPERTY()
+	float HalfHeight;
+	UPROPERTY()
+	float Radius;
+	UPROPERTY()
+	FName BoneName;
+};
+
+USTRUCT()
+struct FHitBoxHistory
+{
+	GENERATED_BODY()
+	double Time;
+	TMap<AActor*, TArray<FHitBox>> HitBoxes;
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API ULagCompensationComponent : public UActorComponent
@@ -16,9 +36,22 @@ class GUNNER_API ULagCompensationComponent : public UActorComponent
 
 public:
 	ULagCompensationComponent();
+	virtual void InitializeComponent() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void BeginRewind(float TimeStamp, const TArray<AActor*>& RewindTargets);
+	void SpawnDummies(const FHitBoxHistory& RewoundHistory, const TArray<AActor*>& RewindTargets);
+	void EndRewind();
+
+private:
+	void RecordHitBoxHistories();
+	void DrawHitBoxes(const TArray<FHitBox>& HitBoxes, FColor Color, bool bPersistentLines, float Time);
 
 public:
-	// [시간, [액터, HitBox]]
+	UPROPERTY(EditDefaultsOnly)
+	double MaxRewindTime = 0.3;
+
+private:
 	TRingBuffer<FHitBoxHistory> HitBoxHistories;
+	UPROPERTY()
+	TArray<AActor*> RewindedDummies;
 };

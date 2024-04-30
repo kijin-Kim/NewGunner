@@ -3,7 +3,9 @@
 
 #include "WeaponManagerComponent.h"
 
+#include "EnhancedInputComponent.h"
 #include "Weapon.h"
+#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -13,6 +15,18 @@ UWeaponManagerComponent::UWeaponManagerComponent()
 	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
 	Weapons.SetNum(3);
+}
+
+void UWeaponManagerComponent::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(0));
+		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(1));
+		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(2));
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Started, this, &ThisClass::OnPrimaryButtonPressed);
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Completed, this, &ThisClass::OnPrimaryButtonReleased);
+	}
 }
 
 void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -82,10 +96,12 @@ void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 		LastWeapon->Unequip();
 	}
 	CurrentWeapon->Equip();
+	
 }
 
 void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
 {
+	
 	if (!CanChangeCurrentWeapon(WeaponIndex))
 	{
 		return;
@@ -99,6 +115,22 @@ void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
 	else
 	{
 		LocalChangeCurrentWeapon(WeaponIndex);
+	}
+}
+
+void UWeaponManagerComponent::OnPrimaryButtonPressed()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->OnPrimaryActionButtonPressed();
+	}
+}
+
+void UWeaponManagerComponent::OnPrimaryButtonReleased()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->OnPrimaryActionButtonReleased();
 	}
 }
 
@@ -128,6 +160,12 @@ void UWeaponManagerComponent::LocalChangeCurrentWeapon(uint32 WeaponIndex)
 	AWeapon* NewWeapon = Weapons[WeaponIndex];
 	NewWeapon->Equip();
 	CurrentWeapon = NewWeapon;
+
+	if(OnWeaponChangedDelegate.IsBound())
+	{
+		OnWeaponChangedDelegate.Broadcast(CurrentWeapon, NewWeapon);
+	}
+	
 }
 
 void UWeaponManagerComponent::ServerChangeCurrentWeapon_Implementation(uint32 WeaponIndex)
