@@ -13,6 +13,7 @@ class AGunnerCharacter;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponEquipSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnequipSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryActionSignature, bool, bPressed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadActionSignature);
 
 
 UCLASS()
@@ -25,23 +26,26 @@ public:
 	AWeapon();
 	void OnPrimaryActionButtonPressed();
 	void OnPrimaryActionButtonReleased();
+	void OnReloadButtonPressed();
 	void SetOwner(AActor* NewOwner) override;
 	void OnRep_Owner() override;
 	void Equip();
 	void Unequip();
 	AGunnerCharacter* GetGunnerCharacterOwner() const;
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
-
+	FName GetWeaponName() const { return WeaponName; }
 
 private:
 	void AttachMeshes();
 
 public:
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FName WeaponName;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
 	FName FPWeaponSocketName = TEXT("WeaponPoint");
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
 	FName TPWeaponSocketName = TEXT("WeaponPoint");
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Weapon")
 	TObjectPtr<UAnimMontage> TPWeaponEquipMontage;
@@ -52,6 +56,8 @@ public:
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnPrimaryActionSignature OnPrimaryActionDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnReloadActionSignature OnReloadActionDelegate;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

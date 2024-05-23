@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "HealthComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, int32, NewHealth);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UHealthComponent : public UActorComponent
@@ -14,14 +15,24 @@ class GUNNER_API UHealthComponent : public UActorComponent
 
 public:
 	UHealthComponent();
-	UFUNCTION()
-	void OnDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRegister() override;
 	virtual void BeginPlay() override;
+	virtual int32 ProcessDamage(float Distance, AActor* DamageCauser);
 	
+	UFUNCTION()
+	void OnTakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
+	
+	UFUNCTION()
+	void OnRep_Health();
 
-protected:
-	UPROPERTY(VisibleAnywhere)
-	float Health = 0.0f;
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthChangedSignature OnHealthChangedDelegate;
 	UPROPERTY(EditAnywhere)
-	float MaxHealth = 0.0f;
+	int32 MaxHealth;
+	
+protected:
+	UPROPERTY(ReplicatedUsing=OnRep_Health, VisibleAnywhere, BlueprintReadOnly)
+	int32 Health;
 };

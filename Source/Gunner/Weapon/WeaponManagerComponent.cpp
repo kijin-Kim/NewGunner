@@ -17,6 +17,14 @@ UWeaponManagerComponent::UWeaponManagerComponent()
 	Weapons.SetNum(3);
 }
 
+void UWeaponManagerComponent::OnReloadButtonPressed()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->OnReloadButtonPressed();
+	}
+}
+
 void UWeaponManagerComponent::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
@@ -26,6 +34,7 @@ void UWeaponManagerComponent::SetupPlayerInputComponent(UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(2));
 		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Started, this, &ThisClass::OnPrimaryButtonPressed);
 		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Completed, this, &ThisClass::OnPrimaryButtonReleased);
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &ThisClass::OnReloadButtonPressed);
 	}
 }
 
@@ -96,26 +105,21 @@ void UWeaponManagerComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 		LastWeapon->Unequip();
 	}
 	CurrentWeapon->Equip();
-	
+
+	if (OnWeaponChangedDelegate.IsBound())
+	{
+		OnWeaponChangedDelegate.Broadcast(LastWeapon, CurrentWeapon);
+	}
 }
 
 void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
 {
-	
 	if (!CanChangeCurrentWeapon(WeaponIndex))
 	{
 		return;
 	}
 
-	if (GunnerCharacterOwner->IsLocallyControlled() && !GunnerCharacterOwner->HasAuthority()) // ROLE_Autonomous
-	{
-		LocalChangeCurrentWeapon(WeaponIndex);
-		ServerChangeCurrentWeapon(WeaponIndex);
-	}
-	else
-	{
-		LocalChangeCurrentWeapon(WeaponIndex);
-	}
+	ServerChangeCurrentWeapon(WeaponIndex);
 }
 
 void UWeaponManagerComponent::OnPrimaryButtonPressed()
@@ -161,11 +165,10 @@ void UWeaponManagerComponent::LocalChangeCurrentWeapon(uint32 WeaponIndex)
 	NewWeapon->Equip();
 	CurrentWeapon = NewWeapon;
 
-	if(OnWeaponChangedDelegate.IsBound())
+	if (OnWeaponChangedDelegate.IsBound())
 	{
 		OnWeaponChangedDelegate.Broadcast(CurrentWeapon, NewWeapon);
 	}
-	
 }
 
 void UWeaponManagerComponent::ServerChangeCurrentWeapon_Implementation(uint32 WeaponIndex)

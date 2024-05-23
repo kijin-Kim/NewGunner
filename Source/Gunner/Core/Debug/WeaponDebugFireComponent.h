@@ -18,7 +18,6 @@ class GUNNER_API UWeaponDebugFireComponent : public UActorComponent
 public:
 	UWeaponDebugFireComponent();
 	virtual void InitializeComponent() override;
-	virtual void DestroyComponent(bool bPromoteChildren) override;
 	
 
 	UFUNCTION()

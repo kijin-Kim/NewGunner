@@ -36,6 +36,13 @@ void AWeapon::OnPrimaryActionButtonReleased()
 	}
 }
 
+void AWeapon::OnReloadButtonPressed()
+{
+	if (OnReloadActionDelegate.IsBound())
+	{
+		OnReloadActionDelegate.Broadcast();
+	}
+}
 
 void AWeapon::SetOwner(AActor* NewOwner)
 {

@@ -24,6 +24,7 @@ class GUNNER_API UWeaponManagerComponent : public UGunnerCharacterComponent
 
 public:
 	UWeaponManagerComponent();
+	void OnReloadButtonPressed();
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void InitializeComponent() override;
@@ -65,6 +66,8 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> PrimaryAction;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UInputAction> ReloadAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> PrimaryWeaponEquipAction;
 	UPROPERTY(EditAnywhere)

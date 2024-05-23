@@ -20,6 +20,9 @@ public:
 	UFUNCTION()
 	void OnPrimaryAction(bool bPressed);
 
+	UFUNCTION(Server, Reliable)
+	void ServerFire(bool bPressed);
+
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponFiredSignature OnWeaponFiredDelegate;

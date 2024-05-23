@@ -5,12 +5,22 @@
 
 #include "Weapon.h"
 #include "WeaponFireComponent.h"
+#include "Gunner/Gunner.h"
+#include "Net/UnrealNetwork.h"
 
 
 UWeaponBulletComponent::UWeaponBulletComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	bWantsInitializeComponent = true;
+	SetIsReplicatedByDefault(true);
+}
+
+void UWeaponBulletComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UWeaponBulletComponent, BulletCount);
+	DOREPLIFETIME(UWeaponBulletComponent, MagazineBulletCount);
 }
 
 void UWeaponBulletComponent::InitializeComponent()
@@ -18,28 +28,59 @@ void UWeaponBulletComponent::InitializeComponent()
 	Super::InitializeComponent();
 	AWeapon* Weapon = GetOwner<AWeapon>();
 	check(Weapon);
+	Weapon->OnReloadActionDelegate.AddUniqueDynamic(this, &ThisClass::OnReload);
 	UWeaponFireComponent* WeaponFireComponent = Weapon->GetComponentByClass<UWeaponFireComponent>();
-	if(WeaponFireComponent)
+	if (WeaponFireComponent)
 	{
 		WeaponFireComponent->OnWeaponFiredDelegate.AddUniqueDynamic(this, &ThisClass::OnWeaponFired);
 	}
 }
 
-void UWeaponBulletComponent::BeginPlay()
+void UWeaponBulletComponent::OnRegister()
 {
-	Super::BeginPlay();
+	Super::OnRegister();
 	BulletCount = MaxBulletCount;
-	MagazineCount = MaxMagazineCount;
+	MagazineBulletCount = MaxMagazineBulletCount;
 }
 
 void UWeaponBulletComponent::OnWeaponFired()
 {
 	BulletCount--;
 	BulletCount = FMath::Clamp(BulletCount, 0, MaxBulletCount);
-	MagazineCount = FMath::Clamp(MagazineCount, 0, MaxMagazineCount);
-	int32 MagazineBulletCount = MaxBulletCount * MagazineCount;
-	if(OnWeaponBulletCountChangedDelegate.IsBound())
+	MagazineBulletCount = FMath::Max(MagazineBulletCount, 0);
+	if (OnWeaponBulletCountChangedDelegate.IsBound())
 	{
 		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
-	}	
+	}
+}
+
+void UWeaponBulletComponent::OnReload()
+{
+	ServerReload();
+}
+
+void UWeaponBulletComponent::ServerReload_Implementation()
+{
+	if(MagazineBulletCount <= 0)
+	{
+		return;
+	}
+
+	int32 BulletCountToReload = FMath::Min(MaxBulletCount - BulletCount, MagazineBulletCount);
+	MagazineBulletCount -= BulletCountToReload;
+	BulletCount += BulletCountToReload;
+	BulletCount = FMath::Clamp(BulletCount, 0, MaxBulletCount);
+	MagazineBulletCount = FMath::Max(MagazineBulletCount, 0);
+	if (OnWeaponBulletCountChangedDelegate.IsBound())
+	{
+		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
+	}
+}
+
+void UWeaponBulletComponent::OnRep_Bullet()
+{
+	if (OnWeaponBulletCountChangedDelegate.IsBound())
+	{
+		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
+	}
 }

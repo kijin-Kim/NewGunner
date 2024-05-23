@@ -17,6 +17,7 @@ class GUNNER_API AGunnerPlayerController : public APlayerController
 	GENERATED_BODY()
 public:
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnRep_Pawn() override;
 	virtual void OnRep_PlayerState() override;
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 	

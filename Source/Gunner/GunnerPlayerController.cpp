@@ -27,6 +27,17 @@ void AGunnerPlayerController::OnPossess(APawn* InPawn)
 	}
 }
 
+void AGunnerPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+	if (IsLocalController())
+	{
+		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
+		check(GunnerHUD)
+		GunnerHUD->SetupHUD();
+	}
+}
+
 void AGunnerPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -43,10 +54,6 @@ void AGunnerPlayerController::OnRep_PlayerState()
 		{
 			ServerRTT(GetWorld()->GetTimeSeconds());
 		}, 1.0f, true, 0.0f);
-		
-		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
-		check(GunnerHUD)
-		GunnerHUD->SetupHUD();
 	}
 }
 

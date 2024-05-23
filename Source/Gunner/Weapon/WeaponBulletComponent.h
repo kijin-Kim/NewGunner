@@ -17,10 +17,19 @@ class GUNNER_API UWeaponBulletComponent : public UActorComponent
 
 public:
 	UWeaponBulletComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	virtual void InitializeComponent() override;
-	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
 	UFUNCTION()
 	void OnWeaponFired();
+	UFUNCTION()
+	void OnReload();
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+
+	UFUNCTION()
+	void OnRep_Bullet();
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -28,11 +37,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 MaxBulletCount;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 MaxMagazineCount;
+	int32 MaxMagazineBulletCount;
 
 protected:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_Bullet, BlueprintReadOnly)
 	int32 BulletCount;
-	UPROPERTY(BlueprintReadOnly)
-	int32 MagazineCount;
+	UPROPERTY(ReplicatedUsing=OnRep_Bullet, BlueprintReadOnly)
+	int32 MagazineBulletCount;
 };
