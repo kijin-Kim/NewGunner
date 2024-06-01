@@ -78,8 +78,6 @@ void AWeapon::Equip()
 
 	if (GunnerCharacterOwner)
 	{
-		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
-		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstance);
 		GunnerCharacterOwner->PlayMontage(WeaponData->TPCharacterEquipMontage, true);
 	}
 	
@@ -88,14 +86,6 @@ void AWeapon::Equip()
 
 void AWeapon::Unequip()
 {
-	if (AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner())
-	{
-		USkeletalMeshComponent* GunnerFirstPersonMeshComponent = GunnerCharacterOwner->GetFirstPersonMeshComponent();
-		GunnerFirstPersonMeshComponent->SetAnimInstanceClass(nullptr);
-		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
-		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(nullptr);
-	}
-
 	FirstPersonMeshComponent->SetVisibility(false);
 	ThirdPersonMeshComponent->SetVisibility(false);
 }
