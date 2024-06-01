@@ -5,7 +5,6 @@
 
 #include "Weapon.h"
 #include "WeaponFireComponent.h"
-#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -61,7 +60,7 @@ void UWeaponBulletComponent::OnReload()
 
 void UWeaponBulletComponent::ServerReload_Implementation()
 {
-	if(MagazineBulletCount <= 0)
+	if (MagazineBulletCount <= 0)
 	{
 		return;
 	}

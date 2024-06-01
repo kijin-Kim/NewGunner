@@ -2,7 +2,10 @@
 
 
 #include "Weapon.h"
+
+#include "WeaponData.h"
 #include "Gunner/GunnerCharacter.h"
+#include "Gunner/Core/GunnerGameInstance.h"
 
 
 AWeapon::AWeapon()
@@ -18,6 +21,17 @@ AWeapon::AWeapon()
 
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
+}
+
+void AWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	UGunnerGameInstance* GameInstance = GetWorld()->GetGameInstance<UGunnerGameInstance>();
+	check(GameInstance);
+	UDataTable* WeaponDataTable = GameInstance->GetWeaponDataTable();
+	check(WeaponDataTable);
+	WeaponData = WeaponDataTable->FindRow<FWeaponData>(WeaponName, TEXT(""));
+	check(WeaponData);
 }
 
 void AWeapon::OnPrimaryActionButtonPressed()
@@ -65,24 +79,11 @@ void AWeapon::Equip()
 	if (GunnerCharacterOwner)
 	{
 		USkeletalMeshComponent* GunnerThirdPersonMeshComponent = GunnerCharacterOwner->GetMesh();
-		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(TPCharacterAnimInstance);
-		if (UAnimInstance* AnimInstance = GunnerThirdPersonMeshComponent->GetAnimInstance())
-		{
-			if (TPCharacterEquipMontage)
-			{
-				AnimInstance->Montage_Play(TPCharacterEquipMontage);
-			}
-		}
+		GunnerThirdPersonMeshComponent->SetAnimInstanceClass(WeaponData->TPCharacterAnimInstance);
+		GunnerCharacterOwner->PlayMontage(WeaponData->TPCharacterEquipMontage, true);
 	}
-
-
-	if (TPWeaponEquipMontage)
-	{
-		if (UAnimInstance* AnimInstance = ThirdPersonMeshComponent->GetAnimInstance())
-		{
-			AnimInstance->Montage_Play(TPWeaponEquipMontage);
-		}
-	}
+	
+	PlayMontage(WeaponData->TPWeaponEquipMontage, true);
 }
 
 void AWeapon::Unequip()
@@ -99,6 +100,11 @@ void AWeapon::Unequip()
 	ThirdPersonMeshComponent->SetVisibility(false);
 }
 
+AGunnerCharacter* AWeapon::GetGunnerCharacterOwner() const
+{
+	return PrivateGunnerCharacterOwner = PrivateGunnerCharacterOwner ? PrivateGunnerCharacterOwner.Get() : Cast<AGunnerCharacter>(GetOwner());
+}
+
 void AWeapon::AttachMeshes()
 {
 	if (AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner())
@@ -108,7 +114,4 @@ void AWeapon::AttachMeshes()
 	}
 }
 
-AGunnerCharacter* AWeapon::GetGunnerCharacterOwner() const
-{
-	return PrivateGunnerCharacterOwner = PrivateGunnerCharacterOwner ? PrivateGunnerCharacterOwner.Get() : Cast<AGunnerCharacter>(GetOwner());
-}
+

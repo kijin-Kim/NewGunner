@@ -2,12 +2,17 @@
 
 
 #include "GunnerHUD.h"
+
+#include "Gunner.h"
 #include "Blueprint/UserWidget.h"
 
 
 void AGunnerHUD::SetupHUD()
 {
 	check(OverlayWidgetClass);
-	OverlayWidget = CreateWidget<UUserWidget>(GetOwningPlayerController(), OverlayWidgetClass);
-	OverlayWidget->AddToViewport();
+	if (!OverlayWidget)
+	{
+		OverlayWidget = CreateWidget<UUserWidget>(GetOwningPlayerController(), OverlayWidgetClass);
+		OverlayWidget->AddToViewport();
+	}
 }

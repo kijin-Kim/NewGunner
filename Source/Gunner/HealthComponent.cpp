@@ -38,14 +38,14 @@ int32 UHealthComponent::ProcessDamage(float Distance, AActor* DamageCauser)
 {
 	UGunnerGameInstance* GameInstance = GetWorld()->GetGameInstance<UGunnerGameInstance>();
 	check(GameInstance);
-	UCurveTable* DamageTable = GameInstance->GetDamageTable();
-	check(DamageTable);
+	UCurveTable* DamageCurveTable = GameInstance->GetDamageCurveTable();
+	check(DamageCurveTable);
 	float OutDamage = 0.0f;
 	TEnumAsByte<EEvaluateCurveTableResult::Type> OutResult;
 	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
 	check(Weapon);
 	FName RowName = *FString::Printf(TEXT("%s.Body"), *Weapon->GetWeaponName().ToString());
-	UDataTableFunctionLibrary::EvaluateCurveTableRow(DamageTable, RowName, Distance, OutResult, OutDamage, FString());
+	UDataTableFunctionLibrary::EvaluateCurveTableRow(DamageCurveTable, RowName, Distance, OutResult, OutDamage, FString());
 	check(OutResult == EEvaluateCurveTableResult::RowFound);
 	return OutDamage;
 }
@@ -55,6 +55,12 @@ void UHealthComponent::OnTakePointDamage(AActor* DamagedActor, float Damage, ACo
 	int32 ProcessedDamage = ProcessDamage(0.0f, DamageCauser);
 	Health -= ProcessedDamage;
 	Health = FMath::Clamp(Health, 0, MaxHealth);
+
+	if(Health <= 0)
+	{
+		GetOwner()->Destroy();
+	}
+	
 	if (OnHealthChangedDelegate.IsBound())
 	{
 		OnHealthChangedDelegate.Broadcast(Health);

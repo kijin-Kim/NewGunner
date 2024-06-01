@@ -4,6 +4,7 @@
 #include "GunnerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Gunner.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "HealthComponent.h"
 #include "Camera/CameraComponent.h"
@@ -20,8 +21,8 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	GetCapsuleComponent()->SetCapsuleHalfHeight(98.0f);
 	GetCapsuleComponent()->SetCapsuleRadius(42.0f);
-	
-	
+
+
 	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
 	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
 	FirstPersonSpringArmComponent->TargetArmLength = 0.0f;
@@ -32,20 +33,19 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
 	GetMesh()->SetOwnerNoSee(true);
-	
-	
+
+
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
-	
+
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	
+
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 }
-
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -88,7 +88,7 @@ void AGunnerCharacter::SetRunning(bool bNewRunning)
 	bIsRunning = bNewRunning;
 	if (GetLocalRole() < ROLE_Authority)
 	{
-		ServerRun(bNewRunning);	
+		ServerRun(bNewRunning);
 	}
 }
 

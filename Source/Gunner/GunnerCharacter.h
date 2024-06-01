@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
+#include "Core/MultiPerspectiveMesh.h"
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
@@ -17,7 +18,7 @@ class UCameraComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter
+class GUNNER_API AGunnerCharacter : public ACharacter, public IMultiPerspectiveMesh
 {
 	GENERATED_BODY()
 
@@ -25,14 +26,16 @@ class GUNNER_API AGunnerCharacter : public ACharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
-	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
 
-	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
+	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent() const override { return FirstPersonMeshComponent; }
+	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent() const override { return GetMesh(); }
 	bool IsRunning() const;
+
+	
 
 private:
 	void SetRunning(bool bNewRunning);
@@ -60,11 +63,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> WalkAction;
 	
-	
-
-	
-
-
 	UPROPERTY(EditDefaultsOnly)
 	float BaseTurnRate = 45.0f;
 	UPROPERTY(EditDefaultsOnly)

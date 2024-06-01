@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Gunner/Core/MultiPerspectiveMesh.h"
 #include "Weapon.generated.h"
 
 
+struct FWeaponData;
 class UWeaponData;
 class AGunnerCharacter;
 
@@ -17,13 +19,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadActionSignature);
 
 
 UCLASS()
-class GUNNER_API AWeapon : public AActor
+class GUNNER_API AWeapon : public AActor, public IMultiPerspectiveMesh
 {
 	GENERATED_BODY()
 
 	friend class UGunnerCheatManagerExtension;
 public:
 	AWeapon();
+	virtual void BeginPlay() override;
 	void OnPrimaryActionButtonPressed();
 	void OnPrimaryActionButtonReleased();
 	void OnReloadButtonPressed();
@@ -31,8 +34,10 @@ public:
 	void OnRep_Owner() override;
 	void Equip();
 	void Unequip();
+
+	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent() const override { return FirstPersonMeshComponent; }
+	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent() const override { return ThirdPersonMeshComponent; }
 	AGunnerCharacter* GetGunnerCharacterOwner() const;
-	USkeletalMeshComponent* GetFirstPersonMeshComponent() const { return FirstPersonMeshComponent; }
 	FName GetWeaponName() const { return WeaponName; }
 
 private:
@@ -40,19 +45,11 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FName WeaponName;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
+	FName WeaponName = TEXT("NO_WEAPON");
 	FName FPWeaponSocketName = TEXT("WeaponPoint");
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
 	FName TPWeaponSocketName = TEXT("WeaponPoint");
 	
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Weapon")
-	TObjectPtr<UAnimMontage> TPWeaponEquipMontage;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
-	TSubclassOf<UAnimInstance> TPCharacterAnimInstance;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|ThirdPerson|Character")
-	TObjectPtr<UAnimMontage> TPCharacterEquipMontage;
+	FWeaponData* WeaponData;
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnPrimaryActionSignature OnPrimaryActionDelegate;

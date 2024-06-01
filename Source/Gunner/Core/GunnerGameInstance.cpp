@@ -3,7 +3,12 @@
 
 #include "GunnerGameInstance.h"
 
-UCurveTable* UGunnerGameInstance::GetDamageTable() const
+UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const
 {
-	return DamageTable;
+	return DamageCurveTable;
+}
+
+UDataTable* UGunnerGameInstance::GetWeaponDataTable() const
+{
+	return WeaponDataTable;
 }

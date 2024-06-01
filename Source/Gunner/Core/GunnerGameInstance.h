@@ -14,9 +14,12 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 public:
-	UCurveTable* GetDamageTable() const;
+	UCurveTable* GetDamageCurveTable() const;
+	UDataTable* GetWeaponDataTable() const;
 
 public:
 	UPROPERTY(EditAnywhere)
-	UCurveTable* DamageTable;
+	TObjectPtr<UCurveTable> DamageCurveTable;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UDataTable> WeaponDataTable;
 };
