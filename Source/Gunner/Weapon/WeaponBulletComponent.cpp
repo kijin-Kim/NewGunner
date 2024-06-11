@@ -2,7 +2,6 @@
 
 
 #include "WeaponBulletComponent.h"
-
 #include "Weapon.h"
 #include "WeaponFireComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -51,6 +50,12 @@ void UWeaponBulletComponent::OnWeaponFired()
 	{
 		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
 	}
+
+	
+	if (BulletCount == 0) // Auto Reload
+	{
+		OnReload();
+	}
 }
 
 void UWeaponBulletComponent::OnReload()
@@ -58,9 +63,14 @@ void UWeaponBulletComponent::OnReload()
 	ServerReload();
 }
 
+bool UWeaponBulletComponent::CanReload() const
+{
+	return MagazineBulletCount > 0;
+}
+
 void UWeaponBulletComponent::ServerReload_Implementation()
 {
-	if (MagazineBulletCount <= 0)
+	if (!CanReload())
 	{
 		return;
 	}

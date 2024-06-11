@@ -25,6 +25,7 @@ public:
 	void OnWeaponFired();
 	UFUNCTION()
 	void OnReload();
+	bool CanReload() const;
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 
