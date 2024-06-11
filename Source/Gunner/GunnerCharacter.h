@@ -30,6 +30,7 @@ public:
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
+	virtual bool CanJumpInternal_Implementation() const override;
 
 	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent() const override { return FirstPersonMeshComponent; }
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent() const override { return GetMesh(); }
@@ -81,7 +82,6 @@ protected:
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UHealthComponent> HealthComponent;
-
-private:
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsRunning = true;
 };

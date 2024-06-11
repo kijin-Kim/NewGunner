@@ -4,14 +4,12 @@
 #include "GunnerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Gunner.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Weapon/WeaponManagerComponent.h"
-
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -76,6 +74,11 @@ void AGunnerCharacter::OnRep_Controller()
 {
 	Super::OnRep_Controller();
 	SetupMappingContext();
+}
+
+bool AGunnerCharacter::CanJumpInternal_Implementation() const
+{
+	return JumpIsAllowedInternal();
 }
 
 bool AGunnerCharacter::IsRunning() const

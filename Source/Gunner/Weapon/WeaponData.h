@@ -49,6 +49,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FirstPerson|Character")
 	TObjectPtr<UAnimSequence> FPCharacterCrouchOut;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FirstPerson|Character")
+	TObjectPtr<UAnimSequence> FPCharacterCrouchWalkAdd;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FirstPerson|Character")
 	TObjectPtr<UAnimSequence> FPCharacterJumpAdd;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FirstPerson|Character")
 	TObjectPtr<UAnimSequence> FPCharacterJumpLandAdd;
