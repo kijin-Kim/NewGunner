@@ -4,26 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/Core/MultiPerspectiveMesh.h"
+#include "Gunner/Core/AnimMontagePlayerInterface.h"
 #include "Weapon.generated.h"
 
 
+class UAnimMontagePlayerComponent;
 struct FWeaponData;
 class UWeaponData;
 class AGunnerCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponEquipSignature);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnequipSignature);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryActionSignature, bool, bPressed);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadActionSignature);
 
 
 UCLASS()
-class GUNNER_API AWeapon : public AActor, public IMultiPerspectiveMesh
+class GUNNER_API AWeapon : public AActor, public IAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
 	friend class UGunnerCheatManagerExtension;
+
 public:
 	AWeapon();
 	virtual void BeginPlay() override;
@@ -35,10 +40,12 @@ public:
 	void Equip();
 	void Unequip();
 
-	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent() const override { return FirstPersonMeshComponent; }
-	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent() const override { return ThirdPersonMeshComponent; }
+	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
+	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
+	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return ThirdPersonMeshComponent; }
 	AGunnerCharacter* GetGunnerCharacterOwner() const;
 	FName GetWeaponName() const { return WeaponName; }
+	FWeaponData* GetWeaponData() const { return WeaponData; }
 
 private:
 	void AttachMeshes();
@@ -48,9 +55,9 @@ public:
 	FName WeaponName = TEXT("NO_WEAPON");
 	FName FPWeaponSocketName = TEXT("WeaponPoint");
 	FName TPWeaponSocketName = TEXT("WeaponPoint");
-	
+
 	FWeaponData* WeaponData;
-	
+
 	UPROPERTY(BlueprintAssignable)
 	FOnPrimaryActionSignature OnPrimaryActionDelegate;
 	UPROPERTY(BlueprintAssignable)
@@ -63,7 +70,8 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 private:
 	UPROPERTY()

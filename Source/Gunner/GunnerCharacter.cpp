@@ -8,6 +8,7 @@
 #include "HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Core/AnimMontagePlayerComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Weapon/WeaponManagerComponent.h"
 
@@ -42,7 +43,9 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
-	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
+	
 }
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -79,6 +82,11 @@ void AGunnerCharacter::OnRep_Controller()
 bool AGunnerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
+}
+
+UAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementation()
+{
+	return AnimMontagePlayerComponent;
 }
 
 bool AGunnerCharacter::IsRunning() const

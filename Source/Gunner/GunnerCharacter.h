@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
-#include "Core/MultiPerspectiveMesh.h"
+#include "Core/AnimMontagePlayerInterface.h"
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
+class UAnimMontagePlayerComponent;
 class UHealthComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
@@ -18,7 +19,7 @@ class UCameraComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IMultiPerspectiveMesh
+class GUNNER_API AGunnerCharacter : public ACharacter, public IAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
@@ -32,8 +33,9 @@ public:
 	virtual void OnRep_Controller() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 
-	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent() const override { return FirstPersonMeshComponent; }
-	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent() const override { return GetMesh(); }
+	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
+	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
+	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return GetMesh(); }
 	bool IsRunning() const;
 
 	
@@ -80,6 +82,8 @@ protected:
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UHealthComponent> HealthComponent;
 	UPROPERTY(BlueprintReadOnly)
