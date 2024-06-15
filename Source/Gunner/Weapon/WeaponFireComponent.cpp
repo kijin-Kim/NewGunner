@@ -75,7 +75,7 @@ void UWeaponFireComponent::ServerFire_Implementation(bool bPressed)
 			UGameplayStatics::ApplyPointDamage(HitActor, 10.0f, Forward, Hit, GunnerCharacterOwner->GetController(), Weapon, UDamageType::StaticClass());
 			DrawDebugSphere(GetWorld(), Hit.Location, 10.0f, 16, FColor::Red, false, 3.0f);
 		}
-		OnWeaponFired();
+		ConsumeBullets();
 		LocalFire(bPressed);
 	}
 }
@@ -93,7 +93,7 @@ void UWeaponFireComponent::LocalFire(bool bPressed)
 	GunnerCharacterAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->FPCharacterFireMontage, false);
 }
 
-void UWeaponFireComponent::OnWeaponFired()
+void UWeaponFireComponent::ConsumeBullets()
 {
 	BulletCount--;
 	BulletCount = FMath::Clamp(BulletCount, 0, MaxBulletCount);
@@ -110,8 +110,25 @@ void UWeaponFireComponent::OnWeaponFired()
 	}
 }
 
+void UWeaponFireComponent::LocalReload()
+{
+	AWeapon* Weapon = GetOwner<AWeapon>();
+	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
+	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPWeaponReloadMontage, true);
+	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->FPWeaponReloadMontage, false);
+	
+	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
+	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
+	GunnerCharacterAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPCharacterReloadMontage, true);
+	GunnerCharacterAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->FPCharacterReloadMontage, false);
+}
+
 void UWeaponFireComponent::OnReload()
 {
+	if (GetOwnerRole() < ROLE_Authority)
+	{
+		LocalReload();
+	}
 	ServerReload();
 }
 
@@ -136,6 +153,8 @@ void UWeaponFireComponent::ServerReload_Implementation()
 	{
 		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
 	}
+
+	LocalReload();
 }
 
 void UWeaponFireComponent::OnRep_Bullet()

@@ -31,7 +31,8 @@ public:
 
 	
 	UFUNCTION()
-	void OnWeaponFired();
+	void ConsumeBullets();
+	void LocalReload();
 	UFUNCTION()
 	void OnReload();
 	bool CanReload() const;

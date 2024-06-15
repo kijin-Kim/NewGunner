@@ -42,7 +42,7 @@ void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UWeaponManagerComponent, Weapons);
-	DOREPLIFETIME(UWeaponManagerComponent, CurrentWeapon);
+	DOREPLIFETIME_CONDITION(UWeaponManagerComponent, CurrentWeapon, COND_SimulatedOnly);
 }
 
 void UWeaponManagerComponent::InitializeComponent()
@@ -119,6 +119,11 @@ void UWeaponManagerComponent::ChangeCurrentWeapon(uint32 WeaponIndex)
 		return;
 	}
 
+	if (GetOwnerRole() < ROLE_Authority)
+	{
+		LocalChangeCurrentWeapon(WeaponIndex);
+	}
+
 	ServerChangeCurrentWeapon(WeaponIndex);
 }
 
@@ -173,5 +178,6 @@ void UWeaponManagerComponent::LocalChangeCurrentWeapon(uint32 WeaponIndex)
 
 void UWeaponManagerComponent::ServerChangeCurrentWeapon_Implementation(uint32 WeaponIndex)
 {
+	check(CanChangeCurrentWeapon(WeaponIndex)); // TODO: 롤백 로직
 	LocalChangeCurrentWeapon(WeaponIndex);
 }

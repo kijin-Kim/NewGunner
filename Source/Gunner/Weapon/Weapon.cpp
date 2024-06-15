@@ -25,17 +25,6 @@ AWeapon::AWeapon()
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 }
 
-void AWeapon::BeginPlay()
-{
-	Super::BeginPlay();
-	UGunnerGameInstance* GameInstance = GetWorld()->GetGameInstance<UGunnerGameInstance>();
-	check(GameInstance);
-	UDataTable* WeaponDataTable = GameInstance->GetWeaponDataTable();
-	check(WeaponDataTable);
-	WeaponData = WeaponDataTable->FindRow<FWeaponData>(WeaponName, TEXT(""));
-	check(WeaponData);
-}
-
 void AWeapon::OnPrimaryActionButtonPressed()
 {
 	if (OnPrimaryActionDelegate.IsBound())
@@ -77,6 +66,7 @@ void AWeapon::Equip()
 	FirstPersonMeshComponent->SetVisibility(true);
 	ThirdPersonMeshComponent->SetVisibility(true);
 	AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner();
+	FWeaponData* WeaponData = GetWeaponData();
 	if (UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = GunnerCharacterOwner ? IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacterOwner) : nullptr)
 	{
 		GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->TPCharacterEquipMontage, true);
@@ -101,6 +91,21 @@ UAnimMontagePlayerComponent* AWeapon::GetAnimMontagePlayer_Implementation()
 AGunnerCharacter* AWeapon::GetGunnerCharacterOwner() const
 {
 	return PrivateGunnerCharacterOwner = PrivateGunnerCharacterOwner ? PrivateGunnerCharacterOwner.Get() : Cast<AGunnerCharacter>(GetOwner());
+}
+
+FWeaponData* AWeapon::GetWeaponData() const
+{
+	if (WeaponDataCache)
+	{
+		return WeaponDataCache;
+	}
+	UGunnerGameInstance* GameInstance = GetWorld()->GetGameInstance<UGunnerGameInstance>();
+	check(GameInstance);
+	UDataTable* WeaponDataTable = GameInstance->GetWeaponDataTable();
+	check(WeaponDataTable);
+	WeaponDataCache = WeaponDataTable->FindRow<FWeaponData>(WeaponName, TEXT(""));
+	check(WeaponDataCache);
+	return WeaponDataCache;
 }
 
 void AWeapon::AttachMeshes()

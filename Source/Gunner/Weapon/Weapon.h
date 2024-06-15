@@ -31,7 +31,6 @@ class GUNNER_API AWeapon : public AActor, public IAnimMontagePlayerInterface
 
 public:
 	AWeapon();
-	virtual void BeginPlay() override;
 	void OnPrimaryActionButtonPressed();
 	void OnPrimaryActionButtonReleased();
 	void OnReloadButtonPressed();
@@ -45,7 +44,7 @@ public:
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return ThirdPersonMeshComponent; }
 	AGunnerCharacter* GetGunnerCharacterOwner() const;
 	FName GetWeaponName() const { return WeaponName; }
-	FWeaponData* GetWeaponData() const { return WeaponData; }
+	FWeaponData* GetWeaponData() const;
 
 private:
 	void AttachMeshes();
@@ -56,7 +55,7 @@ public:
 	FName FPWeaponSocketName = TEXT("WeaponPoint");
 	FName TPWeaponSocketName = TEXT("WeaponPoint");
 
-	FWeaponData* WeaponData;
+	mutable FWeaponData* WeaponDataCache;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnPrimaryActionSignature OnPrimaryActionDelegate;
