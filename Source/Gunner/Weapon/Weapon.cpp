@@ -72,7 +72,7 @@ void AWeapon::Equip()
 		GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->TPCharacterEquipMontage, true);
 		GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->FPCharacterEquipMontage, false);
 	}
-
+	
 	AnimMontagePlayerComponent->PlayMontage(WeaponData->TPWeaponEquipMontage, true);
 	AnimMontagePlayerComponent->PlayMontage(WeaponData->FPWeaponEquipMontage, false);
 }

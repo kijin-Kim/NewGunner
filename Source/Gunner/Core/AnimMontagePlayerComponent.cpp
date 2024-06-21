@@ -50,6 +50,32 @@ float UAnimMontagePlayerComponent::PlayMontage(UAnimMontage* AnimMontage, bool b
 	return Duration;
 }
 
+void UAnimMontagePlayerComponent::SetMontageEndDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageEnded& OnMontageEnded)
+{
+	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
+	if (AnimMontage && AnimInstance)
+	{
+		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, AnimMontage);
+	}
+}
+
+void UAnimMontagePlayerComponent::SetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageBlendingOutStarted& OnMontageBlendingOutStarted)
+{
+	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
+	if (AnimMontage && AnimInstance)
+	{
+		AnimInstance->Montage_SetBlendingOutDelegate(OnMontageBlendingOutStarted, AnimMontage);
+	}
+}
+
+UAnimInstance* UAnimMontagePlayerComponent::GetDesiredAnimInstance(bool bIsThirdPerson) const
+{
+	USkeletalMeshComponent* TargetMesh = bIsThirdPerson
+		                                     ? IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner())
+		                                     : IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GetOwner());
+	return (TargetMesh) ? TargetMesh->GetAnimInstance() : nullptr;
+}
+
 void UAnimMontagePlayerComponent::AuthUpdateReplicatedAnimMontage()
 {
 	USkeletalMeshComponent* ThirdPersonMeshComponent = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner());
@@ -66,14 +92,10 @@ void UAnimMontagePlayerComponent::AuthUpdateReplicatedAnimMontage()
 
 float UAnimMontagePlayerComponent::LocalPlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InStartTime, float InPlayRate, FName StartSectionName)
 {
-	USkeletalMeshComponent* TargetMesh = bIsThirdPerson
-		                                     ? IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner())
-		                                     : IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GetOwner());
-	UAnimInstance* AnimInstance = (TargetMesh) ? TargetMesh->GetAnimInstance() : nullptr;
+	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
 	if (AnimMontage && AnimInstance)
 	{
 		float const Duration = AnimInstance->Montage_Play(AnimMontage, InPlayRate, EMontagePlayReturnType::MontageLength, InStartTime);
-
 		if (Duration > 0.f)
 		{
 			// Start at a given Section.

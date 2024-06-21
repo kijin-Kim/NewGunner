@@ -50,8 +50,12 @@ public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	float PlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
-
+	void SetMontageEndDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageEnded& OnMontageEnded);
+	void SetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageBlendingOutStarted& OnMontageBlendingOutStarted);
+	UAnimInstance* GetDesiredAnimInstance(bool bIsThirdPerson) const;
 private:
+
+	
 	void AuthUpdateReplicatedAnimMontage();
 	float LocalPlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InStartTime = 0.0f, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
 	UFUNCTION()

@@ -21,6 +21,18 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryActionSignature, bool, bPr
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadActionSignature);
 
+UENUM()
+enum class EWeaponState
+{
+	Idle,
+	Equip,
+	Reload,
+	Fire,
+	Drop
+};
+
+
+
 
 UCLASS()
 class GUNNER_API AWeapon : public AActor, public IAnimMontagePlayerInterface

@@ -18,7 +18,6 @@ class GUNNER_API UWeaponFireComponent : public UActorComponent
 public:
 	UWeaponFireComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	
 	virtual void InitializeComponent() override;
 	virtual void OnRegister() override;
@@ -41,6 +40,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_Bullet();
+
+
 
 public:
 	UPROPERTY(BlueprintAssignable)

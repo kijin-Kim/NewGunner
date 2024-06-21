@@ -74,7 +74,7 @@ public:
 	TObjectPtr<UInputAction> SecondaryWeaponEquipAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> MeleeWeaponEquipAction;
-
+	
 
 
 protected:

@@ -24,6 +24,7 @@ void UWeaponFireComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UWeaponFireComponent, MagazineBulletCount);
 }
 
+
 void UWeaponFireComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -42,17 +43,25 @@ void UWeaponFireComponent::OnRegister()
 
 void UWeaponFireComponent::OnPrimaryAction(bool bPressed)
 {
+	if(!bPressed)
+	{
+		return;
+	}
+	
+	ServerFire(bPressed);
 	if (GetOwnerRole() < ROLE_Authority)
 	{
 		LocalFire(bPressed);
 	}
-	ServerFire(bPressed);
 }
 
 void UWeaponFireComponent::ServerFire_Implementation(bool bPressed)
 {
 	if (bPressed)
 	{
+	
+		
+
 		AWeapon* Weapon = GetOwner<AWeapon>();
 		AGunnerCharacter* GunnerCharacterOwner = Weapon->GetGunnerCharacterOwner();
 		APlayerCameraManager* PlayerCameraManager = Cast<APlayerController>(GunnerCharacterOwner->GetController())->PlayerCameraManager;
@@ -86,7 +95,7 @@ void UWeaponFireComponent::LocalFire(bool bPressed)
 	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
 	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPWeaponFireMontage, true);
 	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->FPWeaponFireMontage, false);
-	
+
 	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
 	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPCharacterFireMontage, true);
@@ -116,7 +125,7 @@ void UWeaponFireComponent::LocalReload()
 	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
 	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPWeaponReloadMontage, true);
 	WeaponAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->FPWeaponReloadMontage, false);
-	
+
 	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
 	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(Weapon->GetWeaponData()->TPCharacterReloadMontage, true);
