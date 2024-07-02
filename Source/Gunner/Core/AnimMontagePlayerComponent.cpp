@@ -50,22 +50,28 @@ float UAnimMontagePlayerComponent::PlayMontage(UAnimMontage* AnimMontage, bool b
 	return Duration;
 }
 
-void UAnimMontagePlayerComponent::SetMontageEndDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageEnded& OnMontageEnded)
+void UAnimMontagePlayerComponent::StopMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
-	if (AnimMontage && AnimInstance)
+	UAnimMontage* MontageToStop = (AnimMontage) ? AnimMontage : AnimInstance->GetCurrentActiveMontage();
+	bool bShouldStopMontage = AnimInstance && MontageToStop && !AnimInstance->Montage_GetIsStopped(MontageToStop);
+	if (bShouldStopMontage)
 	{
-		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, AnimMontage);
+		AnimInstance->Montage_Stop(MontageToStop->BlendOut.GetBlendTime(), MontageToStop);
 	}
 }
 
-void UAnimMontagePlayerComponent::SetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson, FOnMontageBlendingOutStarted& OnMontageBlendingOutStarted)
+
+FOnMontageEnded* UAnimMontagePlayerComponent::GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
-	if (AnimMontage && AnimInstance)
-	{
-		AnimInstance->Montage_SetBlendingOutDelegate(OnMontageBlendingOutStarted, AnimMontage);
-	}
+	return AnimInstance ? AnimInstance->Montage_GetEndedDelegate(AnimMontage) : nullptr;
+}
+
+FOnMontageBlendingOutStarted* UAnimMontagePlayerComponent::GetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
+{
+	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
+	return AnimInstance ? AnimInstance->Montage_GetBlendingOutDelegate(AnimMontage) : nullptr;
 }
 
 UAnimInstance* UAnimMontagePlayerComponent::GetDesiredAnimInstance(bool bIsThirdPerson) const

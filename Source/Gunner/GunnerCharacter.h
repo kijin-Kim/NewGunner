@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
+class UEventManagerComponent;
 class UAnimMontagePlayerComponent;
 class UHealthComponent;
 class USpringArmComponent;
@@ -28,7 +29,6 @@ public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_Controller() override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -84,8 +84,11 @@ protected:
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UHealthComponent> HealthComponent;
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsRunning = true;
+
+
+private:
+	UPROPERTY()
+	UEventManagerComponent* EventManagerComponent;
 };

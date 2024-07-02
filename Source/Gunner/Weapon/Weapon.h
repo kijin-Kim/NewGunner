@@ -8,10 +8,16 @@
 #include "Weapon.generated.h"
 
 
+class UDroppedStateComponent;
+class UReloadingStateComponent;
+class UFiringStateComponent;
+class UEquippedStateComponent;
+class UDrawingStateComponent;
+class UInventoriedStateComponent;
 class UAnimMontagePlayerComponent;
 struct FWeaponData;
-class UWeaponData;
 class AGunnerCharacter;
+class UStateComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponEquipSignature);
 
@@ -21,17 +27,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryActionSignature, bool, bPr
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadActionSignature);
 
-UENUM()
-enum class EWeaponState
-{
-	Idle,
-	Equip,
-	Reload,
-	Fire,
-	Drop
-};
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponBulletCountChangedSignature, int32, BulletCount, int32, MagazineBulletCount);
 
 
 UCLASS()
@@ -43,11 +39,10 @@ class GUNNER_API AWeapon : public AActor, public IAnimMontagePlayerInterface
 
 public:
 	AWeapon();
+	virtual void PostInitializeComponents() override;
 	void OnPrimaryActionButtonPressed();
 	void OnPrimaryActionButtonReleased();
 	void OnReloadButtonPressed();
-	void SetOwner(AActor* NewOwner) override;
-	void OnRep_Owner() override;
 	void Equip();
 	void Unequip();
 
@@ -58,14 +53,12 @@ public:
 	FName GetWeaponName() const { return WeaponName; }
 	FWeaponData* GetWeaponData() const;
 
-private:
-	void AttachMeshes();
+	UStaticMeshComponent* GetFirstPersonMagainzeMeshComponent() const { return FirstPersonMagazineMeshComponent; };
+	UStaticMeshComponent* GetThirdPersonMagainzeMeshComponent() const { return ThirdPersonMagazineMeshComponent; };
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName WeaponName = TEXT("NO_WEAPON");
-	FName FPWeaponSocketName = TEXT("WeaponPoint");
-	FName TPWeaponSocketName = TEXT("WeaponPoint");
 
 	mutable FWeaponData* WeaponDataCache;
 
@@ -81,10 +74,70 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	TObjectPtr<UStaticMeshComponent> FirstPersonMagazineMeshComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	TObjectPtr<UStaticMeshComponent> ThirdPersonMagazineMeshComponent;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 private:
 	UPROPERTY()
 	mutable TObjectPtr<AGunnerCharacter> PrivateGunnerCharacterOwner;
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponBulletCountChangedSignature OnWeaponBulletCountChangedDelegate;
+
+	void SetBulletCount(int32 InBulletCount);
+	int32 GetBulletCount() const;
+	int32 GetMaxMagazineBulletCount() const;
+	int32 MaxMagazineBulletCount = 30;
+	int32 GetMaxBulletCount() const;
+	int32 MaxBulletCount = 30;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int32 BulletCount = 30;
+	void SetMagazineBulletCount(int32 InMagazineBulletCount);
+	int32 GetMagazineBulletCount() const;
+	UPROPERTY(BlueprintReadOnly)
+	int32 MagazineBulletCount = 30;
+	float GetFiringDelay() const;
+	float FiringDelay =  1.0f / 9.75f;
+
+	UPROPERTY()
+	TObjectPtr<UStateComponent> CurrentState;
+
+
+	void EnterNewState(TSubclassOf<UStateComponent> NewState);
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> InventoriedStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> DrawingStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> EquippedStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> FiringStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> ReloadingStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UStateComponent> DroppedStateComponentClass;
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UInventoriedStateComponent> InventoriedStateComponent;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UDrawingStateComponent> DrawingStateComponent;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UEquippedStateComponent> EquippedStateComponent;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UFiringStateComponent> FiringStateComponent;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UReloadingStateComponent> ReloadingStateComponent;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UDroppedStateComponent> DroppedStateComponent;
 };

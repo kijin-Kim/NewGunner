@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "Weapon.h"
+#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -14,6 +15,12 @@ UWeaponManagerComponent::UWeaponManagerComponent()
 	bWantsInitializeComponent = true;
 	SetIsReplicatedByDefault(true);
 	Weapons.SetNum(3);
+}
+
+void UWeaponManagerComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	SetupWeaponManager();
 }
 
 void UWeaponManagerComponent::OnReloadButtonPressed()
@@ -31,7 +38,7 @@ void UWeaponManagerComponent::SetupPlayerInputComponent(UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(PrimaryWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(0));
 		EnhancedInputComponent->BindAction(SecondaryWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(1));
 		EnhancedInputComponent->BindAction(MeleeWeaponEquipAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeCurrentWeapon, static_cast<uint32>(2));
-		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Started, this, &ThisClass::OnPrimaryButtonPressed);
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Triggered, this, &ThisClass::OnPrimaryButtonPressed);
 		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Completed, this, &ThisClass::OnPrimaryButtonReleased);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &ThisClass::OnReloadButtonPressed);
 	}
@@ -48,12 +55,6 @@ void UWeaponManagerComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 	GunnerCharacterOwner = GetGunnerCharacterOwnerChecked<AGunnerCharacter>();
-}
-
-void UWeaponManagerComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	SetupWeaponManager();
 }
 
 void UWeaponManagerComponent::SetupWeaponManager()

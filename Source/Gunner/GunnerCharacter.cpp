@@ -5,10 +5,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GunnerCharacterMovementComponent.h"
-#include "HealthComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Core/AnimMontagePlayerComponent.h"
+#include "Core/Event/EventManagerComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Weapon/WeaponManagerComponent.h"
 
@@ -44,8 +44,9 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
-	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
+
 	
+	EventManagerComponent = CreateDefaultSubobject<UEventManagerComponent>(TEXT("EventManager"));
 }
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

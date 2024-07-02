@@ -4,9 +4,17 @@
 #include "Weapon.h"
 
 #include "WeaponData.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/GunnerCharacter.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
 #include "Gunner/Core/GunnerGameInstance.h"
+#include "State/DroppedStateComponent.h"
+#include "State/EquippedStateComponent.h"
+#include "State/DrawingStateComponent.h"
+#include "State/FiringStateComponent.h"
+#include "State/InventoriedStateComponent.h"
+#include "State/ReloadingStateComponent.h"
+#include "State/StateComponent.h"
 
 
 AWeapon::AWeapon()
@@ -19,10 +27,51 @@ AWeapon::AWeapon()
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
 	ThirdPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonMesh"));
 	ThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
+	
+	FirstPersonMagazineMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FirstPersonMagazineMesh"));
+	FirstPersonMagazineMeshComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("Magazine_Main"));
+	FirstPersonMagazineMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	ThirdPersonMagazineMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ThirdPersonMagazineMesh"));
+	ThirdPersonMagazineMeshComponent->SetupAttachment(ThirdPersonMeshComponent, TEXT("Magazine_Main"));
+	ThirdPersonMagazineMeshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
+	FirstPersonMagazineMeshComponent->bOnlyOwnerSee = true;
+	ThirdPersonMagazineMeshComponent->bOwnerNoSee = true;
+	
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+
+
+	InventoriedStateComponentClass = UInventoriedStateComponent::StaticClass();
+	DrawingStateComponentClass = UDrawingStateComponent::StaticClass();
+	EquippedStateComponentClass = UEquippedStateComponent::StaticClass();
+	FiringStateComponentClass = UFiringStateComponent::StaticClass();
+	ReloadingStateComponentClass = UReloadingStateComponent::StaticClass();
+	DroppedStateComponentClass = UDroppedStateComponent::StaticClass();
+}
+
+void AWeapon::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
+	InventoriedStateComponent = NewObject<UInventoriedStateComponent>(this, InventoriedStateComponentClass, FName(TEXT("InventoriedStateComponent")));
+	InventoriedStateComponent->RegisterComponent();
+
+	DrawingStateComponent = NewObject<UDrawingStateComponent>(this, DrawingStateComponentClass, FName(TEXT("DrawingStateComponent")));
+	DrawingStateComponent->RegisterComponent();
+	
+	EquippedStateComponent = NewObject<UEquippedStateComponent>(this, EquippedStateComponentClass, FName(TEXT("EquippedStateComponent")));
+	EquippedStateComponent->RegisterComponent();
+	
+	FiringStateComponent = NewObject<UFiringStateComponent>(this, FiringStateComponentClass, FName(TEXT("FiringStateComponent")));
+	FiringStateComponent->RegisterComponent();
+	
+	ReloadingStateComponent = NewObject<UReloadingStateComponent>(this, ReloadingStateComponentClass, FName(TEXT("ReloadingStateComponent")));
+	ReloadingStateComponent->RegisterComponent();
+	
+	DroppedStateComponent = NewObject<UDroppedStateComponent>(this, DroppedStateComponentClass, FName(TEXT("DroppedStateComponent")));
+	DroppedStateComponent->RegisterComponent();
 }
 
 void AWeapon::OnPrimaryActionButtonPressed()
@@ -49,38 +98,14 @@ void AWeapon::OnReloadButtonPressed()
 	}
 }
 
-void AWeapon::SetOwner(AActor* NewOwner)
-{
-	Super::SetOwner(NewOwner);
-	AttachMeshes();
-}
-
-void AWeapon::OnRep_Owner()
-{
-	Super::OnRep_Owner();
-	AttachMeshes();
-}
-
 void AWeapon::Equip()
 {
-	FirstPersonMeshComponent->SetVisibility(true);
-	ThirdPersonMeshComponent->SetVisibility(true);
-	AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner();
-	FWeaponData* WeaponData = GetWeaponData();
-	if (UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = GunnerCharacterOwner ? IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacterOwner) : nullptr)
-	{
-		GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->TPCharacterEquipMontage, true);
-		GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->FPCharacterEquipMontage, false);
-	}
-	
-	AnimMontagePlayerComponent->PlayMontage(WeaponData->TPWeaponEquipMontage, true);
-	AnimMontagePlayerComponent->PlayMontage(WeaponData->FPWeaponEquipMontage, false);
+	EnterNewState(DrawingStateComponentClass);
 }
 
 void AWeapon::Unequip()
 {
-	FirstPersonMeshComponent->SetVisibility(false);
-	ThirdPersonMeshComponent->SetVisibility(false);
+	EnterNewState(InventoriedStateComponentClass);
 }
 
 UAnimMontagePlayerComponent* AWeapon::GetAnimMontagePlayer_Implementation()
@@ -108,11 +133,60 @@ FWeaponData* AWeapon::GetWeaponData() const
 	return WeaponDataCache;
 }
 
-void AWeapon::AttachMeshes()
+
+void AWeapon::SetBulletCount(int32 InBulletCount)
 {
-	if (AGunnerCharacter* GunnerCharacterOwner = GetGunnerCharacterOwner())
+	BulletCount = InBulletCount;
+	if (OnWeaponBulletCountChangedDelegate.IsBound())
 	{
-		FirstPersonMeshComponent->AttachToComponent(IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GunnerCharacterOwner), FAttachmentTransformRules::KeepRelativeTransform, FPWeaponSocketName);
-		ThirdPersonMeshComponent->AttachToComponent(IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GunnerCharacterOwner), FAttachmentTransformRules::KeepRelativeTransform, TPWeaponSocketName);
+		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
+	}
+}
+
+int32 AWeapon::GetBulletCount() const
+{
+	return BulletCount;
+}
+
+int32 AWeapon::GetMaxMagazineBulletCount() const
+{
+	return MaxMagazineBulletCount;
+}
+
+int32 AWeapon::GetMaxBulletCount() const
+{
+	return MaxBulletCount;
+}
+
+void AWeapon::SetMagazineBulletCount(int32 InMagazineBulletCount)
+{
+	MagazineBulletCount = InMagazineBulletCount;
+	if (OnWeaponBulletCountChangedDelegate.IsBound())
+	{
+		OnWeaponBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
+	}
+}
+
+int32 AWeapon::GetMagazineBulletCount() const
+{
+	return MagazineBulletCount;
+}
+
+float AWeapon::GetFiringDelay() const
+{
+	return FiringDelay;
+}
+
+void AWeapon::EnterNewState(TSubclassOf<UStateComponent> NewState)
+{
+	UStateComponent* NewStateComponent = Cast<UStateComponent>(GetComponentByClass(NewState));
+	if (NewStateComponent)
+	{
+		if (CurrentState)
+		{
+			CurrentState->Exit();
+		}
+		CurrentState = NewStateComponent;
+		CurrentState->Enter();
 	}
 }

@@ -6,8 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GunnerPlayerController.generated.h"
 
-class UInputMappingContext;
 
+class UInputEventDispatcherComponent;
 /**
  *
  */
@@ -16,6 +16,7 @@ class GUNNER_API AGunnerPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
+	AGunnerPlayerController();
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_Pawn() override;
 	virtual void OnRep_PlayerState() override;
@@ -34,4 +35,7 @@ private:
 	double RoundTripTime = 0.0f;
 	double ServerTimeDelta = 0.0f;
 	FDelegateHandle OnShowDebugInfoDelegateHandle;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UInputEventDispatcherComponent> InputEventDispatcherComponent;
 };
