@@ -23,10 +23,11 @@ public:
 	void OnInputEvent(UEnhancedInputComponent* InputComponent, FGameplayTag InputTag);
 	UFUNCTION()
 	void SetupInputEvent(APawn* OldPawn, APawn* NewPawn);
-	
-	void OnInputTest(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
 
 private:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputTagMappingData> InputTagMappingData;
+	FEventCallbackHandle Handle;
+	UPROPERTY()
+	APlayerController* PlayerController;
 };
