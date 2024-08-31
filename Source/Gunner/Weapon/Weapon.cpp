@@ -5,7 +5,7 @@
 
 #include "WeaponData.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
 #include "Gunner/Core/GunnerGameInstance.h"
 #include "State/DroppedStateComponent.h"

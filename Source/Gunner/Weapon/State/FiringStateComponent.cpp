@@ -3,7 +3,7 @@
 
 #include "FiringStateComponent.h"
 
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponData.h"

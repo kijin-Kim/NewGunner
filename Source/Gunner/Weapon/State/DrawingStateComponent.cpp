@@ -4,7 +4,7 @@
 #include "DrawingStateComponent.h"
 
 #include "EquippedStateComponent.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
 #include "Gunner/Core/AnimMontagePlayerInterface.h"
 #include "Gunner/Weapon/Weapon.h"

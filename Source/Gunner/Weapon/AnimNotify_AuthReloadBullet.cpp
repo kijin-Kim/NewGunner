@@ -4,7 +4,7 @@
 #include "AnimNotify_AuthReloadBullet.h"
 
 #include "Weapon.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 
 void UAnimNotify_AuthReloadBullet::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {

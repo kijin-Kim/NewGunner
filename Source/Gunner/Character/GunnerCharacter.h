@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputActionValue.h"
-#include "Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/AnimMontagePlayerInterface.h"
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
+class UCameraControllerComponent;
 class UEventManagerComponent;
 class UAnimMontagePlayerComponent;
 class UHealthComponent;
@@ -29,8 +29,6 @@ public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_Controller() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 
 	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
@@ -45,31 +43,12 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerRun(bool bNewRunning);
 
-
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void SetupMappingContext();
-
 public:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputMappingContext> DefaultMappingContext;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> MoveForwardRightAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> MoveBackwardLeftAction;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputAction> CrouchAction;
-	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> WalkAction;
-	
-	UPROPERTY(EditDefaultsOnly)
-	float BaseTurnRate = 45.0f;
-	UPROPERTY(EditDefaultsOnly)
-	float MouseSensitivity = 1.0f;
+
 	
 	
 
@@ -89,6 +68,9 @@ protected:
 
 
 private:
+	
 	UPROPERTY()
-	UEventManagerComponent* EventManagerComponent;
+	TObjectPtr<UEventManagerComponent> EventManagerComponent;
+	UPROPERTY()
+	TObjectPtr<UCameraControllerComponent> CameraControllerComponent;
 };

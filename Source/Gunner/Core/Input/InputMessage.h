@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "InputMessage.generated.h"
 
 /**
@@ -12,6 +13,6 @@ USTRUCT()
 struct GUNNER_API FInputMessage
 {
 	GENERATED_BODY()
-
 	
+	FInputActionValue Value;
 };

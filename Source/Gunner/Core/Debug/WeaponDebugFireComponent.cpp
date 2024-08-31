@@ -4,7 +4,7 @@
 #include "WeaponDebugFireComponent.h"
 
 #include "GameFramework/GameModeBase.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Gunner/GunnerPlayerController.h"
 #include "Gunner/Core/LagCompensationComponent.h"
 #include "Gunner/Weapon/Weapon.h"

@@ -4,7 +4,7 @@
 #include "InventoriedStateComponent.h"
 
 #include "Gunner/Gunner.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Gunner/Weapon/Weapon.h"
 
 

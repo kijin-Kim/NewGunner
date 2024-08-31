@@ -3,7 +3,7 @@
 
 #include "GunnerCheatManagerExtension.h"
 
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponManagerComponent.h"

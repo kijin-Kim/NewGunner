@@ -6,7 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Containers/RingBuffer.h"
 #include "GameFramework/GameModeBase.h"
-#include "Gunner/GunnerCharacter.h"
+#include "Gunner/Character/GunnerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 

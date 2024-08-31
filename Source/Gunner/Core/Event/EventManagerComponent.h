@@ -67,6 +67,7 @@ public:
 	void UnbindEventCallback(FEventCallbackHandle Handle);
 
 
+
 	template <typename FMessageStruct>
 	void HandleEvent(FGameplayTag EventTag, const FMessageStruct& Message)
 	{
@@ -92,6 +93,8 @@ public:
 			EventManagerComponent->HandleEvent<FMessageStruct>(EventTag, Message);
 		}
 	}
+
+	
 
 private:
 	FEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks);
