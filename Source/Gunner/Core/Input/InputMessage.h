@@ -9,10 +9,11 @@
 /**
  * 
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct GUNNER_API FInputMessage
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY(BlueprintReadOnly)
 	FInputActionValue Value;
 };

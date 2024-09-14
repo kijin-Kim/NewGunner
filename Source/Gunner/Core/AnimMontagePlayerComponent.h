@@ -57,6 +57,7 @@ public:
 
 	UAnimInstance* GetDesiredAnimInstance(bool bIsThirdPerson) const;
 
+
 private:
 	void AuthUpdateReplicatedAnimMontage();
 	float LocalPlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InStartTime = 0.0f, float InPlayRate = 1.f, FName StartSectionName = NAME_None);

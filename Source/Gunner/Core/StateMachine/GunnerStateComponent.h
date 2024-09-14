@@ -6,6 +6,16 @@
 #include "Components/ActorComponent.h"
 #include "GunnerStateComponent.generated.h"
 
+UENUM()
+enum class EGunnerStateNetTransitionPolicy : uint8
+{
+	ClientOnly UMETA(DisplayName = "Client Only"),
+	ServerOnly UMETA(DisplayName = "Server Only"),
+	ClientPredicted UMETA(DisplayName = "Client Predicted"),
+	ServerAuthoritative UMETA(DisplayName = "Server Authoritative"),
+};
+
+
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerStateComponent : public UActorComponent
@@ -21,9 +31,16 @@ public:
 	void OnUpdate(float DeltaTime);
 	UFUNCTION(BlueprintNativeEvent)
 	void OnExit();
+	
+	EGunnerStateNetTransitionPolicy GetNetTransitionPolicy() const { return NetTransitionPolicy; }
 
+protected:
+	UPROPERTY(EditAnywhere)
+	EGunnerStateNetTransitionPolicy NetTransitionPolicy = EGunnerStateNetTransitionPolicy::ClientOnly;
 
 private:
 	// 자식클래스가 TickComponent를 override하지 못하도록 final 키워드를 사용합니다. OnUpdate 참고
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override final;
+
+
 };

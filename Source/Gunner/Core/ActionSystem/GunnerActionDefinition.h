@@ -1,0 +1,38 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GunnerActionDefinitionHandle.h"
+#include "GunnerActionDefinition.generated.h"
+
+/**
+ * 
+ */
+
+class UGunnerAction;
+
+
+
+USTRUCT()
+struct FGunnerActionDefinition
+{
+	GENERATED_BODY()
+
+	FGunnerActionDefinition();
+	FGunnerActionDefinition(UObject* InSourceObject, TSubclassOf<UGunnerAction> InActionClass);
+
+	UPROPERTY()
+	FGunnerActionDefinitionHandle Handle;
+	UPROPERTY()
+	TWeakObjectPtr<UObject> SourceObject;
+	UPROPERTY()
+	TSubclassOf<UGunnerAction> ActionClass;
+
+	UPROPERTY()
+	TObjectPtr<UGunnerAction> ActionCDO;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UGunnerAction>> ActionInstances;
+};
+

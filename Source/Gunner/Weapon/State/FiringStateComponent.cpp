@@ -22,14 +22,11 @@ void UFiringStateComponent::Enter()
 		LocalFire();
 	}
 	ServerFire();
-
-	
 }
 
 void UFiringStateComponent::Exit()
 {
 	Super::Exit();
-
 }
 
 void UFiringStateComponent::PlayFireMontage()
@@ -57,8 +54,6 @@ void UFiringStateComponent::LocalFire()
 	{
 		EnterNewState(Weapon->EquippedStateComponentClass);
 	}, Weapon->GetFiringDelay(), false);
-
-	
 	
 	Weapon->SetBulletCount(Weapon->GetBulletCount() - 1);
 }

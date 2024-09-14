@@ -140,4 +140,5 @@ public:
 	TObjectPtr<UReloadingStateComponent> ReloadingStateComponent;
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UDroppedStateComponent> DroppedStateComponent;
+	
 };

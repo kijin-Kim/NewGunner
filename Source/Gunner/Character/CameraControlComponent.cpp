@@ -2,9 +2,7 @@
 
 
 #include "CameraControlComponent.h"
-
 #include "Gunner/Core/Input/InputMessage.h"
-#include "Gunner/Weapon/WeaponManagerComponent.h"
 
 
 UCameraControllerComponent::UCameraControllerComponent()

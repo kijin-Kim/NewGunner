@@ -36,6 +36,19 @@ private:
 	void RegisterStateComponentFromOwner();
 	void RegisterTransitionData();
 	void CheckTransitions();
+
+	bool CanTransitionToState(UGunnerStateComponent* ToStateComponent) const;
+	void LocalEnterNewState(UGunnerStateComponent* ToStateComponent);
+	UFUNCTION(Reliable, Server)
+	void ServerEnterNewState(UGunnerStateComponent* ToStateComponent);
+	UFUNCTION(Reliable, Client)
+	void ClientEnterNewState(UGunnerStateComponent* ToStateComponent);
+	
+	
+	
+	void Enter(UGunnerStateComponent* StateComponent);
+	void Update(UGunnerStateComponent* StateComponent, float DeltaTime);
+	void Exit(UGunnerStateComponent* StateComponent);
 	
 	UGunnerStateComponent* GetStateComponentByClass(TSubclassOf<UGunnerStateComponent> StateComponentClass) const;
 
@@ -43,6 +56,7 @@ private:
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UGunnerStateComponent> StartStateComponentClass;
+	
 	UPROPERTY()
 	TObjectPtr<UGunnerStateComponent> CurrentStateComponent;
 	UPROPERTY(EditAnywhere)

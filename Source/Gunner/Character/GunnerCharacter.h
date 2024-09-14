@@ -7,6 +7,8 @@
 #include "GameFramework/Character.h"
 #include "GunnerCharacter.generated.h"
 
+class UGunnerActionComponent;
+class AWeapon;
 class UCameraControllerComponent;
 class UEventManagerComponent;
 class UAnimMontagePlayerComponent;
@@ -68,9 +70,20 @@ protected:
 
 
 private:
-	
 	UPROPERTY()
 	TObjectPtr<UEventManagerComponent> EventManagerComponent;
 	UPROPERTY()
 	TObjectPtr<UCameraControllerComponent> CameraControllerComponent;
+
+
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> TestWeaponClass;
+	UPROPERTY()
+	TObjectPtr<AWeapon> TestWeapon;
+
+public:
+	virtual void PossessedBy(AController* NewController) override;
+	
+	
 };

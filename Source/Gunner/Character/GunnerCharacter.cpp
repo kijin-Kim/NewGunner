@@ -10,8 +10,11 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
+#include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponManagerComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -50,6 +53,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	
 	EventManagerComponent = CreateDefaultSubobject<UEventManagerComponent>(TEXT("EventManager"));
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
+	
 }
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -60,7 +64,8 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::SetRunning, false);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::SetRunning, true);
 	}
-	WeaponManagerComponent->SetupPlayerInputComponent(PlayerInputComponent);
+	//WeaponManagerComponent->SetupPlayerInputComponent(PlayerInputComponent);
+
 }
 
 
@@ -85,6 +90,22 @@ void AGunnerCharacter::SetRunning(bool bNewRunning)
 	if (GetLocalRole() < ROLE_Authority)
 	{
 		ServerRun(bNewRunning);
+	}
+}
+
+void AGunnerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (HasAuthority())
+	{
+		if (TestWeaponClass)
+		{
+			TestWeapon = GetWorld()->SpawnActorDeferred<AWeapon>(TestWeaponClass, GetTransform());
+			TestWeapon->SetOwner(this);
+			TestWeapon->SetInstigator(this);
+			TestWeapon->SetAutonomousProxy(true);
+			TestWeapon->FinishSpawning(GetTransform());
+		}
 	}
 }
 

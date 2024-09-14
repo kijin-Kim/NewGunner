@@ -6,8 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "Gunner/Core/Event/EventCallbackBindInterface.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
-#include "Gunner/Core/Input/InputMessage.h"
 #include "CameraControlComponent.generated.h"
+
+struct FInputMessage;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

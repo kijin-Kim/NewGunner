@@ -37,6 +37,7 @@ class GUNNER_API UEventManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	friend class UAsyncAction_WaitForGunnerEvent;
 public:
 	UEventManagerComponent();
 
@@ -55,11 +56,11 @@ public:
 	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&))
 	{
 		TWeakObjectPtr<TOwner> Weak = Object;
-		return BindEventCallbackInternal(EventTag, [Weak, Function](FGameplayTag Tag, const void* Message)
+		return BindEventCallbackInternal(EventTag, [Weak, Function](FGameplayTag Tag, const void* MessagePtr)
 		{
 			if (TOwner* Strong = Weak.Get())
 			{
-				(Strong->*Function)(Tag, *static_cast<const FMessageStruct*>(Message));
+				(Strong->*Function)(Tag, *static_cast<const FMessageStruct*>(MessagePtr));
 			}
 		});
 	}
@@ -108,9 +109,9 @@ private:
 		TFunction<void(FGameplayTag, const void*)> Callback;
 		bool bIsPendingRemove = false;
 
-		void operator()(FGameplayTag EventTag, const void* Message) const
+		void operator()(FGameplayTag EventTag, const void* MessagePtr) const
 		{
-			Callback(EventTag, Message);
+			Callback(EventTag, MessagePtr);
 		}
 	};
 

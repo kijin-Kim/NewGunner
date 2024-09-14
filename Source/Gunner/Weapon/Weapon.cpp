@@ -49,6 +49,7 @@ AWeapon::AWeapon()
 	FiringStateComponentClass = UFiringStateComponent::StaticClass();
 	ReloadingStateComponentClass = UReloadingStateComponent::StaticClass();
 	DroppedStateComponentClass = UDroppedStateComponent::StaticClass();
+	
 }
 
 void AWeapon::PostInitializeComponents()

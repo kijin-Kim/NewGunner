@@ -5,7 +5,6 @@
 
 #include "Gunner/Gunner.h"
 
-
 UGunnerStateComponent::UGunnerStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;

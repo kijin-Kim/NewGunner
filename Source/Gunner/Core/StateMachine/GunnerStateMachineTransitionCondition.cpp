@@ -3,7 +3,26 @@
 
 #include "GunnerStateMachineTransitionCondition.h"
 
-bool UGunnerStateMachineTransitionCondition::ShouldTransit_Implementation() const
+
+void UGunnerStateMachineTransitionCondition::OnEnter_Implementation()
 {
-	return false;
+}
+
+void UGunnerStateMachineTransitionCondition::OnUpdate_Implementation(float DeltaTime)
+{
+}
+
+void UGunnerStateMachineTransitionCondition::OnExit_Implementation()
+{
+	bShouldTransit = false;
+}
+
+bool UGunnerStateMachineTransitionCondition::ShouldTransit() const
+{
+	return bShouldTransit;
+}
+
+AActor* UGunnerStateMachineTransitionCondition::GetOwner() const
+{
+	return Cast<AActor>(GetOuter());
 }

@@ -16,9 +16,9 @@ struct FGunnerStateMachineToStateAndConditionClass
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<UGunnerStateMachineTransitionCondition> TransitionConditionClass;
-	UPROPERTY(EditAnywhere)
 	TSubclassOf<UGunnerStateComponent> ToStateComponentClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UGunnerStateMachineTransitionCondition> TransitionConditionClass;
 };
 
 
@@ -44,5 +44,5 @@ class GUNNER_API UGunnerStateMachineTransitionData : public UDataAsset
 
 public:
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "FromStateComponentClass"))
-	TArray<FGunnerStateMachineTransitionDataEntry> TransitionData;
+	TArray<FGunnerStateMachineTransitionDataEntry> TransitionDataEntries;
 };
