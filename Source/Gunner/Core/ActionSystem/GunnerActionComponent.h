@@ -10,6 +10,7 @@
 
 
 
+class UGunnerActionSet;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerActionComponent : public UActorComponent
@@ -23,10 +24,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	FGunnerActionDefinitionHandle AddAction(const FGunnerActionDefinition& ActionDefinition);
+	void RemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle);
 
 
 	void TEST_TRIGGER_ACTIONS();
+
+	void IncrementActionListLock();
+	void DecrementActionListLock();
 	
 private:
 	UFUNCTION()
@@ -44,6 +49,27 @@ private:
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_ActionDefinitions)
 	TArray<FGunnerActionDefinition> ActionDefinitions;
+	int32 ActionScopeLockCount = 0;
+	TArray<FGunnerActionDefinition> ActionPendingAdds;
+	TArray<FGunnerActionDefinitionHandle> ActionPendingRemoves;
+	
 
-	FGunnerActionAgentInfo AgentInfo;
+	TSharedPtr<FGunnerActionAgentInfo> AgentInfo;
 };
+
+
+struct FGunnerActionListScopeLock
+{
+	FGunnerActionListScopeLock(UGunnerActionComponent& InActionComponent): ActionComponent(InActionComponent)
+	{
+		ActionComponent.IncrementActionListLock();
+	}
+	~FGunnerActionListScopeLock()
+	{
+		ActionComponent.DecrementActionListLock();
+	}
+	
+	UGunnerActionComponent& ActionComponent;
+};
+
+#define ACTION_LIST_SCOPE_LOCK() FGunnerActionListScopeLock ActionListScopeLock(*this)

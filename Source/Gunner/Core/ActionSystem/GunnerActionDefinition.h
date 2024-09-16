@@ -21,6 +21,8 @@ struct FGunnerActionDefinition
 
 	FGunnerActionDefinition();
 	FGunnerActionDefinition(UObject* InSourceObject, TSubclassOf<UGunnerAction> InActionClass);
+	bool operator==(const FGunnerActionDefinition& Other) const;
+	bool operator!=(const FGunnerActionDefinition& Other) const;
 
 	UPROPERTY()
 	FGunnerActionDefinitionHandle Handle;

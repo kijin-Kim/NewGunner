@@ -15,7 +15,7 @@ class GUNNER_API UTestGunnerAction : public UGunnerAction
 	GENERATED_BODY()
 public:
 	UTestGunnerAction();
-	virtual void TriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle) override;
+	virtual void TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InActionAgentInfo) override;
 	virtual void EndAction() override;
 
 private:

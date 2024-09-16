@@ -10,13 +10,16 @@ bool UGunnerAction::CanTriggerAction()
 	return true;
 }
 
-void UGunnerAction::TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle)
+void UGunnerAction::TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo)
 {
 	GR_LOG_SUB(LogGunner, Warning, TEXT("Triggered action: %s"), *GetName());
 	check(InActionDefinitionHandle.IsValid());
+	check(InAgentInfo.IsValid());
 	check(!bIsRunning);
-	bIsRunning = true;
 	ActionDefinitionHandle = InActionDefinitionHandle;
+	AgentInfo = InAgentInfo;
+	bIsRunning = true;
+	
 }
 
 void UGunnerAction::EndAction()

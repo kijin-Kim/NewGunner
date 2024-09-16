@@ -19,3 +19,13 @@ FGunnerActionDefinition::FGunnerActionDefinition(UObject* InSourceObject, TSubcl
 {
 	Handle.GenerateNewHandle();
 }
+
+bool FGunnerActionDefinition::operator==(const FGunnerActionDefinition& Other) const
+{
+	return Handle == Other.Handle;
+}
+
+bool FGunnerActionDefinition::operator!=(const FGunnerActionDefinition& Other) const
+{
+	return !(*this == Other);
+}

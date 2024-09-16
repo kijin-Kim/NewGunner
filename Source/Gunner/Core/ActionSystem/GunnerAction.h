@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GunnerActionDefinition.h"
 #include "UObject/Object.h"
 #include "GunnerAction.generated.h"
 
+
+struct FGunnerActionAgentInfo;
 
 UENUM()
 enum class EGunnerActionNetMethod
@@ -30,10 +33,11 @@ class GUNNER_API UGunnerAction : public UObject
 
 public:
 	virtual bool CanTriggerAction();
-	virtual void TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle);
+	virtual void TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo);
 	virtual void EndAction();
 
 	EGunnerActionNetMethod GetActionNetMethod() const { return ActionNetMethod; }
+	const FGameplayTagContainer& GetTriggerEvents() const { return TriggerEvents; }
 
 public:
 	inline static FOnGunnerActionEndedSignature OnGunnerActionEndedDelegate;
@@ -42,7 +46,10 @@ protected:
 	FGunnerActionDefinitionHandle ActionDefinitionHandle;
 	UPROPERTY(EditDefaultsOnly)
 	EGunnerActionNetMethod ActionNetMethod = EGunnerActionNetMethod::ClientOnly;
-
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer TriggerEvents;
+	TWeakPtr<FGunnerActionAgentInfo> AgentInfo;
 private:
 	bool bIsRunning = false;
+	
 };
