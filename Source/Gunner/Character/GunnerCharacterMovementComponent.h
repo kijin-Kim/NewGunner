@@ -7,7 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Gunner/Core/Event/EventCallbackBindInterface.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
-#include "Gunner/Core/Input/InputMessage.h"
+#include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "GunnerCharacterMovementComponent.generated.h"
 
 
@@ -32,10 +32,10 @@ private:
 	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
 	
 
-	void Move(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
-	void Jump(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
-	void CharacterCrouch(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
-	void CharacterUncrouch(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
+	void Move(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
+	void Jump(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
+	void CharacterCrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
+	void CharacterUncrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 
 private:
 	TArray<FEventCallbackHandle> BoundedEventCallbackHandles;

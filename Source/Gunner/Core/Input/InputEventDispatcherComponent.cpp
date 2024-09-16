@@ -4,8 +4,10 @@
 #include "InputEventDispatcherComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputMessage.h"
+#include "GunnerEventMessage.h"
 #include "InputTagMappingData.h"
+#include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
 
 
@@ -27,16 +29,11 @@ void UInputEventDispatcherComponent::InitializeComponent()
 
 void UInputEventDispatcherComponent::OnInputEvent(const FInputActionValue& InputActionValue, UEnhancedInputComponent* InputComponent, FGameplayTag InputTag)
 {
-	if (!InputComponent)
+	check(InputComponent);
+	if (APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>())
 	{
-		return;
-	}
-
-	if (APawn* PossessedPawn = PlayerController->GetPawn())
-	{
-		FInputMessage InputMessage;
-		InputMessage.Value = InputActionValue;
-		UEventManagerComponent::SendEventToActor<FInputMessage>(InputTag, InputMessage, PossessedPawn);
+		const FGunnerEventMessage EventMessage(PlayerController, nullptr, InputActionValue, nullptr);
+		UEventManagerComponent::SendEventToActor<FGunnerEventMessage>(InputTag, EventMessage, PlayerState);
 	}
 }
 
@@ -55,16 +52,16 @@ void UInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn* NewP
 	}
 
 	UEnhancedInputComponent* InputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
-	if(!InputComponent)
+	if (!InputComponent)
 	{
 		return;
 	}
 
 	for (const auto& [InputAction, TriggerEventMappings] : InputTagMappingData->InputTagMappings)
 	{
-		for(const auto& [TriggerEvent, InputTag] : TriggerEventMappings)
+		for (const auto& [TriggerEvent, InputTag] : TriggerEventMappings)
 		{
-			InputComponent->BindAction(InputAction, TriggerEvent, this, &UInputEventDispatcherComponent::OnInputEvent, InputComponent, InputTag);	
+			InputComponent->BindAction(InputAction, TriggerEvent, this, &UInputEventDispatcherComponent::OnInputEvent, InputComponent, InputTag);
 		}
 	}
 }

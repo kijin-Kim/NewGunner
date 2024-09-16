@@ -2,7 +2,7 @@
 
 
 #include "CameraControlComponent.h"
-#include "Gunner/Core/Input/InputMessage.h"
+#include "Gunner/Core/Input/GunnerEventMessage.h"
 
 
 UCameraControllerComponent::UCameraControllerComponent()
@@ -25,7 +25,7 @@ TArray<FEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	if (UEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FInputMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
+			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
 		};
 	}
 	return {};
@@ -47,10 +47,10 @@ void UCameraControllerComponent::OnControllerChanged(APawn* Pawn, AController* O
 	}
 }
 
-void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FInputMessage& InputMessage)
+void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
 {
 	APawn* PawnOwner = GetOwner<APawn>();
-	const FVector2D LookAxisVector = InputMessage.Value.Get<FVector2D>();
+	const FVector2D LookAxisVector = EventMessage.GetInputActionValue().Get<FVector2D>();
 	if (PawnOwner->GetController())
 	{
 		PawnOwner->AddControllerYawInput(LookAxisVector.X * BaseTurnRate * MouseSensitivity);

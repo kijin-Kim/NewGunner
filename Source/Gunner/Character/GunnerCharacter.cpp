@@ -51,7 +51,6 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	
 	
-	EventManagerComponent = CreateDefaultSubobject<UEventManagerComponent>(TEXT("EventManager"));
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
 	
 }
@@ -96,17 +95,17 @@ void AGunnerCharacter::SetRunning(bool bNewRunning)
 void AGunnerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	if (HasAuthority())
-	{
-		if (TestWeaponClass)
-		{
-			TestWeapon = GetWorld()->SpawnActorDeferred<AWeapon>(TestWeaponClass, GetTransform());
-			TestWeapon->SetOwner(this);
-			TestWeapon->SetInstigator(this);
-			TestWeapon->SetAutonomousProxy(true);
-			TestWeapon->FinishSpawning(GetTransform());
-		}
-	}
+	// if (HasAuthority())
+	// {
+	// 	if (TestWeaponClass)
+	// 	{
+	// 		TestWeapon = GetWorld()->SpawnActorDeferred<AWeapon>(TestWeaponClass, GetTransform());
+	// 		TestWeapon->SetOwner(this);
+	// 		TestWeapon->SetInstigator(this);
+	// 		TestWeapon->SetAutonomousProxy(true);
+	// 		TestWeapon->FinishSpawning(GetTransform());
+	// 	}
+	// }
 }
 
 void AGunnerCharacter::ServerRun_Implementation(bool bNewRunning)

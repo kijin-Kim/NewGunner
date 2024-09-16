@@ -8,7 +8,7 @@
 #include "Gunner/Core/Event/EventManagerComponent.h"
 #include "CameraControlComponent.generated.h"
 
-struct FInputMessage;
+struct FGunnerEventMessage;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -27,7 +27,7 @@ protected:
 private:
 	UFUNCTION()
 	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
-	void Look(FGameplayTag GameplayTag, const FInputMessage& InputMessage);
+	void Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 
 private:
 	UPROPERTY(EditDefaultsOnly)

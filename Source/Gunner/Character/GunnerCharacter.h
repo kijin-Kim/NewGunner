@@ -71,8 +71,6 @@ protected:
 
 private:
 	UPROPERTY()
-	TObjectPtr<UEventManagerComponent> EventManagerComponent;
-	UPROPERTY()
 	TObjectPtr<UCameraControllerComponent> CameraControllerComponent;
 
 

@@ -2,14 +2,16 @@
 
 
 #include "GunnerPlayerState.h"
+
 #include "Gunner/Core/ActionSystem/GunnerAction.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/Core/ActionSystem/TestGunnerAction.h"
+#include "Gunner/Core/Event/EventManagerComponent.h"
 
 AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
+	EventManagerComponent = CreateDefaultSubobject<UEventManagerComponent>(TEXT("EventManagerComponent"));
 }
 
 void AGunnerPlayerState::PostInitializeComponents()
@@ -17,33 +19,38 @@ void AGunnerPlayerState::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	if (HasAuthority())
 	{
-		SetupActionComponent();
-	};
-}
-
-void AGunnerPlayerState::BeginPlay()
-{
-	Super::BeginPlay();
+		SetupOnPossessedPawnChangedEvent();
+	}
 }
 
 void AGunnerPlayerState::ClientInitialize(AController* C)
 {
 	Super::ClientInitialize(C);
-	SetupActionComponent();
+	SetupOnPossessedPawnChangedEvent();
 }
 
-void AGunnerPlayerState::SetupActionComponent()
+void AGunnerPlayerState::SetupOnPossessedPawnChangedEvent()
 {
-	ActionComponent->InitActionComponent(this, GetPawn());
-	if (HasAuthority())
+	if (AController* Controller = GetOwningController())
 	{
-		FGunnerActionDefinition ActionDefinition(this, UTestGunnerAction::StaticClass());
-		ActionComponent->AddAction(ActionDefinition);
+		Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::OnPossessedPawnChanged);
+		if (APawn* PossessedPawn = Controller->GetPawn())
+		{
+			OnPossessedPawnChanged(nullptr, PossessedPawn);
+		}
 	}
+}
 
-	FTimerHandle Temp;
-	GetWorld()->GetTimerManager().SetTimer(Temp, [this]()
+void AGunnerPlayerState::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
+{
+	if (NewPawn)
 	{
-		ActionComponent->TEST_TRIGGER_ACTIONS();
-	}, 5.0f, false);
+		ActionComponent->InitActionComponent(this, NewPawn);
+
+		if (HasAuthority() && TestActionClass)
+		{
+			FGunnerActionDefinition ActionDefinition(this, TestActionClass);
+			ActionComponent->AddAction(ActionDefinition);
+		}
+	}
 }

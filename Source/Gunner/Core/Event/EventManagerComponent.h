@@ -38,35 +38,36 @@ class GUNNER_API UEventManagerComponent : public UActorComponent
 	GENERATED_BODY()
 
 	friend class UAsyncAction_WaitForGunnerEvent;
+
 public:
 	UEventManagerComponent();
-
+	
 	// Free function version
-	template <typename FMessageStruct>
-	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TFunction<void(FGameplayTag, const FMessageStruct&)>&& Callback)
+	template <typename FMessageStruct, typename... VarType>
+	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
-		return BindEventCallbackInternal(EventTag, [InnerFunction = MoveTemp(Callback)](FGameplayTag EventTag, const void* Function)
+		return BindEventCallbackInternal(EventTag, [FreeFunction, Vars...](FGameplayTag EventTag, const void* MessagePtr)
 		{
-			InnerFunction(EventTag, *static_cast<const FMessageStruct*>(Function));
+			FreeFunction(EventTag, *static_cast<const FMessageStruct*>(MessagePtr), Vars...);
 		});
 	}
 
 	// Member function version
-	template <typename FMessageStruct, typename TOwner>
-	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&))
+	template <typename FMessageStruct, typename TOwner, typename... VarType>
+	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
 		TWeakObjectPtr<TOwner> Weak = Object;
-		return BindEventCallbackInternal(EventTag, [Weak, Function](FGameplayTag Tag, const void* MessagePtr)
+		return BindEventCallbackInternal(EventTag, [Weak, Function, Vars...](FGameplayTag Tag, const void* MessagePtr)
 		{
 			if (TOwner* Strong = Weak.Get())
 			{
-				(Strong->*Function)(Tag, *static_cast<const FMessageStruct*>(MessagePtr));
+				(Strong->*Function)(Tag, *static_cast<const FMessageStruct*>(MessagePtr), Vars...);
 			}
 		});
 	}
-	
-	void UnbindEventCallback(FEventCallbackHandle Handle);
 
+
+	void UnbindEventCallback(FEventCallbackHandle Handle);
 
 
 	template <typename FMessageStruct>
@@ -94,8 +95,6 @@ public:
 			EventManagerComponent->HandleEvent<FMessageStruct>(EventTag, Message);
 		}
 	}
-
-	
 
 private:
 	FEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks);

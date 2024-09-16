@@ -8,7 +8,7 @@
 /**
  * 
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FGunnerActionAgentInfo
 {
 	GENERATED_BODY()
