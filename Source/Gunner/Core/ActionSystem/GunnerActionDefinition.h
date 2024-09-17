@@ -35,6 +35,6 @@ struct FGunnerActionDefinition
 	TObjectPtr<UGunnerAction> ActionCDO;
 
 	UPROPERTY()
-	TArray<TObjectPtr<UGunnerAction>> ActionInstances;
+	TObjectPtr<UGunnerAction> ActionInstance;
 };
 

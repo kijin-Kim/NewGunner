@@ -61,11 +61,15 @@ public:
 
 protected:
 	FGunnerActionDefinitionHandle ActionDefinitionHandle;
-	UPROPERTY(EditDefaultsOnly)
-	EGunnerActionNetMethod ActionNetMethod = EGunnerActionNetMethod::LocalOnly;
+	
 
-	UPROPERTY(EditDefaultsOnly, Category = "ActionEvent")
+	UPROPERTY(EditDefaultsOnly, Category = "ActionTrigger Config")
+	EGunnerActionNetMethod ActionNetMethod = EGunnerActionNetMethod::LocalOnly;
+	UPROPERTY(EditDefaultsOnly, Category = "ActionTrigger Config")
 	FGameplayTagContainer ActionTriggerEventTags;
+	UPROPERTY(EditDefaultsOnly, Category = "ActionTrigger Config")
+	bool bIsRetriggerable = false;
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = "ActionTag")
 	FGameplayTagContainer ActionOwnedTags;
@@ -76,16 +80,11 @@ protected:
 	FGameplayTagContainer ShouldNotHaveTags;
 
 	
-	
-
-	
-
-
 	TWeakPtr<FGunnerActionAgentInfo> AgentInfo;
 
 	UPROPERTY(BlueprintReadOnly)
 	FGunnerEventMessage EventMessage;
 
 private:
-	bool bIsRunning = false;
+	bool bIsTriggering = false;
 };

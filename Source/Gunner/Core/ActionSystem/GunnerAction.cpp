@@ -2,12 +2,11 @@
 
 
 #include "GunnerAction.h"
-
 #include "Gunner/Gunner.h"
 
 bool UGunnerAction::CanTriggerAction() const
 {
-	return CanTrigger();
+	return (bIsRetriggerable || !bIsTriggering) && CanTrigger();
 }
 
 void UGunnerAction::TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo, const FGunnerEventMessage& InEventMessage)
@@ -15,23 +14,29 @@ void UGunnerAction::TriggerAction(FGunnerActionDefinitionHandle InActionDefiniti
 	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
 	check(InActionDefinitionHandle.IsValid());
 	check(InAgentInfo.IsValid());
-	check(!bIsRunning);
+	check(bIsRetriggerable || !bIsTriggering);
 	ActionDefinitionHandle = InActionDefinitionHandle;
 	AgentInfo = InAgentInfo;
-	bIsRunning = true;
 	EventMessage = InEventMessage;
+
+	if(bIsTriggering && bIsRetriggerable)
+	{
+		EndAction();
+		TriggerAction(InActionDefinitionHandle, InAgentInfo, InEventMessage);
+		return;
+	}
 	
+	bIsTriggering = true;
 	Trigger(InEventMessage);
 }
 
 void UGunnerAction::EndAction()
 {
 	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
-	check(bIsRunning);
-	bIsRunning = false;
+	check(bIsTriggering);
+	bIsTriggering = false;
 	check(ActionDefinitionHandle.IsValid());
 	check(OnGunnerActionEndedDelegate.ExecuteIfBound(ActionDefinitionHandle, this));
-
 	End();
 }
 
@@ -48,6 +53,3 @@ void UGunnerAction::Trigger_Implementation(const FGunnerEventMessage& InEventMes
 void UGunnerAction::End_Implementation()
 {
 }
-
-
-

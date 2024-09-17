@@ -29,10 +29,7 @@ void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* I
 
 	if (!AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
-		for (const auto& ActionDefinition : ActionDefinitions)
-		{
-			BindActionTriggerEvent(ActionDefinition);
-		}
+		OnRep_ActionDefinitions({});
 	}
 }
 
@@ -61,7 +58,13 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerAct
 		return ActionDefinition.Handle;
 	}
 
-	return ActionDefinitions[ActionDefinitions.Add(ActionDefinition)].Handle;
+	auto& NewActionDefinition = ActionDefinitions[ActionDefinitions.Add(ActionDefinition)];
+
+	NewActionDefinition.ActionInstance = NewObject<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass);
+	check(NewActionDefinition.ActionInstance);
+	NewActionDefinition.ActionInstance->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
+
+	return NewActionDefinition.Handle;
 }
 
 void UGunnerActionComponent::RemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle)
@@ -272,13 +275,16 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 	}
 
 	TArray<FGunnerActionDefinition> NewActionDefinitions;
-	for (const auto& ActionDefinition : ActionDefinitions)
+	for (auto& ActionDefinition : ActionDefinitions)
 	{
 		if (!OldActionDefinitions.ContainsByPredicate([ActionDefinition](const FGunnerActionDefinition& OldActionDefinition)
 		{
 			return (ActionDefinition.Handle == OldActionDefinition.Handle);
 		}))
 		{
+			check(!ActionDefinition.ActionInstance);
+			ActionDefinition.ActionInstance = NewObject<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass);
+			ActionDefinition.ActionInstance->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
 			NewActionDefinitions.Add(ActionDefinition);
 		}
 	}
@@ -293,7 +299,6 @@ void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionD
 	check(Action && ActionDefinitionHandle.IsValid());
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
 	check(ActionDefinition);
-	ActionDefinition->ActionInstances.Remove(Action);
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 }
 
@@ -317,7 +322,7 @@ FGunnerActionDefinition* UGunnerActionComponent::FindActionDefinitionByHandle(FG
 
 bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const
 {
-	return ActionDefinition.ActionCDO->CanTriggerAction()
+	return ActionDefinition.ActionInstance->CanTriggerAction()
 		&& OwnedTags.HasAll(ActionDefinition.ActionCDO->GetShouldHaveTags())
 		&& !OwnedTags.HasAny(ActionDefinition.ActionCDO->GetShouldNotHaveTags());
 }
@@ -339,13 +344,9 @@ void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionD
 
 	GR_LOG_SUB(LogGunner, Display, TEXT("InputActionValue: [%s]"), *EventMessage.GetInputActionValue().ToString());
 
-
-	UGunnerAction* NewAction = NewObject<UGunnerAction>(GetOwner(), ActionDefinition->ActionClass);
-	check(NewAction);
-	ActionDefinition->ActionInstances.Add(NewAction);
-	NewAction->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
-	OwnedTags.AppendTags(NewAction->GetActionOwnedTags());
-	NewAction->TriggerAction(ActionDefinitionHandle, AgentInfo, EventMessage);
+	check(ActionDefinition->ActionInstance);
+	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
+	ActionDefinition->ActionInstance->TriggerAction(ActionDefinitionHandle, AgentInfo, EventMessage);
 }
 
 void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
