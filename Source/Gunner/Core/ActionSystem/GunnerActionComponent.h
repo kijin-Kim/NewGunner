@@ -20,6 +20,17 @@ class GUNNER_API UGunnerActionComponent : public UActorComponent
 
 public:
 	UGunnerActionComponent();
+
+	template<typename T>
+	T* NewGunnerAction(UObject* Outer, const UClass* Class)
+	{
+		T* NewAction = NewObject<UGunnerAction>(GetOwner(), Class);
+		NewAction->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
+		return NewAction;
+	}
+	
+
+	
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -33,10 +44,13 @@ public:
 
 	static UGunnerActionComponent* GetActionComponentFromActor(AActor* Actor);
 
+	bool HasActionTriggerAuthority(UGunnerAction* Action) const;
+
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
-	
+
+	void HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition);
 	void BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition);
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage, FGunnerActionDefinitionHandle ActionDefinitionHandle);
 	UFUNCTION()

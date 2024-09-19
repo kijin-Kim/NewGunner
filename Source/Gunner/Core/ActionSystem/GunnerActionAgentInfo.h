@@ -13,9 +13,12 @@ struct FGunnerActionAgentInfo
 {
 	GENERATED_BODY()
 	void Init(AActor* InOwnerActor, AActor* InAgentActor);
-	
+
+	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AController> Controller;
+	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AActor> AgentActor;
+	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AActor> OwnerActor;
 	
 	bool IsLocallyPlayerControlled() const;

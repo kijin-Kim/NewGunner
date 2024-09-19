@@ -51,7 +51,7 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerAct
 		return FGunnerActionDefinitionHandle();
 	}
 
-	BindActionTriggerEvent(ActionDefinition);
+
 	if (ActionScopeLockCount > 0)
 	{
 		ActionPendingAdds.Add(ActionDefinition);
@@ -59,11 +59,8 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerAct
 	}
 
 	auto& NewActionDefinition = ActionDefinitions[ActionDefinitions.Add(ActionDefinition)];
-
-	NewActionDefinition.ActionInstance = NewObject<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass);
-	check(NewActionDefinition.ActionInstance);
-	NewActionDefinition.ActionInstance->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
-
+	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass);
+	HandleTriggerableActionOnAdded(NewActionDefinition);
 	return NewActionDefinition.Handle;
 }
 
@@ -204,6 +201,24 @@ UGunnerActionComponent* UGunnerActionComponent::GetActionComponentFromActor(AAct
 	return PlayerState->GetComponentByClass<UGunnerActionComponent>();
 }
 
+bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) const
+{
+	check(Action);
+	EGunnerActionNetMethod ActionNetMethod = Action->GetActionNetMethod();
+	if (ActionNetMethod == EGunnerActionNetMethod::LocalOnly || ActionNetMethod == EGunnerActionNetMethod::LocalPredicted)
+	{
+		return AgentInfo->IsLocallyControlled();
+	}
+
+	if (ActionNetMethod == EGunnerActionNetMethod::ServerOnly || ActionNetMethod == EGunnerActionNetMethod::ServerAuthoritative)
+	{
+		return AgentInfo->IsOwnerActorAuthoritative();
+	}
+
+	checkNoEntry();
+	return false;
+}
+
 void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
 {
 	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
@@ -239,16 +254,24 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 	}
 }
 
-void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition)
+void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition)
 {
-	EGunnerActionNetMethod ActionNetMethod = NewActionDefinition.ActionCDO->GetActionNetMethod();
-	bool bIsAutonmousProxy = !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled();
-	if (bIsAutonmousProxy && (ActionNetMethod != EGunnerActionNetMethod::LocalOnly && ActionNetMethod != EGunnerActionNetMethod::LocalPredicted))
+	if (!HasActionTriggerAuthority(NewActionDefinition.ActionCDO))
 	{
 		return;
 	}
 
+	BindActionTriggerEvent(NewActionDefinition);
+	if (NewActionDefinition.ActionCDO->ShouldTriggerOnAdded())
+	{
+		TryTriggerAction(NewActionDefinition.Handle, FGunnerEventMessage());
+	}
+}
+
+void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition)
+{
 	UGunnerAction* Action = NewActionDefinition.ActionCDO;
+
 	FGameplayTagContainer ActionTriggerEventTags = Action->GetActionTriggerEventTags();
 	UEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UEventManagerComponent>();
 	if (!EventManagerComponent)
@@ -275,6 +298,7 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 	}
 
 	TArray<FGunnerActionDefinition> NewActionDefinitions;
+
 	for (auto& ActionDefinition : ActionDefinitions)
 	{
 		if (!OldActionDefinitions.ContainsByPredicate([ActionDefinition](const FGunnerActionDefinition& OldActionDefinition)
@@ -282,15 +306,14 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 			return (ActionDefinition.Handle == OldActionDefinition.Handle);
 		}))
 		{
-			check(!ActionDefinition.ActionInstance);
-			ActionDefinition.ActionInstance = NewObject<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass);
-			ActionDefinition.ActionInstance->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
+			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass);
 			NewActionDefinitions.Add(ActionDefinition);
 		}
 	}
+
 	for (const auto& NewActionDefinition : NewActionDefinitions)
 	{
-		BindActionTriggerEvent(NewActionDefinition);
+		HandleTriggerableActionOnAdded(NewActionDefinition);
 	}
 }
 

@@ -51,6 +51,7 @@ public:
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
+	bool ShouldTriggerOnAdded() const { return bShouldTriggerOnAdded; }
 	
 
 	UFUNCTION(BlueprintCallable)
@@ -69,6 +70,9 @@ protected:
 	FGameplayTagContainer ActionTriggerEventTags;
 	UPROPERTY(EditDefaultsOnly, Category = "ActionTrigger Config")
 	bool bIsRetriggerable = false;
+	UPROPERTY(EditDefaultsOnly, Category = "ActionTrigger Config")
+	bool bShouldTriggerOnAdded = false;
+	
 	
 
 	UPROPERTY(EditDefaultsOnly, Category = "ActionTag")
@@ -84,6 +88,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	FGunnerEventMessage EventMessage;
+
+	
 
 private:
 	bool bIsTriggering = false;
