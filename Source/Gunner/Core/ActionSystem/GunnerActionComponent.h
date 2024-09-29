@@ -11,8 +11,6 @@
 #include "GunnerActionComponent.generated.h"
 
 
-class UGunnerActionSet;
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerActionComponent : public UActorComponent
 {
@@ -21,16 +19,15 @@ class GUNNER_API UGunnerActionComponent : public UActorComponent
 public:
 	UGunnerActionComponent();
 
-	template<typename T>
-	T* NewGunnerAction(UObject* Outer, const UClass* Class)
+	template <typename T>
+	T* NewGunnerAction(UObject* Outer, const UClass* Class, FGunnerActionDefinitionHandle ActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> AgentInfo)
 	{
 		T* NewAction = NewObject<UGunnerAction>(GetOwner(), Class);
-		NewAction->OnGunnerActionEndedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionEnded);
+		NewAction->OnGunnerActionEndedDelegate.AddUObject(this, &UGunnerActionComponent::OnActionEnded);
+		NewAction->InitializeGunnerAction(ActionDefinitionHandle, AgentInfo);
 		return NewAction;
 	}
-	
 
-	
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -42,6 +39,7 @@ public:
 	void IncrementActionListLock();
 	void DecrementActionListLock();
 
+	UFUNCTION(BlueprintCallable)
 	static UGunnerActionComponent* GetActionComponentFromActor(AActor* Actor);
 
 	bool HasActionTriggerAuthority(UGunnerAction* Action) const;
@@ -59,11 +57,12 @@ private:
 	FGunnerActionDefinition* FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle);
 
 	bool CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const;
-	void LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+	void LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionDefinitionHandle ActionDefinitionHandle);
 	UFUNCTION(Reliable, Server)
-	void ServerTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+	void ServerTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+	void ClientTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated);
+
 
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_ActionDefinitions)
@@ -75,6 +74,7 @@ private:
 	TSharedPtr<FGunnerActionAgentInfo> AgentInfo;
 
 	FGameplayTagContainer OwnedTags;
+	
 };
 
 

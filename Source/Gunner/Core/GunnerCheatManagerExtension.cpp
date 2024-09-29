@@ -43,11 +43,11 @@ void UGunnerCheatManagerExtension::ToggleThirdPersonMode()
 	GunnerCharacter->FirstPersonSpringArmComponent->SocketOffset = bIsTPMode ? FVector{0.0f, 50.0f, 0.0f} : FVector::ZeroVector;
 
 
-	if (GunnerCharacter->WeaponManagerComponent->CurrentWeapon) // TODO: Signaled By Weapon Change
-	{
-		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->FirstPersonMeshComponent->SetHiddenInGame(bIsTPMode);
-		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->FirstPersonMagazineMeshComponent->SetHiddenInGame(bIsTPMode);
-		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->ThirdPersonMeshComponent->SetOwnerNoSee(!bIsTPMode);
-		GunnerCharacter->WeaponManagerComponent->CurrentWeapon->ThirdPersonMagazineMeshComponent->SetOwnerNoSee(!bIsTPMode);
-	}
+	// if (GunnerCharacter->WeaponManagerComponent->CurrentWeapon) // TODO: Signaled By Weapon Change
+	// {
+	// 	GunnerCharacter->WeaponManagerComponent->CurrentWeapon->FirstPersonMeshComponent->SetHiddenInGame(bIsTPMode);
+	// 	GunnerCharacter->WeaponManagerComponent->CurrentWeapon->FirstPersonMagazineMeshComponent->SetHiddenInGame(bIsTPMode);
+	// 	GunnerCharacter->WeaponManagerComponent->CurrentWeapon->ThirdPersonMeshComponent->SetOwnerNoSee(!bIsTPMode);
+	// 	GunnerCharacter->WeaponManagerComponent->CurrentWeapon->ThirdPersonMagazineMeshComponent->SetOwnerNoSee(!bIsTPMode);
+	// }
 }

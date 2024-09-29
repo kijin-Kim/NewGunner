@@ -49,10 +49,13 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION(BlueprintCallable)
 	float PlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
+	UFUNCTION(BlueprintCallable)
 	void StopMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson);
 	FOnMontageEnded* GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson);
 	FOnMontageBlendingOutStarted* GetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson);
+	
 
 
 	UAnimInstance* GetDesiredAnimInstance(bool bIsThirdPerson) const;
@@ -65,7 +68,7 @@ private:
 	void OnRep_ReplicatedAnimMontage();
 
 private:
-	UPROPERTY(Transient, ReplicatedUsing=OnRep_ReplicatedAnimMontage)
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_ReplicatedAnimMontage)
 	FRepAnimMontageData ReplicatedAnimMontageData;
 	FLocalAnimMontageData LocalAnimMontageData;
 };

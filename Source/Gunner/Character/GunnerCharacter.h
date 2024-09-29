@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "Gunner/Core/AnimMontagePlayerInterface.h"
 #include "GameFramework/Character.h"
+#include "Gunner/Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "GunnerCharacter.generated.h"
 
+class AGunnerEquipment;
+class UGunnerEquipmentManagerComponent;
 class UGunnerActionComponent;
 class AWeapon;
 class UCameraControllerComponent;
@@ -22,7 +25,7 @@ class UCameraComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IAnimMontagePlayerInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public IAnimMontagePlayerInterface, public IGunnerActionComponentInterface
 {
 	GENERATED_BODY()
 
@@ -32,14 +35,18 @@ public:
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;
-
+	
 	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
 	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return GetMesh(); }
 	bool IsRunning() const;
-
 	
+	virtual UGunnerActionComponent* GetActionComponent() const override;
 
+
+
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+	
 private:
 	void SetRunning(bool bNewRunning);
 	UFUNCTION(Server, Reliable)
@@ -82,6 +89,14 @@ private:
 
 public:
 	virtual void PossessedBy(AController* NewController) override;
+
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TSubclassOf<AGunnerEquipment>> InitialEquipmentClasses;
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;
+
 	
 	
 };

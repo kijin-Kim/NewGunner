@@ -3,8 +3,49 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "InputActionValue.h"
 #include "GunnerEventMessage.generated.h"
+
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct GUNNER_API FGunnerEventMessage
+{
+	GENERATED_BODY()
+
+	FGunnerEventMessage()
+		: EventTag(),
+		  Instigator(nullptr)
+		  , TargetActor(nullptr)
+		  , InputActionValue()
+		  , EventDataObject(nullptr)
+	{
+	}
+
+	FGunnerEventMessage(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: EventTag(InEventTag),
+		  Instigator(InInstigator)
+		  , TargetActor(InTargetActor)
+		  , InputActionValue(InInputActionValue)
+		  , EventDataObject(InEventDataObject)
+	{
+	}
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag EventTag;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AActor> Instigator;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AActor> TargetActor;
+	UPROPERTY(BlueprintReadOnly)
+	FInputActionValue InputActionValue;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UObject> EventDataObject;
+};
 
 USTRUCT()
 struct FGunnerReplicatedInputActionValue
@@ -26,42 +67,51 @@ struct FGunnerReplicatedInputActionValue
 	EInputActionValueType ValueType = EInputActionValueType::Boolean;
 };
 
-/**
- * 
- */
 USTRUCT(BlueprintType)
-struct GUNNER_API FGunnerEventMessage
+struct GUNNER_API FGunnerEventMessageReplicated
 {
 	GENERATED_BODY()
-
-	FGunnerEventMessage()
-		: Instigator(nullptr)
+	FGunnerEventMessageReplicated()
+		: EventTag(),
+		  Instigator(nullptr)
 		  , TargetActor(nullptr)
 		  , ReplicatedInputActionValue()
 		  , EventDataObject(nullptr)
 	{
 	}
 
-	FGunnerEventMessage(AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
-		: Instigator(InInstigator)
+	FGunnerEventMessageReplicated(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: EventTag(InEventTag),
+		  Instigator(InInstigator)
 		  , TargetActor(InTargetActor)
 		  , ReplicatedInputActionValue(InInputActionValue)
 		  , EventDataObject(InEventDataObject)
 	{
 	}
 
-	AActor* GetInstigator() const { return Instigator.Get(); }
-	AActor* GetTargetActor() const { return TargetActor.Get(); }
-	FInputActionValue GetInputActionValue() const { return FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value); }
-	UObject* GetEventDataObject() const { return EventDataObject.Get(); }
+	FGunnerEventMessageReplicated(const FGunnerEventMessage& EventMessage)
+		: EventTag(EventMessage.EventTag),
+		  Instigator(EventMessage.Instigator)
+		  , TargetActor(EventMessage.TargetActor)
+		  , ReplicatedInputActionValue(EventMessage.InputActionValue)
+		  , EventDataObject(EventMessage.EventDataObject)
+	{
+	}
+
+	FGunnerEventMessage ToEventMessage() const
+	{
+		return FGunnerEventMessage(EventTag, Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
+	}
 
 private:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
+	FGameplayTag EventTag;
+	UPROPERTY()
 	TObjectPtr<AActor> Instigator;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	TObjectPtr<AActor> TargetActor;
 	UPROPERTY()
 	FGunnerReplicatedInputActionValue ReplicatedInputActionValue;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	TObjectPtr<UObject> EventDataObject;
 };

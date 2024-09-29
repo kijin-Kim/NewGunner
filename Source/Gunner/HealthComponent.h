@@ -33,6 +33,6 @@ public:
 	int32 MaxHealth;
 	
 protected:
-	UPROPERTY(ReplicatedUsing=OnRep_Health, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, BlueprintReadOnly)
 	int32 Health;
 };

@@ -9,11 +9,14 @@
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/Core/AnimMontagePlayerComponent.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Equipment/GunnerEquipment.h"
+#include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponManagerComponent.h"
 
@@ -49,10 +52,11 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
-	
-	
+
+
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
-	
+
+	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -64,7 +68,6 @@ void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::SetRunning, true);
 	}
 	//WeaponManagerComponent->SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 
@@ -81,6 +84,36 @@ UAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementati
 bool AGunnerCharacter::IsRunning() const
 {
 	return bIsRunning;
+}
+
+UGunnerActionComponent* AGunnerCharacter::GetActionComponent() const
+{
+	const APlayerState* PS = GetPlayerState<APlayerState>();
+	return PS ? PS->FindComponentByClass<UGunnerActionComponent>() : FindComponentByClass<UGunnerActionComponent>();
+}
+
+void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+	GR_LOG(LogGunner, Warning, TEXT(""));
+
+	if (NewPlayerState)
+	{
+		GetActionComponent()->InitActionComponent(NewPlayerState, this);
+	}
+
+
+	if (HasAuthority() && NewPlayerState && NewPlayerState != OldPlayerState)
+	{
+		check(InitialEquipmentClasses.Num() <= 3);
+		for (int i = 0; i < InitialEquipmentClasses.Num(); ++i)
+		{
+			if (InitialEquipmentClasses[i])
+			{
+				EquipmentManagerComponent->AddEquipmentToSlot(i, InitialEquipmentClasses[i]);
+			}
+		}
+	}
 }
 
 void AGunnerCharacter::SetRunning(bool bNewRunning)

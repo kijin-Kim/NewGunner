@@ -35,5 +35,5 @@ private:
 	TObjectPtr<UEventManagerComponent> EventManagerComponent;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGunnerAction> TestActionClass;
+	TArray<TSubclassOf<UGunnerAction>> TestActionClasses;
 };

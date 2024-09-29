@@ -4,52 +4,60 @@
 #include "GunnerAction.h"
 #include "Gunner/Gunner.h"
 
-bool UGunnerAction::CanTriggerAction() const
+void UGunnerAction::InitializeGunnerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo)
 {
-	return (bIsRetriggerable || !bIsTriggering) && CanTrigger();
-}
-
-void UGunnerAction::TriggerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo, const FGunnerEventMessage& InEventMessage)
-{
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
 	check(InActionDefinitionHandle.IsValid());
 	check(InAgentInfo.IsValid());
-	check(bIsRetriggerable || !bIsTriggering);
 	ActionDefinitionHandle = InActionDefinitionHandle;
 	AgentInfo = InAgentInfo;
-	EventMessage = InEventMessage;
+	OnActionAdded();
+}
 
-	if(bIsTriggering && bIsRetriggerable)
+void UGunnerAction::SetActionCurrentEventMessage(const FGunnerEventMessage& InEventMessage)
+{
+	EventMessage = InEventMessage;
+}
+
+void UGunnerAction::OnActionAdded_Implementation()
+{
+	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
+}
+
+bool UGunnerAction::OnCanTriggerAction_Implementation() const
+{
+	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
+	return (bIsRetriggerable || !bIsTriggering);
+}
+
+void UGunnerAction::OnTriggerAction_Implementation()
+{
+	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
+	check(ActionDefinitionHandle.IsValid());
+	check(AgentInfo.IsValid());
+	check(bIsRetriggerable || !bIsTriggering);
+
+	if (bIsTriggering && bIsRetriggerable)
 	{
 		EndAction();
-		TriggerAction(InActionDefinitionHandle, InAgentInfo, InEventMessage);
+	}
+
+	bIsTriggering = true;
+}
+
+void UGunnerAction::OnEndAction_Implementation()
+{
+	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
+
+	if (!bIsTriggering)
+	{
 		return;
 	}
-	
-	bIsTriggering = true;
-	Trigger(InEventMessage);
+	bIsTriggering = false;
+	check(ActionDefinitionHandle.IsValid());
+	OnGunnerActionEndedDelegate.Broadcast(ActionDefinitionHandle, this);
 }
 
 void UGunnerAction::EndAction()
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
-	check(bIsTriggering);
-	bIsTriggering = false;
-	check(ActionDefinitionHandle.IsValid());
-	check(OnGunnerActionEndedDelegate.ExecuteIfBound(ActionDefinitionHandle, this));
-	End();
-}
-
-
-bool UGunnerAction::CanTrigger_Implementation() const
-{
-	return true;
-}
-
-void UGunnerAction::Trigger_Implementation(const FGunnerEventMessage& InEventMessage)
-{
-}
-
-void UGunnerAction::End_Implementation()
-{
+	OnEndAction();
 }

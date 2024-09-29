@@ -3,9 +3,10 @@
 
 #include "GunnerActionComponent.h"
 #include "GunnerAction.h"
+#include "GunnerActionComponentInterface.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
-#include "GameFramework/PlayerState.h"
+
 #include "Gunner/Gunner.h"
 #include "Gunner/Core/Event/EventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
@@ -23,11 +24,13 @@ UGunnerActionComponent::UGunnerActionComponent()
 	}
 }
 
+
 void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor)
 {
+	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
 
-	if (!AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
+	if (OldAgentInfo != *AgentInfo && !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
 		OnRep_ActionDefinitions({});
 	}
@@ -59,7 +62,7 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerAct
 	}
 
 	auto& NewActionDefinition = ActionDefinitions[ActionDefinitions.Add(ActionDefinition)];
-	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass);
+	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
 	HandleTriggerableActionOnAdded(NewActionDefinition);
 	return NewActionDefinition.Handle;
 }
@@ -99,7 +102,14 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 		return;
 	}
 
+	if (AgentInfo->AgentActor->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		GR_LOG_SUB(LogGunner, Error, TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 Action [%s]을(를) 실행할 수 없습니다."), *AgentInfo->AgentActor->GetName(), *ActionDefinition->ActionClass->GetName());
+		return;
+	}
 
+	check(ActionDefinition->ActionInstance);
+	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessage);
 	if (!CanTriggerAction(*ActionDefinition))
 	{
 		GR_LOG_SUB(LogGunner, Error, TEXT("Action [%s]을(를) 실행이 거부되었습니다"), *ActionDefinition->ActionClass->GetName());
@@ -109,7 +119,7 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 
 	if (AgentInfo->OwnerActor->GetNetMode() == NM_Standalone)
 	{
-		LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+		LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 		return;
 	}
 
@@ -122,16 +132,17 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 	{
 		if (bIsLocallyControlled || ActionNetMethod == EGunnerActionNetMethod::ServerOnly)
 		{
-			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 			return;
 		}
 
 		if (ActionNetMethod == EGunnerActionNetMethod::ServerAuthoritative)
 		{
-			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 			ClientTriggerAction(ActionDefinitionHandle, EventMessage);
 			return;
 		}
+
 		GR_LOG_SUB(LogGunner, Error, TEXT("해당 호스트에서는 Action을(를) 실행할 수 없습니다."));
 		return;
 	}
@@ -140,13 +151,13 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 	{
 		if (ActionNetMethod == EGunnerActionNetMethod::LocalOnly)
 		{
-			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 			return;
 		}
 
 		if (ActionNetMethod == EGunnerActionNetMethod::LocalPredicted)
 		{
-			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+			LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage);
 			return;
 		}
@@ -180,25 +191,22 @@ void UGunnerActionComponent::DecrementActionListLock()
 
 UGunnerActionComponent* UGunnerActionComponent::GetActionComponentFromActor(AActor* Actor)
 {
-	// ActionComponent는 Actor또는 PlayerState에 존재할 것을 가정합니다.
+	if (!Actor)
+	{
+		return nullptr;
+	}
+
+	if (IGunnerActionComponentInterface* GunnerActionComponentInterface = Cast<IGunnerActionComponentInterface>(Actor))
+	{
+		return GunnerActionComponentInterface->GetActionComponent();
+	}
+
 	if (UGunnerActionComponent* ActionComponent = Actor->GetComponentByClass<UGunnerActionComponent>())
 	{
 		return ActionComponent;
 	}
 
-	APawn* Pawn = Cast<APawn>(Actor);
-	if (!Pawn)
-	{
-		return nullptr;
-	}
-
-	APlayerState* PlayerState = Pawn->GetPlayerState();
-	if (!PlayerState)
-	{
-		return nullptr;
-	}
-
-	return PlayerState->GetComponentByClass<UGunnerActionComponent>();
+	return nullptr;
 }
 
 bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) const
@@ -306,7 +314,7 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 			return (ActionDefinition.Handle == OldActionDefinition.Handle);
 		}))
 		{
-			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass);
+			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
 			NewActionDefinitions.Add(ActionDefinition);
 		}
 	}
@@ -319,9 +327,6 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 
 void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action)
 {
-	check(Action && ActionDefinitionHandle.IsValid());
-	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	check(ActionDefinition);
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 }
 
@@ -345,42 +350,28 @@ FGunnerActionDefinition* UGunnerActionComponent::FindActionDefinitionByHandle(FG
 
 bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const
 {
-	return ActionDefinition.ActionInstance->CanTriggerAction()
+	return ActionDefinition.ActionInstance->OnCanTriggerAction()
 		&& OwnedTags.HasAll(ActionDefinition.ActionCDO->GetShouldHaveTags())
 		&& !OwnedTags.HasAny(ActionDefinition.ActionCDO->GetShouldNotHaveTags());
 }
 
-void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
+void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionDefinitionHandle ActionDefinitionHandle)
 {
-	if (EventMessage.GetInstigator())
-	{
-		GR_LOG_SUB(LogGunner, Display, TEXT("Instiagtor: [%s]"), *EventMessage.GetInstigator()->GetName());
-	}
-	if (EventMessage.GetTargetActor())
-	{
-		GR_LOG_SUB(LogGunner, Display, TEXT("Targetactor: [%s]"), *EventMessage.GetTargetActor()->GetName());
-	}
-	if (EventMessage.GetEventDataObject())
-	{
-		GR_LOG_SUB(LogGunner, Display, TEXT("EventDataObject: [%s]"), *EventMessage.GetEventDataObject()->GetName());
-	}
-
-	GR_LOG_SUB(LogGunner, Display, TEXT("InputActionValue: [%s]"), *EventMessage.GetInputActionValue().ToString());
-
 	check(ActionDefinition->ActionInstance);
 	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
-	ActionDefinition->ActionInstance->TriggerAction(ActionDefinitionHandle, AgentInfo, EventMessage);
+	ActionDefinition->ActionInstance->OnTriggerAction();
 }
 
-void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
+void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated)
 {
 	check(ActionDefinitionHandle.IsValid());
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
 	check(ActionDefinition)
-	LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
+	LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 }
 
-void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
+void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated)
 {
 	if (!ActionDefinitionHandle.IsValid())
 	{
@@ -392,10 +383,11 @@ void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerAction
 		UE_DEBUG_BREAK(); // FAIL DESYNC
 	}
 
+	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
 	if (!CanTriggerAction(*ActionDefinition))
 	{
 		UE_DEBUG_BREAK(); // FAIL DESYNC SHOULD ROLLBACK
 	}
 
-	LocalTriggerAction(ActionDefinition, ActionDefinitionHandle, EventMessage);
+	LocalTriggerAction(ActionDefinition, ActionDefinitionHandle);
 }

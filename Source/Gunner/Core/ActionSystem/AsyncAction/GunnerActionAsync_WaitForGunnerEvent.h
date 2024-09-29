@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EventCallbackBindInterface.h"
+#include "Gunner/Core/Event/EventCallbackBindInterface.h"
 #include "GameplayTagContainer.h"
-#include "Engine/CancellableAsyncAction.h"
-#include "AsyncAction_WaitForGunnerEvent.generated.h"
+#include "GunnerCancellableAsyncAction.h"
+#include "GunnerActionAsync_WaitForGunnerEvent.generated.h"
 
+class UGunnerAction;
 class UEventManagerComponent;
 /**
  * 
@@ -16,13 +17,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerEventReceivedSignature, FGa
 
 
 UCLASS()
-class GUNNER_API UAsyncAction_WaitForGunnerEvent : public UCancellableAsyncAction, public IEventCallbackBindInterface
+class GUNNER_API UGunnerActionAsync_WaitForGunnerEvent : public UGunnerCancellableAsyncAction, public IEventCallbackBindInterface
 {
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
-	static UAsyncAction_WaitForGunnerEvent* WaitForGunnerEvent(AActor* EventTargetActor, FGameplayTag EventTag, UScriptStruct* EventMessageType);
+	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
+	static UGunnerActionAsync_WaitForGunnerEvent* WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag EventTag, UScriptStruct* EventMessageType);
 	virtual void Activate() override;
 	virtual void SetReadyToDestroy() override;
 	
@@ -36,8 +37,8 @@ public:
 	DECLARE_FUNCTION(execGetMessage);
 
 public:
-	UPROPERTY(BlueprintAssignable)
-	FOnGunnerEventReceivedSignature OnEventReceived;
+	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnEventReceived"))
+	FOnGunnerEventReceivedSignature OnEventReceivedDelegate;
 
 private:
 	const void* MessagePtr;

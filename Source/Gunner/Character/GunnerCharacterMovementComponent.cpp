@@ -94,7 +94,7 @@ void UGunnerCharacterMovementComponent::Move(FGameplayTag GameplayTag, const FGu
 
 	if (CharacterOwner)
 	{
-		const FVector2D MovementVector = EventMessage.GetInputActionValue().Get<FVector2D>();
+		const FVector2D MovementVector = EventMessage.InputActionValue.Get<FVector2D>();
 		AddInputVector(CharacterOwner->GetActorForwardVector() * MovementVector.Y, false);
 		AddInputVector(CharacterOwner->GetActorRightVector() * MovementVector.X, false);
 	}

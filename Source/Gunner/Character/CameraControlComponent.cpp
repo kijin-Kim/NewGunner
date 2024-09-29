@@ -50,7 +50,7 @@ void UCameraControllerComponent::OnControllerChanged(APawn* Pawn, AController* O
 void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
 {
 	APawn* PawnOwner = GetOwner<APawn>();
-	const FVector2D LookAxisVector = EventMessage.GetInputActionValue().Get<FVector2D>();
+	const FVector2D LookAxisVector = EventMessage.InputActionValue.Get<FVector2D>();
 	if (PawnOwner->GetController())
 	{
 		PawnOwner->AddControllerYawInput(LookAxisVector.X * BaseTurnRate * MouseSensitivity);

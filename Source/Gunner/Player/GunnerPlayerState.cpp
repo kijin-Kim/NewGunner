@@ -17,16 +17,16 @@ AGunnerPlayerState::AGunnerPlayerState()
 void AGunnerPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	if (HasAuthority())
-	{
-		SetupOnPossessedPawnChangedEvent();
-	}
+	// if (HasAuthority())
+	// {
+	// 	SetupOnPossessedPawnChangedEvent();
+	// }
 }
 
 void AGunnerPlayerState::ClientInitialize(AController* C)
 {
 	Super::ClientInitialize(C);
-	SetupOnPossessedPawnChangedEvent();
+	//SetupOnPossessedPawnChangedEvent();
 }
 
 void AGunnerPlayerState::SetupOnPossessedPawnChangedEvent()
@@ -47,10 +47,17 @@ void AGunnerPlayerState::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 	{
 		ActionComponent->InitActionComponent(this, NewPawn);
 
-		if (HasAuthority() && TestActionClass)
+		if (HasAuthority())
 		{
-			FGunnerActionDefinition ActionDefinition(this, TestActionClass);
-			ActionComponent->AddAction(ActionDefinition);
+			for (const auto& TestActionClass : TestActionClasses)
+			{
+				if(TestActionClass)
+				{
+					FGunnerActionDefinition ActionDefinition(this, TestActionClass);
+					ActionComponent->AddAction(ActionDefinition);	
+				}
+				
+			}
 		}
 	}
 }

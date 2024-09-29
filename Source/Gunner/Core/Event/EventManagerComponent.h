@@ -37,7 +37,7 @@ class GUNNER_API UEventManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	friend class UAsyncAction_WaitForGunnerEvent;
+	friend class UGunnerActionAsync_WaitForGunnerEvent;
 
 public:
 	UEventManagerComponent();
@@ -49,7 +49,7 @@ public:
 		return BindEventCallbackInternal(EventTag, [FreeFunction, Vars...](FGameplayTag EventTag, const void* MessagePtr)
 		{
 			FreeFunction(EventTag, *static_cast<const FMessageStruct*>(MessagePtr), Vars...);
-		});
+		}, TBaseStructure<FMessageStruct>::Get());
 	}
 
 	// Member function version
@@ -63,64 +63,67 @@ public:
 			{
 				(Strong->*Function)(Tag, *static_cast<const FMessageStruct*>(MessagePtr), Vars...);
 			}
-		});
+		}, TBaseStructure<FMessageStruct>::Get());
 	}
 
 
 	void UnbindEventCallback(FEventCallbackHandle Handle);
-
-
-	template <typename FMessageStruct>
-	void HandleEvent(FGameplayTag EventTag, const FMessageStruct& Message)
-	{
-		if (EventCallbacks.Contains(EventTag))
-		{
-			bIsIterating = true;
-			for (const auto& Callback : EventCallbacks[EventTag].Callbacks)
-			{
-				Callback(EventTag, &Message);
-			}
-			bIsIterating = false;
-		}
-
-		AddPendingEventCallbacks();
-		RemovePendingEventCallbacks();
-	}
+	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
 
 	template <typename FMessageStruct>
 	static void SendEventToActor(FGameplayTag EventTag, const FMessageStruct& Message, AActor* TargetActor)
 	{
 		if (UEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UEventManagerComponent>())
 		{
-			EventManagerComponent->HandleEvent<FMessageStruct>(EventTag, Message);
+			EventManagerComponent->HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
 		}
 	}
 
+	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "Message", DisplayName= "Send Event To Actor"))
+	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
+	DECLARE_FUNCTION(execBP_SendEventToActor);
+
+
 private:
-	FEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks);
-	void AddPendingEventCallbacks();
-	void RemovePendingEventCallbacks();
+	FEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType);
 
 private:
 	struct FEventCallback
 	{
 		int32 HandleID = 0;
 		TFunction<void(FGameplayTag, const void*)> Callback;
-		bool bIsPendingRemove = false;
-
-		void operator()(FGameplayTag EventTag, const void* MessagePtr) const
-		{
-			Callback(EventTag, MessagePtr);
-		}
+		TWeakObjectPtr<UScriptStruct> MessageType;
+		
+		void operator()(FGameplayTag EventTag, const void* MessagePtr, UScriptStruct* InMessageType) const;
 	};
 
 	struct FEventCallbackList
 	{
+	public:
 		int32 HandleID = 0;
 		TArray<FEventCallback> Callbacks;
+
+		void IncrementCallbackListLock();
+		void DecrementCallbackListLock();
+		
+		int32 CallbackListScopeLockCount = 0;
+		TArray<FEventCallback> CallbackPendingAdds;
+		TArray<FEventCallbackHandle> CallbackPendingRemoves;
+	};
+
+	struct FGunnerEventCallbackListScopeLock
+	{
+		FGunnerEventCallbackListScopeLock(FEventCallbackList& InCallbackList) : CallbackList(InCallbackList)
+		{
+			CallbackList.IncrementCallbackListLock();
+		}
+		~FGunnerEventCallbackListScopeLock()
+		{
+			CallbackList.DecrementCallbackListLock();
+		}
+
+		FEventCallbackList& CallbackList;
 	};
 
 	TMap<FGameplayTag, FEventCallbackList> EventCallbacks;
-	TMap<FGameplayTag, TArray<FEventCallback>> PendingAddCallbacks;
-	bool bIsIterating = false;
 };
