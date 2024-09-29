@@ -30,13 +30,28 @@ AGunnerEquipment::AGunnerEquipment()
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 }
 
-void AGunnerEquipment::SetOwner(AActor* NewOwner)
+void AGunnerEquipment::OnAcquire()
 {
-	Super::SetOwner(NewOwner);
+	AActor* ActorOwner = GetOwner();
+	check(ActorOwner);
+	if (ActorOwner->HasAuthority())
+	{
+		AuthAddActionsOnAcquire();
+	}
 	AttachEquipmentToOwner();
 }
 
-void AGunnerEquipment::AddActionsOnEquip()
+void AGunnerEquipment::OnLost()
+{
+	AActor* ActorOwner = GetOwner();
+	check(ActorOwner);
+	if (ActorOwner->HasAuthority())
+	{
+		AuthRemoveActionsOnAcquire(ActorOwner);
+	}
+}
+
+void AGunnerEquipment::AuthAddActionsOnEquip()
 {
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
@@ -48,23 +63,23 @@ void AGunnerEquipment::AddActionsOnEquip()
 		if (ActionClass)
 		{
 			FGunnerActionDefinition ActionDefinition(this, ActionClass);
-			AddedActionHandlesOnEquip.Add(ActionComponent->AddAction(ActionDefinition));
+			AddedActionHandlesOnEquip.Add(ActionComponent->AuthAddAction(ActionDefinition));
 		}
 	}
 }
 
-void AGunnerEquipment::RemoveActionsOnEquip()
+void AGunnerEquipment::AuthRemoveActionsOnEquip()
 {
 	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
 	for (auto& ActionHandle : AddedActionHandlesOnEquip)
 	{
-		ActionComponent->RemoveAction(ActionHandle);
+		ActionComponent->AuthRemoveAction(ActionHandle);
 	}
 	AddedActionHandlesOnEquip.Empty();
 }
 
-void AGunnerEquipment::AddActionsOnAcquire()
+void AGunnerEquipment::AuthAddActionsOnAcquire()
 {
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
@@ -75,18 +90,18 @@ void AGunnerEquipment::AddActionsOnAcquire()
 		if (ActionClass)
 		{
 			FGunnerActionDefinition ActionDefinition(this, ActionClass);
-			AddedActionHandlesOnAcquire.Add(ActionComponent->AddAction(ActionDefinition));
+			AddedActionHandlesOnAcquire.Add(ActionComponent->AuthAddAction(ActionDefinition));
 		}
 	}
 }
 
-void AGunnerEquipment::RemoveActionsOnAcquire(AActor* OldOwner)
+void AGunnerEquipment::AuthRemoveActionsOnAcquire(AActor* OldOwner)
 {
 	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(OldOwner);
 	check(ActionComponent);
 	for (auto& ActionHandle : AddedActionHandlesOnAcquire)
 	{
-		ActionComponent->RemoveAction(ActionHandle);
+		ActionComponent->AuthRemoveAction(ActionHandle);
 	}
 	AddedActionHandlesOnAcquire.Empty();
 }
@@ -94,7 +109,8 @@ void AGunnerEquipment::RemoveActionsOnAcquire(AActor* OldOwner)
 void AGunnerEquipment::AttachEquipmentToOwner()
 {
 	AActor* ActorOwner = GetOwner();
-	if (ActorOwner && ActorOwner->Implements<UAnimMontagePlayerInterface>())
+	check(ActorOwner);
+	if (ActorOwner->Implements<UAnimMontagePlayerInterface>())
 	{
 		USkeletalMeshComponent* CwnerFPMeshComponent = IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
 		USkeletalMeshComponent* OwnerTPMeshComponent = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
@@ -102,23 +118,35 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 		AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("CameraSocket"));
 		FirstPersonMeshComponent->AttachToComponent(CwnerFPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
 		ThirdPersonMeshComponent->AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
-		FirstPersonMeshComponent->SetVisibility(false);
-		ThirdPersonMeshComponent->SetVisibility(false);
 	}
 }
 
 void AGunnerEquipment::OnEquipped()
 {
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
-	FirstPersonMeshComponent->SetVisibility(true);
-	ThirdPersonMeshComponent->SetVisibility(true);
+	SetMeshVisibility(true);
+
+	if (GetOwner()->HasAuthority())
+	{
+		AuthAddActionsOnEquip();
+	}
 }
 
 void AGunnerEquipment::OnUnequipped()
 {
 	SetOwnerLocomotionAnimSet(nullptr);
-	FirstPersonMeshComponent->SetVisibility(false);
-	ThirdPersonMeshComponent->SetVisibility(false);
+	SetMeshVisibility(false);
+
+	if (GetOwner()->HasAuthority())
+	{
+		AuthRemoveActionsOnEquip();
+	}
+}
+
+void AGunnerEquipment::SetMeshVisibility(bool bVisible)
+{
+	FirstPersonMeshComponent->SetVisibility(bVisible);
+	ThirdPersonMeshComponent->SetVisibility(bVisible);
 }
 
 UAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
@@ -169,4 +197,3 @@ void AGunnerEquipment::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLoc
 		}
 	}
 }
-

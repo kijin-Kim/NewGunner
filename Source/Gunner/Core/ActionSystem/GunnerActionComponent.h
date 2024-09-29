@@ -7,6 +7,7 @@
 #include "GunnerActionAgentInfo.h"
 #include "GunnerActionDefinition.h"
 #include "Components/ActorComponent.h"
+#include "Gunner/Core/Event/EventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "GunnerActionComponent.generated.h"
 
@@ -31,9 +32,10 @@ public:
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
 
-	FGunnerActionDefinitionHandle AddAction(const FGunnerActionDefinition& ActionDefinition);
-	void RemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
+	FGunnerActionDefinitionHandle AuthAddAction(const FGunnerActionDefinition& ActionDefinition);
+	void AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
 
 	void IncrementActionListLock();
@@ -49,7 +51,9 @@ private:
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
 
 	void HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition);
+	void HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition);
 	void BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition);
+	void UnbindActionTriggerEvent(const FGunnerActionDefinition& ActionDefinition);
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage, FGunnerActionDefinitionHandle ActionDefinitionHandle);
 	UFUNCTION()
 	void OnRep_ActionDefinitions(const TArray<FGunnerActionDefinition>& OldActionDefinitions);
@@ -74,6 +78,8 @@ private:
 	TSharedPtr<FGunnerActionAgentInfo> AgentInfo;
 
 	FGameplayTagContainer OwnedTags;
+
+	TMap<FGunnerActionDefinitionHandle, TArray<FEventCallbackHandle>> BoundedActionEventHandles;
 	
 };
 

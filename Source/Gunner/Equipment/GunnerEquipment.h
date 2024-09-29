@@ -19,16 +19,17 @@ class GUNNER_API AGunnerEquipment : public AActor, public IAnimMontagePlayerInte
 
 public:
 	AGunnerEquipment();
-	virtual void SetOwner(AActor* NewOwner) override;
-	UFUNCTION(BlueprintCallable)
-	void AddActionsOnEquip();
-	UFUNCTION(BlueprintCallable)
-	void RemoveActionsOnEquip();
-	void AddActionsOnAcquire();
-	void RemoveActionsOnAcquire(AActor* OldOwner);
+	void OnAcquire();
+	void OnLost(); 
+	void AuthAddActionsOnEquip();
+	void AuthRemoveActionsOnEquip();
+	void AuthAddActionsOnAcquire();
+	void AuthRemoveActionsOnAcquire(AActor* OldOwner);
 	void AttachEquipmentToOwner();
 	void OnEquipped();
 	void OnUnequipped();
+
+	void SetMeshVisibility(bool bVisible);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UAnimMontagePlayerComponent* GetAnimMontagePlayer();

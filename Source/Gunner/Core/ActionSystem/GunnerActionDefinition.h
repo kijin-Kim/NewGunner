@@ -34,7 +34,7 @@ struct FGunnerActionDefinition
 	UPROPERTY()
 	TObjectPtr<UGunnerAction> ActionCDO;
 
-	UPROPERTY()
+	UPROPERTY(NotReplicated)
 	TObjectPtr<UGunnerAction> ActionInstance;
 };
 

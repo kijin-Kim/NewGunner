@@ -18,7 +18,7 @@ public:
 	UGunnerEquipmentManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UFUNCTION(BlueprintCallable)
-	void AddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass);
+	void AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass);
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentEquipmentByIndex(int32 SlotIndex);
 	UFUNCTION(BlueprintCallable)
@@ -29,12 +29,13 @@ public:
 private:
 	UFUNCTION()
 	void OnRep_CurrentEquipment(AGunnerEquipment* LastEquipment);
+	UFUNCTION()
+	void OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots);
 
 private:
 	const int32 MaxSlots = 3;
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquipment)
 	TObjectPtr<AGunnerEquipment> CurrentEquipment;
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots)
 	TArray<TObjectPtr<AGunnerEquipment>> EquipmentSlots;
-	
 };

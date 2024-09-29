@@ -22,7 +22,7 @@ void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifeti
 	DOREPLIFETIME(UGunnerEquipmentManagerComponent, CurrentEquipment);
 }
 
-void UGunnerEquipmentManagerComponent::AddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass)
+void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass)
 {
 	if (!EquipmentSlots.IsValidIndex(SlotIndex))
 	{
@@ -34,19 +34,23 @@ void UGunnerEquipmentManagerComponent::AddEquipmentToSlot(int32 SlotIndex, TSubc
 
 	if (EquipmentSlots[SlotIndex])
 	{
-		EquipmentSlots[SlotIndex]->RemoveActionsOnAcquire(ActorOwner);
+		EquipmentSlots[SlotIndex]->OnLost();
 	}
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = ActorOwner;
 	AGunnerEquipment* Equipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentClass, SpawnParams);
-	Equipment->AddActionsOnAcquire();
+	Equipment->OnAcquire();
+	if(Equipment != CurrentEquipment)
+	{
+		Equipment->SetMeshVisibility(false);
+	}
 	EquipmentSlots[SlotIndex] = Equipment;
 }
 
 void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByIndex(int32 SlotIndex)
 {
-	if (EquipmentSlots.IsValidIndex(SlotIndex) && EquipmentSlots[SlotIndex])
+	if (EquipmentSlots.IsValidIndex(SlotIndex) && EquipmentSlots[SlotIndex] != CurrentEquipment)
 	{
 		AGunnerEquipment* LastEquipment = CurrentEquipment;
 		CurrentEquipment = EquipmentSlots[SlotIndex];
@@ -78,5 +82,24 @@ void UGunnerEquipmentManagerComponent::OnRep_CurrentEquipment(AGunnerEquipment* 
 	if (CurrentEquipment)
 	{
 		CurrentEquipment->OnEquipped();
+	}
+}
+
+void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots)
+{
+	for (AGunnerEquipment* Equipment : EquipmentSlots)
+	{
+		if (Equipment && !OldEquipmentSlots.Contains(Equipment))
+		{
+			Equipment->OnAcquire();
+		}
+	}
+	
+	for (AGunnerEquipment* Equipment : OldEquipmentSlots)
+	{
+		if (Equipment && !EquipmentSlots.Contains(Equipment))
+		{
+			Equipment->OnLost();
+		}
 	}
 }

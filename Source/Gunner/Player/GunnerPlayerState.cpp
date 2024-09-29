@@ -54,7 +54,7 @@ void AGunnerPlayerState::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 				if(TestActionClass)
 				{
 					FGunnerActionDefinition ActionDefinition(this, TestActionClass);
-					ActionComponent->AddAction(ActionDefinition);	
+					ActionComponent->AuthAddAction(ActionDefinition);	
 				}
 				
 			}

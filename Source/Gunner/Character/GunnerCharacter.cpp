@@ -110,7 +110,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		{
 			if (InitialEquipmentClasses[i])
 			{
-				EquipmentManagerComponent->AddEquipmentToSlot(i, InitialEquipmentClasses[i]);
+				EquipmentManagerComponent->AuthAddEquipmentToSlot(i, InitialEquipmentClasses[i]);
 			}
 		}
 	}

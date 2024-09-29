@@ -47,7 +47,7 @@ void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerActionDefinition& ActionDefinition)
+FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunnerActionDefinition& ActionDefinition)
 {
 	if (!AgentInfo->IsOwnerActorAuthoritative())
 	{
@@ -67,12 +67,20 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AddAction(const FGunnerAct
 	return NewActionDefinition.Handle;
 }
 
-void UGunnerActionComponent::RemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle)
+void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle)
 {
 	if (!AgentInfo->IsOwnerActorAuthoritative())
 	{
 		return;
 	}
+
+	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
+	if (!ActionDefinition)
+	{
+		return;
+	}
+	
+	HandleTriggerableActionOnRemoved(*ActionDefinition);
 
 	if (ActionScopeLockCount > 0)
 	{
@@ -177,13 +185,13 @@ void UGunnerActionComponent::DecrementActionListLock()
 	{
 		for (const auto& ActionDefinition : ActionPendingAdds)
 		{
-			AddAction(ActionDefinition);
+			AuthAddAction(ActionDefinition);
 		}
 		ActionPendingAdds.Empty();
 
-		for (const auto& ActionDefinitionHandle : ActionPendingRemoves)
+		for (const auto& ActionDefinition : ActionPendingRemoves)
 		{
-			RemoveAction(ActionDefinitionHandle);
+			AuthRemoveAction(ActionDefinition);
 		}
 		ActionPendingRemoves.Empty();
 	}
@@ -276,6 +284,16 @@ void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionD
 	}
 }
 
+void UGunnerActionComponent::HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition)
+{
+	if (!HasActionTriggerAuthority(ActionDefinition.ActionCDO))
+	{
+		return;
+	}
+
+	UnbindActionTriggerEvent(ActionDefinition);
+}
+
 void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition)
 {
 	UGunnerAction* Action = NewActionDefinition.ActionCDO;
@@ -289,7 +307,26 @@ void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinitio
 
 	for (FGameplayTag Tag : ActionTriggerEventTags)
 	{
-		EventManagerComponent->BindEventCallback<FGunnerEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDefinition.Handle);
+		FEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FGunnerEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDefinition.Handle);
+		BoundedActionEventHandles.FindOrAdd(NewActionDefinition.Handle).Add(EventCallbackHandle);
+	}
+}
+
+void UGunnerActionComponent::UnbindActionTriggerEvent(const FGunnerActionDefinition& ActionDefinition)
+{
+	if (TArray<FEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDefinition.Handle))
+	{
+		UEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UEventManagerComponent>();
+		if (!EventManagerComponent)
+		{
+			return;
+		}
+
+		for (FEventCallbackHandle EventCallbackHandle : *EventCallbackHandles)
+		{
+			EventManagerComponent->UnbindEventCallback(EventCallbackHandle);
+		}
+		BoundedActionEventHandles.Remove(ActionDefinition.Handle);
 	}
 }
 
@@ -322,6 +359,23 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 	for (const auto& NewActionDefinition : NewActionDefinitions)
 	{
 		HandleTriggerableActionOnAdded(NewActionDefinition);
+	}
+
+	TArray<FGunnerActionDefinition> RemoveActionDefinitions;
+	for (const auto& OldActionDefinition : OldActionDefinitions)
+	{
+		if (!ActionDefinitions.ContainsByPredicate([OldActionDefinition](const FGunnerActionDefinition& ActionDefinition)
+		{
+			return (ActionDefinition.Handle == OldActionDefinition.Handle);
+		}))
+		{
+			RemoveActionDefinitions.Add(OldActionDefinition);
+		}
+	}
+
+	for (const auto& RemoveActionDefinition : RemoveActionDefinitions)
+	{
+		HandleTriggerableActionOnRemoved(RemoveActionDefinition);
 	}
 }
 
