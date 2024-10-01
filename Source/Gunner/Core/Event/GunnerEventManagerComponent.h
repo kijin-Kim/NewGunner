@@ -5,25 +5,25 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
-#include "EventManagerComponent.generated.h"
+#include "GunnerEventManagerComponent.generated.h"
 
 
-class UEventManagerComponent;
+class UGunnerEventManagerComponent;
 
 USTRUCT()
-struct FEventCallbackHandle
+struct FGunnerEventCallbackHandle
 {
 	GENERATED_BODY()
 
-	FEventCallbackHandle() = default;
+	FGunnerEventCallbackHandle() = default;
 
 public:
 	bool IsValid() const { return ID != 0; }
 
 private:
-	friend UEventManagerComponent;
+	friend UGunnerEventManagerComponent;
 
-	FEventCallbackHandle(int32 InID, FGameplayTag InEventTag) : ID(InID), EventTag(InEventTag)
+	FGunnerEventCallbackHandle(int32 InID, FGameplayTag InEventTag) : ID(InID), EventTag(InEventTag)
 	{
 	}
 
@@ -33,18 +33,18 @@ private:
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UEventManagerComponent : public UActorComponent
+class GUNNER_API UGunnerEventManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 	friend class UGunnerActionAsync_WaitForGunnerEvent;
 
 public:
-	UEventManagerComponent();
+	UGunnerEventManagerComponent();
 	
 	// Free function version
 	template <typename FMessageStruct, typename... VarType>
-	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
+	FGunnerEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
 		return BindEventCallbackInternal(EventTag, [FreeFunction, Vars...](FGameplayTag EventTag, const void* MessagePtr)
 		{
@@ -54,7 +54,7 @@ public:
 
 	// Member function version
 	template <typename FMessageStruct, typename TOwner, typename... VarType>
-	FEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
+	FGunnerEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
 		TWeakObjectPtr<TOwner> Weak = Object;
 		return BindEventCallbackInternal(EventTag, [Weak, Function, Vars...](FGameplayTag Tag, const void* MessagePtr)
@@ -67,13 +67,13 @@ public:
 	}
 
 
-	void UnbindEventCallback(FEventCallbackHandle Handle);
+	void UnbindEventCallback(FGunnerEventCallbackHandle Handle);
 	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
 
 	template <typename FMessageStruct>
 	static void SendEventToActor(FGameplayTag EventTag, const FMessageStruct& Message, AActor* TargetActor)
 	{
-		if (UEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UEventManagerComponent>())
+		if (UGunnerEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UGunnerEventManagerComponent>())
 		{
 			EventManagerComponent->HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
 		}
@@ -85,7 +85,7 @@ public:
 
 
 private:
-	FEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType);
+	FGunnerEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType);
 
 private:
 	struct FEventCallback
@@ -108,7 +108,7 @@ private:
 		
 		int32 CallbackListScopeLockCount = 0;
 		TArray<FEventCallback> CallbackPendingAdds;
-		TArray<FEventCallbackHandle> CallbackPendingRemoves;
+		TArray<FGunnerEventCallbackHandle> CallbackPendingRemoves;
 	};
 
 	struct FGunnerEventCallbackListScopeLock

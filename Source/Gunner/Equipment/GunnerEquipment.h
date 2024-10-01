@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/Core/ActionSystem/GunnerActionDefinitionHandle.h"
 #include "GunnerEquipment.generated.h"
 
@@ -13,33 +13,39 @@ class UGunnerActionComponent;
 class UGunnerAction;
 
 UCLASS()
-class GUNNER_API AGunnerEquipment : public AActor, public IAnimMontagePlayerInterface
+class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
 public:
 	AGunnerEquipment();
-	void OnAcquire();
-	void OnLost(); 
-	void AuthAddActionsOnEquip();
-	void AuthRemoveActionsOnEquip();
-	void AuthAddActionsOnAcquire();
-	void AuthRemoveActionsOnAcquire(AActor* OldOwner);
+
 	void AttachEquipmentToOwner();
+	
+	void OnAcquired();
+	void OnLost();
 	void OnEquipped();
 	void OnUnequipped();
-
-	void SetMeshVisibility(bool bVisible);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	UAnimMontagePlayerComponent* GetAnimMontagePlayer();
+	UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
+	
+	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 private:
+	
+	void AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
+	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
+	
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
+	
+	void SetMeshVisibility(bool bVisible);
+
+	
 	
 
 private:
@@ -51,12 +57,12 @@ private:
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
+	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UGunnerAction>> ActionsToAddOnAcquire;
-	TArray<FGunnerActionDefinitionHandle> AddedActionHandlesOnAcquire;
+	TArray<TSubclassOf<UGunnerAction>> ActionsToAddOnAcquired;
+	TArray<FGunnerActionDefinitionHandle> AddedActionHandlesOnAcquired;
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UGunnerAction>> ActionsToAddOnEquip;
 	TArray<FGunnerActionDefinitionHandle> AddedActionHandlesOnEquip;

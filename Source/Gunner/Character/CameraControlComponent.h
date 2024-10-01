@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/Core/Event/EventCallbackBindInterface.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventCallbackBindInterface.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "CameraControlComponent.generated.h"
 
 struct FGunnerEventMessage;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UCameraControllerComponent : public UActorComponent, public IEventCallbackBindInterface
+class GUNNER_API UCameraControllerComponent : public UActorComponent, public IGunnerEventCallbackBindInterface
 {
 	GENERATED_BODY()
 
@@ -21,8 +21,8 @@ public:
 	virtual void InitializeComponent() override;
 
 protected:
-	virtual TArray<FEventCallbackHandle> SetupEvents() override;
-	virtual UEventManagerComponent* GetEventManagerComponent() const override;
+	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
+	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 
 private:
 	UFUNCTION()
@@ -35,5 +35,5 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
 
-	TArray<FEventCallbackHandle> BoundedEventCallbackHandles;
+	TArray<FGunnerEventCallbackHandle> BoundedEventCallbackHandles;
 };

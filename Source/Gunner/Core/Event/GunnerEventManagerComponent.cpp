@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EventManagerComponent.h"
+#include "GunnerEventManagerComponent.h"
 
 #include "Gunner/Gunner.h"
 
 
-UEventManagerComponent::UEventManagerComponent()
+UGunnerEventManagerComponent::UGunnerEventManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UEventManagerComponent::UnbindEventCallback(FEventCallbackHandle Handle)
+void UGunnerEventManagerComponent::UnbindEventCallback(FGunnerEventCallbackHandle Handle)
 {
 	if (!Handle.IsValid() || !EventCallbacks.Contains(Handle.EventTag))
 	{
@@ -30,7 +30,7 @@ void UEventManagerComponent::UnbindEventCallback(FEventCallbackHandle Handle)
 	});
 }
 
-void UEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType)
+void UGunnerEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType)
 {
 	if (EventCallbacks.Contains(EventTag))
 	{
@@ -42,7 +42,7 @@ void UEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void* Mess
 	}
 }
 
-FEventCallbackHandle UEventManagerComponent::BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType)
+FGunnerEventCallbackHandle UGunnerEventManagerComponent::BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType)
 {
 	if (!EventTag.IsValid())
 	{
@@ -55,15 +55,15 @@ FEventCallbackHandle UEventManagerComponent::BindEventCallbackInternal(FGameplay
 	if (EventCallbackList.CallbackListScopeLockCount > 0)
 	{
 		EventCallbackList.CallbackPendingAdds.Add({EventCallbackList.HandleID, MoveTemp(Callbacks), MessageType});
-		return FEventCallbackHandle(EventCallbacks[EventTag].HandleID, EventTag);
+		return FGunnerEventCallbackHandle(EventCallbacks[EventTag].HandleID, EventTag);
 	}
 
 	EventCallbackList.Callbacks.Add({EventCallbackList.HandleID, MoveTemp(Callbacks), MessageType});
-	return FEventCallbackHandle(EventCallbacks[EventTag].HandleID, EventTag);
+	return FGunnerEventCallbackHandle(EventCallbacks[EventTag].HandleID, EventTag);
 }
 
 
-DEFINE_FUNCTION(UEventManagerComponent::execBP_SendEventToActor)
+DEFINE_FUNCTION(UGunnerEventManagerComponent::execBP_SendEventToActor)
 {
 	P_GET_STRUCT(FGameplayTag, EventTag);
 	P_GET_OBJECT(AActor, TargetActor);
@@ -80,14 +80,14 @@ DEFINE_FUNCTION(UEventManagerComponent::execBP_SendEventToActor)
 		return;
 	}
 
-	if (UEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UEventManagerComponent>())
+	if (UGunnerEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UGunnerEventManagerComponent>())
 	{
 		EventManagerComponent->HandleEvent(EventTag, MessagePtr, StructProperty->Struct);
 	}
 }
 
 
-void UEventManagerComponent::FEventCallback::operator()(FGameplayTag EventTag, const void* MessagePtr, UScriptStruct* InMessageType) const
+void UGunnerEventManagerComponent::FEventCallback::operator()(FGameplayTag EventTag, const void* MessagePtr, UScriptStruct* InMessageType) const
 {
 	if (MessageType != InMessageType)
 	{
@@ -97,12 +97,12 @@ void UEventManagerComponent::FEventCallback::operator()(FGameplayTag EventTag, c
 	Callback(EventTag, MessagePtr);
 }
 
-void UEventManagerComponent::FEventCallbackList::IncrementCallbackListLock()
+void UGunnerEventManagerComponent::FEventCallbackList::IncrementCallbackListLock()
 {
 	CallbackListScopeLockCount++;
 }
 
-void UEventManagerComponent::FEventCallbackList::DecrementCallbackListLock()
+void UGunnerEventManagerComponent::FEventCallbackList::DecrementCallbackListLock()
 {
 	CallbackListScopeLockCount--;
 	if (CallbackListScopeLockCount == 0 && (CallbackPendingAdds.IsEmpty() || CallbackPendingRemoves.IsEmpty()))

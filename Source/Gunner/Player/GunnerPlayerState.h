@@ -7,7 +7,7 @@
 #include "Gunner/Core/ActionSystem/GunnerActionDefinition.h"
 #include "GunnerPlayerState.generated.h"
 
-class UEventManagerComponent;
+class UGunnerEventManagerComponent;
 class UGunnerActionComponent;
 /**
  * 
@@ -19,8 +19,6 @@ class GUNNER_API AGunnerPlayerState : public APlayerState
 
 public:
 	AGunnerPlayerState();
-	virtual void PostInitializeComponents() override;
-	virtual void ClientInitialize(AController* C) override;
 
 private:
 	void SetupOnPossessedPawnChangedEvent();
@@ -32,7 +30,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
 	UPROPERTY()
-	TObjectPtr<UEventManagerComponent> EventManagerComponent;
+	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<UGunnerAction>> TestActionClasses;

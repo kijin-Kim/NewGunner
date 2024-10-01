@@ -5,7 +5,7 @@
 
 #include "GunnerCharacter.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 
 
@@ -56,9 +56,9 @@ float UGunnerCharacterMovementComponent::GetMaxSpeed() const
 	return MaxSpeed;
 }
 
-TArray<FEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
+TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
 {
-	if (UEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
+	if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
 	{
 		return {
 			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Move"))), this, &ThisClass::Move),
@@ -70,9 +70,9 @@ TArray<FEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
 	return {};
 }
 
-UEventManagerComponent* UGunnerCharacterMovementComponent::GetEventManagerComponent() const
+UGunnerEventManagerComponent* UGunnerCharacterMovementComponent::GetEventManagerComponent() const
 {
-	return CharacterOwner ? CharacterOwner->GetComponentByClass<UEventManagerComponent>() : nullptr;
+	return CharacterOwner ? CharacterOwner->GetComponentByClass<UGunnerEventManagerComponent>() : nullptr;
 }
 
 void UGunnerCharacterMovementComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)

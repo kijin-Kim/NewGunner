@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
 #include "Weapon.generated.h"
 
 
@@ -14,7 +14,7 @@ class UFiringStateComponent;
 class UEquippedStateComponent;
 class UDrawingStateComponent;
 class UInventoriedStateComponent;
-class UAnimMontagePlayerComponent;
+class UGunnerAnimMontagePlayerComponent;
 struct FWeaponData;
 class AGunnerCharacter;
 class UStateComponent;
@@ -31,7 +31,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponBulletCountChangedSignatur
 
 
 UCLASS()
-class GUNNER_API AWeapon : public AActor, public IAnimMontagePlayerInterface
+class GUNNER_API AWeapon : public AActor, public IGunnerAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
@@ -46,7 +46,7 @@ public:
 	void Equip();
 	void Unequip();
 
-	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
+	virtual UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
 	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return ThirdPersonMeshComponent; }
 	AGunnerCharacter* GetGunnerCharacterOwner() const;
@@ -82,7 +82,7 @@ protected:
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
+	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 private:
 	UPROPERTY()

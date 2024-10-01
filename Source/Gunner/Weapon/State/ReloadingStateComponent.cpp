@@ -4,13 +4,13 @@
 #include "ReloadingStateComponent.h"
 
 #include "Gunner/Character/GunnerCharacter.h"
-#include "Gunner/Core/AnimMontagePlayerComponent.h"
-#include "Gunner/Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponData.h"
 
 
-class UAnimMontagePlayerComponent;
+class UGunnerAnimMontagePlayerComponent;
 
 UReloadingStateComponent::UReloadingStateComponent()
 {
@@ -31,13 +31,13 @@ void UReloadingStateComponent::Exit()
 	Super::Exit();
 	
 	AWeapon* Weapon = GetOwner<AWeapon>();
-	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
+	UGunnerAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
 	FWeaponData* WeaponData = Weapon->GetWeaponData();
 	WeaponAnimMontagePlayer->StopMontage(WeaponData->TPWeaponReloadMontage, true);
 	WeaponAnimMontagePlayer->StopMontage(WeaponData->FPWeaponReloadMontage, false);
 
 	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
-	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
+	UGunnerAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
 	if(FOnMontageEnded* OnMontageEnded = GunnerCharacterAnimMontagePlayer->GetMontageEndedDelegate(WeaponData->TPCharacterReloadMontage, true))
 	{
 		OnMontageEnded->Unbind();
@@ -50,13 +50,13 @@ void UReloadingStateComponent::Exit()
 void UReloadingStateComponent::LocalReload()
 {
 	AWeapon* Weapon = GetOwner<AWeapon>();
-	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
+	UGunnerAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
 	FWeaponData* WeaponData = Weapon->GetWeaponData();
 	WeaponAnimMontagePlayer->PlayMontage(WeaponData->TPWeaponReloadMontage, true);
 	WeaponAnimMontagePlayer->PlayMontage(WeaponData->FPWeaponReloadMontage, false);
 
 	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
-	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
+	UGunnerAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->TPCharacterReloadMontage, true);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->FPCharacterReloadMontage, false);
 

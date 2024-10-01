@@ -12,9 +12,9 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/AnimMontagePlayerComponent.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "Gunner/Weapon/Weapon.h"
@@ -51,9 +51,8 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
-	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
-
-
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
 
 	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
@@ -76,7 +75,7 @@ bool AGunnerCharacter::CanJumpInternal_Implementation() const
 	return JumpIsAllowedInternal();
 }
 
-UAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementation()
+UGunnerAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementation()
 {
 	return AnimMontagePlayerComponent;
 }

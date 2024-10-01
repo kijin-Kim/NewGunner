@@ -5,28 +5,13 @@
 
 #include "Gunner/Core/ActionSystem/GunnerAction.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 
 AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
-	EventManagerComponent = CreateDefaultSubobject<UEventManagerComponent>(TEXT("EventManagerComponent"));
-}
-
-void AGunnerPlayerState::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-	// if (HasAuthority())
-	// {
-	// 	SetupOnPossessedPawnChangedEvent();
-	// }
-}
-
-void AGunnerPlayerState::ClientInitialize(AController* C)
-{
-	Super::ClientInitialize(C);
-	//SetupOnPossessedPawnChangedEvent();
+	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
 
 void AGunnerPlayerState::SetupOnPossessedPawnChangedEvent()

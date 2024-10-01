@@ -2,7 +2,7 @@
 
 
 #include "GunnerActionAsync_WaitForGunnerEvent.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 
 UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType)
 {
@@ -12,7 +12,7 @@ UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::Wa
 		return nullptr;
 	}
 
-	SelfObject->TargetEventManagerComponent = EventTargetActor->GetComponentByClass<UEventManagerComponent>();
+	SelfObject->TargetEventManagerComponent = EventTargetActor->GetComponentByClass<UGunnerEventManagerComponent>();
 	if (!SelfObject->TargetEventManagerComponent.IsValid())
 	{
 		return nullptr;
@@ -39,7 +39,7 @@ void UGunnerActionAsync_WaitForGunnerEvent::SetReadyToDestroy()
 	UnbindEvents();
 }
 
-TArray<FEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupEvents()
+TArray<FGunnerEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupEvents()
 {
 	TWeakObjectPtr<UGunnerActionAsync_WaitForGunnerEvent> Weak = this;
 	return {
@@ -57,7 +57,7 @@ TArray<FEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupEvents(
 	};
 }
 
-UEventManagerComponent* UGunnerActionAsync_WaitForGunnerEvent::GetEventManagerComponent() const
+UGunnerEventManagerComponent* UGunnerActionAsync_WaitForGunnerEvent::GetEventManagerComponent() const
 {
 	return TargetEventManagerComponent.Get();
 }

@@ -1,0 +1,57 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Core/GunnerPropertyComponent.h"
+#include "GunnerBulletComponent.generated.h"
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBulletCountChangedSignature, int32, BulletCount, int32, MagazineBulletCount);
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class GUNNER_API UGunnerBulletComponent : public UGunnerPropertyComponent
+{
+	GENERATED_BODY()
+
+public:
+	UGunnerBulletComponent();
+	virtual void OnRegister() override;
+	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetBulletCount(int32 NewBulletCount);
+	UFUNCTION(BlueprintCallable)
+	void SetMagazineCount(int32 NewMagazineCount);
+
+	UFUNCTION(BlueprintCallable)
+	void AddBulletCount(int32 BulletCountToAdd);
+	UFUNCTION(BlueprintCallable)
+	void AddMagazineCount(int32 MagazineCountToAdd);
+
+	int32 GetBulletCount() const { return BulletCount; }
+	int32 GetMagazineCount() const { return MagazineCount; }
+	int32 GetMaxBulletCountPerMagazine() const { return MaxBulletCountPerMagazine; }
+	int32 GetMaxMagazineCount() const { return MaxMagazineCount; }
+
+	
+private:
+	void BroadcastOnBulletCountChangedDelegate();
+	
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnBulletCountChangedSignature OnBulletCountChangedDelegate;
+
+private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 BulletCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 MaxBulletCountPerMagazine;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 MagazineCount = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 MaxMagazineCount;
+
+	
+};

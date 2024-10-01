@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Gunner/Core/Event/EventCallbackBindInterface.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventCallbackBindInterface.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "GunnerCharacterMovementComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public IEventCallbackBindInterface
+class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public IGunnerEventCallbackBindInterface
 {
 	GENERATED_BODY()
 
@@ -23,8 +23,8 @@ public:
 	virtual float GetMaxSpeed() const override;
 
 protected:
-	virtual TArray<FEventCallbackHandle> SetupEvents() override;
-	virtual UEventManagerComponent* GetEventManagerComponent() const override;
+	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
+	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 
 	
 private:
@@ -38,5 +38,5 @@ private:
 	void CharacterUncrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 
 private:
-	TArray<FEventCallbackHandle> BoundedEventCallbackHandles;
+	TArray<FGunnerEventCallbackHandle> BoundedEventCallbackHandles;
 };

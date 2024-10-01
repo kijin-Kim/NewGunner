@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gunner/Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "GunnerCharacter.generated.h"
@@ -13,8 +13,8 @@ class UGunnerEquipmentManagerComponent;
 class UGunnerActionComponent;
 class AWeapon;
 class UCameraControllerComponent;
-class UEventManagerComponent;
-class UAnimMontagePlayerComponent;
+class UGunnerEventManagerComponent;
+class UGunnerAnimMontagePlayerComponent;
 class UHealthComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
@@ -25,7 +25,7 @@ class UCameraComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IAnimMontagePlayerInterface, public IGunnerActionComponentInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface
 {
 	GENERATED_BODY()
 
@@ -36,7 +36,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	
-	virtual UAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
+	virtual UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
 	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return GetMesh(); }
 	bool IsRunning() const;
@@ -71,7 +71,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWeaponManagerComponent> WeaponManagerComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontagePlayerComponent> AnimMontagePlayerComponent;
+	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsRunning = true;
 

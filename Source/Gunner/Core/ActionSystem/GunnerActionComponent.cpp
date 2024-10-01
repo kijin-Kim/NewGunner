@@ -8,7 +8,7 @@
 #include "GameFramework/HUD.h"
 
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "Net/UnrealNetwork.h"
 
@@ -235,7 +235,7 @@ bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) co
 	return false;
 }
 
-void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
+void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
 	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
 	if (!DebugTarget)
@@ -245,11 +245,11 @@ void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const F
 
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(DebugTarget))
 	{
-		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Arg);
+		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
 	}
 }
 
-void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
+void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
 	if (!AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
 	{
@@ -261,7 +261,7 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 
 	if (HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
 	{
-		DisplayDebugManager.SetFont(GEngine->GetMediumFont());
+		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
 		DisplayDebugManager.SetDrawColor(FColor::Orange);
 		for (FGameplayTag Tag : OwnedTags)
 		{
@@ -299,7 +299,7 @@ void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinitio
 	UGunnerAction* Action = NewActionDefinition.ActionCDO;
 
 	FGameplayTagContainer ActionTriggerEventTags = Action->GetActionTriggerEventTags();
-	UEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UEventManagerComponent>();
+	UGunnerEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UGunnerEventManagerComponent>();
 	if (!EventManagerComponent)
 	{
 		return;
@@ -307,22 +307,22 @@ void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinitio
 
 	for (FGameplayTag Tag : ActionTriggerEventTags)
 	{
-		FEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FGunnerEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDefinition.Handle);
+		FGunnerEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FGunnerEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDefinition.Handle);
 		BoundedActionEventHandles.FindOrAdd(NewActionDefinition.Handle).Add(EventCallbackHandle);
 	}
 }
 
 void UGunnerActionComponent::UnbindActionTriggerEvent(const FGunnerActionDefinition& ActionDefinition)
 {
-	if (TArray<FEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDefinition.Handle))
+	if (TArray<FGunnerEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDefinition.Handle))
 	{
-		UEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UEventManagerComponent>();
+		UGunnerEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UGunnerEventManagerComponent>();
 		if (!EventManagerComponent)
 		{
 			return;
 		}
 
-		for (FEventCallbackHandle EventCallbackHandle : *EventCallbackHandles)
+		for (FGunnerEventCallbackHandle EventCallbackHandle : *EventCallbackHandles)
 		{
 			EventManagerComponent->UnbindEventCallback(EventCallbackHandle);
 		}

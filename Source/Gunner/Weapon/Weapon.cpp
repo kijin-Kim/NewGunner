@@ -6,7 +6,7 @@
 #include "WeaponData.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/Character/GunnerCharacter.h"
-#include "Gunner/Core/AnimMontagePlayerComponent.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Core/GunnerGameInstance.h"
 #include "State/DroppedStateComponent.h"
 #include "State/EquippedStateComponent.h"
@@ -40,7 +40,7 @@ AWeapon::AWeapon()
 	FirstPersonMagazineMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMagazineMeshComponent->bOwnerNoSee = true;
 	
-	AnimMontagePlayerComponent = CreateDefaultSubobject<UAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 
 
 	InventoriedStateComponentClass = UInventoriedStateComponent::StaticClass();
@@ -109,7 +109,7 @@ void AWeapon::Unequip()
 	EnterNewState(InventoriedStateComponentClass);
 }
 
-UAnimMontagePlayerComponent* AWeapon::GetAnimMontagePlayer_Implementation()
+UGunnerAnimMontagePlayerComponent* AWeapon::GetAnimMontagePlayer_Implementation()
 {
 	return AnimMontagePlayerComponent;
 }

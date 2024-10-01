@@ -9,6 +9,8 @@
 
 class AGunnerEquipment;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedEquipmentChangedSignature, AGunnerEquipment*, NewEquippedEquipment, AGunnerEquipment*, OldEquippedEquipment);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerEquipmentManagerComponent : public UActorComponent
 {
@@ -24,18 +26,25 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AGunnerEquipment* GetEquipmentByIndex(int32 SlotIndex) const;
 	UFUNCTION(BlueprintCallable)
-	AGunnerEquipment* GetCurrentEquipment() const;
+	AGunnerEquipment* GetCurrentEquippedEquipment() const;
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnEquippedEquipmentChangedSignature OnEquippedEquipmentChangedDelegate;
 
 private:
+	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	void InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	
 	UFUNCTION()
-	void OnRep_CurrentEquipment(AGunnerEquipment* LastEquipment);
+	void OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment);
 	UFUNCTION()
 	void OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots);
 
 private:
 	const int32 MaxSlots = 3;
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquipment)
-	TObjectPtr<AGunnerEquipment> CurrentEquipment;
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquippedEquipment)
+	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
 	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots)
 	TArray<TObjectPtr<AGunnerEquipment>> EquipmentSlots;
 };

@@ -7,7 +7,7 @@
 #include "GunnerPlayerController.generated.h"
 
 
-class UInputEventDispatcherComponent;
+class UGunnerInputEventDispatcherComponent;
 /**
  *
  */
@@ -37,5 +37,5 @@ private:
 	FDelegateHandle OnShowDebugInfoDelegateHandle;
 	
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UInputEventDispatcherComponent> InputEventDispatcherComponent;
+	TObjectPtr<UGunnerInputEventDispatcherComponent> InputEventDispatcherComponent;
 };

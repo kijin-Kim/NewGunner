@@ -4,7 +4,7 @@
 #include "FiringStateComponent.h"
 
 #include "Gunner/Character/GunnerCharacter.h"
-#include "Gunner/Core/AnimMontagePlayerComponent.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Weapon/Weapon.h"
 #include "Gunner/Weapon/WeaponData.h"
 
@@ -33,13 +33,13 @@ void UFiringStateComponent::PlayFireMontage()
 {
 	AWeapon* Weapon = GetWeapon();
 	FWeaponData* WeaponData = Weapon->GetWeaponData();
-	UAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
+	UGunnerAnimMontagePlayerComponent* WeaponAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(Weapon);
 	
 	WeaponAnimMontagePlayer->PlayMontage(WeaponData->TPWeaponFireMontage, true);
 	WeaponAnimMontagePlayer->PlayMontage(WeaponData->FPWeaponFireMontage, false);
 
 	AGunnerCharacter* GunnerCharacter = Weapon->GetGunnerCharacterOwner();
-	UAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
+	UGunnerAnimMontagePlayerComponent* GunnerCharacterAnimMontagePlayer = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(GunnerCharacter);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->TPCharacterFireMontage, true);
 	GunnerCharacterAnimMontagePlayer->PlayMontage(WeaponData->FPCharacterFireMontage, false);
 }

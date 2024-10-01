@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "AnimMontagePlayerComponent.generated.h"
+#include "GunnerAnimMontagePlayerComponent.generated.h"
 
 USTRUCT()
-struct GUNNER_API FRepAnimMontageData
+struct GUNNER_API FGunnerRepAnimMontageData
 {
 	GENERATED_BODY()
 
@@ -28,7 +28,7 @@ struct GUNNER_API FRepAnimMontageData
 };
 
 USTRUCT()
-struct GUNNER_API FLocalAnimMontageData
+struct GUNNER_API FGunnerLocalAnimMontageData
 {
 	GENERATED_BODY()
 
@@ -40,12 +40,12 @@ struct GUNNER_API FLocalAnimMontageData
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UAnimMontagePlayerComponent : public UActorComponent
+class GUNNER_API UGunnerAnimMontagePlayerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UAnimMontagePlayerComponent();
+	UGunnerAnimMontagePlayerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -69,6 +69,6 @@ private:
 
 private:
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_ReplicatedAnimMontage)
-	FRepAnimMontageData ReplicatedAnimMontageData;
-	FLocalAnimMontageData LocalAnimMontageData;
+	FGunnerRepAnimMontageData ReplicatedAnimMontageData;
+	FGunnerLocalAnimMontageData LocalAnimMontageData;
 };

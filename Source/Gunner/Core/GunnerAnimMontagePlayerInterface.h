@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "AnimMontagePlayerInterface.generated.h"
+#include "GunnerAnimMontagePlayerInterface.generated.h"
 
-class UAnimMontagePlayerComponent;
+class UGunnerAnimMontagePlayerComponent;
 // This class does not need to be modified.
 UINTERFACE()
-class UAnimMontagePlayerInterface : public UInterface
+class UGunnerAnimMontagePlayerInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,14 +17,14 @@ class UAnimMontagePlayerInterface : public UInterface
 /**
  * 
  */
-class GUNNER_API IAnimMontagePlayerInterface
+class GUNNER_API IGunnerAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	UAnimMontagePlayerComponent* GetAnimMontagePlayer();
+	UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)

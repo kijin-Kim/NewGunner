@@ -4,7 +4,7 @@
 #include "GunnerPlayerController.h"
 
 #include "GunnerHUD.h"
-#include "Core/Input/InputEventDispatcherComponent.h"
+#include "Core/Input/GunnerInputEventDispatcherComponent.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
@@ -12,7 +12,7 @@
 
 AGunnerPlayerController::AGunnerPlayerController()
 {
-	InputEventDispatcherComponent = CreateDefaultSubobject<UInputEventDispatcherComponent>(TEXT("InputEventDispatcher"));
+	InputEventDispatcherComponent = CreateDefaultSubobject<UGunnerInputEventDispatcherComponent>(TEXT("InputEventDispatcher"));
 }
 
 void AGunnerPlayerController::OnPossess(APawn* InPawn)

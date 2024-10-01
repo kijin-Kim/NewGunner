@@ -1,23 +1,23 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "InputEventDispatcherComponent.h"
+#include "GunnerInputEventDispatcherComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GunnerEventMessage.h"
-#include "InputTagMappingData.h"
+#include "GunnerInputTagMappingData.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 
 
-UInputEventDispatcherComponent::UInputEventDispatcherComponent()
+UGunnerInputEventDispatcherComponent::UGunnerInputEventDispatcherComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	bWantsInitializeComponent = true;
 }
 
-void UInputEventDispatcherComponent::InitializeComponent()
+void UGunnerInputEventDispatcherComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 	PlayerController = Cast<APlayerController>(GetOwner());
@@ -27,17 +27,17 @@ void UInputEventDispatcherComponent::InitializeComponent()
 	}
 }
 
-void UInputEventDispatcherComponent::OnInputEvent(const FInputActionValue& InputActionValue, UEnhancedInputComponent* InputComponent, FGameplayTag InputTag)
+void UGunnerInputEventDispatcherComponent::OnInputEvent(const FInputActionValue& InputActionValue, UEnhancedInputComponent* InputComponent, FGameplayTag InputTag)
 {
 	check(InputComponent);
 	if (APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>())
 	{
 		const FGunnerEventMessage EventMessage(InputTag, PlayerController, nullptr, InputActionValue, nullptr);
-		UEventManagerComponent::SendEventToActor<FGunnerEventMessage>(InputTag, EventMessage, PlayerState);
+		UGunnerEventManagerComponent::SendEventToActor<FGunnerEventMessage>(InputTag, EventMessage, PlayerState);
 	}
 }
 
-void UInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn* NewPawn)
+void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn* NewPawn)
 {
 	if (!InputTagMappingData || !NewPawn)
 	{
@@ -61,7 +61,7 @@ void UInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn* NewP
 	{
 		for (const auto& [TriggerEvent, InputTag] : TriggerEventMappings)
 		{
-			InputComponent->BindAction(InputAction, TriggerEvent, this, &UInputEventDispatcherComponent::OnInputEvent, InputComponent, InputTag);
+			InputComponent->BindAction(InputAction, TriggerEvent, this, &UGunnerInputEventDispatcherComponent::OnInputEvent, InputComponent, InputTag);
 		}
 	}
 }

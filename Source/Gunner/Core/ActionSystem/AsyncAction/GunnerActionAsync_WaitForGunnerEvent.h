@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gunner/Core/Event/EventCallbackBindInterface.h"
+#include "Gunner/Core/Event/GunnerEventCallbackBindInterface.h"
 #include "GameplayTagContainer.h"
 #include "GunnerCancellableAsyncAction.h"
 #include "GunnerActionAsync_WaitForGunnerEvent.generated.h"
 
 class UGunnerAction;
-class UEventManagerComponent;
+class UGunnerEventManagerComponent;
 /**
  * 
  */
@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerEventReceivedSignature, FGa
 
 
 UCLASS()
-class GUNNER_API UGunnerActionAsync_WaitForGunnerEvent : public UGunnerCancellableAsyncAction, public IEventCallbackBindInterface
+class GUNNER_API UGunnerActionAsync_WaitForGunnerEvent : public UGunnerCancellableAsyncAction, public IGunnerEventCallbackBindInterface
 {
 	GENERATED_BODY()
 
@@ -27,8 +27,8 @@ public:
 	virtual void Activate() override;
 	virtual void SetReadyToDestroy() override;
 	
-	virtual TArray<FEventCallbackHandle> SetupEvents() override;
-	virtual UEventManagerComponent* GetEventManagerComponent() const override;
+	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
+	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	
 	
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "OutMessage"))
@@ -42,7 +42,7 @@ public:
 
 private:
 	const void* MessagePtr;
-	TWeakObjectPtr<UEventManagerComponent> TargetEventManagerComponent;
+	TWeakObjectPtr<UGunnerEventManagerComponent> TargetEventManagerComponent;
 	TWeakObjectPtr<UScriptStruct> EventMesageType;
 	FGameplayTag EventTag;
 };

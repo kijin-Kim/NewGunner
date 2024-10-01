@@ -20,9 +20,9 @@ void UCameraControllerComponent::InitializeComponent()
 	}
 }
 
-TArray<FEventCallbackHandle> UCameraControllerComponent::SetupEvents()
+TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 {
-	if (UEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
+	if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
 	{
 		return {
 			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
@@ -31,10 +31,10 @@ TArray<FEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	return {};
 }
 
-UEventManagerComponent* UCameraControllerComponent::GetEventManagerComponent() const
+UGunnerEventManagerComponent* UCameraControllerComponent::GetEventManagerComponent() const
 {
 	AActor* ActorOwner = GetOwner();
-	return ActorOwner ? ActorOwner->GetComponentByClass<UEventManagerComponent>() : nullptr;
+	return ActorOwner ? ActorOwner->GetComponentByClass<UGunnerEventManagerComponent>() : nullptr;
 }
 
 

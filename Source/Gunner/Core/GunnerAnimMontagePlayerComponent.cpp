@@ -1,31 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AnimMontagePlayerComponent.h"
+#include "GunnerAnimMontagePlayerComponent.h"
 
-#include "AnimMontagePlayerInterface.h"
+#include "GunnerAnimMontagePlayerInterface.h"
 #include "Net/UnrealNetwork.h"
 
 
-UAnimMontagePlayerComponent::UAnimMontagePlayerComponent()
+UGunnerAnimMontagePlayerComponent::UGunnerAnimMontagePlayerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
 }
 
-void UAnimMontagePlayerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UGunnerAnimMontagePlayerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(UAnimMontagePlayerComponent, ReplicatedAnimMontageData, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(UGunnerAnimMontagePlayerComponent, ReplicatedAnimMontageData, COND_SimulatedOnly);
 }
 
-void UAnimMontagePlayerComponent::BeginPlay()
+void UGunnerAnimMontagePlayerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	check(GetOwner()->Implements<UAnimMontagePlayerInterface>() && "Owner Must Implements AnimMontagePlayerInterface");
+	check(GetOwner()->Implements<UGunnerAnimMontagePlayerInterface>() && "Owner Must Implements AnimMontagePlayerInterface");
 }
 
-void UAnimMontagePlayerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UGunnerAnimMontagePlayerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (GetOwner()->HasAuthority())
@@ -34,7 +34,7 @@ void UAnimMontagePlayerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
-float UAnimMontagePlayerComponent::PlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InPlayRate, FName StartSectionName)
+float UGunnerAnimMontagePlayerComponent::PlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InPlayRate, FName StartSectionName)
 {
 	const float Duration = LocalPlayMontage(AnimMontage, bIsThirdPerson, 0.0f, InPlayRate, StartSectionName);
 
@@ -50,7 +50,7 @@ float UAnimMontagePlayerComponent::PlayMontage(UAnimMontage* AnimMontage, bool b
 	return Duration;
 }
 
-void UAnimMontagePlayerComponent::StopMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson)
+void UGunnerAnimMontagePlayerComponent::StopMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
 	UAnimMontage* MontageToStop = (AnimMontage) ? AnimMontage : AnimInstance->GetCurrentActiveMontage();
@@ -62,29 +62,29 @@ void UAnimMontagePlayerComponent::StopMontage(UAnimMontage* AnimMontage, bool bI
 }
 
 
-FOnMontageEnded* UAnimMontagePlayerComponent::GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
+FOnMontageEnded* UGunnerAnimMontagePlayerComponent::GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
 	return AnimInstance ? AnimInstance->Montage_GetEndedDelegate(AnimMontage) : nullptr;
 }
 
-FOnMontageBlendingOutStarted* UAnimMontagePlayerComponent::GetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
+FOnMontageBlendingOutStarted* UGunnerAnimMontagePlayerComponent::GetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
 	return AnimInstance ? AnimInstance->Montage_GetBlendingOutDelegate(AnimMontage) : nullptr;
 }
 
-UAnimInstance* UAnimMontagePlayerComponent::GetDesiredAnimInstance(bool bIsThirdPerson) const
+UAnimInstance* UGunnerAnimMontagePlayerComponent::GetDesiredAnimInstance(bool bIsThirdPerson) const
 {
 	USkeletalMeshComponent* TargetMesh = bIsThirdPerson
-		                                     ? IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner())
-		                                     : IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GetOwner());
+		                                     ? IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner())
+		                                     : IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GetOwner());
 	return (TargetMesh) ? TargetMesh->GetAnimInstance() : nullptr;
 }
 
-void UAnimMontagePlayerComponent::AuthUpdateReplicatedAnimMontage()
+void UGunnerAnimMontagePlayerComponent::AuthUpdateReplicatedAnimMontage()
 {
-	USkeletalMeshComponent* ThirdPersonMeshComponent = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner());
+	USkeletalMeshComponent* ThirdPersonMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner());
 	if (UAnimInstance* AnimInstance = ThirdPersonMeshComponent->GetAnimInstance())
 	{
 		ReplicatedAnimMontageData.AnimMontage = AnimInstance->GetCurrentActiveMontage();
@@ -96,7 +96,7 @@ void UAnimMontagePlayerComponent::AuthUpdateReplicatedAnimMontage()
 	}
 }
 
-float UAnimMontagePlayerComponent::LocalPlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InStartTime, float InPlayRate, FName StartSectionName)
+float UGunnerAnimMontagePlayerComponent::LocalPlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InStartTime, float InPlayRate, FName StartSectionName)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);
 	if (AnimMontage && AnimInstance)
@@ -117,10 +117,10 @@ float UAnimMontagePlayerComponent::LocalPlayMontage(UAnimMontage* AnimMontage, b
 	return 0.f;
 }
 
-void UAnimMontagePlayerComponent::OnRep_ReplicatedAnimMontage()
+void UGunnerAnimMontagePlayerComponent::OnRep_ReplicatedAnimMontage()
 {
 	// Server로부터 AnimMontage정보를 받아 Simulated Proxy에서 이 정보를 확인하고 갱신함.
-	USkeletalMeshComponent* ThirdPersonMeshComponent = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner());
+	USkeletalMeshComponent* ThirdPersonMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GetOwner());
 	UAnimInstance* AnimInstance = ThirdPersonMeshComponent->GetAnimInstance();
 	if (!AnimInstance)
 	{

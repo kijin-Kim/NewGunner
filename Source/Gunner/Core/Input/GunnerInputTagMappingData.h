@@ -6,14 +6,14 @@
 #include "EnhancedInputComponent.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "InputTagMappingData.generated.h"
+#include "GunnerInputTagMappingData.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
 
 
 USTRUCT()
-struct FTriggerEventTagMapping
+struct FGunnerTriggerEventTagMapping
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere)
@@ -24,18 +24,18 @@ struct FTriggerEventTagMapping
 
 
 USTRUCT()
-struct GUNNER_API FInputTagMapping
+struct GUNNER_API FGunnerInputTagMapping
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputAction> InputAction;
 	UPROPERTY(EditAnywhere)
-	TArray<FTriggerEventTagMapping> TriggerEventTagMappings;
+	TArray<FGunnerTriggerEventTagMapping> TriggerEventTagMappings;
 };
 
 USTRUCT()
-struct GUNNER_API FInputContextAndPriority
+struct GUNNER_API FGunnerInputContextAndPriority
 {
 	GENERATED_BODY()
 
@@ -50,13 +50,13 @@ struct GUNNER_API FInputContextAndPriority
  * 
  */
 UCLASS()
-class GUNNER_API UInputTagMappingData : public UDataAsset
+class GUNNER_API UGunnerInputTagMappingData : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "InputAction"))
-	TArray<FInputTagMapping> InputTagMappings;
+	TArray<FGunnerInputTagMapping> InputTagMappings;
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "InputMappingContext"))
-	TArray<FInputContextAndPriority> InputContextAndPriorities;
+	TArray<FGunnerInputContextAndPriority> InputContextAndPriorities;
 };

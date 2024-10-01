@@ -5,19 +5,19 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
-#include "InputEventDispatcherComponent.generated.h"
+#include "GunnerInputEventDispatcherComponent.generated.h"
 
 
 struct FInputActionValue;
-class UInputTagMappingData;
+class UGunnerInputTagMappingData;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UInputEventDispatcherComponent : public UActorComponent
+class GUNNER_API UGunnerInputEventDispatcherComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UInputEventDispatcherComponent();
+	UGunnerInputEventDispatcherComponent();
 	virtual void InitializeComponent() override;
 	void OnInputEvent(const FInputActionValue& InputActionValue, UEnhancedInputComponent* InputComponent, FGameplayTag InputTag);
 	UFUNCTION()
@@ -25,7 +25,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UInputTagMappingData> InputTagMappingData;
+	TObjectPtr<UGunnerInputTagMappingData> InputTagMappingData;
 	UPROPERTY()
 	APlayerController* PlayerController;
 };

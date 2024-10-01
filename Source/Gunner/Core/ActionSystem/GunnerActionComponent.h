@@ -7,7 +7,7 @@
 #include "GunnerActionAgentInfo.h"
 #include "GunnerActionDefinition.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/Core/Event/EventManagerComponent.h"
+#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "GunnerActionComponent.generated.h"
 
@@ -33,7 +33,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-
 	FGunnerActionDefinitionHandle AuthAddAction(const FGunnerActionDefinition& ActionDefinition);
 	void AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
@@ -47,8 +46,8 @@ public:
 	bool HasActionTriggerAuthority(UGunnerAction* Action) const;
 
 private:
-	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
-	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
+	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 	void HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition);
 	void HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition);
@@ -79,7 +78,7 @@ private:
 
 	FGameplayTagContainer OwnedTags;
 
-	TMap<FGunnerActionDefinitionHandle, TArray<FEventCallbackHandle>> BoundedActionEventHandles;
+	TMap<FGunnerActionDefinitionHandle, TArray<FGunnerEventCallbackHandle>> BoundedActionEventHandles;
 	
 };
 

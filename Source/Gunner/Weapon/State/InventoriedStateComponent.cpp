@@ -18,8 +18,8 @@ void UInventoriedStateComponent::Enter()
 {
 	Super::Enter();
 	AWeapon* Weapon = GetWeapon();
-	IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(Weapon)->SetVisibility(false);
-	IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(Weapon)->SetVisibility(false);
+	IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(Weapon)->SetVisibility(false);
+	IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(Weapon)->SetVisibility(false);
 	Weapon->GetFirstPersonMagainzeMeshComponent()->SetVisibility(false);
 	Weapon->GetThirdPersonMagainzeMeshComponent()->SetVisibility(false);
 	
@@ -28,11 +28,11 @@ void UInventoriedStateComponent::Enter()
 	if (AGunnerCharacter* GunnerCharacterOwner = Weapon->GetGunnerCharacterOwner())
 	{
 
-		USkeletalMeshComponent* GunnerFPMesh = IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GunnerCharacterOwner);
-		USkeletalMeshComponent* GunnerTPMesh = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GunnerCharacterOwner);
+		USkeletalMeshComponent* GunnerFPMesh = IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(GunnerCharacterOwner);
+		USkeletalMeshComponent* GunnerTPMesh = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(GunnerCharacterOwner);
 
-		USkeletalMeshComponent* WeaponFPMesh = IAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(Weapon);
-		USkeletalMeshComponent* WeaponTPMesh = IAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(Weapon);
+		USkeletalMeshComponent* WeaponFPMesh = IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(Weapon);
+		USkeletalMeshComponent* WeaponTPMesh = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(Weapon);
 		
 		FName FPWeaponSocketName = TEXT("WeaponPoint");
 		FName TPWeaponSocketName = TEXT("WeaponPoint");

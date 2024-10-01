@@ -4,8 +4,8 @@
 #include "GunnerActionAsync_PlayMontage.h"
 
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/AnimMontagePlayerComponent.h"
-#include "Gunner/Core/AnimMontagePlayerInterface.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
+#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
 
 UGunnerActionAsync_PlayMontage* UGunnerActionAsync_PlayMontage::PlayMontage(UGunnerAction* InAction, AActor* InMontageActor, UAnimMontage* InMontageToPlay, bool InbIsThirdPerson, float InPlayRate, FName InStartSectionName)
 {
@@ -30,14 +30,14 @@ void UGunnerActionAsync_PlayMontage::Activate()
 {
 	Super::Activate();
 
-	if (!MontageActor.IsValid() || !MontageToPlay.IsValid() || !MontageActor.Get()->Implements<UAnimMontagePlayerInterface>())
+	if (!MontageActor.IsValid() || !MontageToPlay.IsValid() || !MontageActor.Get()->Implements<UGunnerAnimMontagePlayerInterface>())
 	{
 		Cancel();
 		return;
 	}
 
 
-	UAnimMontagePlayerComponent* MontagePlayerComponent = IAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(MontageActor.Get());
+	UGunnerAnimMontagePlayerComponent* MontagePlayerComponent = IGunnerAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(MontageActor.Get());
 	MontagePlayerComponent->PlayMontage(MontageToPlay.Get(), bIsThirdPerson, PlayRate, StartSectionName);
 	if (OnCompletedDelegate.IsBound() || OnInterruptedDelegate.IsBound() || OnBlendOutDelegate.IsBound())
 	{

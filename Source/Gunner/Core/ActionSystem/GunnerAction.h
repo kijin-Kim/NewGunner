@@ -45,18 +45,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EndAction();
-
-
+	
 	EGunnerActionNetMethod GetActionNetMethod() const { return ActionNetMethod; }
 	const FGameplayTagContainer& GetActionTriggerEventTags() const { return ActionTriggerEventTags; }
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
 	bool ShouldTriggerOnAdded() const { return bShouldTriggerOnAdded; }
-
-
-	UFUNCTION(BlueprintCallable)
-	FGunnerActionAgentInfo GetActionAgentInfo() const { return *AgentInfo.Pin(); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsLocallyPlayerControlled() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsLocallyPlayerControlled(); }
@@ -76,6 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
+	virtual UWorld* GetWorld() const override;
 public:
 	FOnGunnerActionEndedSignature OnGunnerActionEndedDelegate;
 
@@ -109,4 +105,6 @@ protected:
 
 private:
 	bool bIsTriggering = false;
+
+	
 };
