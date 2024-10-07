@@ -26,16 +26,6 @@ void FGunnerActionAgentInfo::Init(AActor* InOwnerActor, AActor* InAgentActor)
 	}
 }
 
-bool FGunnerActionAgentInfo::operator==(const FGunnerActionAgentInfo& Other) const
-{
-	return Controller == Other.Controller && AgentActor == Other.AgentActor && OwnerActor == Other.OwnerActor;
-}
-
-bool FGunnerActionAgentInfo::operator!=(const FGunnerActionAgentInfo& Other) const
-{
-	return !(*this == Other);
-}
-
 bool FGunnerActionAgentInfo::IsLocallyPlayerControlled() const
 {
 	return Controller.IsValid() && Controller->IsLocalPlayerController();

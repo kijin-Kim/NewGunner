@@ -18,8 +18,7 @@ struct FGunnerActionDefinitionHandle
 
 	void GenerateNewHandle();
 	bool IsValid() const { return Handle != INDEX_NONE; }
-	bool operator==(const FGunnerActionDefinitionHandle& Other) const { return Handle == Other.Handle; }
-	bool operator!=(const FGunnerActionDefinitionHandle& Other) const { return Handle != Other.Handle; }
+	bool operator==(const FGunnerActionDefinitionHandle& Other) const = default;
 	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
 
 	friend uint32 GetTypeHash(const FGunnerActionDefinitionHandle& SpecHandle) { return ::GetTypeHash(SpecHandle.Handle); }

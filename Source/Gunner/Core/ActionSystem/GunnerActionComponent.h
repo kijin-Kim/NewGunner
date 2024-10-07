@@ -12,6 +12,25 @@
 #include "GunnerActionComponent.generated.h"
 
 
+USTRUCT()
+struct FGunnerLocalActionTriggerState
+{
+	GENERATED_BODY()
+
+	bool operator==(const FGunnerLocalActionTriggerState& ClientActionTriggerState) const = default;
+
+	UPROPERTY()
+	FGunnerActionDefinitionHandle ActionDefinitionHandle;
+	UPROPERTY()
+	int32 ActionTriggerID = 0;
+	UPROPERTY()
+	bool bIsTriggering = false;
+	
+};
+
+
+
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerActionComponent : public UActorComponent
 {
@@ -59,13 +78,14 @@ private:
 	void OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action);
 	FGunnerActionDefinition* FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle);
 
-	bool CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const;
-	void LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionDefinitionHandle ActionDefinitionHandle);
+	bool CanTriggerAction(const FGunnerActionDefinition& ActionDefinition, const FGunnerEventMessage& EventMessage) const;
+	void LocalTriggerAction(FGunnerActionDefinition* ActionDefinition);
 	UFUNCTION(Reliable, Server)
-	void ServerTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated);
+	void ServerTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, const TArray<FGunnerLocalActionTriggerState>& ClientActionTriggerStates);
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated);
 
+	void AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates);
 
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_ActionDefinitions)
@@ -79,6 +99,16 @@ private:
 	FGameplayTagContainer OwnedTags;
 
 	TMap<FGunnerActionDefinitionHandle, TArray<FGunnerEventCallbackHandle>> BoundedActionEventHandles;
+
+	
+	struct FGunnerNetTriggerDelayedAction
+	{
+		FGunnerActionDefinitionHandle ActionDefinitionHandle;
+		FGunnerEventMessage EventMessage;
+		double TriggerTime;
+	};
+	
+	TArray<FGunnerNetTriggerDelayedAction> NetTriggerDelayedActions;
 	
 };
 

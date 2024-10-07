@@ -52,6 +52,7 @@ public:
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
 	bool ShouldTriggerOnAdded() const { return bShouldTriggerOnAdded; }
+	bool IsTriggering() const { return bIsTriggering; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsLocallyPlayerControlled() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsLocallyPlayerControlled(); }

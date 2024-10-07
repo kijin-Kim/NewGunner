@@ -10,7 +10,7 @@ void UAnimNotify_AuthReloadBullet::Notify(USkeletalMeshComponent* MeshComp, UAni
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 	AWeapon* Weapon = MeshComp->GetOwner<AWeapon>();
-	if(Weapon->GetGunnerCharacterOwner()->HasAuthority())
+	if(Weapon && Weapon->GetGunnerCharacterOwner() && Weapon->GetGunnerCharacterOwner()->HasAuthority())
 	{
 		int32 BulletCountToReload = Weapon->GetMaxBulletCount() - Weapon->GetBulletCount();
 		BulletCountToReload = FMath::Min(BulletCountToReload, Weapon->GetMagazineBulletCount());

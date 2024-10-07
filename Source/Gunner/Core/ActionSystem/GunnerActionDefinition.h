@@ -36,5 +36,7 @@ struct FGunnerActionDefinition
 
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UGunnerAction> ActionInstance;
+	
+	int32 ActionTriggerID = 0;
 };
 

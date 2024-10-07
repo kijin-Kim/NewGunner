@@ -14,8 +14,7 @@ struct FGunnerActionAgentInfo
 	GENERATED_BODY()
 	void Init(AActor* InOwnerActor, AActor* InAgentActor);
 
-	bool operator==(const FGunnerActionAgentInfo& Other) const;
-	bool operator!=(const FGunnerActionAgentInfo& Other) const;
+	bool operator==(const FGunnerActionAgentInfo& Other) const = default;
 
 	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AController> Controller;
