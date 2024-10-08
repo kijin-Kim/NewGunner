@@ -3,6 +3,7 @@
 
 #include "GunnerEventManagerComponent.h"
 
+#include "GunnerEventManagerInterface.h"
 #include "Gunner/Gunner.h"
 
 
@@ -40,6 +41,26 @@ void UGunnerEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void
 			Callback(EventTag, Message, MessageType);
 		}
 	}
+}
+
+UGunnerEventManagerComponent* UGunnerEventManagerComponent::GetEventManagerComponentFromActor(AActor* Actor)
+{
+	if (!Actor)
+	{
+		return nullptr;
+	}
+
+	if (IGunnerEventManagerInterface* GunnerEventManagerComponentInterface = Cast<IGunnerEventManagerInterface>(Actor))
+	{
+		return GunnerEventManagerComponentInterface->GetEventManagerComponent();
+	}
+
+	if (UGunnerEventManagerComponent* EventManagerComponent = Actor->GetComponentByClass<UGunnerEventManagerComponent>())
+	{
+		return EventManagerComponent;
+	}
+
+	return nullptr;
 }
 
 FGunnerEventCallbackHandle UGunnerEventManagerComponent::BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType)
@@ -80,7 +101,7 @@ DEFINE_FUNCTION(UGunnerEventManagerComponent::execBP_SendEventToActor)
 		return;
 	}
 
-	if (UGunnerEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UGunnerEventManagerComponent>())
+	if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponentFromActor(TargetActor))
 	{
 		EventManagerComponent->HandleEvent(EventTag, MessagePtr, StructProperty->Struct);
 	}

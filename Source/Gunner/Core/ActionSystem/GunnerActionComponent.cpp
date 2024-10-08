@@ -29,7 +29,8 @@ void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* I
 {
 	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
-
+	AuthRemoveAllActions();
+	
 	if (OldAgentInfo != *AgentInfo && !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
 		OnRep_ActionDefinitions({});
@@ -93,6 +94,20 @@ void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandl
 	{
 		return ActionDefinition.Handle == ActionDefinitionHandle;
 	});
+}
+
+void UGunnerActionComponent::AuthRemoveAllActions()
+{
+	if (!AgentInfo->IsOwnerActorAuthoritative())
+	{
+		return;
+	}
+
+	ACTION_LIST_SCOPE_LOCK();
+	for (const auto& ActionDefinition : ActionDefinitions)
+	{
+		AuthRemoveAction(ActionDefinition.Handle);
+	}
 }
 
 void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
@@ -530,4 +545,5 @@ void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerAction
 			return;
 		}
 	}
+	UE_DEBUG_BREAK();
 }
