@@ -17,17 +17,15 @@ struct GUNNER_API FGunnerEventMessage
 	GENERATED_BODY()
 
 	FGunnerEventMessage()
-		: EventTag(),
-		  Instigator(nullptr)
+		: Instigator(nullptr)
 		  , TargetActor(nullptr)
 		  , InputActionValue()
 		  , EventDataObject(nullptr)
 	{
 	}
 
-	FGunnerEventMessage(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
-		: EventTag(InEventTag),
-		  Instigator(InInstigator)
+	FGunnerEventMessage(AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: Instigator(InInstigator)
 		  , TargetActor(InTargetActor)
 		  , InputActionValue(InInputActionValue)
 		  , EventDataObject(InEventDataObject)
@@ -35,15 +33,13 @@ struct GUNNER_API FGunnerEventMessage
 	}
 
 public:
-	UPROPERTY(BlueprintReadOnly)
-	FGameplayTag EventTag;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AActor> Instigator;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AActor> TargetActor;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	FInputActionValue InputActionValue;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<UObject> EventDataObject;
 };
 
@@ -72,17 +68,15 @@ struct GUNNER_API FGunnerEventMessageReplicated
 {
 	GENERATED_BODY()
 	FGunnerEventMessageReplicated()
-		: EventTag(),
-		  Instigator(nullptr)
+		: Instigator(nullptr)
 		  , TargetActor(nullptr)
 		  , ReplicatedInputActionValue()
 		  , EventDataObject(nullptr)
 	{
 	}
 
-	FGunnerEventMessageReplicated(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
-		: EventTag(InEventTag),
-		  Instigator(InInstigator)
+	FGunnerEventMessageReplicated(AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: Instigator(InInstigator)
 		  , TargetActor(InTargetActor)
 		  , ReplicatedInputActionValue(InInputActionValue)
 		  , EventDataObject(InEventDataObject)
@@ -90,8 +84,7 @@ struct GUNNER_API FGunnerEventMessageReplicated
 	}
 
 	FGunnerEventMessageReplicated(const FGunnerEventMessage& EventMessage)
-		: EventTag(EventMessage.EventTag),
-		  Instigator(EventMessage.Instigator)
+		: Instigator(EventMessage.Instigator)
 		  , TargetActor(EventMessage.TargetActor)
 		  , ReplicatedInputActionValue(EventMessage.InputActionValue)
 		  , EventDataObject(EventMessage.EventDataObject)
@@ -100,12 +93,10 @@ struct GUNNER_API FGunnerEventMessageReplicated
 
 	FGunnerEventMessage ToEventMessage() const
 	{
-		return FGunnerEventMessage(EventTag, Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
+		return FGunnerEventMessage(Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
 	}
 
 private:
-	UPROPERTY()
-	FGameplayTag EventTag;
 	UPROPERTY()
 	TObjectPtr<AActor> Instigator;
 	UPROPERTY()

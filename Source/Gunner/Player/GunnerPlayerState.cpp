@@ -13,36 +13,3 @@ AGunnerPlayerState::AGunnerPlayerState()
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
-
-void AGunnerPlayerState::SetupOnPossessedPawnChangedEvent()
-{
-	if (AController* Controller = GetOwningController())
-	{
-		Controller->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::OnPossessedPawnChanged);
-		if (APawn* PossessedPawn = Controller->GetPawn())
-		{
-			OnPossessedPawnChanged(nullptr, PossessedPawn);
-		}
-	}
-}
-
-void AGunnerPlayerState::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
-{
-	if (NewPawn)
-	{
-		ActionComponent->InitActionComponent(this, NewPawn);
-
-		if (HasAuthority())
-		{
-			for (const auto& TestActionClass : TestActionClasses)
-			{
-				if(TestActionClass)
-				{
-					FGunnerActionDefinition ActionDefinition(this, TestActionClass);
-					ActionComponent->AuthAddAction(ActionDefinition);	
-				}
-				
-			}
-		}
-	}
-}

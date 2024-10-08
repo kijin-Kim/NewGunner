@@ -21,17 +21,8 @@ public:
 	AGunnerPlayerState();
 
 private:
-	void SetupOnPossessedPawnChangedEvent();
-	UFUNCTION()
-	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
-	
-
-private:
 	UPROPERTY()
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
 	UPROPERTY()
 	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
-
-	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<UGunnerAction>> TestActionClasses;
 };

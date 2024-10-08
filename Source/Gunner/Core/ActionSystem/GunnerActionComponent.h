@@ -54,6 +54,7 @@ public:
 	
 	FGunnerActionDefinitionHandle AuthAddAction(const FGunnerActionDefinition& ActionDefinition);
 	void AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
+	void AuthRemoveAllActions();
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
 
 	void IncrementActionListLock();

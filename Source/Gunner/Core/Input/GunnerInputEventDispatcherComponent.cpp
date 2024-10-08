@@ -32,7 +32,7 @@ void UGunnerInputEventDispatcherComponent::OnInputEvent(const FInputActionValue&
 	check(InputComponent);
 	if (APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>())
 	{
-		const FGunnerEventMessage EventMessage(InputTag, PlayerController, nullptr, InputActionValue, nullptr);
+		const FGunnerEventMessage EventMessage(PlayerController, nullptr, InputActionValue, nullptr);
 		UGunnerEventManagerComponent::SendEventToActor<FGunnerEventMessage>(InputTag, EventMessage, PlayerState);
 	}
 }

@@ -20,23 +20,18 @@ public:
 	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
 
 	UFUNCTION(BlueprintCallable)
+	bool CanReloadBullet() const;
+	UFUNCTION(BlueprintCallable)
+	void ReloadBullet();
+	UFUNCTION(BlueprintCallable)
 	void SetBulletCount(int32 NewBulletCount);
 	UFUNCTION(BlueprintCallable)
-	void SetMagazineCount(int32 NewMagazineCount);
-
-	UFUNCTION(BlueprintCallable)
 	void AddBulletCount(int32 BulletCountToAdd);
-	UFUNCTION(BlueprintCallable)
-	void AddMagazineCount(int32 MagazineCountToAdd);
 
 	int32 GetBulletCount() const { return BulletCount; }
-	int32 GetMagazineCount() const { return MagazineCount; }
+	int32 GetMagazineBulletCount() const { return MagazineBulletCount; }
 	int32 GetMaxBulletCountPerMagazine() const { return MaxBulletCountPerMagazine; }
-	int32 GetMaxMagazineCount() const { return MaxMagazineCount; }
-
-	
-private:
-	void BroadcastOnBulletCountChangedDelegate();
+	int32 GetMaxMagazineBulletCount() const { return MaxMagazineBulletCount; }
 	
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -49,9 +44,9 @@ private:
 	int32 MaxBulletCountPerMagazine;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	int32 MagazineCount = 0;
+	int32 MagazineBulletCount = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	int32 MaxMagazineCount;
+	int32 MaxMagazineBulletCount;
 
 	
 };

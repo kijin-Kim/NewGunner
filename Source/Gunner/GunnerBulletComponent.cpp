@@ -14,7 +14,7 @@ void UGunnerBulletComponent::OnRegister()
 {
 	Super::OnRegister();
 	BulletCount = MaxBulletCountPerMagazine;
-	MagazineCount = MaxMagazineCount;
+	MagazineBulletCount = MaxMagazineBulletCount;
 }
 
 void UGunnerBulletComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -23,38 +23,35 @@ void UGunnerBulletComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const F
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 	DisplayDebugManager.SetDrawColor(FColor::White);
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("BulletCount: %d"), BulletCount));
-	DisplayDebugManager.DrawString(FString::Printf(TEXT("MagazineCount: %d"), MagazineCount));
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("MagazineBulletCount: %d"), MagazineBulletCount));
+}
+
+bool UGunnerBulletComponent::CanReloadBullet() const
+{
+	return BulletCount < MaxBulletCountPerMagazine && MagazineBulletCount > 0;
+}
+
+void UGunnerBulletComponent::ReloadBullet()
+{
+	if (CanReloadBullet())
+	{
+		const int32 BulletCountToAdd = FMath::Min(MaxBulletCountPerMagazine - BulletCount, MagazineBulletCount);
+		BulletCount += BulletCountToAdd;
+		MagazineBulletCount -= BulletCountToAdd;
+		OnBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
+	}
 }
 
 void UGunnerBulletComponent::SetBulletCount(int32 NewBulletCount)
 {
 	BulletCount = NewBulletCount;
 	BulletCount = FMath::Min(BulletCount, MaxBulletCountPerMagazine);
-	BroadcastOnBulletCountChangedDelegate();
-}
-
-void UGunnerBulletComponent::SetMagazineCount(int32 NewMagazineCount)
-{
-	MagazineCount = NewMagazineCount;
-	MagazineCount = FMath::Min(MagazineCount, MaxMagazineCount);
-	BroadcastOnBulletCountChangedDelegate();
+	OnBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
 }
 
 void UGunnerBulletComponent::AddBulletCount(int32 BulletCountToAdd)
 {
 	BulletCount += BulletCountToAdd;
 	BulletCount = FMath::Min(BulletCount, MaxBulletCountPerMagazine);
-	BroadcastOnBulletCountChangedDelegate();
-}
-
-void UGunnerBulletComponent::AddMagazineCount(int32 MagazineCountToAdd)
-{
-	MagazineCount += MagazineCountToAdd;
-	MagazineCount = FMath::Min(MagazineCount, MaxMagazineCount);
-	BroadcastOnBulletCountChangedDelegate();
-}
-
-void UGunnerBulletComponent::BroadcastOnBulletCountChangedDelegate()
-{
-	OnBulletCountChangedDelegate.Broadcast(BulletCount, MagazineCount * MaxBulletCountPerMagazine);
+	OnBulletCountChangedDelegate.Broadcast(BulletCount, MagazineBulletCount);
 }

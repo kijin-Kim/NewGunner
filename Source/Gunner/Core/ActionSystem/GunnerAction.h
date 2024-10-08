@@ -82,7 +82,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	EGunnerActionNetMethod ActionNetMethod = EGunnerActionNetMethod::LocalOnly;
-	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Action Trigger Config")
 	FGameplayTagContainer ActionTriggerEventTags;
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	bool bIsRetriggerable = false;

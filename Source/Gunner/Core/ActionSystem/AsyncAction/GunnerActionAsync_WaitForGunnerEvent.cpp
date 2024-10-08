@@ -12,7 +12,7 @@ UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::Wa
 		return nullptr;
 	}
 
-	SelfObject->TargetEventManagerComponent = EventTargetActor->GetComponentByClass<UGunnerEventManagerComponent>();
+	SelfObject->TargetEventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(EventTargetActor);
 	if (!SelfObject->TargetEventManagerComponent.IsValid())
 	{
 		return nullptr;

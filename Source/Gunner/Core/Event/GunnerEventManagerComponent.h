@@ -70,10 +70,13 @@ public:
 	void UnbindEventCallback(FGunnerEventCallbackHandle Handle);
 	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
 
+	UFUNCTION(BlueprintCallable)
+	static UGunnerEventManagerComponent* GetEventManagerComponentFromActor(AActor* Actor);
+
 	template <typename FMessageStruct>
 	static void SendEventToActor(FGameplayTag EventTag, const FMessageStruct& Message, AActor* TargetActor)
 	{
-		if (UGunnerEventManagerComponent* EventManagerComponent = TargetActor->GetComponentByClass<UGunnerEventManagerComponent>())
+		if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponentFromActor(TargetActor))
 		{
 			EventManagerComponent->HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
 		}

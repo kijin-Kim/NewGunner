@@ -17,7 +17,7 @@
 #include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/Weapon/Weapon.h"
+#include "Gunner/Core/ActionSystem/GunnerAction.h"
 #include "Gunner/Weapon/WeaponManagerComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -52,7 +52,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
-	
+
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
 
 	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
@@ -91,6 +91,12 @@ UGunnerActionComponent* AGunnerCharacter::GetActionComponent() const
 	return PS ? PS->FindComponentByClass<UGunnerActionComponent>() : FindComponentByClass<UGunnerActionComponent>();
 }
 
+UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
+{
+	const APlayerState* PS = GetPlayerState<APlayerState>();
+	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
+}
+
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
@@ -98,7 +104,17 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 	if (NewPlayerState)
 	{
-		GetActionComponent()->InitActionComponent(NewPlayerState, this);
+		UGunnerActionComponent* ActionComponent = GetActionComponent();
+		check(ActionComponent);
+		ActionComponent->InitActionComponent(NewPlayerState, this);
+		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
+		{
+			if (ActionClass)
+			{
+				FGunnerActionDefinition ActionDefinition(this, ActionClass);
+				ActionComponent->AuthAddAction(ActionDefinition);
+			}
+		}
 	}
 
 
