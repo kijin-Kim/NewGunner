@@ -51,6 +51,7 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 
 void AGunnerEquipment::OnAcquired()
 {
+	// TODO: ActorOwner가 없을 경우가 존재
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
 	if (ActorOwner->HasAuthority())
@@ -114,12 +115,12 @@ void AGunnerEquipment::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugD
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("Equipment: %s"), *GetName()));
 
 
-	TArray<UGunnerPropertyComponent*> Components;
-	GetComponents(UGunnerPropertyComponent::StaticClass(), Components);
-	for (UGunnerPropertyComponent* Component : Components)
-	{
-		Component->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
-	}
+	// TArray<UGunnerPropertyComponent*> Components;
+	// GetComponents(UGunnerPropertyComponent::StaticClass(), Components);
+	// for (UGunnerPropertyComponent* Component : Components)
+	// {
+	// 	Component->InternalOnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
+	// }
 }
 
 void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles)

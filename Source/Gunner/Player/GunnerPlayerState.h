@@ -19,6 +19,8 @@ class GUNNER_API AGunnerPlayerState : public APlayerState
 
 public:
 	AGunnerPlayerState();
+	virtual void PreNetReceive() override;
+	virtual void PostNetReceive() override;
 
 private:
 	UPROPERTY()

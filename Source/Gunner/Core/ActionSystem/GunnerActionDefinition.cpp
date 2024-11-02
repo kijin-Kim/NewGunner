@@ -4,11 +4,6 @@
 #include "GunnerActionDefinition.h"
 #include "GunnerAction.h"
 
-void FGunnerActionDefinitionHandle::GenerateNewHandle()
-{
-	static int32 HandleCounter = 1;
-	Handle = HandleCounter++;
-}
 
 FGunnerActionDefinition::FGunnerActionDefinition(): SourceObject(nullptr), ActionClass(nullptr), ActionCDO(ActionClass ? ActionClass.GetDefaultObject() : nullptr)
 {

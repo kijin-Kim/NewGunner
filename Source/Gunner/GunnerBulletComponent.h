@@ -17,7 +17,7 @@ class GUNNER_API UGunnerBulletComponent : public UGunnerPropertyComponent
 public:
 	UGunnerBulletComponent();
 	virtual void OnRegister() override;
-	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
+	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
 
 	UFUNCTION(BlueprintCallable)
 	bool CanReloadBullet() const;
@@ -48,5 +48,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	int32 MaxMagazineBulletCount;
 
+	
+	FGunnerActionPropertyModifier BulletCountProperty(FGameplayTag());
 	
 };

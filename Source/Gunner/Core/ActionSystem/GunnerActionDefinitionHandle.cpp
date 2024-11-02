@@ -5,3 +5,8 @@
 
 
 // Add default functionality here for any IGunnerActionDefinitionHandle functions that are not pure virtual.
+void FGunnerActionDefinitionHandle::GenerateNewHandle()
+{
+	static int32 HandleCounter = 1;
+	Handle = HandleCounter++;
+}

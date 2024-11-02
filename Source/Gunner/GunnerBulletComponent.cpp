@@ -17,9 +17,9 @@ void UGunnerBulletComponent::OnRegister()
 	MagazineBulletCount = MaxMagazineBulletCount;
 }
 
-void UGunnerBulletComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UGunnerBulletComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
-	Super::OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
+	Super::InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 	DisplayDebugManager.SetDrawColor(FColor::White);
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("BulletCount: %d"), BulletCount));

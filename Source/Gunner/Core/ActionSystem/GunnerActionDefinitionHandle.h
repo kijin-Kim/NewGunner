@@ -21,7 +21,7 @@ struct FGunnerActionDefinitionHandle
 	bool operator==(const FGunnerActionDefinitionHandle& Other) const = default;
 	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
 
-	friend uint32 GetTypeHash(const FGunnerActionDefinitionHandle& SpecHandle) { return ::GetTypeHash(SpecHandle.Handle); }
+	friend uint32 GetTypeHash(const FGunnerActionDefinitionHandle& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
 
 private:
 	UPROPERTY()

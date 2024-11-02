@@ -34,6 +34,8 @@ class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontage
 
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	virtual void PreNetReceive() override;
+	virtual void PostNetReceive() override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;

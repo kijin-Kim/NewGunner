@@ -4,10 +4,14 @@
 #include "GunnerActionComponent.h"
 #include "GunnerAction.h"
 #include "GunnerActionComponentInterface.h"
+#include "GunnerActionSideEffect.h"
+#include "GunnerActionSideEffectDefinition.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
+#include "GameFramework/PlayerState.h"
 
 #include "Gunner/Gunner.h"
+#include "Gunner/Core/GunnerPropertyComponent.h"
 #include "Gunner/Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "Net/UnrealNetwork.h"
@@ -17,20 +21,19 @@ UGunnerActionComponent::UGunnerActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
 	AgentInfo = MakeShared<FGunnerActionAgentInfo>();
-
+	bReplicateUsingRegisteredSubObjectList = true;
 	if (HasAnyFlags(RF_ClassDefaultObject))
 	{
 		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
 	}
 }
 
-
 void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor)
 {
 	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
 	AuthRemoveAllActions();
-	
+
 	if (OldAgentInfo != *AgentInfo && !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
 		OnRep_ActionDefinitions({});
@@ -41,6 +44,7 @@ void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitions, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerActionComponent, NetPredictionHandles, COND_OwnerOnly, REPNOTIFY_Always);
 }
 
 void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -180,10 +184,13 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 
 		if (ActionNetMethod == EGunnerActionNetMethod::LocalPredicted)
 		{
+			FGunnerActionNetPrediction NewNetPrediction;
+			NetPredictions.Add(NewNetPrediction);
+			ActionDefinition->ActionInstance->SetActionNetPredictionHandle(NewNetPrediction.Handle);
 			LocalTriggerAction(ActionDefinition);
 			TArray<FGunnerLocalActionTriggerState> LocalActionTriggerStates;
 			AggregateActionTriggerStates(LocalActionTriggerStates);
-			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, LocalActionTriggerStates);
+			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, LocalActionTriggerStates, NewNetPrediction.Handle);
 			return;
 		}
 		GR_LOG_SUB(LogGunner, Error, TEXT("해당 호스트에서는 Action을(를) 실행할 수 없습니다."));
@@ -251,6 +258,105 @@ bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) co
 
 	checkNoEntry();
 	return false;
+}
+
+void UGunnerActionComponent::BP_TriggerSideEffectToActor(UGunnerAction* Action, AActor* SideEffectTarget, TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
+{
+	check(Action);
+	if (!SideEffectTarget)
+	{
+		return;
+	}
+
+	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
+	{
+		ActionComponent->TriggerSideEffect(SideEffectClass, Action->GetActionNetPredictionHandle());
+	}
+}
+
+void UGunnerActionComponent::TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, FGunnerActionNetPredictionHandle PredictionHandle)
+{
+	check(SideEffectClass);
+
+	const FGunnerActionSideEffectDefinition& NewSideEffectDefinition = SideEffectDefinitions[SideEffectDefinitions.Add({SideEffectClass})];
+	if (!AgentInfo->IsOwnerActorAuthoritative())
+	{
+		FGunnerActionNetPrediction* NetPrediction = NetPredictions.FindByPredicate([PredictionHandle](const FGunnerActionNetPrediction& NetPrediction)
+		{
+			return NetPrediction.Handle == PredictionHandle;
+		});
+		check(NetPrediction);
+
+
+		NetPrediction->OnPredictionEnded.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
+		{
+			AActor* SideEffectTarget = AgentInfo->AgentActor.Get();
+			if (!SideEffectTarget)
+			{
+				return;
+			}
+
+			APlayerState* PS = Cast<APawn>(SideEffectTarget)->GetPlayerState();
+			UGunnerPropertyComponent* PropertyComponent = PS->FindComponentByClass<UGunnerPropertyComponent>();
+			if (!PropertyComponent)
+			{
+				return;
+			}
+			PropertyComponent->OnSideEffectEnded(SideEffectDefinitionHandle);
+		});
+
+		NetPrediction->OnPredictionFailed.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
+		{
+			SideEffectDefinitions.RemoveAll([SideEffectDefinitionHandle](const FGunnerActionSideEffectDefinition& SideEffectDefinition)
+			{
+				return SideEffectDefinition.Handle == SideEffectDefinitionHandle;
+			});
+
+			AActor* SideEffectTarget = AgentInfo->AgentActor.Get();
+			if (!SideEffectTarget)
+			{
+				return;
+			}
+
+			APlayerState* PS = Cast<APawn>(SideEffectTarget)->GetPlayerState();
+			UGunnerPropertyComponent* PropertyComponent = PS->FindComponentByClass<UGunnerPropertyComponent>();
+			if (!PropertyComponent)
+			{
+				return;
+			}
+			PropertyComponent->OnSideEffectFailed(SideEffectDefinitionHandle);
+		});
+	}
+
+
+	AActor* SideEffectTarget = AgentInfo->AgentActor.Get();
+	if (!SideEffectTarget)
+	{
+		return;
+	}
+
+	APlayerState* PS = Cast<APawn>(SideEffectTarget)->GetPlayerState();
+	UGunnerPropertyComponent* PropertyComponent = PS->FindComponentByClass<UGunnerPropertyComponent>();
+	if (!PropertyComponent)
+	{
+		return;
+	}
+
+	for (const auto& [PropertyTag, PropertyOperations] : SideEffectClass.GetDefaultObject()->PropertySideEffects)
+	{
+		UGunnerActionProperty* Property = PropertyComponent->GetProperty(PropertyTag);
+		if (!Property)
+		{
+			continue;
+		}
+		for (const auto& Operation : PropertyOperations)
+		{
+			FGunnerActionPropertyOperation NewPropertyOperation = Operation;
+			NewPropertyOperation.SideEffectDefinitionHandle = NewSideEffectDefinition.Handle;
+			Property->Operations.Add(NewPropertyOperation);
+		}
+		Property->MakePropertyDirty();
+	}
 }
 
 void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -472,12 +578,66 @@ bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& Act
 		&& !OwnedTags.HasAny(ActionDefinition.ActionCDO->GetShouldNotHaveTags());
 }
 
-void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition)
+void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionNetPredictionHandle PredictionHandle /*= FGunnerActionNetPredictionHandle()*/)
 {
 	check(ActionDefinition->ActionInstance);
 	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
 	ActionDefinition->ActionTriggerID++;
+
+
+	struct FScopedNetPrediction
+	{
+	public:
+		FScopedNetPrediction(UGunnerActionComponent* InActionComponent, FGunnerActionDefinition& InActionDefinition, FGunnerActionNetPredictionHandle InNetPredictionHandle) : ActionComponent(InActionComponent), ActionDefinition(InActionDefinition), NetPredictionHandle(InNetPredictionHandle)
+		{
+		}
+
+		~FScopedNetPrediction()
+		{
+			if (ActionDefinition.ActionInstance->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted && ActionDefinition.ActionInstance->IsOwnerActorAuthoritative())
+			{
+				check(NetPredictionHandle.IsValid());
+				ActionComponent->NetPredictionHandles.Add(NetPredictionHandle);
+			}
+		}
+
+	private:
+		UGunnerActionComponent* ActionComponent;
+		FGunnerActionDefinition& ActionDefinition;
+		FGunnerActionNetPredictionHandle NetPredictionHandle;
+	};
+
+	FScopedNetPrediction(this, *ActionDefinition, PredictionHandle);
 	ActionDefinition->ActionInstance->OnTriggerAction();
+}
+
+
+void UGunnerActionComponent::ClientTriggerActionRequestFailed_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle)
+{
+	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
+	check(ActionDefinition);
+	ActionDefinition->ActionInstance->OnEndAction();
+
+	GR_LOG_SUB(LogGunner, Display, TEXT("PredictionHandle [%s]"), *PredictionHandle.ToString());
+	if (PredictionHandle.IsValid())
+	{
+		if (FGunnerActionNetPrediction* NetPrediction = NetPredictions.FindByPredicate([PredictionHandle](const FGunnerActionNetPrediction& NetPrediction)
+		{
+			return NetPrediction.Handle == PredictionHandle;
+		}))
+		{
+			NetPrediction->OnPredictionFailed.Broadcast();
+		}
+
+		NetPredictions.RemoveAll([PredictionHandle](const FGunnerActionNetPrediction& NetPrediction)
+		{
+			return NetPrediction.Handle == PredictionHandle;
+		});
+	}
+}
+
+void UGunnerActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle)
+{
 }
 
 void UGunnerActionComponent::AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates)
@@ -494,6 +654,45 @@ void UGunnerActionComponent::AggregateActionTriggerStates(TArray<FGunnerLocalAct
 	}
 }
 
+void UGunnerActionComponent::OnRep_NetPredictionHandles()
+{
+	UE_LOG(LogGunner, Warning, TEXT("OnRep_NetPredictionHandles: %f"), GetWorld()->GetTimeSeconds());
+	for (const FGunnerActionNetPredictionHandle& PredictionHandle : NetPredictionHandles)
+	{
+		if (PredictionHandle.IsValid())
+		{
+			if (FGunnerActionNetPrediction* NetPrediction = NetPredictions.FindByPredicate([PredictionHandle](const FGunnerActionNetPrediction& NetPrediction)
+			{
+				return NetPrediction.Handle == PredictionHandle;
+			}))
+			{
+				NetPrediction->OnPredictionEnded.Broadcast();
+				NetPredictions.RemoveAll([PredictionHandle](const FGunnerActionNetPrediction& NetPrediction)
+				{
+					return NetPrediction.Handle == PredictionHandle;
+				});
+			}
+		}
+	}
+
+	// FGunnerActionNetPredictionHandle YoungestNetPredictionHandle;
+	// for (FGunnerActionNetPredictionHandle& NetPredictionHandle : NetPredictionHandles)
+	// {
+	// 	YoungestNetPredictionHandle = YoungestNetPredictionHandle < NetPredictionHandle ? NetPredictionHandle : YoungestNetPredictionHandle;
+	// }
+	//
+	// for (int32 i = NetPredictions.Num() - 1; i >= 0; i--)
+	// {
+	// 	if (NetPredictions[i].Handle < YoungestNetPredictionHandle)
+	// 	{
+	// 		NetPredictions[i].OnPredictionEnded.Broadcast();
+	// 		NetPredictions.RemoveAt(i);
+	// 	}
+	// }
+
+	NetPredictionHandles.Empty();
+}
+
 void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated)
 {
 	check(ActionDefinitionHandle.IsValid());
@@ -503,8 +702,9 @@ void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDef
 	LocalTriggerAction(ActionDefinition);
 }
 
-void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, const TArray<FGunnerLocalActionTriggerState>& ClientActionTriggerStates)
+void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, const TArray<FGunnerLocalActionTriggerState>& ClientActionTriggerStates, FGunnerActionNetPredictionHandle PredictionHandle)
 {
+	GR_LOG_SUB(LogGunner, Display, TEXT("PredictionHandle [%s]"), *PredictionHandle.ToString());
 	if (!ActionDefinitionHandle.IsValid())
 	{
 		UE_DEBUG_BREAK(); // FAIL DESYNC
@@ -514,12 +714,21 @@ void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerAction
 	{
 		UE_DEBUG_BREAK(); // FAIL DESYNC
 	}
+	
+	LocalTriggerAction(ActionDefinition, PredictionHandle);
+	return;
 
 	if (CanTriggerAction(*ActionDefinition, EventMessageReplicated.ToEventMessage()))
 	{
-		LocalTriggerAction(ActionDefinition);
+		LocalTriggerAction(ActionDefinition, PredictionHandle);
 		return;
 	}
+	else
+	{
+		ClientTriggerActionRequestFailed(ActionDefinitionHandle, PredictionHandle);
+		return;
+	}
+
 
 	for (const FGunnerLocalActionTriggerState& ClientActionTriggerState : ClientActionTriggerStates)
 	{

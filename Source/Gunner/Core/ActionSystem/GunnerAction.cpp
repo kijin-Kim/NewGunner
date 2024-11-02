@@ -36,6 +36,7 @@ void UGunnerAction::OnTriggerAction_Implementation()
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
 
+
 	if (bIsTriggering && bIsRetriggerable)
 	{
 		EndAction();

@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GunnerActionAgentInfo.h"
 #include "GunnerActionDefinition.h"
+#include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Gunner/Core/Input/GunnerEventMessage.h"
 #include "UObject/Object.h"
 #include "GunnerAction.generated.h"
@@ -34,6 +35,7 @@ class GUNNER_API UGunnerAction : public UObject
 public:
 	void InitializeGunnerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FGunnerEventMessage& InEventMessage);
+	void SetActionNetPredictionHandle(FGunnerActionNetPredictionHandle InNetPredictionHandle) { NetPredictionHandle = InNetPredictionHandle; }
 	UFUNCTION(BlueprintNativeEvent)
 	void OnActionAdded();
 	UFUNCTION(BlueprintNativeEvent)
@@ -73,6 +75,8 @@ public:
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
 	virtual UWorld* GetWorld() const override;
+
+	FGunnerActionNetPredictionHandle GetActionNetPredictionHandle() const { return NetPredictionHandle; }
 public:
 	FOnGunnerActionEndedSignature OnGunnerActionEndedDelegate;
 
@@ -106,6 +110,7 @@ protected:
 
 private:
 	bool bIsTriggering = false;
-
+	
+	FGunnerActionNetPredictionHandle NetPredictionHandle;
 	
 };
