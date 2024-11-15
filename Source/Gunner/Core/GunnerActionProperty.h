@@ -19,6 +19,7 @@ enum class EGunnerActionPropertyOperator
 	Override
 };
 
+
 USTRUCT()
 struct FGunnerActionPropertyOperation
 {
@@ -29,72 +30,10 @@ public:
 	EGunnerActionPropertyOperator Operator;
 	UPROPERTY(EditAnywhere)
 	float Operand;
+	UPROPERTY(EditAnywhere)
+	float Duration;
+	
 	FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle;
-};
-
-
-USTRUCT()
-struct FGunnerActionPropertyModifier
-{
-	GENERATED_BODY()
-
-public:
-	void Add(float Operand)
-	{
-		AdditiveOperand += Operand;
-	}
-
-	void Subtract(float Operand)
-	{
-		AdditiveOperand -= Operand;
-	}
-
-	void Multiply(float Operand)
-	{
-		MultiplicativeOperand += Operand;
-	}
-
-	void Divide(float Operand)
-	{
-		DivisiveOperand += Operand;
-	}
-
-	void Override(float NewValue)
-	{
-		OverrideOperand = NewValue;
-		bShouldOverride = true;
-	}
-
-	void Evaluate()
-	{
-		if (FMath::IsNearlyZero(MultiplicativeOperand))
-		{
-			MultiplicativeOperand = 1.0f;
-		}
-
-		//float& TargetValue = bHasAuthority ? StaticValue : DynamicValue;
-		float& TargetValue = StaticValue;
-		const float OldValue = TargetValue;
-
-		if (bShouldOverride)
-		{
-			TargetValue = OverrideOperand;
-		}
-		else
-		{
-			TargetValue = ((TargetValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
-		}
-	}
-
-public:
-	float MultiplicativeOperand = 1.0f;
-	float AdditiveOperand = 0.0f;
-	float DivisiveOperand = 1.0f;
-
-	float OverrideOperand = 0.0f;
-	bool bShouldOverride = false;
-
-	float StaticValue = 0.0f;
 };
 
 /**
@@ -109,16 +48,21 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	void MakePropertyDirty();
-	virtual void PostNetReceive() override;
-	
-	UFUNCTION()
-	void OnRep_RealValue(float OldValue);
+	void Evaluate(const TArray<FGunnerActionPropertyOperation>& PropertyOperation, float& TargetValue);
 
+	virtual void PreNetReceive() override;
+	virtual void PostNetReceive() override;
+
+
+	
 public:
 	UPROPERTY(Replicated)
 	FGameplayTag Tag;
-	UPROPERTY(ReplicatedUsing = OnRep_RealValue)
-	float RealValue;
-	float Value;
-	TArray<FGunnerActionPropertyOperation> Operations;
+	UPROPERTY(Replicated)
+	float StaticValue;
+	UPROPERTY(Replicated)
+	float DynamicValue;
+	TArray<FGunnerActionPropertyOperation> StaticOperations;
+	TArray<FGunnerActionPropertyOperation> DynamicOperations;
+
 };

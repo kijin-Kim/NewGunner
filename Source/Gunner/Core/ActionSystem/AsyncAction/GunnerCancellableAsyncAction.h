@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/CancellableAsyncAction.h"
 #include "Gunner/Core/ActionSystem/GunnerAction.h"
+#include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
 #include "GunnerCancellableAsyncAction.generated.h"
 
+class UGunnerActionComponent;
 /**
  * 
  */
@@ -22,6 +24,8 @@ public:
 		check(InAction);
 		T* SelfObject = NewObject<T>();
 		SelfObject->Action = InAction;
+		SelfObject->ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(InAction->GetOwnerActor());
+		check(SelfObject->ActionComponent.IsValid());
 		SelfObject->Action->OnGunnerActionEndedDelegate.AddWeakLambda(SelfObject, [SelfObject](FGunnerActionDefinitionHandle, UGunnerAction*)
 		{
 			SelfObject->Cancel();
@@ -35,4 +39,5 @@ public:
 
 protected:
 	TWeakObjectPtr<UGunnerAction> Action;
+	TWeakObjectPtr<UGunnerActionComponent> ActionComponent;
 };

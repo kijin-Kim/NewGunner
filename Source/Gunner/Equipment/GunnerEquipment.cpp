@@ -6,7 +6,6 @@
 #include "Engine/Canvas.h"
 #include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Core/GunnerAnimInstance.h"
-#include "Gunner/Core/GunnerPropertyComponent.h"
 #include "Gunner/Core/ActionSystem/GunnerAction.h"
 #include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
 

@@ -14,6 +14,7 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 public:
+	virtual void Shutdown() override; 
 	UCurveTable* GetDamageCurveTable() const;
 	UDataTable* GetWeaponDataTable() const;
 

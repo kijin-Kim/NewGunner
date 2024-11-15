@@ -1,0 +1,5 @@
+E:\Uiana-MapImporter\Uiana\Content\Python\tools\cue4extractor\cue4extractor\obj\Debug\net6.0\cue4extractor.csproj.AssemblyReference.cache
+E:\Uiana-MapImporter\Uiana\Content\Python\tools\cue4extractor\cue4extractor\obj\Debug\net6.0\cue4extractor.GeneratedMSBuildEditorConfig.editorconfig
+E:\Uiana-MapImporter\Uiana\Content\Python\tools\cue4extractor\cue4extractor\obj\Debug\net6.0\cue4extractor.AssemblyInfoInputs.cache
+E:\Uiana-MapImporter\Uiana\Content\Python\tools\cue4extractor\cue4extractor\obj\Debug\net6.0\cue4extractor.AssemblyInfo.cs
+E:\Uiana-MapImporter\Uiana\Content\Python\tools\cue4extractor\cue4extractor\obj\Debug\net6.0\cue4extractor.csproj.CoreCompileInputs.cache

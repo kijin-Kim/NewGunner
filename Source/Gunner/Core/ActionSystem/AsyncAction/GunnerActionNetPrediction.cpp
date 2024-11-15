@@ -7,9 +7,23 @@ void FGunnerActionNetPredictionHandle::GenerateNewHandle()
 {
 	static int32 HandleCounter = 1;
 	Handle = HandleCounter++;
+	bIsExpired = false;
 }
 
-FGunnerActionNetPrediction::FGunnerActionNetPrediction()
+void FGunnerActionNetPredictionHandleItem::PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray)
 {
-	Handle.GenerateNewHandle();
+	PredictionHandle.Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
+}
+
+void FGunnerActionNetPredictionHandleItem::PreReplicatedRemove(const FGunnerActionNetPredictionHandleArray& InArray)
+{
+	PredictionHandle.Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
+}
+
+void FGunnerActionNetPredictionHandleItem::PostReplicatedChange(const FGunnerActionNetPredictionHandleArray& InArray)
+{
+	PredictionHandle.Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
 }

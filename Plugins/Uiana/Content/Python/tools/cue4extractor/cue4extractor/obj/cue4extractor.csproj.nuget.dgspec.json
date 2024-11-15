@@ -1,0 +1,170 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\cue4extractor\\cue4extractor.csproj": {}
+  },
+  "projects": {
+    "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\cue4extractor\\cue4extractor.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\cue4extractor\\cue4extractor.csproj",
+        "projectName": "cue4extractor",
+        "projectPath": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\cue4extractor\\cue4extractor.csproj",
+        "packagesPath": "C:\\Users\\BERNA\\.nuget\\packages\\",
+        "outputPath": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\cue4extractor\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\BERNA\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\CUE4Parse.csproj": {
+                "projectPath": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\CUE4Parse.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "System.CommandLine.DragonFruit": {
+              "target": "Package",
+              "version": "[0.3.0-alpha.21216.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.400\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\CUE4Parse.csproj": {
+      "version": "1.0.9",
+      "restore": {
+        "projectUniqueName": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\CUE4Parse.csproj",
+        "projectName": "CUE4Parse",
+        "projectPath": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\CUE4Parse.csproj",
+        "packagesPath": "C:\\Users\\BERNA\\.nuget\\packages\\",
+        "outputPath": "E:\\Uiana-MapImporter\\Uiana\\Content\\Python\\tools\\cue4extractor\\CUE4Parse\\CUE4Parse\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\BERNA\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "DotNetZip": {
+              "target": "Package",
+              "version": "[1.16.0, )"
+            },
+            "Infrablack.UE4Config": {
+              "target": "Package",
+              "version": "[0.7.2.97, )"
+            },
+            "K4os.Compression.LZ4.Streams": {
+              "target": "Package",
+              "version": "[1.3.5, )"
+            },
+            "LZMA-SDK": {
+              "target": "Package",
+              "version": "[22.1.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            },
+            "System.Memory": {
+              "target": "Package",
+              "version": "[4.5.5, )"
+            },
+            "System.Runtime.CompilerServices.Unsafe": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "ZstdSharp.Port": {
+              "target": "Package",
+              "version": "[0.7.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.400\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

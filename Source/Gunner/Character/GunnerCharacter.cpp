@@ -61,19 +61,13 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 void AGunnerCharacter::PreNetReceive()
 {
 	Super::PreNetReceive();
-	if (GetWorld())
-	{
-		GR_LOG(LogGunner, Warning, TEXT(" [%f]"), GetWorld()->GetTimeSeconds());
-	}
+
 }
 
 void AGunnerCharacter::PostNetReceive()
 {
 	Super::PostNetReceive();
-	if (GetWorld())
-	{
-		GR_LOG(LogGunner, Warning, TEXT(" [%f]"), GetWorld()->GetTimeSeconds());
-	}
+
 }
 
 void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

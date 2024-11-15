@@ -10,12 +10,19 @@ void UGunnerActionProperty::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UGunnerActionProperty, Tag);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerActionProperty, RealValue, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME(UGunnerActionProperty, StaticValue);
+	DOREPLIFETIME(UGunnerActionProperty, DynamicValue);
 }
 
 void UGunnerActionProperty::MakePropertyDirty()
 {
-	UE_LOG(LogGunner, Warning, TEXT("UGunnerActionProperty::MakePropertyDirty: %f"), GetWorld()->GetTimeSeconds());
+	Evaluate(StaticOperations, StaticValue);
+	Evaluate(DynamicOperations, DynamicValue);
+	GR_LOG_SUB(LogGunner, Display, TEXT("Property [%s] StaticValue: %f, DynamicValue: %f, Time: %f"), *Tag.ToString(), StaticValue, DynamicValue, GetWorld()->GetTimeSeconds());
+}
+
+void UGunnerActionProperty::Evaluate(const TArray<FGunnerActionPropertyOperation>& PropertyOperations, float& TargetValue)
+{
 	float AdditiveOperand = 0.0f;
 	float MultiplicativeOperand = 1.0f;
 	float DivisiveOperand = 1.0f;
@@ -24,7 +31,7 @@ void UGunnerActionProperty::MakePropertyDirty()
 	bool bShouldOverride = false;
 
 
-	for (const FGunnerActionPropertyOperation& PropertyOperation : Operations)
+	for (const FGunnerActionPropertyOperation& PropertyOperation : PropertyOperations)
 	{
 		switch (PropertyOperation.Operator)
 		{
@@ -53,33 +60,31 @@ void UGunnerActionProperty::MakePropertyDirty()
 		MultiplicativeOperand = 1.0f;
 	}
 
-	AActor* ActorOwner = Cast<AActor>(GetOuter());
-	bool bHasAuthority = ActorOwner->HasAuthority();
 
 	if (bShouldOverride)
 	{
-		Value = OverrideOperand;
+		TargetValue = OverrideOperand;
 	}
 	else
 	{
-		Value = ((RealValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
+		TargetValue = ((StaticValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
 	}
+}
 
-	if (bHasAuthority)
-	{
-		RealValue = Value;
-		Operations.Empty();
-	}
+void UGunnerActionProperty::PreNetReceive()
+{
+	UObject::PreNetReceive();
+	GR_LOG_SUB(LogGunner, Warning, TEXT( "" ));
 }
 
 void UGunnerActionProperty::PostNetReceive()
 {
 	UObject::PostNetReceive();
-	UE_LOG(LogGunner, Warning, TEXT("UGunnerActionProperty::PostNetRecieve: %f"), GetWorld()->GetTimeSeconds());
-}
-
-void UGunnerActionProperty::OnRep_RealValue(float OldValue)
-{
-	UE_LOG(LogGunner, Warning, TEXT("UGunnerActionProperty::OnRep_RealValue: %f"), GetWorld()->GetTimeSeconds());
-	MakePropertyDirty();
+	GR_LOG_SUB(LogGunner, Warning, TEXT( "" ));
+	AActor* ActorOwner = Cast<AActor>(GetOuter());
+	check(ActorOwner);
+	if (ActorOwner->GetLocalRole() != ROLE_SimulatedProxy)
+	{
+		MakePropertyDirty();
+	}
 }

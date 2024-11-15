@@ -9,6 +9,12 @@
 #include "GunnerActionSideEffect.generated.h"
 
 
+UENUM()
+enum class ESideEffectDurationType
+{
+	Static,
+	Dynamic
+};
 
 
 USTRUCT()
@@ -24,6 +30,8 @@ struct FGunnerActionPropertySideEffect
 
 
 
+
+
 /**
  * 
  */
@@ -36,5 +44,6 @@ class GUNNER_API UGunnerActionSideEffect : public UObject
 public:
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "TargetProperyTag"))
 	TArray<FGunnerActionPropertySideEffect> PropertySideEffects;
-	
+	UPROPERTY(EditAnywhere)
+	ESideEffectDurationType DurationType = ESideEffectDurationType::Static;
 };

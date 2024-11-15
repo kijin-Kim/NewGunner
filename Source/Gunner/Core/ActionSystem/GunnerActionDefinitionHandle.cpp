@@ -10,3 +10,4 @@ void FGunnerActionDefinitionHandle::GenerateNewHandle()
 	static int32 HandleCounter = 1;
 	Handle = HandleCounter++;
 }
+

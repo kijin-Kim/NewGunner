@@ -35,7 +35,6 @@ class GUNNER_API UGunnerAction : public UObject
 public:
 	void InitializeGunnerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FGunnerEventMessage& InEventMessage);
-	void SetActionNetPredictionHandle(FGunnerActionNetPredictionHandle InNetPredictionHandle) { NetPredictionHandle = InNetPredictionHandle; }
 	UFUNCTION(BlueprintNativeEvent)
 	void OnActionAdded();
 	UFUNCTION(BlueprintNativeEvent)
@@ -76,8 +75,10 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
-	FGunnerActionNetPredictionHandle GetActionNetPredictionHandle() const { return NetPredictionHandle; }
+	FGunnerActionDefinitionHandle GetActionDefinitionHandle() const { return ActionDefinitionHandle; }
+
 public:
+	FGunnerActionNetPredictionHandle InitPredictionHandle;
 	FOnGunnerActionEndedSignature OnGunnerActionEndedDelegate;
 
 protected:
@@ -110,7 +111,4 @@ protected:
 
 private:
 	bool bIsTriggering = false;
-	
-	FGunnerActionNetPredictionHandle NetPredictionHandle;
-	
 };

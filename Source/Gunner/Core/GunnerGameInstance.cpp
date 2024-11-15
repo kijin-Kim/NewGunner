@@ -3,6 +3,14 @@
 
 #include "GunnerGameInstance.h"
 
+#include "ActionSystem/AsyncAction/GunnerActionNetPrediction.h"
+
+void UGunnerGameInstance::Shutdown()
+{
+	Super::Shutdown();
+	FGunneractionNetPredictionEvents::ResetPredictionEvents();
+}
+
 UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const
 {
 	return DamageCurveTable;

@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GunnerActionAgentInfo.h"
 #include "GunnerActionDefinition.h"
+#include "GunnerActionSideEffect.h"
 #include "GunnerActionSideEffectDefinition.h"
 #include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Components/ActorComponent.h"
@@ -14,6 +15,8 @@
 #include "GunnerActionComponent.generated.h"
 
 
+class UGunnerActionComponent;
+class UGunnerActionProperty;
 class UGunnerActionSideEffect;
 
 USTRUCT()
@@ -29,11 +32,19 @@ struct FGunnerLocalActionTriggerState
 	int32 ActionTriggerID = 0;
 	UPROPERTY()
 	bool bIsTriggering = false;
-	
 };
 
 
+USTRUCT()
+struct FGunnerActionPropertyMapping
+{
+	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere)
+	FGameplayTag Tag;
+	UPROPERTY(EditAnywhere)
+	float Value = 0.0f;
+};
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -55,13 +66,20 @@ public:
 
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void ReadyForReplication() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	
+
 	FGunnerActionDefinitionHandle AuthAddAction(const FGunnerActionDefinition& ActionDefinition);
 	void AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
 	void AuthRemoveAllActions();
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+
+
+	UFUNCTION(Server, Reliable)
+	void ServerSendNetSyncPoint(FGunnerActionDefinitionHandle Handle, FGunnerActionNetPredictionHandle InitPredictionHandle, FGunnerActionNetPredictionHandle NewPredictionHandle);
+	void CallOrAddSNetyncPointDelegate(FGunnerActionDefinitionHandle Handle, FGunnerActionNetPredictionHandle InitPredictionHandle, FSimpleMulticastDelegate::FDelegate&& Delegate);
+
 
 	void IncrementActionListLock();
 	void DecrementActionListLock();
@@ -73,7 +91,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect To Actor"))
 	static void BP_TriggerSideEffectToActor(UGunnerAction* Action, AActor* SideEffectTarget, TSubclassOf<UGunnerActionSideEffect> SideEffectClass);
-	void TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, FGunnerActionNetPredictionHandle PredictionHandle);
+	void TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, UGunnerAction* Action);
+
+	TWeakPtr<FGunnerActionAgentInfo> GetAgentInfo() const { return AgentInfo; }
+	FGunnerActionNetPredictionHandleArray& GetNetPredictionHandleArray() { return NetPredictionHandleArray; }
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
@@ -99,8 +120,7 @@ private:
 	void ClientTriggerActionRequestSucceeded(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle);
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerActionRequestFailed(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle);
-	
-	
+
 
 	void AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates);
 
@@ -116,30 +136,71 @@ private:
 	FGameplayTagContainer OwnedTags;
 
 	TMap<FGunnerActionDefinitionHandle, TArray<FGunnerEventCallbackHandle>> BoundedActionEventHandles;
-	
 
-	
+
 	struct FGunnerNetTriggerDelayedAction
 	{
 		FGunnerActionDefinitionHandle ActionDefinitionHandle;
 		FGunnerEventMessage EventMessage;
 		double TriggerTime;
 	};
-	
+
 	TArray<FGunnerNetTriggerDelayedAction> NetTriggerDelayedActions;
 
-	
-	TArray<FGunnerActionSideEffectDefinition> SideEffectDefinitions;
 
-	TArray<FGunnerActionNetPrediction> NetPredictions;
+	UPROPERTY(Replicated)
+	FGunnerActionNetPredictionHandleArray NetPredictionHandleArray;
 
-	UFUNCTION()
-	void OnRep_NetPredictionHandles();
-	
-	UPROPERTY(ReplicatedUsing=OnRep_NetPredictionHandles)
-	TArray<FGunnerActionNetPredictionHandle> NetPredictionHandles;
+	UPROPERTY(Replicated)
+	FGunnerActionSideEffectDefinitionArray SideEffectDefinitionArray;
+
+public:
+	void AuthAddProperty(FGameplayTag Tag, float Value);
+	UGunnerActionProperty* GetProperty(FGameplayTag Tag) const;
+	void OnAdded(const TArray<FGunnerActionPropertySideEffect>& PropertySideEffects, const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle) const;
+	void OnRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle);
+
+	UPROPERTY(EditAnywhere)
+	TArray<FGunnerActionPropertyMapping> StartProperties;
+
+	UPROPERTY(Replicated)
+	TArray<TObjectPtr<UGunnerActionProperty>> Properties;
+
+	FGunnerActionNetPredictionHandle NetPredictionHandle;
+
+	struct FNetSyncPointDelegate
+	{
+		typedef TPair<FGunnerActionDefinitionHandle, FGunnerActionNetPredictionHandle> SyncPointDelegateKeyType;
+
+		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FSimpleMulticastDelegate::FDelegate&& InDelegate)
+			: Key(InKey)
+		{
+			OnSyncDelegate.Add(InDelegate);
+		}
+
+		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey)
+			: Key(InKey)
+		{
+		}
+
+		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FGunnerActionNetPredictionHandle InNewPredictionHandle)
+			: Key(InKey),
+			  NewPredictionHandle(InNewPredictionHandle)
+		{
+		}
+
+		bool operator==(const FNetSyncPointDelegate& Other) const
+		{
+			return Key == Other.Key;
+		}
+
+		SyncPointDelegateKeyType Key;
+		FGunnerActionNetPredictionHandle NewPredictionHandle;
+		FSimpleMulticastDelegate OnSyncDelegate;
+	};
+
+	TArray<FNetSyncPointDelegate> NetSyncPointDelegates;
 };
-
 
 struct FGunnerActionListScopeLock
 {
