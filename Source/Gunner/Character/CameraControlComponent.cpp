@@ -2,7 +2,7 @@
 
 
 #include "CameraControlComponent.h"
-#include "Gunner/Core/Input/GunnerEventMessage.h"
+#include "Gunner/_Core/Input/GunnerEventMessage.h"
 
 
 UCameraControllerComponent::UCameraControllerComponent()

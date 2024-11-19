@@ -5,8 +5,8 @@
 
 #include "GunnerCharacter.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/Core/Input/GunnerEventMessage.h"
+#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "Gunner/_Core/Input/GunnerEventMessage.h"
 
 
 UGunnerCharacterMovementComponent::UGunnerCharacterMovementComponent()

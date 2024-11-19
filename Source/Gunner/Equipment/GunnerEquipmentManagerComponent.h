@@ -18,6 +18,7 @@ class GUNNER_API UGunnerEquipmentManagerComponent : public UActorComponent
 
 public:
 	UGunnerEquipmentManagerComponent();
+	void InitEquipmentManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass);
@@ -47,4 +48,7 @@ private:
 	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
 	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots)
 	TArray<TObjectPtr<AGunnerEquipment>> EquipmentSlots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TSubclassOf<AGunnerEquipment>> InitialEquipmentClasses;
 };

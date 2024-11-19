@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/Core/GunnerAnimMontagePlayerInterface.h"
-#include "Gunner/Core/ActionSystem/GunnerActionDefinitionHandle.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionProperty.h"
+#include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionDefinitionHandle.h"
 #include "GunnerEquipment.generated.h"
 
 class UGunnerLocomotionAnimSet;
@@ -37,7 +38,6 @@ public:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 private:
-	
 	void AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 	
@@ -45,8 +45,6 @@ private:
 	
 	void SetMeshVisibility(bool bVisible);
 
-	
-	
 
 private:
 	UPROPERTY()
@@ -69,5 +67,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;
-	
+
+	UPROPERTY(EditAnywhere)
+	TMap<FGameplayTag, float> PropertiesToAddOnEquip;
 };

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "Gunner/Core/ActionSystem/GunnerActionDefinition.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionDefinition.h"
 #include "GunnerPlayerState.generated.h"
 
 class UGunnerEventManagerComponent;
@@ -19,8 +19,6 @@ class GUNNER_API AGunnerPlayerState : public APlayerState
 
 public:
 	AGunnerPlayerState();
-	virtual void PreNetReceive() override;
-	virtual void PostNetReceive() override;
 
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))

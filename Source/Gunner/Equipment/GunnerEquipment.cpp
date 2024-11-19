@@ -4,10 +4,10 @@
 #include "GunnerEquipment.h"
 
 #include "Engine/Canvas.h"
-#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
-#include "Gunner/Core/GunnerAnimInstance.h"
-#include "Gunner/Core/ActionSystem/GunnerAction.h"
-#include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
+#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
+#include "Gunner/Animation/GunnerAnimInstance.h"
+#include "Gunner/_Core/ActionSystem/GunnerAction.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 
 
 // Sets default values
@@ -30,7 +30,6 @@ AGunnerEquipment::AGunnerEquipment()
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	SetMeshVisibility(false);
-
 }
 
 void AGunnerEquipment::AttachEquipmentToOwner()
@@ -75,9 +74,15 @@ void AGunnerEquipment::OnEquipped()
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
 	SetMeshVisibility(true);
 
+
 	if (GetOwner()->HasAuthority())
 	{
 		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
+		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
+		for (const auto& [Tag, Value] : PropertiesToAddOnEquip)
+		{
+			ActionComponent->AuthAddProperty(Tag, Value);
+		}
 	}
 }
 
@@ -89,6 +94,13 @@ void AGunnerEquipment::OnUnequipped()
 	if (GetOwner()->HasAuthority())
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnEquip);
+		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
+		for (auto& [Tag, Value] : PropertiesToAddOnEquip)
+		{
+			FGunnerActionProperty* Property = ActionComponent->GetProperty2(Tag);
+			Value = Property->StaticValue;
+			ActionComponent->AuthRemoveProperty(Tag);
+		}
 	}
 }
 

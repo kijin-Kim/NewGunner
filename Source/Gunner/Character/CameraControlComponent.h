@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/Core/Event/GunnerEventCallbackBindInterface.h"
-#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
+#include "Gunner/_Core/Event/GunnerEventCallbackBindInterface.h"
+#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "CameraControlComponent.generated.h"
 
 struct FGunnerEventMessage;

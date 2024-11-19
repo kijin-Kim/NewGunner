@@ -24,6 +24,18 @@ UGunnerEquipmentManagerComponent::UGunnerEquipmentManagerComponent()
 	}
 }
 
+void UGunnerEquipmentManagerComponent::InitEquipmentManagerComponent()
+{
+	check(InitialEquipmentClasses.Num() <= 3);
+	for (int i = 0; i < InitialEquipmentClasses.Num(); ++i)
+	{
+		if (InitialEquipmentClasses[i])
+		{
+			AuthAddEquipmentToSlot(i, InitialEquipmentClasses[i]);
+		}
+	}
+}
+
 void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -100,7 +112,7 @@ void UGunnerEquipmentManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AH
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("Current Equipped Equipment: %s"), CurrentEquippedEquipment ? *CurrentEquippedEquipment->GetName() : TEXT("None")));
 
 		DisplayDebugManager.SetDrawColor(FColor::White);
-		
+
 		if (CurrentEquippedEquipment)
 		{
 			CurrentEquippedEquipment->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);

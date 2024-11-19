@@ -1,0 +1,57 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "GunnerOverlayWidgetController.h"
+
+#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+#include "GameFramework/PlayerState.h"
+
+
+
+
+void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerState)
+{
+	if (UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState))
+	{
+		ActionComponent->PropertyArray.BindOnGunnerActionPropertyAdded(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
+		{
+			if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet")))
+			{
+				PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+			}
+		}));
+
+		ActionComponent->PropertyArray.BindOnGunnerActionPropertyRemoved(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
+		{
+			 OnBulletValueChanged(0.0f, 0.0f);
+		}));
+	}
+
+
+	if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet")))
+	{
+		PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+	}
+}
+
+void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float NewValue)
+{
+	OnBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+}
+
+FGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag)
+{
+	if (!PlayerState || !Tag.IsValid())
+	{
+		return nullptr;
+	}
+
+	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState);
+	if (!ActionComponent)
+	{
+		return nullptr;
+	}
+
+	FGunnerActionProperty* Property = ActionComponent->GetProperty2(Tag);
+	return Property;
+}

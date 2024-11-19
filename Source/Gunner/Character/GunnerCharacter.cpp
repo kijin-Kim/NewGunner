@@ -12,13 +12,12 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Core/GunnerAnimMontagePlayerComponent.h"
-#include "Gunner/Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/Core/Event/GunnerEventManagerComponent.h"
+#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/Core/ActionSystem/GunnerAction.h"
-#include "Gunner/Weapon/WeaponManagerComponent.h"
+#include "Gunner/_Core/ActionSystem/GunnerAction.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -29,6 +28,10 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCapsuleComponent()->SetCapsuleHalfHeight(98.0f);
 	GetCapsuleComponent()->SetCapsuleRadius(42.0f);
 
+	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
+	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
+	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
+	GetMesh()->SetOwnerNoSee(true);
 
 	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
 	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
@@ -36,51 +39,45 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonSpringArmComponent->bDoCollisionTest = false;
 	FirstPersonSpringArmComponent->bUsePawnControlRotation = true;
 
-	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
-	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
-	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
-	GetMesh()->SetOwnerNoSee(true);
-
-
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
 
+	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
+
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-
-	WeaponManagerComponent = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
-	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
-
-	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
-
-	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
 
-void AGunnerCharacter::PreNetReceive()
+void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
-	Super::PreNetReceive();
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+	GR_LOG(LogGunner, Warning, TEXT(""));
 
-}
-
-void AGunnerCharacter::PostNetReceive()
-{
-	Super::PostNetReceive();
-
-}
-
-void AGunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	if (NewPlayerState)
 	{
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ThisClass::SetRunning, false);
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &ThisClass::SetRunning, true);
+		UGunnerActionComponent* ActionComponent = GetActionComponent();
+		check(ActionComponent);
+		ActionComponent->InitActionComponent(NewPlayerState, this);
+		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
+		{
+			if (ActionClass)
+			{
+				FGunnerActionDefinition ActionDefinition(this, ActionClass);
+				ActionComponent->AuthAddAction(ActionDefinition);
+			}
+		}
 	}
-	//WeaponManagerComponent->SetupPlayerInputComponent(PlayerInputComponent);
-}
 
+
+	if (HasAuthority() && NewPlayerState && NewPlayerState != OldPlayerState)
+	{
+		EquipmentManagerComponent->InitEquipmentManagerComponent();
+	}
+}
 
 bool AGunnerCharacter::CanJumpInternal_Implementation() const
 {
@@ -109,40 +106,6 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
 }
 
-void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
-{
-	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
-	GR_LOG(LogGunner, Warning, TEXT(""));
-
-	if (NewPlayerState)
-	{
-		UGunnerActionComponent* ActionComponent = GetActionComponent();
-		check(ActionComponent);
-		ActionComponent->InitActionComponent(NewPlayerState, this);
-		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
-		{
-			if (ActionClass)
-			{
-				FGunnerActionDefinition ActionDefinition(this, ActionClass);
-				ActionComponent->AuthAddAction(ActionDefinition);
-			}
-		}
-	}
-
-
-	if (HasAuthority() && NewPlayerState && NewPlayerState != OldPlayerState)
-	{
-		check(InitialEquipmentClasses.Num() <= 3);
-		for (int i = 0; i < InitialEquipmentClasses.Num(); ++i)
-		{
-			if (InitialEquipmentClasses[i])
-			{
-				EquipmentManagerComponent->AuthAddEquipmentToSlot(i, InitialEquipmentClasses[i]);
-			}
-		}
-	}
-}
-
 void AGunnerCharacter::SetRunning(bool bNewRunning)
 {
 	bIsRunning = bNewRunning;
@@ -150,22 +113,6 @@ void AGunnerCharacter::SetRunning(bool bNewRunning)
 	{
 		ServerRun(bNewRunning);
 	}
-}
-
-void AGunnerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	// if (HasAuthority())
-	// {
-	// 	if (TestWeaponClass)
-	// 	{
-	// 		TestWeapon = GetWorld()->SpawnActorDeferred<AWeapon>(TestWeaponClass, GetTransform());
-	// 		TestWeapon->SetOwner(this);
-	// 		TestWeapon->SetInstigator(this);
-	// 		TestWeapon->SetAutonomousProxy(true);
-	// 		TestWeapon->FinishSpawning(GetTransform());
-	// 	}
-	// }
 }
 
 void AGunnerCharacter::ServerRun_Implementation(bool bNewRunning)
