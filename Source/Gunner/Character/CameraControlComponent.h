@@ -22,11 +22,10 @@ public:
 
 protected:
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
-	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 
 private:
 	UFUNCTION()
-	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
+	void OnPlayerStateChanged(APlayerState* OldPlayerState, APlayerState* NewPlayerState);
 	void Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 
 private:

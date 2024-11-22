@@ -25,7 +25,6 @@ protected:
 	void BindEvents();
 	void UnbindEvents();
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() = 0;
-	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const = 0;
 
 private:
 	TArray<FGunnerEventCallbackHandle> BoundedEventCallbackHandles;

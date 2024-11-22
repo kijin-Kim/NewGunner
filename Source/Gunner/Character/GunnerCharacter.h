@@ -17,6 +17,8 @@ class UGunnerEquipmentManagerComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGunnerCharacterPlayerStateChanged, APlayerState* OldPlayerState, APlayerState* NewPlayerState);
+
 UCLASS()
 class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface
 {
@@ -48,10 +50,14 @@ public:
 
 	bool IsRunning() const;
 
+
 private:
 	void SetRunning(bool bNewRunning);
 	UFUNCTION(Server, Reliable)
 	void ServerRun(bool bNewRunning);
+
+public:
+	FOnGunnerCharacterPlayerStateChanged OnPlayerStateChangedDelegate;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -67,7 +73,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 	
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

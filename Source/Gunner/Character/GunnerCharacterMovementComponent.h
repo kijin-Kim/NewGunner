@@ -19,21 +19,20 @@ class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementCo
 public:
 	UGunnerCharacterMovementComponent();
 	//~ Begin UCharacterMovementComponent Interface.
-	virtual void InitializeComponent() override;
 	virtual bool CanAttemptJump() const override;
 	virtual float GetMaxSpeed() const override;
 	//~ End UCharacterMovementComponent Interface.
+	
+	void InitEvents();
 
 protected:
 	//~ Begin IGunnerEventCallbackBindInterface Interface.
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
-	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventCallbackBindInterface Interface.
 
 	
 private:
-	UFUNCTION()
-	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
+
 	
 	void Move(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 	void Jump(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);

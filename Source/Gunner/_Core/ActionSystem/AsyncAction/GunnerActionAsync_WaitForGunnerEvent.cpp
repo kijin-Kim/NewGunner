@@ -57,11 +57,6 @@ TArray<FGunnerEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupE
 	};
 }
 
-UGunnerEventManagerComponent* UGunnerActionAsync_WaitForGunnerEvent::GetEventManagerComponent() const
-{
-	return TargetEventManagerComponent.Get();
-}
-
 DEFINE_FUNCTION(UGunnerActionAsync_WaitForGunnerEvent::execGetMessage)
 {
 	Stack.MostRecentPropertyAddress = nullptr;

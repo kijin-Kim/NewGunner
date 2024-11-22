@@ -2,6 +2,8 @@
 
 
 #include "CameraControlComponent.h"
+
+#include "GunnerCharacter.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 
 
@@ -14,15 +16,15 @@ UCameraControllerComponent::UCameraControllerComponent()
 void UCameraControllerComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
-	if (APawn* PawnOwner = GetOwner<APawn>())
+	if (AGunnerCharacter* GunnerCharacterOwner = GetOwner<AGunnerCharacter>())
 	{
-		PawnOwner->ReceiveControllerChangedDelegate.AddDynamic(this, &ThisClass::OnControllerChanged);
+		GunnerCharacterOwner->OnPlayerStateChangedDelegate.AddUObject(this, &ThisClass::OnPlayerStateChanged);
 	}
 }
 
 TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
+	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()))
 	{
 		return {
 			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
@@ -31,20 +33,16 @@ TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	return {};
 }
 
-UGunnerEventManagerComponent* UCameraControllerComponent::GetEventManagerComponent() const
+void UCameraControllerComponent::OnPlayerStateChanged(APlayerState* OldPlayerState, APlayerState* NewPlayerState)
 {
-	AActor* ActorOwner = GetOwner();
-	return ActorOwner ? ActorOwner->GetComponentByClass<UGunnerEventManagerComponent>() : nullptr;
-}
-
-
-void UCameraControllerComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
-{
-	if (NewController && OldController != NewController)
+	APawn* PawnOwner = GetOwner<APawn>();
+	if (!PawnOwner->IsLocallyControlled())
 	{
-		UnbindEvents();
-		BindEvents();
+		return;
 	}
+
+	UnbindEvents();
+	BindEvents();
 }
 
 void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)

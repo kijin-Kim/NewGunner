@@ -32,7 +32,6 @@ public:
 
 	//~ Begin IGunnerEventCallbackBindInterface Interface.
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
-	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ Begin IGunnerEventCallbackBindInterface Interface.
 	
 	

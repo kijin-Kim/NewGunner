@@ -4,7 +4,6 @@
 #include "GunnerCharacterMovementComponent.h"
 
 #include "GunnerCharacter.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 
@@ -21,18 +20,6 @@ UGunnerCharacterMovementComponent::UGunnerCharacterMovementComponent()
 	BrakingFriction = 3000.0f;
 	MaxAcceleration = 3675.0f;
 	GroundFriction = 4.75f;
-
-	bWantsInitializeComponent = true;
-}
-
-
-void UGunnerCharacterMovementComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-	if (CharacterOwner)
-	{
-		CharacterOwner->ReceiveControllerChangedDelegate.AddDynamic(this, &UGunnerCharacterMovementComponent::OnControllerChanged);
-	}
 }
 
 bool UGunnerCharacterMovementComponent::CanAttemptJump() const
@@ -58,7 +45,7 @@ float UGunnerCharacterMovementComponent::GetMaxSpeed() const
 
 TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = GetEventManagerComponent())
+	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner))
 	{
 		return {
 			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Move"))), this, &ThisClass::Move),
@@ -70,18 +57,10 @@ TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvent
 	return {};
 }
 
-UGunnerEventManagerComponent* UGunnerCharacterMovementComponent::GetEventManagerComponent() const
+void UGunnerCharacterMovementComponent::InitEvents()
 {
-	return CharacterOwner ? CharacterOwner->GetComponentByClass<UGunnerEventManagerComponent>() : nullptr;
-}
-
-void UGunnerCharacterMovementComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
-{
-	if (NewController && OldController != NewController)
-	{
-		UnbindEvents();
-		BindEvents();
-	}
+	UnbindEvents();
+	BindEvents();
 }
 
 void UGunnerCharacterMovementComponent::Move(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)

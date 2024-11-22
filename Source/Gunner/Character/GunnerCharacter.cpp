@@ -28,16 +28,18 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCapsuleComponent()->SetCapsuleHalfHeight(98.0f);
 	GetCapsuleComponent()->SetCapsuleRadius(42.0f);
 
-	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
-	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
-	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
-	GetMesh()->SetOwnerNoSee(true);
-
 	FirstPersonSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("FirstPersonSpringArm"));
 	FirstPersonSpringArmComponent->SetupAttachment(GetRootComponent());
 	FirstPersonSpringArmComponent->TargetArmLength = 0.0f;
 	FirstPersonSpringArmComponent->bDoCollisionTest = false;
 	FirstPersonSpringArmComponent->bUsePawnControlRotation = true;
+
+
+	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
+	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
+	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
+	GetMesh()->SetOwnerNoSee(true);
+
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("CameraSocket"));
@@ -77,6 +79,9 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	{
 		EquipmentManagerComponent->InitEquipmentManagerComponent();
 	}
+
+	GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
+	OnPlayerStateChangedDelegate.Broadcast(OldPlayerState, NewPlayerState);
 }
 
 bool AGunnerCharacter::CanJumpInternal_Implementation() const
