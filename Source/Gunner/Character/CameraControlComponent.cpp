@@ -41,7 +41,7 @@ void UCameraControllerComponent::OnPlayerStateChanged(APlayerState* OldPlayerSta
 		return;
 	}
 
-	UnbindEvents();
+	UnbindEvents(UGunnerEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()));
 	BindEvents();
 }
 

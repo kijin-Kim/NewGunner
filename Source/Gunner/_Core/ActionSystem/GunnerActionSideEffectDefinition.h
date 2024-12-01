@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GunnerActionSideEffectDefinitionHandle.h"
 #include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Net/Serialization/FastArraySerializer.h"
@@ -13,13 +14,15 @@ struct FGunnerActionPropertySideEffect;
 class UGunnerActionSideEffect;
 
 
-DECLARE_DELEGATE_ThreeParams(FOnSideEffectDefinitionAddedSignature, const TArray<FGunnerActionPropertySideEffect>& /*PropertySideEffects*/, const FGunnerActionSideEffectDefinition& /*SideEffectDefinition*/, FGunnerActionNetPredictionHandle /*PredictionHandle*/);
+DECLARE_DELEGATE_TwoParams(FOnSideEffectDefinitionAddedSignature, const FGunnerActionSideEffectDefinition& /*SideEffectDefinition*/, FGunnerActionNetPredictionHandle /*PredictionHandle*/);
 DECLARE_DELEGATE_OneParam(FOnSideEffectDefinitionRemovedSignature, FGunnerActionSideEffectDefinitionHandle /*SideEffectDefinitionHandle*/);
+
+
 
 /**
  * 
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FGunnerActionSideEffectDefinition
 {
 	GENERATED_BODY()
@@ -36,6 +39,9 @@ struct FGunnerActionSideEffectDefinition
 
 	UPROPERTY()
 	TObjectPtr<UGunnerActionSideEffect> SideEffectCDO;
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FGameplayTag, float> OutsideSourceValues;
 };
 
 

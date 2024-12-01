@@ -23,7 +23,7 @@ class GUNNER_API IGunnerEventCallbackBindInterface
 
 protected:
 	void BindEvents();
-	void UnbindEvents();
+	void UnbindEvents(UGunnerEventManagerComponent* EventManagerComponent);
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() = 0;
 
 private:

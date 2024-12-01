@@ -7,36 +7,62 @@
 #include "GameFramework/PlayerState.h"
 
 
-
-
 void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerState)
 {
 	if (UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState))
 	{
 		ActionComponent->PropertyArray.BindOnGunnerActionPropertyAdded(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
 		{
-			if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet")))
-			{
-				PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
-			}
+			BindOnBulletValueChanged(PlayerState);
 		}));
 
 		ActionComponent->PropertyArray.BindOnGunnerActionPropertyRemoved(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
 		{
-			 OnBulletValueChanged(0.0f, 0.0f);
+			OnBulletValueChanged(0.0f, 0.0f);
 		}));
 	}
 
+	BindOnBulletValueChanged(PlayerState);
 
-	if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet")))
+
+	if (UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState))
 	{
-		PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+		ActionComponent->PropertyArray.BindOnGunnerActionPropertyAdded(FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
+		{
+			if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet")))
+			{
+				PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+			}
+		}));
+
+		ActionComponent->PropertyArray.BindOnGunnerActionPropertyRemoved(FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"), FOnGunnerActionPropertyCountChangedSignature::CreateLambda([this, PlayerState](const FGunnerActionProperty& Property)
+		{
+			OnMagazineBulletValueChanged(0.0f, 0.0f);
+		}));
+	}
+
+	if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet")))
+	{
+		PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
 	}
 }
 
 void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float NewValue)
 {
 	OnBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+}
+
+void UGunnerOverlayWidgetController::OnMagazineBulletValueChanged(float OldValue, float NewValue)
+{
+	OnMagazineBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+}
+
+void UGunnerOverlayWidgetController::BindOnBulletValueChanged(APlayerState* PlayerState)
+{
+	if (FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet")))
+	{
+		PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+	}
 }
 
 FGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag)

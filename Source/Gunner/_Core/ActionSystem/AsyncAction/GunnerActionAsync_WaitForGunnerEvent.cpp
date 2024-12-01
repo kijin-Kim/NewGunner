@@ -2,9 +2,11 @@
 
 
 #include "GunnerActionAsync_WaitForGunnerEvent.h"
+
+#include "Gunner/_Core/ActionSystem/GunnerActionScopedNetPrediction.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
-UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType)
+UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, bool bInReplicates, UScriptStruct* InEventMessageType)
 {
 	UGunnerActionAsync_WaitForGunnerEvent* SelfObject = NewGunnerAsync<UGunnerActionAsync_WaitForGunnerEvent>(InAction);
 	if (!EventTargetActor || !InEventTag.IsValid() || !InEventMessageType)
@@ -20,15 +22,32 @@ UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::Wa
 
 	SelfObject->EventTag = InEventTag;
 	SelfObject->EventMesageType = InEventMessageType;
+	SelfObject->bReplciates = bInReplicates;
 	SelfObject->RegisterWithGameInstance(EventTargetActor->GetWorld());
 
 	return SelfObject;
 }
 
+void UGunnerActionAsync_WaitForGunnerEvent::OnSync()
+{
+	OnEventReceivedDelegate.Broadcast(EventTag);
+	Cancel();
+}
+
 void UGunnerActionAsync_WaitForGunnerEvent::Activate()
 {
 	Super::Activate();
-	UnbindEvents();
+
+	if (bReplciates)
+	{
+		if (Action->IsOwnerActorAuthoritative() && !ActionComponent->GetAgentInfo().Pin()->IsLocallyControlled())
+		{
+			ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UGunnerActionAsync_WaitForGunnerEvent::OnSync));
+			return;
+		}
+	}
+
+	UnbindEvents(TargetEventManagerComponent.Get());
 	BindEvents();
 }
 
@@ -36,17 +55,23 @@ void UGunnerActionAsync_WaitForGunnerEvent::SetReadyToDestroy()
 {
 	Super::SetReadyToDestroy();
 	MessagePtr = nullptr;
-	UnbindEvents();
+	UnbindEvents(TargetEventManagerComponent.Get());
 }
 
 TArray<FGunnerEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupEvents()
 {
 	TWeakObjectPtr<UGunnerActionAsync_WaitForGunnerEvent> Weak = this;
 	return {
-		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak](FGameplayTag Tag, const void* MessagePtr)
+		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak, this](FGameplayTag Tag, const void* MessagePtr)
 		{
+			if (bReplciates)
+			{
+				ActionComponent->NetPredictionHandle.GenerateNewHandle();
+				ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->NetPredictionHandle);
+			}
+			FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->NetPredictionHandle);
+			
 			UGunnerActionAsync_WaitForGunnerEvent* Strong = Weak.Get();
-
 			if (Strong && Strong->ShouldBroadcastDelegates())
 			{
 				Strong->MessagePtr = MessagePtr;

@@ -10,14 +10,14 @@ void IGunnerEventCallbackBindInterface::BindEvents()
 	BoundedEventCallbackHandles = SetupEvents();
 }
 
-void IGunnerEventCallbackBindInterface::UnbindEvents()
+void IGunnerEventCallbackBindInterface::UnbindEvents(UGunnerEventManagerComponent* EventManagerComponent)
 {
-	for (FGunnerEventCallbackHandle Handle : BoundedEventCallbackHandles)
+	if(EventManagerComponent)
 	{
-		if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(Cast<AActor>(this)))
+		for (FGunnerEventCallbackHandle Handle : BoundedEventCallbackHandles)
 		{
 			EventManagerComponent->UnbindEventCallback(Handle);
 		}
+		BoundedEventCallbackHandles.Empty();
 	}
-	BoundedEventCallbackHandles.Empty();
 }

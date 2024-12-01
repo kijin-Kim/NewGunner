@@ -16,7 +16,7 @@ void UGunnerActionAsync_WaitForSync::Activate()
 {
 	Super::Activate();
 
-	if (Action->IsOwnerActorAuthoritative())
+	if (Action->IsOwnerActorAuthoritative() && !ActionComponent->GetAgentInfo().Pin()->IsLocallyControlled())
 	{
 		ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UGunnerActionAsync_WaitForSync::OnSync));
 		return;

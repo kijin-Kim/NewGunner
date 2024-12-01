@@ -60,7 +60,7 @@ void FGunnerActionSideEffectDefinitionArray::Add(const FGunnerActionSideEffectDe
 
 	OnAdded(SideEffectDefinition, PredictionHandle);
 	
-	if (SideEffectDefinition.SideEffectCDO->DurationType == ESideEffectDurationType::Static && bHasAuthority)
+	if (SideEffectDefinition.SideEffectCDO->DurationType == ESideEffectDurationType::Instant && bHasAuthority)
 	{
 		Remove(SideEffectDefinition.Handle);
 	}
@@ -68,7 +68,7 @@ void FGunnerActionSideEffectDefinitionArray::Add(const FGunnerActionSideEffectDe
 
 void FGunnerActionSideEffectDefinitionArray::OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle) const
 {
-	OnSideEffectDefinitionAddedDelegate.ExecuteIfBound(SideEffectDefinition.SideEffectClass.GetDefaultObject()->PropertySideEffects, SideEffectDefinition, PredictionHandle);
+	OnSideEffectDefinitionAddedDelegate.ExecuteIfBound(SideEffectDefinition, PredictionHandle);
 }
 
 void FGunnerActionSideEffectDefinitionArray::Remove(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle)

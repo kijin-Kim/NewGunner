@@ -7,6 +7,7 @@
 #include "GunnerActionScopedNetPrediction.h"
 #include "GunnerActionSideEffect.h"
 #include "GunnerActionSideEffectDefinition.h"
+#include "GunnerActionSign.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
@@ -304,6 +305,11 @@ bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) co
 	return false;
 }
 
+FGunnerActionSideEffectDefinition UGunnerActionComponent::MakeSideEffectDefinition(TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
+{
+	return FGunnerActionSideEffectDefinition(SideEffectClass);
+}
+
 void UGunnerActionComponent::BP_TriggerSideEffectToActor(UGunnerAction* Action, AActor* SideEffectTarget, TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
 {
 	check(Action);
@@ -314,15 +320,27 @@ void UGunnerActionComponent::BP_TriggerSideEffectToActor(UGunnerAction* Action, 
 
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffect(SideEffectClass, Action);
+		ActionComponent->TriggerSideEffect(MakeSideEffectDefinition(SideEffectClass), Action);
 	}
 }
 
-void UGunnerActionComponent::TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, UGunnerAction* Action)
+void UGunnerActionComponent::BP_TriggerSideEffectToActorWithSideEffectDefinition(UGunnerAction* Action, AActor* SideEffectTarget, const FGunnerActionSideEffectDefinition& SideEffectDefinition)
 {
-	check(SideEffectClass);
 	check(Action);
-	FGunnerActionSideEffectDefinition NewSideEffectDefinition(SideEffectClass);
+	if (!SideEffectTarget)
+	{
+		return;
+	}
+
+	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
+	{
+		ActionComponent->TriggerSideEffect(SideEffectDefinition, Action);
+	}
+}
+
+void UGunnerActionComponent::TriggerSideEffect(const FGunnerActionSideEffectDefinition& NewSideEffectDefinition, UGunnerAction* Action)
+{
+	check(Action);
 	SideEffectDefinitionArray.Add(NewSideEffectDefinition, NetPredictionHandle, AgentInfo->IsOwnerActorAuthoritative());
 	if (!AgentInfo->IsOwnerActorAuthoritative() && Action->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted && !NetPredictionHandle.IsExpired()) // TODO: Expired조건문 위로 옮기기
 	{
@@ -341,6 +359,51 @@ void UGunnerActionComponent::TriggerSideEffect(TSubclassOf<UGunnerActionSideEffe
 			SideEffectDefinitionArray.Remove(SideEffectDefinitionHandle);
 		});
 	}
+}
+
+void UGunnerActionComponent::BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+{
+	check(Action);
+	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
+	check(ActorOwner);
+	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
+	{
+		ActionComponent->Signal(SignClass, SignalDataObject);
+	}
+}
+
+void UGunnerActionComponent::Signal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+{
+	if (!SignClass)
+	{
+		return;
+	}
+
+	if (AgentInfo->IsOwnerActorAuthoritative())
+	{
+		NetMulticastSignal(SignClass, SignalDataObject, NetPredictionHandle);
+		return;
+	}
+
+	InternalSignal(SignClass, SignalDataObject);
+}
+
+void UGunnerActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject, FGunnerActionNetPredictionHandle PredictionHandle)
+{
+	if (!AgentInfo->IsLocallyControlled() || AgentInfo->IsOwnerActorAuthoritative() || (AgentInfo->IsLocallyControlled() && !PredictionHandle.IsValid()))
+	{
+		InternalSignal(SignClass, SignalDataObject);
+	}
+}
+
+void UGunnerActionComponent::InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+{
+	GR_LOG_SUB(LogGunner, Display, TEXT("Signal [%s]"), *SignClass->GetName());
+	UGunnerActionSign* Sign = SignClass.GetDefaultObject();
+	check(Sign);
+	Sign->SetSignalDataObject(SignalDataObject);
+	Sign->OnSignaled();
+	Sign->SetSignalDataObject(nullptr);
 }
 
 void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -375,7 +438,7 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 		{
 			DisplayDebugManager.DrawString(FString::Printf(TEXT("OwnedTags: %s"), *Tag.ToString()));
 		}
-		
+
 
 		for (const FGunnerActionProperty& Property : PropertyArray.Items)
 		{
@@ -667,52 +730,36 @@ FGunnerActionProperty* UGunnerActionComponent::GetProperty2(FGameplayTag Tag)
 	return nullptr;
 }
 
-void UGunnerActionComponent::OnAdded(const TArray<FGunnerActionPropertySideEffect>& PropertySideEffects, const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionComponent::OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
 {
-	
-	for (const auto& [PropertyTag, PropertyOperations] : PropertySideEffects)
-	{
-		FGunnerActionProperty* Property = GetProperty2(PropertyTag);
-		if (!Property)
-		{
-			continue;
-		}
-		for (const auto& Operation : PropertyOperations)
-		{
-			FGunnerActionPropertyOperation NewPropertyOperation = Operation;
-			NewPropertyOperation.SideEffectDefinitionHandle = SideEffectDefinition.Handle;
-			bool bTreatAsDynamic = PredictionHandle.IsValid() && !AgentInfo->IsOwnerActorAuthoritative();
-			ESideEffectDurationType DurationType = SideEffectDefinition.SideEffectCDO->DurationType;
-			if (DurationType == ESideEffectDurationType::Dynamic || bTreatAsDynamic)
-			{
-				Property->DynamicOperations.Add(NewPropertyOperation);
-			}
-			else
-			{
-				Property->StaticOperations.Add(NewPropertyOperation);
-			}
-		}
-		Property->MarkPropertyDirty();
-		PropertyArray.MarkItemDirty(*Property);
-	}
+	PropertyArray.OnSideEffectDefinitionAdded(SideEffectDefinition, PredictionHandle.IsValid() && !AgentInfo->IsOwnerActorAuthoritative());
 }
 
 void UGunnerActionComponent::OnRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
 {
-	for (auto& Property : PropertyArray.Items)
-	{
-		Property.StaticOperations.RemoveAll([SideEffectDefinitionHandle](const FGunnerActionPropertyOperation& Operation)
-		{
-			return Operation.SideEffectDefinitionHandle == SideEffectDefinitionHandle;
-		});
+	PropertyArray.OnSideEffectDefinitionRemoved(SideEffectDefinitionHandle);
+}
 
-		Property.DynamicOperations.RemoveAll([SideEffectDefinitionHandle](const FGunnerActionPropertyOperation& Operation)
-		{
-			return Operation.SideEffectDefinitionHandle == SideEffectDefinitionHandle;
-		});
-		Property.MarkPropertyDirty();
-		PropertyArray.MarkItemDirty(Property);
+float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag)
+{
+	if (!Actor)
+	{
+		return 0.0f;
 	}
+
+	UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(Actor);
+	if (!ActionComponent)
+	{
+		return 0.0f;
+	}
+
+	FGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty2(Tag);
+	if (!PropertyPtr)
+	{
+		return 0.0f;
+	}
+
+	return PropertyPtr->DynamicValue;
 }
 
 void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated)

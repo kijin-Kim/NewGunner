@@ -4,6 +4,7 @@
 #include "GunnerCharacterMovementComponent.h"
 
 #include "GunnerCharacter.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 
@@ -29,18 +30,8 @@ bool UGunnerCharacterMovementComponent::CanAttemptJump() const
 
 float UGunnerCharacterMovementComponent::GetMaxSpeed() const
 {
-	float MaxSpeed = Super::GetMaxSpeed();
-
-	const AGunnerCharacter* GunnerCharacterOwner = Cast<AGunnerCharacter>(PawnOwner);
-	if (GunnerCharacterOwner)
-	{
-		if (!GunnerCharacterOwner->IsRunning())
-		{
-			MaxSpeed *= 0.6f;
-		}
-	}
-
-	return MaxSpeed;
+	return UGunnerActionComponent::GetPropertyValueFromActor(CharacterOwner, FGameplayTag::RequestGameplayTag(FName(TEXT("Property.MaxSpeedMultiplier"))))
+		* Super::GetMaxSpeed();
 }
 
 TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
@@ -59,7 +50,7 @@ TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvent
 
 void UGunnerCharacterMovementComponent::InitEvents()
 {
-	UnbindEvents();
+	UnbindEvents(UGunnerEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner));
 	BindEvents();
 }
 

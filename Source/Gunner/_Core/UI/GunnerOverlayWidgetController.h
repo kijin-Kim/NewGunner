@@ -23,9 +23,19 @@ public:
 
 	UFUNCTION()
 	void OnBulletValueChanged(float OldValue, float NewValue);
+	UFUNCTION()
+	void OnMagazineBulletValueChanged(float OldValue, float NewValue);
 
+private:
+	void BindOnBulletValueChanged(APlayerState* PlayerState);
+	
+
+public:
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnBulletValueChanged"))
 	FGunnerUserWidgetSimpleTwoParamSignature OnBulletValueChangedDelegate;
+	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnMagazineBulletValueChanged"))
+	FGunnerUserWidgetSimpleTwoParamSignature OnMagazineBulletValueChangedDelegate;
+	
 
 private:
 	FGunnerActionProperty* GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag);

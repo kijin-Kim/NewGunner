@@ -3,15 +3,20 @@
 
 #include "GunnerActionProperty.h"
 
+#include "GunnerActionSideEffect.h"
+#include "GunnerActionSideEffectDefinition.h"
+
 void FGunnerActionProperty::MarkPropertyDirty()
 {
 	float OldValue = DynamicValue;
-	Evaluate(StaticOperations, StaticValue);
-	Evaluate(DynamicOperations, DynamicValue);
+	Evaluate(InternalStaticOperations, StaticValue);
+	Evaluate(InternalDynamicOperations, DynamicValue);
+
+
 	OnGunnerActionPropertyValueChangedDelegate.ExecuteIfBound(OldValue, DynamicValue);
 }
 
-void FGunnerActionProperty::Evaluate(const TArray<FGunnerActionPropertyOperation>& PropertyOperations, float& TargetValue)
+void FGunnerActionProperty::Evaluate(const TArray<FGunnerActionPropertyInternalOperation>& PropertyOperations, float& TargetValue)
 {
 	float AdditiveOperand = 0.0f;
 	float MultiplicativeOperand = 1.0f;
@@ -21,7 +26,7 @@ void FGunnerActionProperty::Evaluate(const TArray<FGunnerActionPropertyOperation
 	bool bShouldOverride = false;
 
 
-	for (const FGunnerActionPropertyOperation& PropertyOperation : PropertyOperations)
+	for (const FGunnerActionPropertyInternalOperation& PropertyOperation : PropertyOperations)
 	{
 		switch (PropertyOperation.Operator)
 		{
@@ -75,6 +80,100 @@ void FGunnerActionProperty::PreReplicatedRemove(const FGunnerActionPropertyArray
 void FGunnerActionProperty::PostReplicatedChange(const FGunnerActionPropertyArray& InArraySerializer)
 {
 	MarkPropertyDirty();
+}
+
+void FGunnerActionPropertyArray::OnSideEffectDefinitionAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, bool bIsPredictingClient)
+{
+	UGunnerActionSideEffect* SideEffect = SideEffectDefinition.SideEffectCDO;
+	check(SideEffect);
+	FGunnerActionProperty* PropertyPtr = Items.FindByPredicate([SideEffect](const FGunnerActionProperty& Property)
+	{
+		return Property.Tag == SideEffect->PropertyTag;
+	});
+	if (!PropertyPtr)
+	{
+		return;
+	}
+
+	if (SideEffect->CalculationType == EGunnerActionPropertyCalculationType::None)
+	{
+		return;
+	}
+
+	float Value = 0.0f;
+	if (SideEffect->CalculationType == EGunnerActionPropertyCalculationType::Direct)
+	{
+		Value = SideEffect->DirectValue;
+	}
+	else if (SideEffect->CalculationType == EGunnerActionPropertyCalculationType::FromOutside)
+	{
+		if (const float* FoundValuePtr = SideEffectDefinition.OutsideSourceValues.Find(SideEffect->OutsideSource))
+		{
+			Value = *FoundValuePtr;
+		}
+	}
+	else if (SideEffect->CalculationType == EGunnerActionPropertyCalculationType::PropertyBased)
+	{
+		UE_DEBUG_BREAK();
+		FGunnerActionProperty* BaseProperty = Items.FindByPredicate([SideEffect](const FGunnerActionProperty& Property)
+		{
+			return Property.Tag == SideEffect->BaseProperty;
+		});
+		if (BaseProperty)
+		{
+			Value = BaseProperty->DynamicValue;
+		}
+	}
+
+
+	if (SideEffect->DurationType != ESideEffectDurationType::Instant || bIsPredictingClient)
+	{
+		PropertyPtr->InternalDynamicOperations.Add({
+			.Operand = Value,
+			.Operator = SideEffect->Operator,
+			.SideEffectDefinitionHandle = SideEffectDefinition.Handle
+		});
+	}
+	else
+	{
+		PropertyPtr->InternalStaticOperations.Add({
+			.Operand = Value,
+			.Operator = SideEffect->Operator,
+			.SideEffectDefinitionHandle = SideEffectDefinition.Handle
+		});
+	}
+	PropertyPtr->MarkPropertyDirty();
+
+	// ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
+	// float Duration;
+	// float Interval;
+	//
+	//
+	// FGameplayTag PropertyTag;
+	// EGunnerActionPropertyCalculationType CalculationType = EGunnerActionPropertyCalculationType::None;
+	// EGunnerActionPropertyOperator Operator = EGunnerActionPropertyOperator::Add;
+	//
+	// float DirectValue;
+	// FGameplayTag OutsideSource;
+	// FGameplayTag BaseProperty;
+}
+
+void FGunnerActionPropertyArray::OnSideEffectDefinitionRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
+{
+	for (auto& Property : Items)
+	{
+		Property.InternalStaticOperations.RemoveAll([SideEffectDefinitionHandle](const FGunnerActionPropertyInternalOperation& Operation)
+		{
+			return Operation.SideEffectDefinitionHandle == SideEffectDefinitionHandle;
+		});
+
+		Property.InternalDynamicOperations.RemoveAll([SideEffectDefinitionHandle](const FGunnerActionPropertyInternalOperation& Operation)
+		{
+			return Operation.SideEffectDefinitionHandle == SideEffectDefinitionHandle;
+		});
+		Property.MarkPropertyDirty();
+		MarkItemDirty(Property);
+	}
 }
 
 void FGunnerActionPropertyArray::AuthAdd(const FGunnerActionProperty& Item)

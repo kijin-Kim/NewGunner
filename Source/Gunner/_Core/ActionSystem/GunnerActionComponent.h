@@ -8,13 +8,12 @@
 #include "GunnerActionDefinition.h"
 #include "GunnerActionSideEffect.h"
 #include "GunnerActionSideEffectDefinition.h"
+#include "GunnerActionSign.h"
 #include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Components/ActorComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 #include "GunnerActionComponent.generated.h"
-
-
 
 
 class UGunnerActionComponent;
@@ -91,12 +90,26 @@ public:
 
 	bool HasActionTriggerAuthority(UGunnerAction* Action) const;
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect To Actor"))
+	UFUNCTION(BlueprintCallable)
+	static FGunnerActionSideEffectDefinition MakeSideEffectDefinition(TSubclassOf<UGunnerActionSideEffect> SideEffectClass);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
 	static void BP_TriggerSideEffectToActor(UGunnerAction* Action, AActor* SideEffectTarget, TSubclassOf<UGunnerActionSideEffect> SideEffectClass);
-	void TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, UGunnerAction* Action);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect With Definition"))
+	static void BP_TriggerSideEffectToActorWithSideEffectDefinition(UGunnerAction* Action, AActor* SideEffectTarget, const FGunnerActionSideEffectDefinition& SideEffectDefinition);
+	void TriggerSideEffect(const FGunnerActionSideEffectDefinition& NewSideEffectDefinition, UGunnerAction* Action);
+	
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Signal"))
+	static void BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
+	void Signal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
+	UFUNCTION(NetMulticast, Unreliable)
+	void NetMulticastSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject, FGunnerActionNetPredictionHandle PredictionHandle);
+	void InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
 
 	TWeakPtr<FGunnerActionAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	FGunnerActionNetPredictionHandleArray& GetNetPredictionHandleArray() { return NetPredictionHandleArray; }
+
+
+	
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
@@ -156,15 +169,18 @@ private:
 	UPROPERTY(Replicated)
 	FGunnerActionSideEffectDefinitionArray SideEffectDefinitionArray;
 
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void AuthAddProperty(FGameplayTag Tag, float Value);
 	void AuthRemoveProperty(FGameplayTag Tag);
-	UGunnerActionProperty* GetProperty(FGameplayTag Tag) const;
 	FGunnerActionProperty* GetProperty2(FGameplayTag Tag);
 	const TArray<FGunnerActionProperty>& GetProperties() const { return PropertyArray.Items; }
-	void OnAdded(const TArray<FGunnerActionPropertySideEffect>& PropertySideEffects, const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
+	void OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
 	void OnRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
 
 	UPROPERTY(EditAnywhere)
 	TArray<FGunnerActionPropertyMapping> StartProperties;

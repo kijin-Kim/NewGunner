@@ -12,8 +12,9 @@
 UENUM()
 enum class ESideEffectDurationType
 {
-	Static,
-	Dynamic
+	Instant,
+	Duration,
+	Infinite
 };
 
 
@@ -29,9 +30,6 @@ struct FGunnerActionPropertySideEffect
 };
 
 
-
-
-
 /**
  * 
  */
@@ -40,10 +38,26 @@ class GUNNER_API UGunnerActionSideEffect : public UObject
 {
 	GENERATED_BODY()
 
-	
 public:
-	UPROPERTY(EditAnywhere, meta = (TitleProperty = "TargetProperyTag"))
-	TArray<FGunnerActionPropertySideEffect> PropertySideEffects;
 	UPROPERTY(EditAnywhere)
-	ESideEffectDurationType DurationType = ESideEffectDurationType::Static;
+	ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ESideEffectDurationType::Duration", EditConditionHides))
+	float Duration;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ESideEffectDurationType::Instant", EditConditionHides))
+	float Interval;
+
+
+	UPROPERTY(EditAnywhere, Category = "Property Operation")
+	FGameplayTag PropertyTag;
+	UPROPERTY(EditAnywhere, Category = "Property Operation")
+	EGunnerActionPropertyCalculationType CalculationType = EGunnerActionPropertyCalculationType::None;
+	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "CalculationType != EGunnerActionPropertyCalculationType::None", EditConditionHides))
+	EGunnerActionPropertyOperator Operator = EGunnerActionPropertyOperator::Add;
+
+	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::Direct)", EditConditionHides))
+	float DirectValue;
+	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::FromOutside)", EditConditionHides))
+	FGameplayTag OutsideSource;
+	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::PropertyBased)", EditConditionHides))
+	FGameplayTag BaseProperty;
 };
