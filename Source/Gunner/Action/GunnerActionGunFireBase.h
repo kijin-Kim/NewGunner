@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "GunnerActionGunFireBase.generated.h"
 

@@ -90,28 +90,59 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment(
 	return CurrentEquippedEquipment;
 }
 
-void UGunnerEquipmentManagerComponent::ServerFireHitScan_Implementation(const TArray<FClientHitScanData>& ClientHitScanData)
+void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitResults)
 {
-	if (!ClientHitScanData.IsEmpty())
-	{
-		DrawDebugLine(GetWorld(), ClientHitScanData[0].ShooterLocation, ClientHitScanData[0].ShooterLocation + ClientHitScanData[0].ShooterRotation.Vector() * 10000.0f, FColor::Green, false, 2.0f, 0, 3.0f);
-	}
+	FVector Location;
+	FRotator Rotation;
+	AActor* ActorOwner = GetOwner();
+	ActorOwner->GetActorEyesViewPoint(Location, Rotation);
+	UWorld* World = ActorOwner->GetWorld();
 
+	FCollisionQueryParams CollisionQueryParams;
+	TArray<AActor*> IgnoredActors = {ActorOwner, GetCurrentEquippedEquipment()};
+	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
+	World->LineTraceMultiByChannel(OutHitResults,
+	                               Location,
+	                               Location + Rotation.Vector() * 10000.0f,
+	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
+}
+
+void UGunnerEquipmentManagerComponent::AuthApplyDamage(const TArray<FHitResult>& HitResults)
+{
 	TArray<AActor*> AlreadyHitActors;
-	for (const FClientHitScanData& HitScanData : ClientHitScanData)
+	for (const FHitResult& HitResult : HitResults)
 	{
-		DrawDebugSphere(GetWorld(), HitScanData.HitLocation, 10.0f, 12, FColor::Green, false, 2.0f, 0, 3.0f);
-		if (HitScanData.HitActor && AlreadyHitActors.Find(HitScanData.HitActor) == INDEX_NONE)
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor && AlreadyHitActors.Find(HitActor) == INDEX_NONE)
 		{
-			AlreadyHitActors.Add(HitScanData.HitActor);
-			if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitScanData.HitActor))
+			AlreadyHitActors.Add(HitActor);
+			if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 			{
 				FGunnerEventMessage HitScanMessage;
-				HitScanMessage.Instigator = CurrentEquippedEquipment;
-				EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitScanData.HitActor);
+				HitScanMessage.Instigator = GetOwner();
+				UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
+				HitMessageData->HitBoneName = HitResult.BoneName;
+				HitMessageData->HitNormal = HitResult.Normal;
+				HitMessageData->HitEquipment = CurrentEquippedEquipment;
+				HitScanMessage.EventDataObject = HitMessageData;
+
+				EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
 			}
 		}
 	}
+}
+
+void UGunnerEquipmentManagerComponent::ServerRequestHitScanConfirm_Implementation(const TArray<FClientHitScanData>& ClientHitScanData)
+{
+	TArray<FHitResult> HitResults;
+	LocalHitScan(HitResults);
+
+	if (HitResults.Num() != ClientHitScanData.Num())
+	{
+		UE_DEBUG_BREAK();
+	}
+
+	AuthApplyDamage(HitResults);
 }
 
 void UGunnerEquipmentManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)

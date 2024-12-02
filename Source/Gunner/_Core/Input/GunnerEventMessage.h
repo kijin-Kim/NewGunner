@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "InputActionValue.h"
 #include "GunnerEventMessage.generated.h"
+
 
 
 /**

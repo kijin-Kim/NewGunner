@@ -6,10 +6,42 @@
 #include "Components/ActorComponent.h"
 #include "GunnerEquipmentManagerComponent.generated.h"
 
+
+class AGunnerEquipment;
+
+UCLASS(BlueprintType)
+class GUNNER_API UGunnerHitMessageData : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	AGunnerEquipment* HitEquipment;
+	UPROPERTY(BlueprintReadOnly)
+	FName HitBoneName;
+	UPROPERTY(BlueprintReadOnly)
+	FVector HitNormal;
+};
+
+
 USTRUCT()
 struct FClientHitScanData
 {
 	GENERATED_BODY()
+
+	FClientHitScanData() = default;
+
+	FClientHitScanData(const FHitResult& HitResult, const FVector& InShooterLocation, const FRotator& InShooterRotation)
+		: HitActor(HitResult.GetActor())
+		  , HitLocation(HitResult.Normal)
+		  , HitBoneName(HitResult.BoneName)
+		  , TimeStamp(HitResult.Time)
+		  , ShooterLocation(InShooterLocation)
+		  , ShooterRotation(InShooterRotation)
+	{
+	}
+
+
 	UPROPERTY()
 	AActor* HitActor;
 	UPROPERTY()
@@ -24,8 +56,6 @@ struct FClientHitScanData
 	UPROPERTY()
 	FRotator ShooterRotation;
 };
-
-
 
 
 class AGunnerEquipment;
@@ -52,9 +82,9 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
-	void ServerFireHitScan(const TArray<FClientHitScanData>& ClientHitScanData);
-
-	
+	void ServerRequestHitScanConfirm(const TArray<FClientHitScanData>& ClientHitScanData);
+	void LocalHitScan(TArray<FHitResult>& OutHitResults);
+	void AuthApplyDamage(const TArray<FHitResult>& HitResults);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -63,7 +93,7 @@ public:
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-	
+
 	UFUNCTION()
 	void OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment);
 	UFUNCTION()
