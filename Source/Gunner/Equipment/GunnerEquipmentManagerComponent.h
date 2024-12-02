@@ -6,6 +6,27 @@
 #include "Components/ActorComponent.h"
 #include "GunnerEquipmentManagerComponent.generated.h"
 
+USTRUCT()
+struct FClientHitScanData
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	AActor* HitActor;
+	UPROPERTY()
+	FVector HitLocation;
+	UPROPERTY()
+	FName HitBoneName;
+	UPROPERTY()
+	float TimeStamp;
+
+	UPROPERTY()
+	FVector ShooterLocation;
+	UPROPERTY()
+	FRotator ShooterRotation;
+};
+
+
+
 
 class AGunnerEquipment;
 
@@ -28,6 +49,12 @@ public:
 	AGunnerEquipment* GetEquipmentByIndex(int32 SlotIndex) const;
 	UFUNCTION(BlueprintCallable)
 	AGunnerEquipment* GetCurrentEquippedEquipment() const;
+
+
+	UFUNCTION(Server, Reliable)
+	void ServerFireHitScan(const TArray<FClientHitScanData>& ClientHitScanData);
+
+	
 
 public:
 	UPROPERTY(BlueprintAssignable)

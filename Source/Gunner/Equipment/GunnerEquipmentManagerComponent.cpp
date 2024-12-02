@@ -7,6 +7,9 @@
 #include "GunnerEquipment.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
+#include "Gunner/Gunner.h"
+#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "Gunner/_Core/Input/GunnerEventMessage.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -85,6 +88,30 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetEquipmentByIndex(int32 Sl
 AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment() const
 {
 	return CurrentEquippedEquipment;
+}
+
+void UGunnerEquipmentManagerComponent::ServerFireHitScan_Implementation(const TArray<FClientHitScanData>& ClientHitScanData)
+{
+	if (!ClientHitScanData.IsEmpty())
+	{
+		DrawDebugLine(GetWorld(), ClientHitScanData[0].ShooterLocation, ClientHitScanData[0].ShooterLocation + ClientHitScanData[0].ShooterRotation.Vector() * 10000.0f, FColor::Green, false, 2.0f, 0, 3.0f);
+	}
+
+	TArray<AActor*> AlreadyHitActors;
+	for (const FClientHitScanData& HitScanData : ClientHitScanData)
+	{
+		DrawDebugSphere(GetWorld(), HitScanData.HitLocation, 10.0f, 12, FColor::Green, false, 2.0f, 0, 3.0f);
+		if (HitScanData.HitActor && AlreadyHitActors.Find(HitScanData.HitActor) == INDEX_NONE)
+		{
+			AlreadyHitActors.Add(HitScanData.HitActor);
+			if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitScanData.HitActor))
+			{
+				FGunnerEventMessage HitScanMessage;
+				HitScanMessage.Instigator = CurrentEquippedEquipment;
+				EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitScanData.HitActor);
+			}
+		}
+	}
 }
 
 void UGunnerEquipmentManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
