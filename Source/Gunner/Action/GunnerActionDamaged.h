@@ -1,0 +1,86 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Gunner/_Core/ActionSystem/GunnerAction.h"
+#include "GunnerActionDamaged.generated.h"
+
+
+class UGunnerHitMessageData;
+
+UENUM(BlueprintType)
+enum class EGunnerHitDirectionType
+{
+	Front,
+	Back,
+	Left,
+	Right,
+};
+
+UENUM(BlueprintType)
+enum class EGunnerHitBoneType
+{
+	Head,
+	Body,
+	Leg,
+};
+
+USTRUCT(BlueprintType)
+struct FGunnerHitMontage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> Front;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> Back;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> Left;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> Right;
+};
+
+USTRUCT(BlueprintType)
+struct FGunnerHitMontageSet
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FGunnerHitMontage> MontageSet;
+};
+
+/**
+ * 
+ */
+UCLASS()
+class GUNNER_API UGunnerActionDamaged : public UGunnerAction
+{
+	GENERATED_BODY()
+
+public:
+	UGunnerActionDamaged();
+	virtual void OnTriggerAction_Implementation() override;
+
+	UFUNCTION(BlueprintCallable)
+	EGunnerHitDirectionType GetHitDirectionType() const;
+	UFUNCTION(BlueprintCallable)
+	EGunnerHitBoneType GetHitBoneType(FName HitBoneName) const;
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetDesiredHitMontage(FName HitBoneName) const;
+
+	UFUNCTION(BlueprintCallable)
+	UGunnerHitMessageData* GetHitMessageData() const { return HitMessageData.Get(); }
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TMap<EGunnerHitBoneType, FGunnerHitMontageSet> HitMontages;
+
+	TArray<FName> HeadBoneNames;
+	TArray<FName> LegBoneNames;
+
+	UPROPERTY()
+	TWeakObjectPtr<UGunnerHitMessageData> HitMessageData;
+
+	mutable int32 MontageSetIndex =0;
+};
