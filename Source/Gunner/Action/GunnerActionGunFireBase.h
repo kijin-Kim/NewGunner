@@ -3,10 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
+#include "Gunner/_Core/ReplicatableObject.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "GunnerActionGunFireBase.generated.h"
 
+
+UCLASS(BlueprintType)
+class UHitScanSignDataObject : public UReplicatableObject
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	AActor* AgentActor;
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FHitResult> LocalHitResult;
+};
 
 /**
  * 
@@ -18,6 +30,8 @@ class GUNNER_API UGunnerActionGunFireBase : public UGunnerAction
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void FireHitScan();
-	
+	void FireHitScan(TArray<FHitResult>& OutHitResults);
+	UFUNCTION(BlueprintCallable)
+	UHitScanSignDataObject* MakeHitScanSignDataObject(AActor* AgentActor, const TArray<FHitResult>& HitResults);
+
 };

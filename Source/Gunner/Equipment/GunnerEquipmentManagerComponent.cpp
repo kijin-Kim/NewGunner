@@ -5,6 +5,7 @@
 
 #include "DisplayDebugHelpers.h"
 #include "GunnerEquipment.h"
+#include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
@@ -92,18 +93,18 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment(
 
 void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitResults)
 {
-	FVector Location;
-	FRotator Rotation;
 	AActor* ActorOwner = GetOwner();
-	ActorOwner->GetActorEyesViewPoint(Location, Rotation);
 	UWorld* World = ActorOwner->GetWorld();
+	UCameraComponent* CameraComponet = ActorOwner->GetComponentByClass<UCameraComponent>();
+	FVector CameraLocation = CameraComponet->GetComponentLocation();
+	FVector CameraForward = CameraComponet->GetForwardVector();
 
 	FCollisionQueryParams CollisionQueryParams;
 	TArray<AActor*> IgnoredActors = {ActorOwner, GetCurrentEquippedEquipment()};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	World->LineTraceMultiByChannel(OutHitResults,
-	                               Location,
-	                               Location + Rotation.Vector() * 10000.0f,
+	                               CameraLocation,
+	                               CameraLocation + CameraForward * 10000.0f,
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 }
 

@@ -6,7 +6,7 @@
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 
-void UGunnerActionGunFireBase::FireHitScan()
+void UGunnerActionGunFireBase::FireHitScan(TArray<FHitResult>& OutHitResults)
 {
 	if (!IsLocallyControlled())
 	{
@@ -18,16 +18,16 @@ void UGunnerActionGunFireBase::FireHitScan()
 	UGunnerEquipmentManagerComponent* EquipmentManagerComponent = AgentActor->GetComponentByClass<UGunnerEquipmentManagerComponent>();
 	check(EquipmentManagerComponent);
 
-	TArray<FHitResult> HitResults;
-	EquipmentManagerComponent->LocalHitScan(HitResults);
-	if (HitResults.IsEmpty())
+	OutHitResults.Empty();
+	EquipmentManagerComponent->LocalHitScan(OutHitResults);
+	if (OutHitResults.IsEmpty())
 	{
 		return;
 	}
 
 	if (IsOwnerActorAuthoritative())
 	{
-		EquipmentManagerComponent->AuthApplyDamage(HitResults);
+		EquipmentManagerComponent->AuthApplyDamage(OutHitResults);
 		return;
 	}
 
@@ -35,9 +35,17 @@ void UGunnerActionGunFireBase::FireHitScan()
 	FRotator Rotation;
 	AgentActor->GetActorEyesViewPoint(Location, Rotation);
 	TArray<FClientHitScanData> ClientHitScanData;
-	for (const FHitResult& HitResult : HitResults)
+	for (const FHitResult& HitResult : OutHitResults)
 	{
 		ClientHitScanData.Add(FClientHitScanData(HitResult, Location, Rotation));
 	}
 	EquipmentManagerComponent->ServerRequestHitScanConfirm(ClientHitScanData);
+}
+
+UHitScanSignDataObject* UGunnerActionGunFireBase::MakeHitScanSignDataObject(AActor* AgentActor, const TArray<FHitResult>& HitResults)
+{
+	UHitScanSignDataObject* HitScanSignDataObject = NewObject<UHitScanSignDataObject>(AgentActor);
+	HitScanSignDataObject->AgentActor = AgentActor;
+	HitScanSignDataObject->LocalHitResult = HitResults;
+	return HitScanSignDataObject;
 }
