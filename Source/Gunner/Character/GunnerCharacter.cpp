@@ -4,20 +4,16 @@
 #include "GunnerCharacter.h"
 
 #include "CameraControlComponent.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -56,7 +52,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if(EquipmentManagerComponent)
+	if (EquipmentManagerComponent)
 	{
 		EquipmentManagerComponent->RelaseEquipmentManagerComponent();
 	}
@@ -105,10 +101,6 @@ UGunnerAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implem
 	return AnimMontagePlayerComponent;
 }
 
-bool AGunnerCharacter::IsRunning() const
-{
-	return bIsRunning;
-}
 
 UGunnerActionComponent* AGunnerCharacter::GetActionComponent() const
 {
@@ -120,18 +112,4 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
 	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
-}
-
-void AGunnerCharacter::SetRunning(bool bNewRunning)
-{
-	bIsRunning = bNewRunning;
-	if (GetLocalRole() < ROLE_Authority)
-	{
-		ServerRun(bNewRunning);
-	}
-}
-
-void AGunnerCharacter::ServerRun_Implementation(bool bNewRunning)
-{
-	SetRunning(bNewRunning);
 }

@@ -55,15 +55,6 @@ public:
 	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
 
-	bool IsRunning() const;
-
-
-private:
-	void SetRunning(bool bNewRunning);
-	UFUNCTION(Server, Reliable)
-	void ServerRun(bool bNewRunning);
-
-	void Init(APlayerState* NewPlayerState);
 
 public:
 	FOnGunnerCharacterPlayerStateChanged OnPlayerStateChangedDelegate;
@@ -87,12 +78,6 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<UGunnerAction>> InitialActions;
-
-
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool bIsRunning = true;
-
-
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> PropertiesToAddOnSpawn;
 };
