@@ -70,9 +70,11 @@ class GUNNER_API UGunnerEquipmentManagerComponent : public UActorComponent
 public:
 	UGunnerEquipmentManagerComponent();
 	void InitEquipmentManagerComponent();
+	void RelaseEquipmentManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass);
+	void AuthRemoveAllEquipments();
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentEquipmentByIndex(int32 SlotIndex);
 	UFUNCTION(BlueprintCallable)

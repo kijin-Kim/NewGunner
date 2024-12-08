@@ -19,6 +19,13 @@ class GUNNER_API AGunnerPlayerState : public APlayerState
 
 public:
 	AGunnerPlayerState();
+	virtual void PostInitializeComponents() override;
+
+private:
+	UFUNCTION()
+	void OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);
+	
+	
 
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))

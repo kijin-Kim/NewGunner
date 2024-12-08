@@ -40,6 +40,14 @@ void UGunnerEquipmentManagerComponent::InitEquipmentManagerComponent()
 	}
 }
 
+void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
+{
+	if(GetOwner()->HasAuthority())
+	{
+		AuthRemoveAllEquipments();	
+	}
+}
+
 void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -65,6 +73,18 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlot(int32 SlotIndex, T
 	}
 
 	EquipmentSlots[SlotIndex] = NewEquipment;
+}
+
+void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
+{
+	for (AGunnerEquipment* Equipment : EquipmentSlots)
+	{
+		if (Equipment)
+		{
+			Equipment->Destroy();
+		}
+	}
+	EquipmentSlots.Empty();
 }
 
 void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByIndex(int32 SlotIndex)

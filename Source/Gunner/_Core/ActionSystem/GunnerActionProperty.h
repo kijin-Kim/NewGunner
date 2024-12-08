@@ -124,6 +124,7 @@ struct FGunnerActionPropertyArray : public FFastArraySerializer
 
 	void AuthAdd(const FGunnerActionProperty& Property);
 	void AuthRemove(FGameplayTag Tag);
+	void AuthRemoveAll();
 
 	void BroadcastOnGunnerActionPropertyAdded(const FGunnerActionProperty& NewProperty) const;
 	void BroadcastOnGunnerActionPropertyRemoved(const FGunnerActionProperty& RemovedProperty) const;
@@ -137,6 +138,7 @@ struct FGunnerActionPropertyArray : public FFastArraySerializer
 		return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionProperty, FGunnerActionPropertyArray>(Items, DeltaParms, *this);
 	}
 
+	
 	
 
 private:

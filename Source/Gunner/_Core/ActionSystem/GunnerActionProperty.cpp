@@ -143,19 +143,6 @@ void FGunnerActionPropertyArray::OnSideEffectDefinitionAdded(const FGunnerAction
 		});
 	}
 	PropertyPtr->MarkPropertyDirty();
-
-	// ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
-	// float Duration;
-	// float Interval;
-	//
-	//
-	// FGameplayTag PropertyTag;
-	// EGunnerActionPropertyCalculationType CalculationType = EGunnerActionPropertyCalculationType::None;
-	// EGunnerActionPropertyOperator Operator = EGunnerActionPropertyOperator::Add;
-	//
-	// float DirectValue;
-	// FGameplayTag OutsideSource;
-	// FGameplayTag BaseProperty;
 }
 
 void FGunnerActionPropertyArray::OnSideEffectDefinitionRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
@@ -200,6 +187,17 @@ void FGunnerActionPropertyArray::AuthRemove(FGameplayTag Tag)
 	{
 		return Property.Tag == Tag;
 	});
+	MarkArrayDirty();
+}
+
+void FGunnerActionPropertyArray::AuthRemoveAll()
+{
+	for (FGunnerActionProperty& Property : Items)
+	{
+		Property.MarkPropertyDirty();
+		BroadcastOnGunnerActionPropertyRemoved(Property);
+	}
+	Items.Empty();
 	MarkArrayDirty();
 }
 

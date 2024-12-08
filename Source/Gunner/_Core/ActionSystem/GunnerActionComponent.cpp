@@ -99,6 +99,7 @@ void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandl
 		return;
 	}
 
+	ActionDefinition->ActionInstance->EndAction();
 	HandleTriggerableActionOnRemoved(*ActionDefinition);
 
 	if (ActionScopeLockCount > 0)
@@ -469,12 +470,10 @@ void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionD
 
 void UGunnerActionComponent::HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition)
 {
-	if (!HasActionTriggerAuthority(ActionDefinition.ActionCDO))
+	if (HasActionTriggerAuthority(ActionDefinition.ActionCDO))
 	{
-		return;
+		UnbindActionTriggerEvent(ActionDefinition);
 	}
-
-	UnbindActionTriggerEvent(ActionDefinition);
 }
 
 void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition)
@@ -685,28 +684,11 @@ void UGunnerActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 		return;
 	}
 
-	FGunnerActionProperty NewProperty2;
-	NewProperty2.Tag = Tag;
-	NewProperty2.StaticValue = Value;
-	NewProperty2.MarkPropertyDirty();
-
-	PropertyArray.AuthAdd(NewProperty2);
-
-
-	// if (TObjectPtr<UGunnerActionProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UGunnerActionProperty* Property)
-	// {
-	// 	return Property->Tag == Tag;
-	// }))
-	// {
-	// 	(*PropertyPtr)->StaticValue = Value;
-	// 	(*PropertyPtr)->MarkPropertyDirty();
-	// 	return;
-	// }
-	//
-	// UGunnerActionProperty* NewProperty = Properties[Properties.Add(NewObject<UGunnerActionProperty>(GetOwner()))];
-	// NewProperty->Tag = Tag;
-	// NewProperty->StaticValue = Value;
-	// AddReplicatedSubObject(NewProperty);
+	FGunnerActionProperty NewProperty;
+	NewProperty.Tag = Tag;
+	NewProperty.StaticValue = Value;
+	NewProperty.MarkPropertyDirty();
+	PropertyArray.AuthAdd(NewProperty);
 }
 
 void UGunnerActionComponent::AuthRemoveProperty(FGameplayTag Tag)
@@ -714,6 +696,14 @@ void UGunnerActionComponent::AuthRemoveProperty(FGameplayTag Tag)
 	if (GetOwner()->HasAuthority())
 	{
 		PropertyArray.AuthRemove(Tag);
+	}
+}
+
+void UGunnerActionComponent::AuthRemoveAllProperties()
+{
+	if (GetOwner()->HasAuthority())
+	{
+		PropertyArray.AuthRemoveAll();
 	}
 }
 

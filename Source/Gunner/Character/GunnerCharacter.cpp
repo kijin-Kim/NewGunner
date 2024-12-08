@@ -54,15 +54,26 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 }
 
+void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if(EquipmentManagerComponent)
+	{
+		EquipmentManagerComponent->RelaseEquipmentManagerComponent();
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
-	GR_LOG(LogGunner, Warning, TEXT(""));
 
-	if (NewPlayerState)
+	if (!NewPlayerState)
 	{
-		UGunnerActionComponent* ActionComponent = GetActionComponent();
-		check(ActionComponent);
+		return;
+	}
+
+	if (UGunnerActionComponent* ActionComponent = GetActionComponent())
+	{
 		ActionComponent->InitActionComponent(NewPlayerState, this);
 		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
 		{
@@ -72,14 +83,14 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 				ActionComponent->AuthAddAction(ActionDefinition);
 			}
 		}
+
+		for (const auto& [Tag, Value] : PropertiesToAddOnSpawn)
+		{
+			ActionComponent->AuthAddProperty(Tag, Value);
+		}
 	}
 
-
-	if (HasAuthority() && NewPlayerState && NewPlayerState != OldPlayerState)
-	{
-		EquipmentManagerComponent->InitEquipmentManagerComponent();
-	}
-
+	EquipmentManagerComponent->InitEquipmentManagerComponent();
 	GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
 	OnPlayerStateChangedDelegate.Broadcast(OldPlayerState, NewPlayerState);
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
@@ -28,11 +29,17 @@ class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontage
 
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
+	
+	//~ Begin APawn Interface.
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	//~ End APawn Interface.
+	
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	//~ End ACharacter Interface.
+
+	
 
 	//~ Begin IGunnerAnimMontagePlayerInterface Interface.
 	virtual UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
@@ -55,6 +62,8 @@ private:
 	void SetRunning(bool bNewRunning);
 	UFUNCTION(Server, Reliable)
 	void ServerRun(bool bNewRunning);
+
+	void Init(APlayerState* NewPlayerState);
 
 public:
 	FOnGunnerCharacterPlayerStateChanged OnPlayerStateChangedDelegate;
@@ -82,4 +91,8 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bIsRunning = true;
+
+
+	UPROPERTY(EditAnywhere)
+	TMap<FGameplayTag, float> PropertiesToAddOnSpawn;
 };

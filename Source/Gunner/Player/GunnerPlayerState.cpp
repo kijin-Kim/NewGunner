@@ -12,3 +12,18 @@ AGunnerPlayerState::AGunnerPlayerState()
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
+
+void AGunnerPlayerState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	OnPawnSet.AddDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
+}
+
+void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
+{
+	if (!NewPawn && OldPawn && HasAuthority())
+	{
+		ActionComponent->AuthRemoveAllActions();
+		ActionComponent->AuthRemoveAllProperties();
+	}
+}

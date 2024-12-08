@@ -39,13 +39,25 @@ void UGunnerInputEventDispatcherComponent::OnInputEvent(const FInputActionValue&
 
 void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn* NewPawn)
 {
-	if (!InputTagMappingData || !NewPawn)
+	if (!InputTagMappingData || (!NewPawn && !OldPawn))
 	{
 		return;
 	}
 
+
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-	check(Subsystem);
+	if (!Subsystem)
+	{
+		return;
+	}
+
+	if (OldPawn && !NewPawn)
+	{
+		Subsystem->ClearAllMappings();
+		return;
+	}
+
+
 	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
 	{
 		Subsystem->AddMappingContext(IMC, Priority);

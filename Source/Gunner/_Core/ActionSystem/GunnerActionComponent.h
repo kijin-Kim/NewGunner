@@ -173,7 +173,9 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	void AuthAddProperty(FGameplayTag Tag, float Value);
+	UFUNCTION(BlueprintCallable)
 	void AuthRemoveProperty(FGameplayTag Tag);
+	void AuthRemoveAllProperties();
 	FGunnerActionProperty* GetProperty2(FGameplayTag Tag);
 	const TArray<FGunnerActionProperty>& GetProperties() const { return PropertyArray.Items; }
 	void OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
