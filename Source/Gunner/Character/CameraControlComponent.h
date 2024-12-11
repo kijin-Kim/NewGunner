@@ -33,6 +33,4 @@ private:
 	float BaseTurnRate = 45.0f;
 	UPROPERTY(EditDefaultsOnly)
 	float MouseSensitivity = 1.0f;
-
-	TArray<FGunnerEventCallbackHandle> BoundedEventCallbackHandles;
 };

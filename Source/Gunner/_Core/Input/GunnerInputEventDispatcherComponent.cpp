@@ -43,24 +43,11 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 	{
 		return;
 	}
-
-
+	
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
 	if (!Subsystem)
 	{
 		return;
-	}
-
-	if (OldPawn && !NewPawn)
-	{
-		Subsystem->ClearAllMappings();
-		return;
-	}
-
-
-	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
-	{
-		Subsystem->AddMappingContext(IMC, Priority);
 	}
 
 	UEnhancedInputComponent* InputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
@@ -69,6 +56,14 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 		return;
 	}
 
+	Subsystem->ClearAllMappings();
+	InputComponent->ClearActionBindings();
+	
+	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
+	{
+		Subsystem->AddMappingContext(IMC, Priority);
+	}
+	
 	for (const auto& [InputAction, TriggerEventMappings] : InputTagMappingData->InputTagMappings)
 	{
 		for (const auto& [TriggerEvent, InputTag] : TriggerEventMappings)

@@ -56,12 +56,6 @@ void AGunnerPlayerController::OnRep_PlayerState()
 	}
 }
 
-void AGunnerPlayerController::OnRep_Pawn()
-{
-	Super::OnRep_Pawn();
-	UE_LOG(LogGunner, Warning, TEXT("OnRep_Pawn"));
-}
-
 void AGunnerPlayerController::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	if (HUD->GetCurrentDebugTargetActor() == GetPawn())

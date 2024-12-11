@@ -31,6 +31,18 @@ void UGunnerEventManagerComponent::UnbindEventCallback(FGunnerEventCallbackHandl
 	});
 }
 
+void UGunnerEventManagerComponent::UnbindAllEventCallbacks()
+{
+	for (auto& EventCallback : EventCallbacks)
+	{
+		FGunnerEventCallbackListScopeLock CallbackListScopeLock(EventCallback.Value);
+		for (const auto& Callback : EventCallback.Value.Callbacks)
+		{
+			UnbindEventCallback({Callback.HandleID, EventCallback.Key});
+		}
+	}
+}
+
 void UGunnerEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType)
 {
 	if (EventCallbacks.Contains(EventTag))
@@ -139,8 +151,7 @@ void UGunnerEventManagerComponent::FEventCallbackList::DecrementCallbackListLock
 			});
 		}
 
-		
-		
+
 		CallbackPendingRemoves.Empty();
 	}
 }

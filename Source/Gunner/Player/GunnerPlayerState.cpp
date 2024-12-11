@@ -25,5 +25,6 @@ void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, AP
 	{
 		ActionComponent->AuthRemoveAllActions();
 		ActionComponent->AuthRemoveAllProperties();
+		EventManagerComponent->UnbindAllEventCallbacks();
 	}
 }

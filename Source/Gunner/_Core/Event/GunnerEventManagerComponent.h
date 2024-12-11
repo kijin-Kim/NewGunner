@@ -68,6 +68,7 @@ public:
 
 
 	void UnbindEventCallback(FGunnerEventCallbackHandle Handle);
+	void UnbindAllEventCallbacks();
 	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
 
 	UFUNCTION(BlueprintCallable)
