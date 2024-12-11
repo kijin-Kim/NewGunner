@@ -19,6 +19,7 @@ public:
 	AGunnerPlayerController();
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Pawn() override;
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 	
 	double GetLocalServerTime() const;

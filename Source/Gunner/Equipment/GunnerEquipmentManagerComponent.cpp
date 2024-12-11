@@ -42,9 +42,9 @@ void UGunnerEquipmentManagerComponent::InitEquipmentManagerComponent()
 
 void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
 {
-	if(GetOwner()->HasAuthority())
+	if (GetOwner()->HasAuthority())
 	{
-		AuthRemoveAllEquipments();	
+		AuthRemoveAllEquipments();
 	}
 }
 
@@ -158,7 +158,15 @@ void UGunnerEquipmentManagerComponent::ServerRequestHitScanConfirm_Implementatio
 	TArray<FHitResult> HitResults;
 	LocalHitScan(HitResults);
 
-	if (HitResults.Num() != ClientHitScanData.Num())
+	int32 HitActorCount = 0;
+	for (const FHitResult& HitResult : HitResults)
+	{
+		if (HitResult.GetActor())
+		{
+			HitActorCount++;
+		}
+	}
+	if (HitActorCount != ClientHitScanData.Num())
 	{
 		UE_DEBUG_BREAK();
 	}

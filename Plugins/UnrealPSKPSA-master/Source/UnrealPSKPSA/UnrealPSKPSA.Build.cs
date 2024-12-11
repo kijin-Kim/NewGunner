@@ -42,10 +42,10 @@ public class UnrealPSKPSA : ModuleRules
 				"UnrealEd",
 				"Projects",
 				"MeshDescription",
-				"RawMesh",
+                "ToolWidgets",
+
+                "RawMesh",
 				"RenderCore",
-				"SlateCore",
-				"Slate",
 				"MeshBuilder",
 				"MeshUtilitiesCommon", 
 				"EditorScriptingUtilities",

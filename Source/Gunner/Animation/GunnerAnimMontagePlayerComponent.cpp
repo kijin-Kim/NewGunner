@@ -4,6 +4,7 @@
 #include "GunnerAnimMontagePlayerComponent.h"
 
 #include "GunnerAnimMontagePlayerInterface.h"
+#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 

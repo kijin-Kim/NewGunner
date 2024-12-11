@@ -8,6 +8,7 @@
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
 
 
 AGunnerPlayerController::AGunnerPlayerController()
@@ -53,6 +54,12 @@ void AGunnerPlayerController::OnRep_PlayerState()
 			ServerRTT(GetWorld()->GetTimeSeconds());
 		}, 1.0f, true, 0.0f);
 	}
+}
+
+void AGunnerPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+	UE_LOG(LogGunner, Warning, TEXT("OnRep_Pawn"));
 }
 
 void AGunnerPlayerController::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
