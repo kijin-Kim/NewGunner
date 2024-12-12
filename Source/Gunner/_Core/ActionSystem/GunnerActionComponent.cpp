@@ -369,13 +369,13 @@ void UGunnerActionComponent::BP_Signal(UGunnerAction* Action, TSubclassOf<UGunne
 	check(ActorOwner);
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
 	{
-		ActionComponent->Signal(SignClass, SignalDataObject);
+		ActionComponent->Signal(Action, SignClass, SignalDataObject);
 	}
 }
 
-void UGunnerActionComponent::Signal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+void UGunnerActionComponent::Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
 {
-	if (!SignClass)
+	if (!SignClass || !Action)
 	{
 		return;
 	}
@@ -386,7 +386,10 @@ void UGunnerActionComponent::Signal(TSubclassOf<UGunnerActionSign> SignClass, UO
 		return;
 	}
 
-	InternalSignal(SignClass, SignalDataObject);
+	if (Action->GetActionNetMethod() != EGunnerActionNetMethod::ServerAuthoritative)
+	{
+		InternalSignal(SignClass, SignalDataObject);
+	}
 }
 
 void UGunnerActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject, FGunnerActionNetPredictionHandle PredictionHandle)
