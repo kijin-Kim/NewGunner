@@ -60,14 +60,14 @@ UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) cons
 	const EGunnerHitDirectionType HitDirectionType = GetHitDirectionType();
 	const EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
 
-	const FGunnerHitMontageSet* HitMontageSet = HitMontages.Find(HitBoneType);
+	const FGunnerDirectionalMontageSet* HitMontageSet = HitMontages.Find(HitBoneType);
 	if (!HitMontageSet)
 	{
 		return nullptr;
 	}
 
 
-	const FGunnerHitMontage& HitMontage = HitMontageSet->MontageSet[MontageSetIndex];
+	const FGunnerDirectionalMontage& HitMontage = HitMontageSet->MontageSet[MontageSetIndex];
 	MontageSetIndex = (MontageSetIndex + 1) % HitMontageSet->MontageSet.Num();
 
 
@@ -84,5 +84,31 @@ UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) cons
 	default:
 		return nullptr;
 	}
+}
 
+UAnimMontage* UGunnerActionDamaged::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
+{
+	const EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
+
+	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoneType);
+	if (!DeathMontageSet)
+	{
+		return nullptr;
+	}
+
+	const FGunnerDirectionalMontage& DeathMontage = bLarge ? DeathMontageSet->MontageSet[1] : DeathMontageSet->MontageSet[0];
+
+	switch (GetHitDirectionType())
+	{
+	case EGunnerHitDirectionType::Front:
+		return DeathMontage.Front.Get();
+	case EGunnerHitDirectionType::Back:
+		return DeathMontage.Back.Get();
+	case EGunnerHitDirectionType::Left:
+		return DeathMontage.Left.Get();
+	case EGunnerHitDirectionType::Right:
+		return DeathMontage.Right.Get();
+	default:
+		return nullptr;
+	}
 }

@@ -14,6 +14,7 @@
 AGunnerPlayerController::AGunnerPlayerController()
 {
 	InputEventDispatcherComponent = CreateDefaultSubobject<UGunnerInputEventDispatcherComponent>(TEXT("InputEventDispatcher"));
+	bAutoManageActiveCameraTarget = false;
 }
 
 void AGunnerPlayerController::OnPossess(APawn* InPawn)

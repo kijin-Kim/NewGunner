@@ -27,7 +27,7 @@ enum class EGunnerHitBoneType
 };
 
 USTRUCT(BlueprintType)
-struct FGunnerHitMontage
+struct FGunnerDirectionalMontage
 {
 	GENERATED_BODY()
 
@@ -42,12 +42,12 @@ struct FGunnerHitMontage
 };
 
 USTRUCT(BlueprintType)
-struct FGunnerHitMontageSet
+struct FGunnerDirectionalMontageSet
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<FGunnerHitMontage> MontageSet;
+	TArray<FGunnerDirectionalMontage> MontageSet;
 };
 
 /**
@@ -68,13 +68,17 @@ public:
 	EGunnerHitBoneType GetHitBoneType(FName HitBoneName) const;
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetDesiredHitMontage(FName HitBoneName) const;
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const;
 
 	UFUNCTION(BlueprintCallable)
 	UGunnerHitMessageData* GetHitMessageData() const { return HitMessageData.Get(); }
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TMap<EGunnerHitBoneType, FGunnerHitMontageSet> HitMontages;
+	TMap<EGunnerHitBoneType, FGunnerDirectionalMontageSet> HitMontages;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TMap<EGunnerHitBoneType, FGunnerDirectionalMontageSet> DeathMontages;
 
 	TArray<FName> HeadBoneNames;
 	TArray<FName> LegBoneNames;
@@ -82,5 +86,5 @@ private:
 	UPROPERTY()
 	TWeakObjectPtr<UGunnerHitMessageData> HitMessageData;
 
-	mutable int32 MontageSetIndex =0;
+	mutable int32 MontageSetIndex = 0;
 };
