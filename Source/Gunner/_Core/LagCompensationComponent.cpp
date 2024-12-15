@@ -3,9 +3,12 @@
 
 #include "LagCompensationComponent.h"
 
+#include "HitBoxActorInterface.h"
 #include "Components/CapsuleComponent.h"
 #include "Containers/RingBuffer.h"
 #include "GameFramework/GameModeBase.h"
+#include "Gunner/LagCompensationDummyActor.h"
+#include "Gunner/LagCompensationHitBoxCapsuleComponent.h"
 #include "Gunner/Character/GunnerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/PhysicsAsset.h"
@@ -68,7 +71,7 @@ void ULagCompensationComponent::BeginRewind(float TimeStamp, const TArray<AActor
 		{
 			FVector Location1 = NearestPastHistory.HitBoxes[GunnerActor][i].Transform.GetLocation();
 			FVector Location2 = NearestFutureHistory.HitBoxes[GunnerActor][i].Transform.GetLocation();
-			float Fraction = FMath::Clamp(t / Range, 0.0f, 1.0f);
+			double Fraction = FMath::Clamp(t / Range, 0.0f, 1.0f);
 			FVector NewLocation = FMath::VInterpTo(Location1, Location2, 1.0f, Fraction);
 
 			FQuat Rotation1 = NearestPastHistory.HitBoxes[GunnerActor][i].Transform.GetRotation();
@@ -79,7 +82,7 @@ void ULagCompensationComponent::BeginRewind(float TimeStamp, const TArray<AActor
 			RewoundHistory.HitBoxes[GunnerActor][i].Transform = NewTransform;
 		}
 	}
-	
+
 	SpawnDummies(RewoundHistory, RewindTargets);
 }
 
@@ -87,12 +90,13 @@ void ULagCompensationComponent::SpawnDummies(const FHitBoxHistory& RewoundHistor
 {
 	for (AActor* GunnerActor : RewindTargets)
 	{
-		AActor* RewindedDummy = GetWorld()->SpawnActorDeferred<AActor>(AActor::StaticClass(), FTransform::Identity, GunnerActor);
+		AActor* RewindedDummy = GetWorld()->SpawnActorDeferred<AActor>(ALagCompensationDummyActor::StaticClass(), FTransform::Identity, GunnerActor);
 		RewindedDummies.Add(RewindedDummy);
 		RewindedDummy->AddComponentByClass(USceneComponent::StaticClass(), false, FTransform::Identity, false);
 		for (const FHitBox& HitBox : RewoundHistory.HitBoxes[GunnerActor])
 		{
-			UCapsuleComponent* CapsuleComponent = Cast<UCapsuleComponent>(RewindedDummy->AddComponentByClass(UCapsuleComponent::StaticClass(), false, HitBox.Transform, false));
+			ULagCompensationHitBoxCapsuleComponent* CapsuleComponent = Cast<ULagCompensationHitBoxCapsuleComponent>(RewindedDummy->AddComponentByClass(ULagCompensationHitBoxCapsuleComponent::StaticClass(), false, HitBox.Transform, false));
+			CapsuleComponent->SetBoneName(HitBox.BoneName);
 			CapsuleComponent->SetCapsuleRadius(HitBox.Radius);
 			CapsuleComponent->SetCapsuleHalfHeight(HitBox.HalfHeight);
 		}
@@ -104,15 +108,19 @@ void ULagCompensationComponent::EndRewind()
 {
 	for (AActor* Dummies : RewindedDummies)
 	{
-		Dummies->Destroy();
+		if (Dummies)
+		{
+			Dummies->Destroy();
+		}
 	}
+	RewindedDummies.Empty();
 }
 
 void ULagCompensationComponent::RecordHitBoxHistories()
 {
-	TArray<AActor*> GunnerActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), GunnerActors);
-	if (GunnerActors.IsEmpty())
+	TArray<AActor*> HitBoxActors;
+	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UHitBoxActorInterface::StaticClass(), HitBoxActors);
+	if (HitBoxActors.IsEmpty())
 	{
 		return;
 	}
@@ -124,30 +132,12 @@ void ULagCompensationComponent::RecordHitBoxHistories()
 
 	FHitBoxHistory NewHistory;
 	NewHistory.Time = GetWorld()->GetTimeSeconds();
-	for (AActor* GunnerActor : GunnerActors)
+	for (AActor* HitBoxActor : HitBoxActors)
 	{
-		AGunnerCharacter* HitGunner = Cast<AGunnerCharacter>(GunnerActor);
-		check(HitGunner);
-		UPhysicsAsset* PhysAsset = HitGunner->GetMesh()->GetPhysicsAsset();
-		check(PhysAsset);
-
-		TArray<FHitBox>& HitBoxes = NewHistory.HitBoxes.FindOrAdd(GunnerActor);
-		for (USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-		{
-			FTransform BodyTransform = HitGunner->GetMesh()->GetSocketTransform(BodySetup->BoneName);
-			for (FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-			{
-				FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-				HitBoxes.Add({
-					.Transform = HitBoxTransform,
-					.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
-					.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
-					.BoneName = BodySetup->BoneName,
-				});
-			}
-		}
-
-		DrawHitBoxes(HitBoxes, FColor::Green, false, MaxRewindTime);
+		TArray<FHitBox>& HitBoxes = NewHistory.HitBoxes.FindOrAdd(HitBoxActor);
+		IHitBoxActorInterface* HitBoxActorInterface = Cast<IHitBoxActorInterface>(HitBoxActor);
+		check(HitBoxActorInterface);
+		HitBoxes = HitBoxActorInterface->CollectAndGetHitBoxes();
 	}
 
 	HitBoxHistories.AddFront(NewHistory);
@@ -157,6 +147,6 @@ void ULagCompensationComponent::DrawHitBoxes(const TArray<FHitBox>& HitBoxes, FC
 {
 	for (const auto& [Transform, HalfHeight, Radius, BoneName] : HitBoxes)
 	{
-		DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), FColor::Green, bPersistentLines, Time);
+		DrawDebugCapsule(GetWorld(), Transform.GetLocation(), HalfHeight, Radius, Transform.GetRotation(), Color, bPersistentLines, Time);
 	}
 }

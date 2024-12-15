@@ -11,9 +11,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
+#include "Gunner/_Core/HitBox.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -48,6 +50,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	
 }
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -112,4 +115,27 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
 	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
+}
+
+TArray<FHitBox> AGunnerCharacter::CollectAndGetHitBoxes()
+{
+	TArray<FHitBox> HitBoxes;
+	UPhysicsAsset* PhysAsset = GetMesh()->GetPhysicsAsset();
+	check(PhysAsset);
+	for (USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
+	{
+		FTransform BodyTransform = GetMesh()->GetSocketTransform(BodySetup->BoneName);
+		for (FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
+		{
+			FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
+			HitBoxes.Add({
+				.Transform = HitBoxTransform,
+				.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
+				.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
+				.BoneName = BodySetup->BoneName,
+			});
+		}
+	}
+
+	return HitBoxes;
 }

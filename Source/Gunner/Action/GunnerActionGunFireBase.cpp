@@ -3,8 +3,9 @@
 
 #include "GunnerActionGunFireBase.h"
 
-#include "Gunner/Equipment/GunnerEquipment.h"
+#include "GameFramework/Character.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
+#include "Gunner/Player/GunnerPlayerController.h"
 
 void UGunnerActionGunFireBase::FireHitScan(TArray<FHitResult>& OutHitResults)
 {
@@ -25,21 +26,22 @@ void UGunnerActionGunFireBase::FireHitScan(TArray<FHitResult>& OutHitResults)
 		return;
 	}
 
-	if (IsOwnerActorAuthoritative())
+
+	if (IsOwnerActorAuthoritative() && IsLocallyControlled())
 	{
 		EquipmentManagerComponent->AuthApplyDamage(OutHitResults);
 		return;
 	}
 
-	FVector Location;
-	FRotator Rotation;
-	AgentActor->GetActorEyesViewPoint(Location, Rotation);
 	TArray<FClientHitScanData> ClientHitScanData;
 	for (const FHitResult& HitResult : OutHitResults)
 	{
-		ClientHitScanData.Add(FClientHitScanData(HitResult, Location, Rotation));
+		ClientHitScanData.Add(FClientHitScanData(HitResult));
 	}
-	EquipmentManagerComponent->ServerRequestHitScanConfirm(ClientHitScanData);
+
+	AGunnerPlayerController* PlayerController = Cast<AGunnerPlayerController>(GetController());
+	check(PlayerController);
+	EquipmentManagerComponent->ServerRequestHitScanConfirm(ClientHitScanData, PlayerController->GetLocalServerTime());
 }
 
 UHitScanSignDataObject* UGunnerActionGunFireBase::MakeHitScanSignDataObject(AActor* AgentActor, const TArray<FHitResult>& HitResults)

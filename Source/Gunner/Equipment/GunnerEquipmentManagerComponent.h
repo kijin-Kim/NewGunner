@@ -7,6 +7,7 @@
 #include "GunnerEquipmentManagerComponent.generated.h"
 
 
+struct FHitBox;
 class AGunnerEquipment;
 
 UCLASS(BlueprintType)
@@ -31,13 +32,10 @@ struct FClientHitScanData
 
 	FClientHitScanData() = default;
 
-	FClientHitScanData(const FHitResult& HitResult, const FVector& InShooterLocation, const FRotator& InShooterRotation)
-		: HitActor(HitResult.GetActor())
-		  , HitLocation(HitResult.Normal)
-		  , HitBoneName(HitResult.BoneName)
-		  , TimeStamp(HitResult.Time)
-		  , ShooterLocation(InShooterLocation)
-		  , ShooterRotation(InShooterRotation)
+	FClientHitScanData(const FHitResult& InHitResult)
+		: HitActor(InHitResult.GetActor())
+		  , HitLocation(InHitResult.ImpactPoint)
+		  , HitBoneName(InHitResult.BoneName)
 	{
 	}
 
@@ -48,13 +46,6 @@ struct FClientHitScanData
 	FVector HitLocation;
 	UPROPERTY()
 	FName HitBoneName;
-	UPROPERTY()
-	float TimeStamp;
-
-	UPROPERTY()
-	FVector ShooterLocation;
-	UPROPERTY()
-	FRotator ShooterRotation;
 };
 
 
@@ -84,8 +75,8 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
-	void ServerRequestHitScanConfirm(const TArray<FClientHitScanData>& ClientHitScanData);
-	void LocalHitScan(TArray<FHitResult>& OutHitResults);
+	void ServerRequestHitScanConfirm(const TArray<FClientHitScanData>& ClientHitScanData, float TimeStamp);
+	void LocalHitScan(TArray<FHitResult>& OutHitResults, const TArray<AActor*>& ActorsToIgnore = {});
 	void AuthApplyDamage(const TArray<FHitResult>& HitResults);
 
 public:
@@ -100,6 +91,11 @@ private:
 	void OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment);
 	UFUNCTION()
 	void OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots);
+
+
+	void DrawDebugHitBoxByHitResult(const TArray<FHitResult>& HitResults);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticastSendCurrentHitBoxes(const TArray<FHitBox>& HitBoxes, FName HitBoneName, FVector HitLocation, FColor HitColor, FColor NonHitColor);
 
 private:
 	const int32 MaxSlots = 3;

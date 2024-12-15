@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
+#include "Gunner/_Core/HitBoxActorInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
 #include "GunnerCharacter.generated.h"
@@ -21,7 +22,7 @@ class UWeaponManagerComponent;
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGunnerCharacterPlayerStateChanged, APlayerState* OldPlayerState, APlayerState* NewPlayerState);
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface, public IHitBoxActorInterface
 {
 	GENERATED_BODY()
 
@@ -54,6 +55,11 @@ public:
 	//~ Begin IGunnerEventManagerInterface Interface.
 	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
+	
+	//~ Begin IHitBoxActorInterface Interface.
+	virtual TArray<FHitBox> CollectAndGetHitBoxes() override;
+	//~ End IHitBoxActorInterface Interface.
+
 
 
 public:

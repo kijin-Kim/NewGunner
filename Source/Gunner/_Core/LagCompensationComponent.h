@@ -3,23 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HitBox.h"
 #include "Components/ActorComponent.h"
 #include "Containers/RingBuffer.h"
 #include "LagCompensationComponent.generated.h"
 
-USTRUCT()
-struct FHitBox
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	FTransform Transform;
-	UPROPERTY()
-	float HalfHeight;
-	UPROPERTY()
-	float Radius;
-	UPROPERTY()
-	FName BoneName;
-};
 
 USTRUCT()
 struct FHitBoxHistory
@@ -41,6 +29,7 @@ public:
 	void BeginRewind(float TimeStamp, const TArray<AActor*>& RewindTargets);
 	void SpawnDummies(const FHitBoxHistory& RewoundHistory, const TArray<AActor*>& RewindTargets);
 	void EndRewind();
+
 
 private:
 	void RecordHitBoxHistories();

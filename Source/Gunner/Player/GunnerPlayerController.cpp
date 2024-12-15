@@ -63,6 +63,7 @@ void AGunnerPlayerController::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const 
 	{
 		Canvas->DisplayDebugManager.DrawString(FString::Printf(TEXT("Ping: %f"), GetPlayerState<APlayerState>()->GetPingInMilliseconds()));
 		Canvas->DisplayDebugManager.DrawString(FString::Printf(TEXT("RTT: %f"), RoundTripTime * 1000));
+		Canvas->DisplayDebugManager.DrawString(FString::Printf(TEXT("Local Server Time: %f"), GetLocalServerTime()));
 	}
 }
 

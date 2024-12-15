@@ -7,10 +7,16 @@
 #include "GunnerEquipment.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
+#include "GameFramework/GameMode.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/LagCompensationHitBoxCapsuleComponent.h"
+#include "Gunner/_Core/HitBox.h"
+#include "Gunner/_Core/HitBoxActorInterface.h"
+#include "Gunner/_Core/LagCompensationComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -111,7 +117,7 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment(
 	return CurrentEquippedEquipment;
 }
 
-void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitResults)
+void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitResults, const TArray<AActor*>& ActorsToIgnore)
 {
 	AActor* ActorOwner = GetOwner();
 	UWorld* World = ActorOwner->GetWorld();
@@ -121,11 +127,15 @@ void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitRe
 
 	FCollisionQueryParams CollisionQueryParams;
 	TArray<AActor*> IgnoredActors = {ActorOwner, GetCurrentEquippedEquipment()};
+	IgnoredActors.Append(ActorsToIgnore);
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	World->LineTraceMultiByChannel(OutHitResults,
 	                               CameraLocation,
 	                               CameraLocation + CameraForward * 10000.0f,
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
+
+	FlushPersistentDebugLines(World);
+	DrawDebugHitBoxByHitResult(OutHitResults);
 }
 
 void UGunnerEquipmentManagerComponent::AuthApplyDamage(const TArray<FHitResult>& HitResults)
@@ -153,23 +163,115 @@ void UGunnerEquipmentManagerComponent::AuthApplyDamage(const TArray<FHitResult>&
 	}
 }
 
-void UGunnerEquipmentManagerComponent::ServerRequestHitScanConfirm_Implementation(const TArray<FClientHitScanData>& ClientHitScanData)
+void UGunnerEquipmentManagerComponent::ServerRequestHitScanConfirm_Implementation(const TArray<FClientHitScanData>& ClientHitScanData, float TimeStamp)
 {
-	TArray<FHitResult> HitResults;
-	LocalHitScan(HitResults);
+	GR_LOG_SUB(LogGunner, Display, TEXT("Time Discrpency: %f"), GetWorld()->GetTimeSeconds() - TimeStamp);
 
-	int32 HitActorCount = 0;
-	for (const FHitResult& HitResult : HitResults)
+	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
+	check(GameMode);
+	ULagCompensationComponent* LagCompensationComponent = GameMode->GetComponentByClass<ULagCompensationComponent>();
+	check(LagCompensationComponent);
+
+	TArray<AActor*> RewindTargets;
+	for (const FClientHitScanData& HitScanData : ClientHitScanData)
 	{
-		if (HitResult.GetActor())
+		if (HitScanData.HitActor && HitScanData.HitActor->Implements<UHitBoxActorInterface>())
 		{
-			HitActorCount++;
+			RewindTargets.AddUnique(HitScanData.HitActor);
 		}
 	}
-	if (HitActorCount != ClientHitScanData.Num())
+
+
+	for (AActor* RewindTarget : RewindTargets)
 	{
-		UE_DEBUG_BREAK();
+		if (IHitBoxActorInterface* HitBoxActor = Cast<IHitBoxActorInterface>(RewindTarget))
+		{
+			TArray<FHitBox> HitBoxes = HitBoxActor->CollectAndGetHitBoxes();
+			NetMulticastSendCurrentHitBoxes(HitBoxes, FName(), FVector(), FColor::Black, FColor::Cyan);
+		}
 	}
+
+
+	TArray<AActor*> ActorsToIgnoreWhenRewounded;
+	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UHitBoxActorInterface::StaticClass(), ActorsToIgnoreWhenRewounded);
+
+
+	
+	LagCompensationComponent->BeginRewind(TimeStamp, RewindTargets);
+	TArray<FHitResult> HitResults;
+	LocalHitScan(HitResults, ActorsToIgnoreWhenRewounded);
+	TArray<AActor*> AlreadyHitActors;
+	for (const FHitResult& HitResult : HitResults)
+	{
+		AActor* HitActor = HitResult.GetActor();
+		IHitBoxActorInterface* HitBoxActor = Cast<IHitBoxActorInterface>(HitActor);
+		if (HitBoxActor && AlreadyHitActors.Find(HitActor) == INDEX_NONE)
+		{
+			AlreadyHitActors.Add(HitActor);
+			TArray<FHitBox> HitBoxes = HitBoxActor->CollectAndGetHitBoxes();
+			if (ULagCompensationHitBoxCapsuleComponent* HitBoxComponent = Cast<ULagCompensationHitBoxCapsuleComponent>(HitResult.GetComponent()))
+			{
+				NetMulticastSendCurrentHitBoxes(HitBoxes, HitBoxComponent->GetBoneName(), HitResult.Location, FColor::Magenta, FColor::Yellow);
+			}
+		}
+	}
+	LagCompensationComponent->EndRewind();
+
+
+	// TSet<IHitBoxActorInterface*> ClientHitHitBoxActors;
+	// for (const FClientHitScanData& HitScanData : ClientHitScanData)
+	// {
+	// 	if (HitScanData.HitActor && HitScanData.HitActor->Implements<UHitBoxActorInterface>())
+	// 	{
+	// 		ClientHitHitBoxActors.Add(Cast<IHitBoxActorInterface>(HitScanData.HitActor));
+	// 	}
+	// }
+	//
+	// TSet<IHitBoxActorInterface*> ServerHitHitBoxActors;
+	// for (const FHitResult& HitResult : HitResults)
+	// {
+	// 	if (HitResult.GetActor() && HitResult.GetActor()->Implements<UHitBoxActorInterface>())
+	// 	{
+	// 		ServerHitHitBoxActors.Add(Cast<IHitBoxActorInterface>(HitResult.GetActor()));
+	// 	}
+	// }
+	//
+	// for (IHitBoxActorInterface* HitBoxActor : ClientHitHitBoxActors)
+	// {
+	// 	if (!ServerHitHitBoxActors.Contains(HitBoxActor))
+	// 	{
+	// 		TArray<FHitBox> HitBoxes = HitBoxActor->CollectAndGetHitBoxes();
+	// 		NetMulticastSendCurrentHitBoxes(HitBoxes, FName(), FVector());
+	// 		return;
+	// 	}
+	// }
+	//
+	// for (const FHitResult& HitResult : HitResults)
+	// {
+	// 	AActor* ServerHitActor = HitResult.GetActor();
+	// 	if (!ServerHitActor || !ServerHitActor->Implements<UHitBoxActorInterface>())
+	// 	{
+	// 		continue;
+	// 	}
+	// 	const FClientHitScanData* ClientHitScanDataPtr = ClientHitScanData.FindByPredicate([ServerHitActor](const FClientHitScanData& HitScanData)
+	// 	{
+	// 		return HitScanData.HitActor == ServerHitActor;
+	// 	});
+	//
+	// 	if (!ClientHitScanDataPtr)
+	// 	{
+	// 		UE_DEBUG_BREAK();
+	// 		continue;
+	// 	}
+	//
+	// 	if (ClientHitScanDataPtr->HitBoneName != HitResult.BoneName)
+	// 	{
+	// 		IHitBoxActorInterface* ServerHitBoxActor = Cast<IHitBoxActorInterface>(ServerHitActor);
+	// 		NetMulticastSendCurrentHitBoxes(ServerHitBoxActor->CollectAndGetHitBoxes(), HitResult.BoneName, HitResult.Location);
+	// 		return;
+	// 	}
+	// }
+
 
 	AuthApplyDamage(HitResults);
 }
@@ -238,5 +340,39 @@ void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots(const TArray<AGunner
 		{
 			Equipment->OnLost();
 		}
+	}
+}
+
+void UGunnerEquipmentManagerComponent::DrawDebugHitBoxByHitResult(const TArray<FHitResult>& HitResults)
+{
+	TArray<AActor*> AlreadyHitActors;
+	for (const FHitResult& HitResult : HitResults)
+	{
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor && HitActor->Implements<UHitBoxActorInterface>() && AlreadyHitActors.Find(HitActor) == INDEX_NONE)
+		{
+			AlreadyHitActors.Add(HitActor);
+			IHitBoxActorInterface* HitBoxActor = Cast<IHitBoxActorInterface>(HitActor);
+			TArray<FHitBox> HitBoxes = HitBoxActor->CollectAndGetHitBoxes();
+			for (const FHitBox& HitBox : HitBoxes)
+			{
+				HitBox.DrawDebug(GetWorld(), HitResult.BoneName == HitBox.BoneName ? FColor::Green : FColor::Black, true);
+			}
+
+			DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 15.0f, FColor::Red, true);
+		}
+	}
+}
+
+void UGunnerEquipmentManagerComponent::NetMulticastSendCurrentHitBoxes_Implementation(const TArray<FHitBox>& HitBoxes, FName HitBoneName, FVector HitLocation, FColor HitColor, FColor NonHitColor)
+{
+	for (const FHitBox& HitBox : HitBoxes)
+	{
+		HitBox.DrawDebug(GetWorld(), (!HitBoneName.IsNone() && HitBoneName == HitBox.BoneName) ? HitColor : NonHitColor, true);
+	}
+
+	if (HitLocation != FVector::ZeroVector)
+	{
+		DrawDebugPoint(GetWorld(), HitLocation, 15.0f, FColor::Orange, true);
 	}
 }
