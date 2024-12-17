@@ -77,7 +77,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRequestHitScanConfirm(const TArray<FClientHitScanData>& ClientHitScanData, float TimeStamp);
 	void LocalHitScan(TArray<FHitResult>& OutHitResults, const TArray<AActor*>& ActorsToIgnore = {});
-	void AuthApplyDamage(const TArray<FHitResult>& HitResults);
+	void LocalHitScan2(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& CollisionQueryParams);
+	void AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -106,4 +107,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<AGunnerEquipment>> InitialEquipmentClasses;
+
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAnimInstance> SnapshotAnimInstanceClass;
+
+private:
+	void Draw(ACharacter* Character, FColor Color);
 };

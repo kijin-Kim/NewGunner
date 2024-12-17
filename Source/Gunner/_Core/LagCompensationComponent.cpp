@@ -9,9 +9,9 @@
 #include "GameFramework/GameModeBase.h"
 #include "Gunner/LagCompensationDummyActor.h"
 #include "Gunner/LagCompensationHitBoxCapsuleComponent.h"
+#include "Gunner/RewoundSnapshotAnimInstance.h"
 #include "Gunner/Character/GunnerCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "PhysicsEngine/PhysicsAsset.h"
 
 
 ULagCompensationComponent::ULagCompensationComponent()
@@ -86,6 +86,31 @@ void ULagCompensationComponent::BeginRewind(float TimeStamp, const TArray<AActor
 	SpawnDummies(RewoundHistory, RewindTargets);
 }
 
+
+void ULagCompensationComponent::BeginRewind2(float TimeStamp, const TArray<AActor*>& RewindTargets)
+{
+	double SingleTripTimeFromClient = GetWorld()->GetTimeSeconds() - TimeStamp;
+	double AdjustedClientTimeStamp = TimeStamp - SingleTripTimeFromClient;
+	double TargetTime = FMath::Min(GetWorld()->GetTimeSeconds(), AdjustedClientTimeStamp);
+
+	FPoseSnapshotHistory NearestFutureHistory;
+	FPoseSnapshotHistory NearestPastHistory;
+
+	NearestFutureHistory = PoseSnapshots.First();
+	NearestPastHistory = NearestFutureHistory;
+	for (int i = 1; i < PoseSnapshots.Num(); ++i)
+	{
+		if (PoseSnapshots[i].Time <= TargetTime)
+		{
+			NearestPastHistory = PoseSnapshots[i];
+			break;
+		}
+		NearestFutureHistory = PoseSnapshots[i];
+	}
+	SpawnDummies2(NearestFutureHistory, NearestPastHistory, RewindTargets, TargetTime);
+}
+
+
 void ULagCompensationComponent::SpawnDummies(const FHitBoxHistory& RewoundHistory, const TArray<AActor*>& RewindTargets)
 {
 	for (AActor* GunnerActor : RewindTargets)
@@ -104,6 +129,55 @@ void ULagCompensationComponent::SpawnDummies(const FHitBoxHistory& RewoundHistor
 	}
 }
 
+void ULagCompensationComponent::SpawnDummies2(const FPoseSnapshotHistory& NearestFutureHistory, const FPoseSnapshotHistory& NearestPastHistory, const TArray<AActor*>& RewindTargets, float TargetTime)
+{
+	const double Range = NearestFutureHistory.Time - NearestPastHistory.Time;
+	const double t = TargetTime - NearestPastHistory.Time;
+	const double Fraction = FMath::Clamp(t / Range, 0.0f, 1.0f);
+
+
+	for (AActor* RewindTarget : RewindTargets)
+	{
+		if (ACharacter* RewindTargetCharacter = Cast<ACharacter>(RewindTarget))
+		{
+			FTransform NearFutuerTransform = NearestFutureHistory.TransformSnapShots[RewindTarget];
+			FTransform NearPastTransform = NearestPastHistory.TransformSnapShots[RewindTarget];
+			FVector NewLocation = FMath::VInterpTo(NearPastTransform.GetLocation(), NearFutuerTransform.GetLocation(), 1.0f, Fraction);
+			FQuat NewRotation = FMath::QInterpTo(NearPastTransform.GetRotation(), NearFutuerTransform.GetRotation(), 1.0f, Fraction);
+			FTransform NewTransform{NewRotation, NewLocation};
+
+			USkeletalMeshComponent* DummySkeletalMeshComponent = Cast<USkeletalMeshComponent>(RewindTargetCharacter->AddComponentByClass(USkeletalMeshComponent::StaticClass(), false, FTransform::Identity, false));
+			DummySkeletalMeshComponent->RegisterComponent();
+			RewindedDummies2.Add(DummySkeletalMeshComponent);
+
+			DummySkeletalMeshComponent->SetCollisionResponseToChannels(RewindTargetCharacter->GetMesh()->GetCollisionResponseToChannels());
+			DummySkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			DummySkeletalMeshComponent->SetWorldTransform(NewTransform * RewindTargetCharacter->GetMesh()->GetRelativeTransform());
+			DummySkeletalMeshComponent->SetSkeletalMesh(RewindTargetCharacter->GetMesh()->GetSkeletalMeshAsset());
+			DummySkeletalMeshComponent->SetPhysicsAsset(RewindTargetCharacter->GetMesh()->GetPhysicsAsset());
+			DummySkeletalMeshComponent->SetAnimInstanceClass(DummyAnimInstanceClass);
+			URewoundSnapshotAnimInstance* RewoundSnapshotAnimInstance = Cast<URewoundSnapshotAnimInstance>(DummySkeletalMeshComponent->GetAnimInstance());
+			RewoundSnapshotAnimInstance->SetBlendAlpha(Fraction);
+
+			FPoseSnapshot& NearestFutureSnapshot = RewoundSnapshotAnimInstance->AddPoseSnapshot(FName("RewindSnapshot_NearestFuture"));
+			NearestFutureSnapshot.LocalTransforms = NearestFutureHistory.PoseSnapShots[RewindTarget].LocalTransforms;
+			NearestFutureSnapshot.BoneNames = NearestFutureHistory.PoseSnapShots[RewindTarget].BoneNames;
+			NearestFutureSnapshot.SkeletalMeshName = NearestFutureHistory.PoseSnapShots[RewindTarget].SkeletalMeshName;
+
+			FPoseSnapshot& NearestPastSnapshot = RewoundSnapshotAnimInstance->AddPoseSnapshot(FName("RewindSnapshot_NearestPast"));
+			NearestPastSnapshot.LocalTransforms = NearestPastHistory.PoseSnapShots[RewindTarget].LocalTransforms;
+			NearestPastSnapshot.BoneNames = NearestPastHistory.PoseSnapShots[RewindTarget].BoneNames;
+			NearestPastSnapshot.SkeletalMeshName = NearestPastHistory.PoseSnapShots[RewindTarget].SkeletalMeshName;
+
+			DummySkeletalMeshComponent->TickAnimation(0.0f, false);
+			DummySkeletalMeshComponent->RefreshBoneTransforms();
+			DummySkeletalMeshComponent->RefreshFollowerComponents();
+			DummySkeletalMeshComponent->UpdateComponentToWorld();
+			DummySkeletalMeshComponent->FinalizeBoneTransform();
+		}
+	}
+}
+
 void ULagCompensationComponent::EndRewind()
 {
 	for (AActor* Dummies : RewindedDummies)
@@ -114,6 +188,18 @@ void ULagCompensationComponent::EndRewind()
 		}
 	}
 	RewindedDummies.Empty();
+}
+
+void ULagCompensationComponent::EndRewind2()
+{
+	for (USkeletalMeshComponent* Dummies : RewindedDummies2)
+	{
+		if (Dummies)
+		{
+			Dummies->DestroyComponent();
+		}
+	}
+	RewindedDummies2.Empty();
 }
 
 void ULagCompensationComponent::RecordHitBoxHistories()
@@ -141,6 +227,30 @@ void ULagCompensationComponent::RecordHitBoxHistories()
 	}
 
 	HitBoxHistories.AddFront(NewHistory);
+
+
+	while (!PoseSnapshots.IsEmpty() && GetWorld()->GetTimeSeconds() - PoseSnapshots.Last().Time >= MaxRewindTime)
+	{
+		PoseSnapshots.Pop();
+	}
+
+	FPoseSnapshotHistory NewPoseSnapshotHistory;
+	NewPoseSnapshotHistory.Time = GetWorld()->GetTimeSeconds();
+	for (AActor* HitBoxActor : HitBoxActors)
+	{
+		if (ACharacter* HitBoxCharacter = Cast<ACharacter>(HitBoxActor))
+		{
+			FTransform& NewTransformSnapshot = NewPoseSnapshotHistory.TransformSnapShots.FindOrAdd(HitBoxActor);
+			NewTransformSnapshot = HitBoxCharacter->GetActorTransform();
+			FPoseSnapshot& NewPoseSnapshot = NewPoseSnapshotHistory.PoseSnapShots.FindOrAdd(HitBoxActor);
+			HitBoxCharacter->GetMesh()->SnapshotPose(NewPoseSnapshot);
+		}
+	}
+
+	if (NewPoseSnapshotHistory.IsValid())
+	{
+		PoseSnapshots.AddFront(NewPoseSnapshotHistory);
+	}
 }
 
 void ULagCompensationComponent::DrawHitBoxes(const TArray<FHitBox>& HitBoxes, FColor Color, bool bPersistentLines, float Time)

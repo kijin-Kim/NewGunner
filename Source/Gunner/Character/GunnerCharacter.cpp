@@ -50,7 +50,8 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-	
+
+	LagCompensationComponent = CreateDefaultSubobject<ULagCompComponent>(TEXT("LagCompensationComponent"));
 }
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)

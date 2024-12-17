@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/HitBoxActorInterface.h"
+#include "Gunner/_Core/LagCompComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
 #include "GunnerCharacter.generated.h"
@@ -30,17 +31,16 @@ class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontage
 
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-	
+
 	//~ Begin APawn Interface.
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	//~ End APawn Interface.
-	
+
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	//~ End ACharacter Interface.
 
-	
 
 	//~ Begin IGunnerAnimMontagePlayerInterface Interface.
 	virtual UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
@@ -55,11 +55,10 @@ public:
 	//~ Begin IGunnerEventManagerInterface Interface.
 	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
-	
+
 	//~ Begin IHitBoxActorInterface Interface.
 	virtual TArray<FHitBox> CollectAndGetHitBoxes() override;
 	//~ End IHitBoxActorInterface Interface.
-
 
 
 public:
@@ -78,12 +77,16 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<UGunnerAction>> InitialActions;
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> PropertiesToAddOnSpawn;
+
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<ULagCompComponent> LagCompensationComponent;
 };

@@ -17,6 +17,21 @@ struct FHitBoxHistory
 	TMap<AActor*, TArray<FHitBox>> HitBoxes;
 };
 
+
+USTRUCT()
+struct FPoseSnapshotHistory
+{
+	GENERATED_BODY()
+	double Time;
+	TMap<AActor*, FPoseSnapshot> PoseSnapShots;
+	TMap<AActor*, FTransform> TransformSnapShots;
+
+	bool IsValid() const
+	{
+		return PoseSnapShots.Num() > 0;
+	}
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API ULagCompensationComponent : public UActorComponent
 {
@@ -27,9 +42,11 @@ public:
 	virtual void InitializeComponent() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void BeginRewind(float TimeStamp, const TArray<AActor*>& RewindTargets);
+	void BeginRewind2(float TimeStamp, const TArray<AActor*>& RewindTargets);
 	void SpawnDummies(const FHitBoxHistory& RewoundHistory, const TArray<AActor*>& RewindTargets);
+	void SpawnDummies2(const FPoseSnapshotHistory& NearestFutureHistory, const FPoseSnapshotHistory& NearestPastHistory, const TArray<AActor*>& RewindTargets, float TargetTime);
 	void EndRewind();
-
+	void EndRewind2();
 
 private:
 	void RecordHitBoxHistories();
@@ -41,6 +58,13 @@ public:
 
 private:
 	TRingBuffer<FHitBoxHistory> HitBoxHistories;
+	TRingBuffer<FPoseSnapshotHistory> PoseSnapshots;
 	UPROPERTY()
 	TArray<AActor*> RewindedDummies;
+	UPROPERTY()
+	TArray<USkeletalMeshComponent*> RewindedDummies2;
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAnimInstance> DummyAnimInstanceClass;
 };

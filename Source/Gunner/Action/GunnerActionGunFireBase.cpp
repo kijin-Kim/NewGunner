@@ -29,7 +29,16 @@ void UGunnerActionGunFireBase::FireHitScan(TArray<FHitResult>& OutHitResults)
 
 	if (IsOwnerActorAuthoritative() && IsLocallyControlled())
 	{
-		EquipmentManagerComponent->AuthApplyDamage(OutHitResults);
+		TArray<AActor*> DamageActors;
+		for (const FHitResult& HitResult : OutHitResults)
+		{
+			AActor* HitActor = HitResult.GetActor();
+			if (HitActor && DamageActors.Find(HitActor) == INDEX_NONE)
+			{
+				DamageActors.Add(HitActor);
+				EquipmentManagerComponent->AuthApplyDamage(HitActor, HitResult.BoneName, HitResult.Normal);
+			}
+		}
 		return;
 	}
 
