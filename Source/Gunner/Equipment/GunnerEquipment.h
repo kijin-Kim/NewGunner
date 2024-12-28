@@ -20,7 +20,6 @@ class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlay
 
 public:
 	AGunnerEquipment();
-
 	void AttachEquipmentToOwner();
 	
 	void OnAcquired();

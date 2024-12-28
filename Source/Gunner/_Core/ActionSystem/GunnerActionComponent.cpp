@@ -168,6 +168,7 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 	const bool bIsLocallyControlled = AgentInfo->IsLocallyControlled();
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
 	const EGunnerActionNetMethod ActionNetMethod = ActionDefinition->ActionCDO->GetActionNetMethod();
+	const bool bIsRemoteTriggerable = ActionDefinition->ActionCDO->IsRemoteTriggerable();
 
 
 	if (bIsOwnerActorAuthoritative)
@@ -182,6 +183,12 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 		{
 			LocalTriggerAction(ActionDefinition);
 			ClientTriggerAction(ActionDefinitionHandle, EventMessage);
+			return;
+		}
+
+		if (bIsRemoteTriggerable)
+		{
+			ClientRemoteRequestTryTriggerAction(ActionDefinitionHandle, EventMessage);
 			return;
 		}
 
@@ -206,6 +213,13 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, LocalActionTriggerStates, NetPredictionHandle);
 			return;
 		}
+
+		if (bIsRemoteTriggerable)
+		{
+			ServerRemoteRequestTryTriggerAction(ActionDefinitionHandle, EventMessage);
+			return;
+		}
+
 		GR_LOG_SUB(LogGunner, Error, TEXT("해당 호스트에서는 Action을(를) 실행할 수 없습니다."));
 	}
 }
@@ -294,12 +308,12 @@ bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) co
 	EGunnerActionNetMethod ActionNetMethod = Action->GetActionNetMethod();
 	if (ActionNetMethod == EGunnerActionNetMethod::LocalOnly || ActionNetMethod == EGunnerActionNetMethod::LocalPredicted)
 	{
-		return AgentInfo->IsLocallyControlled();
+		return AgentInfo->IsLocallyControlled() || Action->IsRemoteTriggerable();
 	}
 
 	if (ActionNetMethod == EGunnerActionNetMethod::ServerOnly || ActionNetMethod == EGunnerActionNetMethod::ServerAuthoritative)
 	{
-		return AgentInfo->IsOwnerActorAuthoritative();
+		return AgentInfo->IsOwnerActorAuthoritative() || Action->IsRemoteTriggerable();
 	}
 
 	checkNoEntry();
@@ -541,6 +555,14 @@ void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionD
 		}
 	}
 
+	for (auto& ActionDefinition : ActionDefinitions)
+	{
+		if (ActionDefinition.ActionInstance.GetClass() != ActionDefinition.ActionClass)
+		{
+			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
+		}
+	}
+
 
 	for (const auto& NewActionDefinition : NewActionDefinitions)
 	{
@@ -570,7 +592,7 @@ void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionD
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	if (ActionDefinition->ActionCDO->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted)
+	if (ActionDefinition && ActionDefinition->ActionCDO->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted)
 	{
 		TArray<FGunnerActionDefinitionHandle> HandlesToRemove;
 		for (const auto& [Handle, EventMessage, TriggerTime] : NetTriggerDelayedActions)
@@ -664,6 +686,16 @@ void UGunnerActionComponent::ClientTriggerActionRequestFailed_Implementation(FGu
 
 void UGunnerActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle)
 {
+}
+
+void UGunnerActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
+{
+	TryTriggerAction(ActionDefinitionHandle, EventMessage);
+}
+
+void UGunnerActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
+{
+	TryTriggerAction(ActionDefinitionHandle, EventMessage);
 }
 
 void UGunnerActionComponent::AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates)

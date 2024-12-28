@@ -3,68 +3,55 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HitBox.h"
 #include "Components/ActorComponent.h"
 #include "Containers/RingBuffer.h"
 #include "LagCompensationComponent.generated.h"
 
 
+class URewoundSnapshotAnimInstance;
+
 USTRUCT()
-struct FHitBoxHistory
+struct FMyPoseSnapshot
 {
 	GENERATED_BODY()
 	double Time;
-	TMap<AActor*, TArray<FHitBox>> HitBoxes;
-};
-
-
-USTRUCT()
-struct FPoseSnapshotHistory
-{
-	GENERATED_BODY()
-	double Time;
-	TMap<AActor*, FPoseSnapshot> PoseSnapShots;
-	TMap<AActor*, FTransform> TransformSnapShots;
+	FPoseSnapshot PoseSnapshot;
+	FTransform TransformSnapshot;
 
 	bool IsValid() const
 	{
-		return PoseSnapShots.Num() > 0;
+		return PoseSnapshot.LocalTransforms.Num() > 0
+			&& PoseSnapshot.BoneNames.Num() > 0;
 	}
 };
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+
+UCLASS(Config=Game, DefaultConfig, meta=(BlueprintSpawnableComponent))
 class GUNNER_API ULagCompensationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	ULagCompensationComponent();
-	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void BeginRewind(float TimeStamp, const TArray<AActor*>& RewindTargets);
-	void BeginRewind2(float TimeStamp, const TArray<AActor*>& RewindTargets);
-	void SpawnDummies(const FHitBoxHistory& RewoundHistory, const TArray<AActor*>& RewindTargets);
-	void SpawnDummies2(const FPoseSnapshotHistory& NearestFutureHistory, const FPoseSnapshotHistory& NearestPastHistory, const TArray<AActor*>& RewindTargets, float TargetTime);
-	void EndRewind();
-	void EndRewind2();
+	void AuthBeginRewind(float TimeStamp);
+	void AuthEndRewind();
 
 private:
-	void RecordHitBoxHistories();
-	void DrawHitBoxes(const TArray<FHitBox>& HitBoxes, FColor Color, bool bPersistentLines, float Time);
+	void AuthSpawnDummyMesh(const FMyPoseSnapshot& NearestFutureSnapshot, const FMyPoseSnapshot& NearestPastSnapshot, float TargetTime);
 
-public:
-	UPROPERTY(EditDefaultsOnly)
+private:
+	UPROPERTY(GlobalConfig)
+	TSubclassOf<URewoundSnapshotAnimInstance> PoseSnapshotAnimInstanceClass;
+	UPROPERTY(GlobalConfig)
 	double MaxRewindTime = 0.3;
 
-private:
-	TRingBuffer<FHitBoxHistory> HitBoxHistories;
-	TRingBuffer<FPoseSnapshotHistory> PoseSnapshots;
 	UPROPERTY()
-	TArray<AActor*> RewindedDummies;
-	UPROPERTY()
-	TArray<USkeletalMeshComponent*> RewindedDummies2;
+	ACharacter* CharacterOwner;
 
-public:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UAnimInstance> DummyAnimInstanceClass;
+	TRingBuffer<FMyPoseSnapshot> PoseSnapshots;
+
+	UPROPERTY()
+	USkeletalMeshComponent* DummyMeshComponent;
 };

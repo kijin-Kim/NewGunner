@@ -8,6 +8,7 @@
 #include "GunnerActionGunFireBase.generated.h"
 
 
+
 UCLASS(BlueprintType)
 class UHitScanSignDataObject : public UReplicatableObject
 {
@@ -29,8 +30,6 @@ class GUNNER_API UGunnerActionGunFireBase : public UGunnerAction
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void FireHitScan(TArray<FHitResult>& OutHitResults);
 	UFUNCTION(BlueprintCallable)
 	UHitScanSignDataObject* MakeHitScanSignDataObject(AActor* AgentActor, const TArray<FHitResult>& HitResults);
 

@@ -6,8 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
-#include "Gunner/_Core/HitBoxActorInterface.h"
-#include "Gunner/_Core/LagCompComponent.h"
+#include "Gunner/_Core/LagCompensationComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
 #include "GunnerCharacter.generated.h"
@@ -23,7 +22,7 @@ class UWeaponManagerComponent;
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGunnerCharacterPlayerStateChanged, APlayerState* OldPlayerState, APlayerState* NewPlayerState);
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface, public IHitBoxActorInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface
 {
 	GENERATED_BODY()
 
@@ -56,9 +55,7 @@ public:
 	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
 
-	//~ Begin IHitBoxActorInterface Interface.
-	virtual TArray<FHitBox> CollectAndGetHitBoxes() override;
-	//~ End IHitBoxActorInterface Interface.
+
 
 
 public:
@@ -88,5 +85,5 @@ private:
 
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<ULagCompComponent> LagCompensationComponent;
+	TObjectPtr<ULagCompensationComponent> LagCompensationComponent;
 };

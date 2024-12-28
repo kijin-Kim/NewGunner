@@ -2,8 +2,7 @@
 
 
 #include "GunnerActionDamaged.h"
-
-#include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
+#include "Gunner/Equipment/TraceHitMessageData.h"
 
 UGunnerActionDamaged::UGunnerActionDamaged()
 {

@@ -8,7 +8,14 @@ public class Gunner : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "GameplayTags", "UnrealPSKPSA", "Uiana" });
+		if(Target.bBuildEditor)
+		{
+			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GameplayTags", "UnrealPSKPSA", "OnlineSubsystem", "OnlineSubsystemSteam", "Niagara" });
+		}
+		else
+		{
+			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG","Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam" });
+		}
 		PrivateDependencyModuleNames.AddRange(new string[] { "NetCore" });
 	}
 }

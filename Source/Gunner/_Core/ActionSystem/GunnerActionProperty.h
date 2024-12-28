@@ -15,7 +15,7 @@ DECLARE_DELEGATE_TwoParams(FOnGunnerActionPropertyValueChangedSignature, float O
 DECLARE_DELEGATE_OneParam(FOnGunnerActionPropertyCountChangedSignature, const struct FGunnerActionProperty& NewProperty);
 
 
-UENUM()
+UENUM(BlueprintType)
 enum class EGunnerActionPropertyOperator
 {
 	Add,
@@ -25,7 +25,7 @@ enum class EGunnerActionPropertyOperator
 	Override
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EGunnerActionPropertyCalculationType
 {
 	None,

@@ -36,7 +36,7 @@ public:
 	//~ Begin UObject Interface.
 	virtual UWorld* GetWorld() const override;
 	//~ End UObject Interface.
-	
+
 	void InitializeGunnerAction(FGunnerActionDefinitionHandle InActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FGunnerEventMessage& InEventMessage);
 	UFUNCTION(BlueprintNativeEvent)
@@ -50,7 +50,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EndAction();
-	
+
 	EGunnerActionNetMethod GetActionNetMethod() const { return ActionNetMethod; }
 	const FGameplayTagContainer& GetActionTriggerEventTags() const { return ActionTriggerEventTags; }
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
@@ -61,19 +61,24 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsLocallyPlayerControlled() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsLocallyPlayerControlled(); }
+
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsLocallyControlled() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsLocallyControlled(); }
+
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsOwnerActorAuthoritative() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsOwnerActorAuthoritative(); }
 
 	UFUNCTION(BlueprintCallable)
 	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->OwnerActor.Get() : nullptr; }
+
 	UFUNCTION(BlueprintCallable)
 	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->AgentActor.Get() : nullptr; }
+
 	UFUNCTION(BlueprintCallable)
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
 	FGunnerActionDefinitionHandle GetActionDefinitionHandle() const { return ActionDefinitionHandle; }
+	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
 public:
 	FGunnerActionNetPredictionHandle InitPredictionHandle;
@@ -85,6 +90,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	EGunnerActionNetMethod ActionNetMethod = EGunnerActionNetMethod::LocalOnly;
+	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
+	bool bAllowRemoteTrigger = false;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Action Trigger Config")
 	FGameplayTagContainer ActionTriggerEventTags;
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")

@@ -71,5 +71,8 @@ void UGunnerAction::OnEndAction_Implementation()
 
 void UGunnerAction::EndAction()
 {
-	OnEndAction();
+	if (bIsTriggering)
+	{
+		OnEndAction();
+	}
 }

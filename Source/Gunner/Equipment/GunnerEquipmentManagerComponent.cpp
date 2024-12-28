@@ -3,19 +3,11 @@
 
 #include "GunnerEquipmentManagerComponent.h"
 
-#include "DisplayDebugHelpers.h"
 #include "GunnerEquipment.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/GameMode.h"
 #include "GameFramework/HUD.h"
-#include "Gunner/Gunner.h"
-#include "Gunner/LagCompensationHitBoxCapsuleComponent.h"
-#include "Gunner/PoseSnapshotCharacter.h"
-#include "Gunner/_Core/HitBox.h"
-#include "Gunner/_Core/HitBoxActorInterface.h"
-#include "Gunner/_Core/LagCompComponent.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
@@ -62,13 +54,13 @@ void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
 void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UGunnerEquipmentManagerComponent, EquipmentSlots);
-	DOREPLIFETIME(UGunnerEquipmentManagerComponent, CurrentEquippedEquipment);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, EquipmentSlots, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, CurrentEquippedEquipment, COND_None, REPNOTIFY_Always);
 }
 
 void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass)
 {
-	if (!EquipmentSlots.IsValidIndex(SlotIndex))
+	if (!EquipmentSlots.IsValidIndex(SlotIndex) || !GetOwner()->HasAuthority())
 	{
 		return;
 	}
@@ -98,13 +90,33 @@ void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
 	EquipmentSlots.Empty();
 }
 
+void UGunnerEquipmentManagerComponent::DropCurrentEquipment()
+{
+	if (CurrentEquippedEquipment)
+	{
+		CurrentEquippedEquipment->OnUnequipped();
+		CurrentEquippedEquipment->OnLost();
+		TObjectPtr<AGunnerEquipment>* CurrentPtr = EquipmentSlots.FindByPredicate([this](AGunnerEquipment* Equipment)
+		{
+			return Equipment == CurrentEquippedEquipment;
+		});
+		*CurrentPtr = nullptr;
+		CurrentEquippedEquipment = nullptr;
+	}
+	
+}
+
 void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByIndex(int32 SlotIndex)
 {
 	if (EquipmentSlots.IsValidIndex(SlotIndex) && EquipmentSlots[SlotIndex] != CurrentEquippedEquipment)
 	{
 		AGunnerEquipment* LastEquipment = CurrentEquippedEquipment;
 		CurrentEquippedEquipment = EquipmentSlots[SlotIndex];
-		OnRep_CurrentEquippedEquipment(LastEquipment);
+		AActor* ActorOwner = GetOwner();
+		if (ActorOwner && ActorOwner->HasAuthority())
+		{
+			OnRep_CurrentEquippedEquipment(LastEquipment);
+		}
 	}
 }
 
@@ -120,107 +132,6 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetEquipmentByIndex(int32 Sl
 AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment() const
 {
 	return CurrentEquippedEquipment;
-}
-
-void UGunnerEquipmentManagerComponent::LocalHitScan(TArray<FHitResult>& OutHitResults, const TArray<AActor*>& ActorsToIgnore)
-{
-	AActor* ActorOwner = GetOwner();
-	UWorld* World = ActorOwner->GetWorld();
-	UCameraComponent* CameraComponet = ActorOwner->GetComponentByClass<UCameraComponent>();
-	FVector CameraLocation = CameraComponet->GetComponentLocation();
-	FVector CameraForward = CameraComponet->GetForwardVector();
-
-	FCollisionQueryParams CollisionQueryParams;
-	TArray<AActor*> IgnoredActors = {ActorOwner, GetCurrentEquippedEquipment()};
-	IgnoredActors.Append(ActorsToIgnore);
-	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
-	World->LineTraceMultiByChannel(OutHitResults,
-	                               CameraLocation,
-	                               CameraLocation + CameraForward * 10000.0f,
-	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
-
-	FlushPersistentDebugLines(World);
-	DrawDebugHitBoxByHitResult(OutHitResults);
-}
-
-void UGunnerEquipmentManagerComponent::LocalHitScan2(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& CollisionQueryParams)
-{
-	AActor* ActorOwner = GetOwner();
-	UWorld* World = ActorOwner->GetWorld();
-	UCameraComponent* CameraComponet = ActorOwner->GetComponentByClass<UCameraComponent>();
-	FVector CameraLocation = CameraComponet->GetComponentLocation();
-	FVector CameraForward = CameraComponet->GetForwardVector();
-
-	World->LineTraceMultiByChannel(OutHitResults,
-	                               CameraLocation,
-	                               CameraLocation + CameraForward * 10000.0f,
-	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
-
-	FlushPersistentDebugLines(World);
-	DrawDebugHitBoxByHitResult(OutHitResults);
-}
-
-void UGunnerEquipmentManagerComponent::AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal)
-{
-	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
-	{
-		FGunnerEventMessage HitScanMessage;
-		HitScanMessage.Instigator = GetOwner();
-		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
-		HitMessageData->HitBoneName = BoneName;
-		HitMessageData->HitNormal = HitNormal;
-		HitMessageData->HitEquipment = CurrentEquippedEquipment;
-		HitScanMessage.EventDataObject = HitMessageData;
-
-		EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
-	}
-}
-
-void UGunnerEquipmentManagerComponent::ServerRequestHitScanConfirm_Implementation(const TArray<FClientHitScanData>& ClientHitScanData, float TimeStamp)
-{
-	
-	TArray<ACharacter*> LagCompensationTargetCharacters;
-	for (const FClientHitScanData& HitScanData : ClientHitScanData)
-	{
-		ACharacter* Character = Cast<ACharacter>(HitScanData.HitActor);
-		if (Character && Character->GetComponentByClass<ULagCompComponent>())
-		{
-			LagCompensationTargetCharacters.AddUnique(Character);
-		}
-	}
-
-
-	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
-	{
-		ULagCompComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompComponent>();
-		check(LagCompensationComponent);
-		LagCompensationComponent->AuthBeginRewind(TimeStamp);
-	}
-
-
-	FCollisionQueryParams CollisionQueryParams;
-	TArray<AActor*> LagCompensatableActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACharacter::StaticClass(), LagCompensatableActors);
-	for (AActor* CompensatableActor : LagCompensatableActors)
-	{
-		ACharacter* Character = Cast<ACharacter>(CompensatableActor);
-		check(Character);
-		CollisionQueryParams.AddIgnoredComponent(Character->GetMesh());
-	}
-
-	TArray<FHitResult> HitResults;
-	TArray<AActor*> IgnoredActors = {GetOwner(), GetCurrentEquippedEquipment()};
-	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
-	LocalHitScan2(HitResults, CollisionQueryParams);
-
-
-	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
-	{
-		ULagCompComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompComponent>();
-		check(LagCompensationComponent);
-		LagCompensationComponent->AuthEndRewind();
-	}
-
 }
 
 void UGunnerEquipmentManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -287,64 +198,5 @@ void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots(const TArray<AGunner
 		{
 			Equipment->OnLost();
 		}
-	}
-}
-
-void UGunnerEquipmentManagerComponent::DrawDebugHitBoxByHitResult(const TArray<FHitResult>& HitResults)
-{
-	TArray<AActor*> AlreadyHitActors;
-	for (const FHitResult& HitResult : HitResults)
-	{
-		AActor* HitActor = HitResult.GetActor();
-		if (HitActor && HitActor->Implements<UHitBoxActorInterface>() && AlreadyHitActors.Find(HitActor) == INDEX_NONE)
-		{
-			AlreadyHitActors.Add(HitActor);
-			IHitBoxActorInterface* HitBoxActor = Cast<IHitBoxActorInterface>(HitActor);
-			TArray<FHitBox> HitBoxes = HitBoxActor->CollectAndGetHitBoxes();
-			for (const FHitBox& HitBox : HitBoxes)
-			{
-				HitBox.DrawDebug(GetWorld(), HitResult.BoneName == HitBox.BoneName ? FColor::Green : FColor::Black, true);
-			}
-
-			DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 15.0f, FColor::Red, true);
-		}
-	}
-}
-
-void UGunnerEquipmentManagerComponent::Draw(ACharacter* DummyCharacter, FColor Color)
-{
-	TArray<FHitBox> HitBoxes;
-	UPhysicsAsset* PhysAsset = DummyCharacter->GetMesh()->GetPhysicsAsset();
-	check(PhysAsset);
-	for (USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-	{
-		FTransform BodyTransform = DummyCharacter->GetMesh()->GetSocketTransform(BodySetup->BoneName);
-		for (FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-		{
-			FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-			HitBoxes.Add({
-				.Transform = HitBoxTransform,
-				.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
-				.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
-				.BoneName = BodySetup->BoneName,
-			});
-		}
-	}
-	for (const FHitBox& HitBox : HitBoxes)
-	{
-		HitBox.DrawDebug(GetWorld(), Color, true);
-	}
-}
-
-void UGunnerEquipmentManagerComponent::NetMulticastSendCurrentHitBoxes_Implementation(const TArray<FHitBox>& HitBoxes, FName HitBoneName, FVector HitLocation, FColor HitColor, FColor NonHitColor)
-{
-	for (const FHitBox& HitBox : HitBoxes)
-	{
-		HitBox.DrawDebug(GetWorld(), (!HitBoneName.IsNone() && HitBoneName == HitBox.BoneName) ? HitColor : NonHitColor, true);
-	}
-
-	if (HitLocation != FVector::ZeroVector)
-	{
-		DrawDebugPoint(GetWorld(), HitLocation, 15.0f, FColor::Orange, true);
 	}
 }

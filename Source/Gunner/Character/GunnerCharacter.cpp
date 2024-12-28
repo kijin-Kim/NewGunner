@@ -11,7 +11,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/_Core/HitBox.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
@@ -36,6 +35,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
 	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
+	FirstPersonMeshComponent->SetCastShadow(false);
 	GetMesh()->SetOwnerNoSee(true);
 
 
@@ -51,7 +51,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-	LagCompensationComponent = CreateDefaultSubobject<ULagCompComponent>(TEXT("LagCompensationComponent"));
+	LagCompensationComponent = CreateDefaultSubobject<ULagCompensationComponent>(TEXT("LagCompensationComponent"));
 }
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -116,27 +116,4 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
 	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
-}
-
-TArray<FHitBox> AGunnerCharacter::CollectAndGetHitBoxes()
-{
-	TArray<FHitBox> HitBoxes;
-	UPhysicsAsset* PhysAsset = GetMesh()->GetPhysicsAsset();
-	check(PhysAsset);
-	for (USkeletalBodySetup* BodySetup : PhysAsset->SkeletalBodySetups)
-	{
-		FTransform BodyTransform = GetMesh()->GetSocketTransform(BodySetup->BoneName);
-		for (FKSphylElem& SphylElem : BodySetup->AggGeom.SphylElems)
-		{
-			FTransform HitBoxTransform = SphylElem.GetTransform() * BodyTransform;
-			HitBoxes.Add({
-				.Transform = HitBoxTransform,
-				.HalfHeight = SphylElem.GetScaledHalfLength(FVector(1.0f, 1.0f, 1.0f)),
-				.Radius = SphylElem.GetScaledRadius(FVector(1.0f, 1.0f, 1.0f)),
-				.BoneName = BodySetup->BoneName,
-			});
-		}
-	}
-
-	return HitBoxes;
 }

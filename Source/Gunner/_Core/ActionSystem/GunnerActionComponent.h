@@ -136,6 +136,11 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerActionRequestFailed(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle);
 
+	UFUNCTION(Reliable, Server)
+	void ServerRemoteRequestTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+	UFUNCTION(Reliable, Client)
+	void ClientRemoteRequestTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
+
 
 	void AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates);
 

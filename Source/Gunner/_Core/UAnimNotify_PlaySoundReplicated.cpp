@@ -32,8 +32,8 @@ void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, 
 			return;
 		}
 
-#if WITH_EDITORONLY_DATA
 		UWorld* World = MeshComp->GetWorld();
+#if WITH_EDITORONLY_DATA
 		if (bPreviewIgnoreAttenuation && World && World->WorldType == EWorldType::EditorPreview)
 		{
 			UGameplayStatics::PlaySound2D(World, Sound, VolumeMultiplier, PitchMultiplier);

@@ -7,46 +7,6 @@
 #include "GunnerEquipmentManagerComponent.generated.h"
 
 
-struct FHitBox;
-class AGunnerEquipment;
-
-UCLASS(BlueprintType)
-class GUNNER_API UGunnerHitMessageData : public UObject
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(BlueprintReadOnly)
-	AGunnerEquipment* HitEquipment;
-	UPROPERTY(BlueprintReadOnly)
-	FName HitBoneName;
-	UPROPERTY(BlueprintReadOnly)
-	FVector HitNormal;
-};
-
-
-USTRUCT()
-struct FClientHitScanData
-{
-	GENERATED_BODY()
-
-	FClientHitScanData() = default;
-
-	FClientHitScanData(const FHitResult& InHitResult)
-		: HitActor(InHitResult.GetActor())
-		  , HitLocation(InHitResult.ImpactPoint)
-		  , HitBoneName(InHitResult.BoneName)
-	{
-	}
-
-
-	UPROPERTY()
-	AActor* HitActor;
-	UPROPERTY()
-	FVector HitLocation;
-	UPROPERTY()
-	FName HitBoneName;
-};
 
 
 class AGunnerEquipment;
@@ -66,6 +26,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass);
 	void AuthRemoveAllEquipments();
+
+	UFUNCTION(BlueprintCallable)
+	void DropCurrentEquipment();
+	
+	
+	
+	
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentEquipmentByIndex(int32 SlotIndex);
 	UFUNCTION(BlueprintCallable)
@@ -73,12 +40,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AGunnerEquipment* GetCurrentEquippedEquipment() const;
 
-
-	UFUNCTION(Server, Reliable)
-	void ServerRequestHitScanConfirm(const TArray<FClientHitScanData>& ClientHitScanData, float TimeStamp);
-	void LocalHitScan(TArray<FHitResult>& OutHitResults, const TArray<AActor*>& ActorsToIgnore = {});
-	void LocalHitScan2(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& CollisionQueryParams);
-	void AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -94,15 +55,12 @@ private:
 	void OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots);
 
 
-	void DrawDebugHitBoxByHitResult(const TArray<FHitResult>& HitResults);
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticastSendCurrentHitBoxes(const TArray<FHitBox>& HitBoxes, FName HitBoneName, FVector HitLocation, FColor HitColor, FColor NonHitColor);
 
 private:
 	const int32 MaxSlots = 3;
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquippedEquipment)
 	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
-	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_EquipmentSlots, meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<AGunnerEquipment>> EquipmentSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -112,7 +70,5 @@ private:
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UAnimInstance> SnapshotAnimInstanceClass;
-
-private:
-	void Draw(ACharacter* Character, FColor Color);
+	
 };

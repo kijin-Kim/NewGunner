@@ -4,6 +4,7 @@
 #include "GunnerEquipment.h"
 
 #include "Engine/Canvas.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Animation/GunnerAnimInstance.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
@@ -27,6 +28,8 @@ AGunnerEquipment::AGunnerEquipment()
 
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
+	FirstPersonMeshComponent->SetCastShadow(false);
+
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	SetMeshVisibility(false);
@@ -62,8 +65,7 @@ void AGunnerEquipment::OnAcquired()
 void AGunnerEquipment::OnLost()
 {
 	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (ActorOwner->HasAuthority())
+	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnAcquired);
 	}
@@ -73,7 +75,6 @@ void AGunnerEquipment::OnEquipped()
 {
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
 	SetMeshVisibility(true);
-
 
 	if (GetOwner()->HasAuthority())
 	{
@@ -103,6 +104,7 @@ void AGunnerEquipment::OnUnequipped()
 		}
 	}
 }
+
 
 
 UGunnerAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
