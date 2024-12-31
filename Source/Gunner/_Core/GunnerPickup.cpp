@@ -19,7 +19,6 @@ AGunnerPickup::AGunnerPickup()
 	BoxComponent->SetBoxExtent({30.0f, 30.0f, 5.0f});
 
 	SetRootComponent(BoxComponent);
-	
 }
 
 
@@ -38,7 +37,14 @@ void AGunnerPickup::BeginPlay()
 
 	if (HasAuthority())
 	{
-		BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AGunnerPickup::OnBeginOverlap);
+		FTimerHandle InitialDelayTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(InitialDelayTimerHandle, [this]()
+		{
+			BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AGunnerPickup::OnBeginOverlap);
+			ClearComponentOverlaps();
+			UpdateOverlaps();
+			
+		}, PickupInitialDelay, false);
 	}
 }
 
