@@ -4,14 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionProperty.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionDefinitionHandle.h"
+#include "Gunner/_Core/ActionSystem/GunnerActionProperty.h"
 #include "GunnerEquipment.generated.h"
 
 class UGunnerLocomotionAnimSet;
 class UGunnerActionComponent;
 class UGunnerAction;
+
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8
+{
+	Primary,
+	Secondary,
+	Melee,
+	CSkill,
+	QSkill,
+	ESkill,
+	XSkill
+};
+
 
 UCLASS()
 class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlayerInterface
@@ -21,38 +34,44 @@ class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlay
 public:
 	AGunnerEquipment();
 	void AttachEquipmentToOwner();
-	
-	void OnAcquired();
-	void OnLost();
+
+	void OnAuthAcquired();
+	void OnAuthLost();
 	void OnEquipped();
 	void OnUnequipped();
-	
+
+	virtual void OnRep_Owner() override;
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
-	
+	EEquipmentType GetEquipmentType() const { return EquipmentType; }
+
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 private:
 	void AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
-	
+
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
-	
+
 	void SetMeshVisibility(bool bVisible);
 
-
 private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	EEquipmentType EquipmentType;
+
+
 	UPROPERTY()
 	TObjectPtr<USceneComponent> DefaultSceneRootComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
-	
+
 	UPROPERTY()
 	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 

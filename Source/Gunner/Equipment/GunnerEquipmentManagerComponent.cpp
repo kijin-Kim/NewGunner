@@ -4,26 +4,19 @@
 #include "GunnerEquipmentManagerComponent.h"
 
 #include "GunnerEquipment.h"
-#include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/HUD.h"
-#include "Gunner/_Core/LagCompensationComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/_Core/Input/GunnerEventMessage.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Gunner/_Core/GunnerPickup.h"
+
 #include "Net/UnrealNetwork.h"
-#include "PhysicsEngine/PhysicsAsset.h"
-#include "PhysicsEngine/SphylElem.h"
 
 
 // Sets default values for this component's properties
 UGunnerEquipmentManagerComponent::UGunnerEquipmentManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	EquipmentSlots.SetNum(MaxSlots);
 	SetIsReplicatedByDefault(true);
-
 
 	if (HasAnyFlags(RF_ClassDefaultObject))
 	{
@@ -38,7 +31,7 @@ void UGunnerEquipmentManagerComponent::InitEquipmentManagerComponent()
 	{
 		if (InitialEquipmentClasses[i])
 		{
-			AuthAddEquipmentToSlot(i, InitialEquipmentClasses[i]);
+			AuthAddEquipmentToSlotByClass(InitialEquipmentClasses[i]);
 		}
 	}
 }
@@ -54,13 +47,14 @@ void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
 void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, EquipmentSlots, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME(UGunnerEquipmentManagerComponent, NewEquipmentSlots);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, CurrentEquippedEquipment, COND_None, REPNOTIFY_Always);
 }
 
-void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlot(int32 SlotIndex, TSubclassOf<AGunnerEquipment> EquipmentClass)
+
+void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlotByClass(TSubclassOf<AGunnerEquipment> EquipmentClass)
 {
-	if (!EquipmentSlots.IsValidIndex(SlotIndex) || !GetOwner()->HasAuthority())
+	if (!GetOwner()->HasAuthority())
 	{
 		return;
 	}
@@ -68,50 +62,103 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlot(int32 SlotIndex, T
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = GetOwner();
 	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentClass, SpawnParams);
-	NewEquipment->OnAcquired();
+	NewEquipment->OnAuthAcquired();
 
-	if (EquipmentSlots[SlotIndex])
+	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentClass](const FEquipmentSlot& Slot)
 	{
-		EquipmentSlots[SlotIndex]->OnLost();
+		return Slot.DesiredEquipmentType == EquipmentClass.GetDefaultObject()->GetEquipmentType();
+	});
+
+	if (!SlotPtr)
+	{
+		return;
 	}
 
-	EquipmentSlots[SlotIndex] = NewEquipment;
+	if (SlotPtr && SlotPtr->SlottedEquipment)
+	{
+		SlotPtr->SlottedEquipment->OnAuthLost();
+	}
+
+	SlotPtr->SlottedEquipment = NewEquipment;
+}
+
+void UGunnerEquipmentManagerComponent::AuthAddEquipment(AGunnerEquipment* NewEquipment)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		return;
+	}
+	NewEquipment->SetOwner(GetOwner());
+	NewEquipment->OnAuthAcquired();
+
+	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([Equipment = NewEquipment](const FEquipmentSlot& Slot)
+	{
+		return Slot.DesiredEquipmentType == Equipment->GetEquipmentType();
+	});
+
+	if (!SlotPtr)
+	{
+		return;
+	}
+
+	if (SlotPtr && SlotPtr->SlottedEquipment)
+	{
+		return;
+		SlotPtr->SlottedEquipment->OnAuthLost();
+	}
+
+	SlotPtr->SlottedEquipment = NewEquipment;
 }
 
 void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
 {
-	for (AGunnerEquipment* Equipment : EquipmentSlots)
+	for (FEquipmentSlot& Slot : NewEquipmentSlots)
 	{
-		if (Equipment)
+		if (Slot.SlottedEquipment)
 		{
-			Equipment->Destroy();
+			Slot.SlottedEquipment->Destroy();
 		}
 	}
-	EquipmentSlots.Empty();
+	NewEquipmentSlots.Empty();
 }
 
-void UGunnerEquipmentManagerComponent::DropCurrentEquipment()
+AGunnerEquipment* UGunnerEquipmentManagerComponent::DropCurrentEquipment()
 {
+	AGunnerEquipment* LastEquipment = nullptr;
 	if (CurrentEquippedEquipment)
 	{
-		CurrentEquippedEquipment->OnUnequipped();
-		CurrentEquippedEquipment->OnLost();
-		TObjectPtr<AGunnerEquipment>* CurrentPtr = EquipmentSlots.FindByPredicate([this](AGunnerEquipment* Equipment)
+		FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([Equipment = CurrentEquippedEquipment.Get()](const FEquipmentSlot& Slot)
 		{
-			return Equipment == CurrentEquippedEquipment;
+			return Slot.SlottedEquipment == Equipment;
 		});
-		*CurrentPtr = nullptr;
+		SlotPtr->SlottedEquipment = nullptr;
+
+		CurrentEquippedEquipment->OnUnequipped();
+		CurrentEquippedEquipment->OnAuthLost();
+		CurrentEquippedEquipment->SetOwner(nullptr);
+		LastEquipment = CurrentEquippedEquipment;
 		CurrentEquippedEquipment = nullptr;
 	}
-	
+	return LastEquipment;
 }
 
-void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByIndex(int32 SlotIndex)
+
+AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment() const
 {
-	if (EquipmentSlots.IsValidIndex(SlotIndex) && EquipmentSlots[SlotIndex] != CurrentEquippedEquipment)
+	return CurrentEquippedEquipment;
+}
+
+void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByEquipmentType(EEquipmentType EquipmentType)
+{
+	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
+	{
+		return Slot.DesiredEquipmentType == EquipmentType;
+	});
+
+	if (SlotPtr && SlotPtr->SlottedEquipment != CurrentEquippedEquipment)
 	{
 		AGunnerEquipment* LastEquipment = CurrentEquippedEquipment;
-		CurrentEquippedEquipment = EquipmentSlots[SlotIndex];
+		CurrentEquippedEquipment = SlotPtr->SlottedEquipment;
 		AActor* ActorOwner = GetOwner();
 		if (ActorOwner && ActorOwner->HasAuthority())
 		{
@@ -120,18 +167,18 @@ void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByIndex(int32 SlotInde
 	}
 }
 
-AGunnerEquipment* UGunnerEquipmentManagerComponent::GetEquipmentByIndex(int32 SlotIndex) const
+AGunnerEquipment* UGunnerEquipmentManagerComponent::GetEquipmentByEquipmentType(EEquipmentType EquipmentType) const
 {
-	if (EquipmentSlots.IsValidIndex(SlotIndex))
+	const FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
 	{
-		return EquipmentSlots[SlotIndex];
+		return Slot.DesiredEquipmentType == EquipmentType;
+	});
+
+	if (SlotPtr)
+	{
+		return SlotPtr->SlottedEquipment;
 	}
 	return nullptr;
-}
-
-AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment() const
-{
-	return CurrentEquippedEquipment;
 }
 
 void UGunnerEquipmentManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -180,23 +227,4 @@ void UGunnerEquipmentManagerComponent::OnRep_CurrentEquippedEquipment(AGunnerEqu
 	}
 
 	OnEquippedEquipmentChangedDelegate.Broadcast(CurrentEquippedEquipment, OldEquippedEquipment);
-}
-
-void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots(const TArray<AGunnerEquipment*>& OldEquipmentSlots)
-{
-	for (AGunnerEquipment* Equipment : EquipmentSlots)
-	{
-		if (Equipment && !OldEquipmentSlots.Contains(Equipment))
-		{
-			Equipment->OnAcquired();
-		}
-	}
-
-	for (AGunnerEquipment* Equipment : OldEquipmentSlots)
-	{
-		if (Equipment && !EquipmentSlots.Contains(Equipment))
-		{
-			Equipment->OnLost();
-		}
-	}
 }

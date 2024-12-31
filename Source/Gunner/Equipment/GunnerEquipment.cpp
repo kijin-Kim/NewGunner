@@ -4,11 +4,11 @@
 #include "GunnerEquipment.h"
 
 #include "Engine/Canvas.h"
-#include "Gunner/Gunner.h"
-#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Animation/GunnerAnimInstance.h"
+#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+
 
 
 // Sets default values
@@ -38,8 +38,7 @@ AGunnerEquipment::AGunnerEquipment()
 void AGunnerEquipment::AttachEquipmentToOwner()
 {
 	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
+	if (ActorOwner && ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
 	{
 		USkeletalMeshComponent* OwnerFPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
 		USkeletalMeshComponent* OwnerTPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
@@ -50,9 +49,8 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 	}
 }
 
-void AGunnerEquipment::OnAcquired()
+void AGunnerEquipment::OnAuthAcquired()
 {
-	// TODO: ActorOwner가 없을 경우가 존재
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
 	if (ActorOwner->HasAuthority())
@@ -62,10 +60,11 @@ void AGunnerEquipment::OnAcquired()
 	AttachEquipmentToOwner();
 }
 
-void AGunnerEquipment::OnLost()
+void AGunnerEquipment::OnAuthLost()
 {
 	AActor* ActorOwner = GetOwner();
-	if (ActorOwner && ActorOwner->HasAuthority())
+	check(ActorOwner);
+	if (ActorOwner->HasAuthority())
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnAcquired);
 	}
@@ -76,7 +75,8 @@ void AGunnerEquipment::OnEquipped()
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
 	SetMeshVisibility(true);
 
-	if (GetOwner()->HasAuthority())
+	AActor* ActorOwner = GetOwner();
+	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
 		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
@@ -92,7 +92,8 @@ void AGunnerEquipment::OnUnequipped()
 	SetOwnerLocomotionAnimSet(nullptr);
 	SetMeshVisibility(false);
 
-	if (GetOwner()->HasAuthority())
+	AActor* ActorOwner = GetOwner();
+	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnEquip);
 		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
@@ -105,6 +106,11 @@ void AGunnerEquipment::OnUnequipped()
 	}
 }
 
+void AGunnerEquipment::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	AttachEquipmentToOwner();
+}
 
 
 UGunnerAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
@@ -126,14 +132,6 @@ void AGunnerEquipment::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugD
 {
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("Equipment: %s"), *GetName()));
-
-
-	// TArray<UGunnerPropertyComponent*> Components;
-	// GetComponents(UGunnerPropertyComponent::StaticClass(), Components);
-	// for (UGunnerPropertyComponent* Component : Components)
-	// {
-	// 	Component->InternalOnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
-	// }
 }
 
 void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles)
@@ -168,8 +166,7 @@ void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHa
 void AGunnerEquipment::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet)
 {
 	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (!ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
+	if (!ActorOwner || !ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
 	{
 		return;
 	}
