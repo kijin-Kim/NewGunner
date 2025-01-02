@@ -208,9 +208,7 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 		{
 			NetPredictionHandle.GenerateNewHandle();
 			LocalTriggerAction(ActionDefinition, NetPredictionHandle);
-			TArray<FGunnerLocalActionTriggerState> LocalActionTriggerStates;
-			AggregateActionTriggerStates(LocalActionTriggerStates);
-			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, LocalActionTriggerStates, NetPredictionHandle);
+			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, NetPredictionHandle);
 			return;
 		}
 
@@ -591,48 +589,6 @@ void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionD
 {
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 
-	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	if (ActionDefinition && ActionDefinition->ActionCDO->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted)
-	{
-		TArray<FGunnerActionDefinitionHandle> HandlesToRemove;
-		for (const auto& [Handle, EventMessage, TriggerTime] : NetTriggerDelayedActions)
-		{
-			if (TriggerTime - GetWorld()->GetTimeSeconds() >= 0.2)
-			{
-				// 부정행위 또는 동기화 오류
-				HandlesToRemove.Add(Handle);
-				UE_DEBUG_BREAK();
-				continue;
-			}
-
-			if (!Handle.IsValid())
-			{
-				continue;
-			}
-
-			FGunnerActionDefinition* DelayedActionDefinition = FindActionDefinitionByHandle(Handle);
-			if (!DelayedActionDefinition)
-			{
-				continue;
-			}
-
-			if (!CanTriggerAction(*DelayedActionDefinition, EventMessage))
-			{
-				continue;
-			}
-
-			HandlesToRemove.Add(Handle);
-			LocalTriggerAction(DelayedActionDefinition);
-		}
-
-		for (const auto& Handle : HandlesToRemove)
-		{
-			NetTriggerDelayedActions.RemoveAll([Handle](const FGunnerNetTriggerDelayedAction& TriggerDelayedAction)
-			{
-				return TriggerDelayedAction.ActionDefinitionHandle == Handle;
-			});
-		}
-	}
 }
 
 FGunnerActionDefinition* UGunnerActionComponent::FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle)
@@ -674,6 +630,7 @@ void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionD
 }
 
 
+
 void UGunnerActionComponent::ClientTriggerActionRequestFailed_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle)
 {
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
@@ -698,19 +655,6 @@ void UGunnerActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(
 	TryTriggerAction(ActionDefinitionHandle, EventMessage);
 }
 
-void UGunnerActionComponent::AggregateActionTriggerStates(TArray<FGunnerLocalActionTriggerState>& OutActionTriggerStates)
-{
-	for (const FGunnerActionDefinition& ActionDefinition : ActionDefinitions)
-	{
-		FGunnerLocalActionTriggerState ActionTriggerState = {
-			.ActionDefinitionHandle = ActionDefinition.Handle,
-			.ActionTriggerID = ActionDefinition.ActionTriggerID,
-			.bIsTriggering = ActionDefinition.ActionInstance->IsTriggering()
-		};
-
-		OutActionTriggerStates.Add(ActionTriggerState);
-	}
-}
 
 void UGunnerActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
@@ -743,7 +687,7 @@ void UGunnerActionComponent::AuthRemoveAllProperties()
 }
 
 
-FGunnerActionProperty* UGunnerActionComponent::GetProperty2(FGameplayTag Tag)
+FGunnerActionProperty* UGunnerActionComponent::GetProperty(FGameplayTag Tag)
 {
 	for (FGunnerActionProperty& Property : PropertyArray.Items)
 	{
@@ -778,7 +722,7 @@ float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplay
 		return 0.0f;
 	}
 
-	FGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty2(Tag);
+	FGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty(Tag);
 	if (!PropertyPtr)
 	{
 		return 0.0f;
@@ -796,7 +740,7 @@ void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDef
 	LocalTriggerAction(ActionDefinition);
 }
 
-void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, const TArray<FGunnerLocalActionTriggerState>& ClientActionTriggerStates, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, FGunnerActionNetPredictionHandle PredictionHandle)
 {
 	GR_LOG_SUB(LogGunner, Display, TEXT("PredictionHandle [%s]"), *PredictionHandle.ToString());
 	if (!ActionDefinitionHandle.IsValid())
@@ -810,43 +754,4 @@ void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerAction
 	}
 
 	LocalTriggerAction(ActionDefinition, PredictionHandle);
-	return;
-
-	if (CanTriggerAction(*ActionDefinition, EventMessageReplicated.ToEventMessage()))
-	{
-		LocalTriggerAction(ActionDefinition, PredictionHandle);
-		return;
-	}
-	else
-	{
-		ClientTriggerActionRequestFailed(ActionDefinitionHandle, PredictionHandle);
-		return;
-	}
-
-
-	for (const FGunnerLocalActionTriggerState& ClientActionTriggerState : ClientActionTriggerStates)
-	{
-		if (FGunnerActionDefinition* ServerActionDefinition = FindActionDefinitionByHandle(ClientActionTriggerState.ActionDefinitionHandle))
-		{
-			FGunnerLocalActionTriggerState ServerActionTriggerState = {
-				.ActionDefinitionHandle = ServerActionDefinition->Handle,
-				.ActionTriggerID = ServerActionDefinition->ActionTriggerID,
-				.bIsTriggering = ServerActionDefinition->ActionInstance->IsTriggering()
-			};
-
-			if (ServerActionTriggerState == ClientActionTriggerState)
-			{
-				continue;
-			}
-
-			if (ServerActionTriggerState.ActionTriggerID > ClientActionTriggerState.ActionTriggerID)
-			{
-				UE_DEBUG_BREAK(); // TODO: 과거 보정 처리
-			}
-
-			NetTriggerDelayedActions.Add({ActionDefinitionHandle, EventMessageReplicated.ToEventMessage(), GetWorld()->GetTimeSeconds()});
-			return;
-		}
-	}
-	UE_DEBUG_BREAK();
 }

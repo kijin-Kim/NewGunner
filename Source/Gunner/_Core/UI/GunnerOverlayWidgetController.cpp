@@ -78,6 +78,6 @@ FGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerStat
 		return nullptr;
 	}
 
-	FGunnerActionProperty* Property = ActionComponent->GetProperty2(Tag);
+	FGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
 	return Property;
 }

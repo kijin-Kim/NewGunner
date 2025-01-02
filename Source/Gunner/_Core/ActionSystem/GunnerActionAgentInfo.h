@@ -26,7 +26,5 @@ struct FGunnerActionAgentInfo
 	bool IsLocallyPlayerControlled() const;
 	bool IsLocallyControlled() const;
 	bool IsOwnerActorAuthoritative() const;
-
-	
 	
 };

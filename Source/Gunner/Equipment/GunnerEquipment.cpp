@@ -99,7 +99,7 @@ void AGunnerEquipment::OnUnequipped()
 		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
 		for (auto& [Tag, Value] : PropertiesToAddOnEquip)
 		{
-			FGunnerActionProperty* Property = ActionComponent->GetProperty2(Tag);
+			FGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
 			Value = Property->StaticValue;
 			ActionComponent->AuthRemoveProperty(Tag);
 		}
