@@ -167,8 +167,8 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 
 	const bool bIsLocallyControlled = AgentInfo->IsLocallyControlled();
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
-	const EGunnerActionNetMethod ActionNetMethod = ActionDefinition->ActionCDO->GetActionNetMethod();
-	const bool bIsRemoteTriggerable = ActionDefinition->ActionCDO->IsRemoteTriggerable();
+	const EGunnerActionNetMethod ActionNetMethod = ActionDefinition->ActionInstance->GetActionNetMethod();
+	const bool bIsRemoteTriggerable = ActionDefinition->ActionInstance->IsRemoteTriggerable();
 
 
 	if (bIsOwnerActorAuthoritative)
@@ -471,13 +471,13 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 
 void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition)
 {
-	if (!HasActionTriggerAuthority(NewActionDefinition.ActionCDO))
+	if (!HasActionTriggerAuthority(NewActionDefinition.ActionInstance))
 	{
 		return;
 	}
 
 	BindActionTriggerEvent(NewActionDefinition);
-	if (NewActionDefinition.ActionCDO->ShouldTriggerOnAdded())
+	if (NewActionDefinition.ActionInstance->ShouldTriggerOnAdded())
 	{
 		TryTriggerAction(NewActionDefinition.Handle, FGunnerEventMessage());
 	}
@@ -485,7 +485,7 @@ void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionD
 
 void UGunnerActionComponent::HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition)
 {
-	if (HasActionTriggerAuthority(ActionDefinition.ActionCDO))
+	if (HasActionTriggerAuthority(ActionDefinition.ActionInstance))
 	{
 		UnbindActionTriggerEvent(ActionDefinition);
 	}
@@ -493,7 +493,7 @@ void UGunnerActionComponent::HandleTriggerableActionOnRemoved(const FGunnerActio
 
 void UGunnerActionComponent::BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition)
 {
-	UGunnerAction* Action = NewActionDefinition.ActionCDO;
+	UGunnerAction* Action = NewActionDefinition.ActionInstance;
 
 	FGameplayTagContainer ActionTriggerEventTags = Action->GetActionTriggerEventTags();
 	UGunnerEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UGunnerEventManagerComponent>();
@@ -613,8 +613,8 @@ bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& Act
 {
 	ActionDefinition.ActionInstance->SetActionCurrentEventMessage(EventMessage);
 	return ActionDefinition.ActionInstance->OnCanTriggerAction()
-		&& OwnedTags.HasAll(ActionDefinition.ActionCDO->GetShouldHaveTags())
-		&& !OwnedTags.HasAny(ActionDefinition.ActionCDO->GetShouldNotHaveTags());
+		&& OwnedTags.HasAll(ActionDefinition.ActionInstance->GetShouldHaveTags())
+		&& !OwnedTags.HasAny(ActionDefinition.ActionInstance->GetShouldNotHaveTags());
 }
 
 void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionNetPredictionHandle PredictionHandle /*= FGunnerActionNetPredictionHandle()*/)

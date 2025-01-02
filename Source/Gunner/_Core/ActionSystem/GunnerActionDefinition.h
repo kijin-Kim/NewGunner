@@ -30,9 +30,7 @@ struct FGunnerActionDefinition
 	TWeakObjectPtr<UObject> SourceObject;
 	UPROPERTY()
 	TSubclassOf<UGunnerAction> ActionClass;
-
-	UPROPERTY()
-	TObjectPtr<UGunnerAction> ActionCDO;
+	
 
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UGunnerAction> ActionInstance;

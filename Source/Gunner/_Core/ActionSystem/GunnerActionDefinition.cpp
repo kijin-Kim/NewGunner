@@ -5,12 +5,12 @@
 #include "GunnerAction.h"
 
 
-FGunnerActionDefinition::FGunnerActionDefinition(): SourceObject(nullptr), ActionClass(nullptr), ActionCDO(ActionClass ? ActionClass.GetDefaultObject() : nullptr)
+FGunnerActionDefinition::FGunnerActionDefinition(): SourceObject(nullptr), ActionClass(nullptr)
 {
 	Handle.GenerateNewHandle();
 }
 
-FGunnerActionDefinition::FGunnerActionDefinition(UObject* InSourceObject, TSubclassOf<UGunnerAction> InActionClass): SourceObject(InSourceObject), ActionClass(InActionClass), ActionCDO(ActionClass ? ActionClass.GetDefaultObject() : nullptr)
+FGunnerActionDefinition::FGunnerActionDefinition(UObject* InSourceObject, TSubclassOf<UGunnerAction> InActionClass): SourceObject(InSourceObject), ActionClass(InActionClass)
 {
 	Handle.GenerateNewHandle();
 }
