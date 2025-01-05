@@ -33,22 +33,32 @@ void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* I
 {
 	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
-	SideEffectDefinitionArray.OnSideEffectDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnAdded);
-	SideEffectDefinitionArray.OnSideEffectDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnRemoved);
-	AuthRemoveAllActions();
+	SideEffectDefinitionArray.OnSideEffectDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnSideEffectDefinitionAdded);
+	SideEffectDefinitionArray.OnSideEffectDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnSideEffectDefinitionRemoved);
+	ActionDefinitionArray.OnActionDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionAdded);
+	ActionDefinitionArray.OnActionDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionRemoved);
 
+	if (AgentInfo->IsOwnerActorAuthoritative())
+	{
+		AuthRemoveAllActions();
+	}
+	
 	if (OldAgentInfo != *AgentInfo && !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
-		OnRep_ActionDefinitions({});
+		for (auto& ActionDefinition : ActionDefinitionArray.Items)
+		{
+			OnActionDefinitionAdded(ActionDefinition);
+		}
 	}
 }
 
 void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitions, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitionArray, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, NetPredictionHandleArray, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, SideEffectDefinitionArray, COND_OwnerOnly);
+
 	DOREPLIFETIME(UGunnerActionComponent, PropertyArray);
 }
 
@@ -68,10 +78,7 @@ void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunnerActionDefinition& ActionDefinition)
 {
-	if (!AgentInfo->IsOwnerActorAuthoritative())
-	{
-		return FGunnerActionDefinitionHandle();
-	}
+	check(AgentInfo->IsOwnerActorAuthoritative());
 
 	if (ActionScopeLockCount > 0)
 	{
@@ -80,16 +87,21 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunne
 	}
 
 	ACTION_LIST_SCOPE_LOCK();
-	auto& NewActionDefinition = ActionDefinitions[ActionDefinitions.Add(ActionDefinition)];
+
+	FGunnerActionDefinition NewActionDefinition = ActionDefinition;
 	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
 	HandleTriggerableActionOnAdded(NewActionDefinition);
+	ActionDefinitionArray.AuthAdd(NewActionDefinition);
+
 	return NewActionDefinition.Handle;
 }
 
 void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle)
 {
-	if (!AgentInfo->IsOwnerActorAuthoritative())
+	check(AgentInfo->IsOwnerActorAuthoritative());
+	if (ActionScopeLockCount > 0)
 	{
+		ActionPendingRemoves.Add(ActionDefinitionHandle);
 		return;
 	}
 
@@ -102,37 +114,28 @@ void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandl
 	ActionDefinition->ActionInstance->EndAction();
 	HandleTriggerableActionOnRemoved(*ActionDefinition);
 
-	if (ActionScopeLockCount > 0)
-	{
-		ActionPendingRemoves.Add(ActionDefinitionHandle);
-		return;
-	}
-
 	ACTION_LIST_SCOPE_LOCK();
-	ActionDefinitions.RemoveAll([ActionDefinitionHandle](const FGunnerActionDefinition& ActionDefinition)
-	{
-		return ActionDefinition.Handle == ActionDefinitionHandle;
-	});
+	ActionDefinitionArray.AuthRemove(ActionDefinitionHandle);
 }
 
 void UGunnerActionComponent::AuthRemoveAllActions()
 {
-	if (!AgentInfo->IsOwnerActorAuthoritative())
-	{
-		return;
-	}
+	check(AgentInfo->IsOwnerActorAuthoritative());
 
 	ACTION_LIST_SCOPE_LOCK();
-	for (const auto& ActionDefinition : ActionDefinitions)
+	for (const auto& ActionDefinition : ActionDefinitionArray.Items)
 	{
-		AuthRemoveAction(ActionDefinition.Handle);
+		ActionDefinition.ActionInstance->EndAction();
+		HandleTriggerableActionOnRemoved(ActionDefinition);
 	}
+	ActionDefinitionArray.AuthRemoveAll();
 }
 
 void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage)
 {
 	check(ActionDefinitionHandle.IsValid());
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
+
 	if (!ActionDefinition)
 	{
 		GR_LOG_SUB(LogGunner, Warning, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
@@ -269,12 +272,18 @@ void UGunnerActionComponent::DecrementActionListLock()
 
 		for (const auto& ActionDefinition : PendingAdds)
 		{
-			AuthAddAction(ActionDefinition);
+			if (AgentInfo->IsOwnerActorAuthoritative())
+			{
+				AuthAddAction(ActionDefinition);
+			}
 		}
 
 		for (const auto& ActionDefinition : PendingRemoves)
 		{
-			AuthRemoveAction(ActionDefinition);
+			if (AgentInfo->IsOwnerActorAuthoritative())
+			{
+				AuthRemoveAction(ActionDefinition);
+			}
 		}
 	}
 }
@@ -469,6 +478,18 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 	}
 }
 
+void UGunnerActionComponent::OnActionDefinitionAdded(FGunnerActionDefinition& ActionDefinition)
+{
+	ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
+	HandleTriggerableActionOnAdded(ActionDefinition);
+}
+
+void UGunnerActionComponent::OnActionDefinitionRemoved(FGunnerActionDefinition& ActionDefinition)
+{
+	ActionDefinition.ActionInstance->EndAction();
+	HandleTriggerableActionOnRemoved(ActionDefinition);
+}
+
 void UGunnerActionComponent::HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition)
 {
 	if (!HasActionTriggerAuthority(NewActionDefinition.ActionInstance))
@@ -532,81 +553,24 @@ void UGunnerActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, co
 	TryTriggerAction(ActionDefinitionHandle, EventMessage);
 }
 
-void UGunnerActionComponent::OnRep_ActionDefinitions(const TArray<FGunnerActionDefinition>& OldActionDefinitions)
-{
-	if (!AgentInfo->OwnerActor.IsValid() || !AgentInfo->AgentActor.IsValid())
-	{
-		return;
-	}
-
-	TArray<FGunnerActionDefinition> NewActionDefinitions;
-
-	for (auto& ActionDefinition : ActionDefinitions)
-	{
-		if (!OldActionDefinitions.ContainsByPredicate([ActionDefinition](const FGunnerActionDefinition& OldActionDefinition)
-		{
-			return (ActionDefinition.Handle == OldActionDefinition.Handle);
-		}))
-		{
-			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
-			NewActionDefinitions.Add(ActionDefinition);
-		}
-	}
-
-	for (auto& ActionDefinition : ActionDefinitions)
-	{
-		if (ActionDefinition.ActionInstance.GetClass() != ActionDefinition.ActionClass)
-		{
-			ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
-		}
-	}
-
-
-	for (const auto& NewActionDefinition : NewActionDefinitions)
-	{
-		HandleTriggerableActionOnAdded(NewActionDefinition);
-	}
-
-	TArray<FGunnerActionDefinition> RemoveActionDefinitions;
-	for (const auto& OldActionDefinition : OldActionDefinitions)
-	{
-		if (!ActionDefinitions.ContainsByPredicate([OldActionDefinition](const FGunnerActionDefinition& ActionDefinition)
-		{
-			return (ActionDefinition.Handle == OldActionDefinition.Handle);
-		}))
-		{
-			RemoveActionDefinitions.Add(OldActionDefinition);
-		}
-	}
-
-	for (const auto& RemoveActionDefinition : RemoveActionDefinitions)
-	{
-		HandleTriggerableActionOnRemoved(RemoveActionDefinition);
-	}
-}
-
 void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action)
 {
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
-
 }
 
 FGunnerActionDefinition* UGunnerActionComponent::FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle)
 {
 	check(ActionDefinitionHandle.IsValid());
+	if (FGunnerActionDefinition* ActionDefinitionPtr = ActionDefinitionArray.FindActionDefinitionByHandle(ActionDefinitionHandle))
+	{
+		return ActionDefinitionPtr;
+	}
 
-	FGunnerActionDefinition* FoundedInActionDefinitions = ActionDefinitions.FindByPredicate([ActionDefinitionHandle](const FGunnerActionDefinition& ActionDefinition)
+	// If not found in ActionDefinitions, try to find in ActionPendingAdds
+	return ActionPendingAdds.FindByPredicate([ActionDefinitionHandle](const FGunnerActionDefinition& ActionDefinition)
 	{
 		return ActionDefinition.Handle == ActionDefinitionHandle;
 	});
-
-	// If not found in ActionDefinitions, try to find in ActionPendingAdds
-	return FoundedInActionDefinitions
-		       ? FoundedInActionDefinitions
-		       : ActionPendingAdds.FindByPredicate([ActionDefinitionHandle](const FGunnerActionDefinition& ActionDefinition)
-		       {
-			       return ActionDefinition.Handle == ActionDefinitionHandle;
-		       });
 }
 
 bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& ActionDefinition, const FGunnerEventMessage& EventMessage) const
@@ -621,14 +585,12 @@ void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionD
 {
 	check(ActionDefinition->ActionInstance);
 	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
-	ActionDefinition->ActionTriggerID++;
 
 
 	ActionDefinition->ActionInstance->InitPredictionHandle = PredictionHandle;
 	FGunnerActionScopedNetPrediction ScopedNetPrediction(*this, AgentInfo->IsOwnerActorAuthoritative(), PredictionHandle);
 	ActionDefinition->ActionInstance->OnTriggerAction();
 }
-
 
 
 void UGunnerActionComponent::ClientTriggerActionRequestFailed_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, FGunnerActionNetPredictionHandle PredictionHandle)
@@ -699,12 +661,12 @@ FGunnerActionProperty* UGunnerActionComponent::GetProperty(FGameplayTag Tag)
 	return nullptr;
 }
 
-void UGunnerActionComponent::OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionComponent::OnSideEffectDefinitionAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
 {
 	PropertyArray.OnSideEffectDefinitionAdded(SideEffectDefinition, PredictionHandle.IsValid() && !AgentInfo->IsOwnerActorAuthoritative());
 }
 
-void UGunnerActionComponent::OnRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
+void UGunnerActionComponent::OnSideEffectDefinitionRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
 {
 	PropertyArray.OnSideEffectDefinitionRemoved(SideEffectDefinitionHandle);
 }

@@ -10,7 +10,6 @@
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 
 
-
 // Sets default values
 AGunnerEquipment::AGunnerEquipment()
 {
@@ -145,7 +144,10 @@ void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAct
 		if (ActionClass)
 		{
 			FGunnerActionDefinition ActionDefinition(this, ActionClass);
-			AddedActionHandles.Add(ActionComponent->AuthAddAction(ActionDefinition));
+			if (ActorOwner->HasAuthority())
+			{
+				AddedActionHandles.Add(ActionComponent->AuthAddAction(ActionDefinition));
+			}
 		}
 	}
 }
@@ -154,8 +156,14 @@ void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHa
 {
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
+	if (!ActorOwner->HasAuthority())
+	{
+		return;
+	}
+	
 	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
+
 	for (auto& ActionHandle : AddedActionHandles)
 	{
 		ActionComponent->AuthRemoveAction(ActionHandle);

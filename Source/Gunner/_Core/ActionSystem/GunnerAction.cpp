@@ -21,7 +21,6 @@ void UGunnerAction::InitializeGunnerAction(FGunnerActionDefinitionHandle InActio
 	check(InAgentInfo.IsValid());
 	ActionDefinitionHandle = InActionDefinitionHandle;
 	AgentInfo = InAgentInfo;
-	OnActionAdded();
 }
 
 void UGunnerAction::SetActionCurrentEventMessage(const FGunnerEventMessage& InEventMessage)

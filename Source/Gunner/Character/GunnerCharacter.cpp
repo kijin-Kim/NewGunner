@@ -80,7 +80,10 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 			if (ActionClass)
 			{
 				FGunnerActionDefinition ActionDefinition(this, ActionClass);
-				ActionComponent->AuthAddAction(ActionDefinition);
+				if (HasAuthority())
+				{
+					ActionComponent->AuthAddAction(ActionDefinition);
+				}
 			}
 		}
 

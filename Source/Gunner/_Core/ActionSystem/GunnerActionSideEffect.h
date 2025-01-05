@@ -17,19 +17,6 @@ enum class ESideEffectDurationType
 	Infinite
 };
 
-
-USTRUCT()
-struct FGunnerActionPropertySideEffect
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	FGameplayTag TargetProperyTag;
-	UPROPERTY(EditAnywhere)
-	TArray<FGunnerActionPropertyOperation> PropertyOperations;
-};
-
-
 /**
  * 
  */

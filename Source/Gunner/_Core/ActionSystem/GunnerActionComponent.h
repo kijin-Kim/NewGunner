@@ -46,17 +46,20 @@ public:
 		T* NewAction = NewObject<UGunnerAction>(GetOwner(), Class);
 		NewAction->OnGunnerActionEndedDelegate.AddUObject(this, &UGunnerActionComponent::OnActionEnded);
 		NewAction->InitializeGunnerAction(ActionDefinitionHandle, AgentInfo);
+		NewAction->OnActionAdded();
+		
 		return NewAction;
 	}
-
+	
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void ReadyForReplication() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
+	
 	FGunnerActionDefinitionHandle AuthAddAction(const FGunnerActionDefinition& ActionDefinition);
 	void AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle);
+	
 	void AuthRemoveAllActions();
 	void TryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessage& EventMessage);
 
@@ -97,13 +100,15 @@ private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
+	void OnActionDefinitionAdded(FGunnerActionDefinition& ActionDefinition);
+	void OnActionDefinitionRemoved(FGunnerActionDefinition& ActionDefinition);
+	
+
 	void HandleTriggerableActionOnAdded(const FGunnerActionDefinition& NewActionDefinition);
 	void HandleTriggerableActionOnRemoved(const FGunnerActionDefinition& ActionDefinition);
 	void BindActionTriggerEvent(const FGunnerActionDefinition& NewActionDefinition);
 	void UnbindActionTriggerEvent(const FGunnerActionDefinition& ActionDefinition);
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage, FGunnerActionDefinitionHandle ActionDefinitionHandle);
-	UFUNCTION()
-	void OnRep_ActionDefinitions(const TArray<FGunnerActionDefinition>& OldActionDefinitions);
 	void OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action);
 	FGunnerActionDefinition* FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle);
 
@@ -126,8 +131,6 @@ private:
 
 
 private:
-	UPROPERTY(ReplicatedUsing=OnRep_ActionDefinitions)
-	TArray<FGunnerActionDefinition> ActionDefinitions;
 	int32 ActionScopeLockCount = 0;
 	TArray<FGunnerActionDefinition> ActionPendingAdds;
 	TArray<FGunnerActionDefinitionHandle> ActionPendingRemoves;
@@ -137,13 +140,17 @@ private:
 	FGameplayTagContainer OwnedTags;
 
 	TMap<FGunnerActionDefinitionHandle, TArray<FGunnerEventCallbackHandle>> BoundedActionEventHandles;
-	
+
+	UPROPERTY(Replicated)
+	FGunnerActionDefinitionArray ActionDefinitionArray;
 
 	UPROPERTY(Replicated)
 	FGunnerActionNetPredictionHandleArray NetPredictionHandleArray;
 
 	UPROPERTY(Replicated)
 	FGunnerActionSideEffectDefinitionArray SideEffectDefinitionArray;
+
+	
 
 
 public:
@@ -154,8 +161,8 @@ public:
 	void AuthRemoveAllProperties();
 	FGunnerActionProperty* GetProperty(FGameplayTag Tag);
 	const TArray<FGunnerActionProperty>& GetProperties() const { return PropertyArray.Items; }
-	void OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
-	void OnRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle);
+	void OnSideEffectDefinitionAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
+	void OnSideEffectDefinitionRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
