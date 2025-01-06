@@ -18,12 +18,11 @@ DECLARE_DELEGATE_TwoParams(FOnSideEffectDefinitionAddedSignature, const FGunnerA
 DECLARE_DELEGATE_OneParam(FOnSideEffectDefinitionRemovedSignature, FGunnerActionSideEffectDefinitionHandle /*SideEffectDefinitionHandle*/);
 
 
-
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct FGunnerActionSideEffectDefinition
+struct FGunnerActionSideEffectDefinition : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
@@ -32,33 +31,18 @@ struct FGunnerActionSideEffectDefinition
 	bool operator==(const FGunnerActionSideEffectDefinition& Other) const;
 	bool operator!=(const FGunnerActionSideEffectDefinition& Other) const;
 
+	void PostReplicatedAdd(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
+	void PreReplicatedRemove(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
+	void PostReplicatedChange(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
+	
 	UPROPERTY()
 	FGunnerActionSideEffectDefinitionHandle Handle;
 	UPROPERTY()
 	TSubclassOf<UGunnerActionSideEffect> SideEffectClass;
 
-	UPROPERTY()
-	TObjectPtr<UGunnerActionSideEffect> SideEffectCDO;
+	UPROPERTY(NotReplicated, BlueprintReadOnly)
+	TObjectPtr<UGunnerActionSideEffect> SideEffectInstance;
 
-	UPROPERTY(BlueprintReadWrite)
-	TMap<FGameplayTag, float> OutsideSourceValues;
-};
-
-
-struct FGunnerActionSideEffectDefinitionArray;
-
-USTRUCT()
-struct FGunnerActionSideEffectDefinitionItem : public FFastArraySerializerItem
-{
-	GENERATED_USTRUCT_BODY()
-
-	void PostReplicatedAdd(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
-	void PreReplicatedRemove(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
-	void PostReplicatedChange(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
-	
-
-	UPROPERTY()
-	FGunnerActionSideEffectDefinition SideEffectDefinition;
 	UPROPERTY()
 	FGunnerActionNetPredictionHandle PredictionHandle;
 };
@@ -73,14 +57,14 @@ struct FGunnerActionSideEffectDefinitionArray : public FFastArraySerializer
 
 	void Remove(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle);
 	void OnRemoved(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle) const;
-
+	
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
-	UPROPERTY()
-	TArray<FGunnerActionSideEffectDefinitionItem> Items;
+	void Tick(float DeltaTime);
 
-	FOnSideEffectDefinitionAddedSignature OnSideEffectDefinitionAddedDelegate;
-	FOnSideEffectDefinitionRemovedSignature OnSideEffectDefinitionRemovedDelegate;
+
+	UPROPERTY()
+	TArray<FGunnerActionSideEffectDefinition> Items;
 };
 
 template <>

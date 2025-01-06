@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionDefinitionHandle.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionProperty.h"
 #include "GunnerEquipment.generated.h"
 
 class UGunnerLocomotionAnimSet;
@@ -87,5 +86,10 @@ private:
 	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FGameplayTag, float> PropertiesToAddOnEquip;
+	float BulletCount;
+	UPROPERTY(EditAnywhere)
+	float MagazineBulletCount;
+	UPROPERTY(EditAnywhere)
+	float MaxBulletPerMagazineCount;
+	
 };

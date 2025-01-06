@@ -33,16 +33,15 @@ void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* I
 {
 	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
-	SideEffectDefinitionArray.OnSideEffectDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnSideEffectDefinitionAdded);
-	SideEffectDefinitionArray.OnSideEffectDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnSideEffectDefinitionRemoved);
 	ActionDefinitionArray.OnActionDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionAdded);
 	ActionDefinitionArray.OnActionDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionRemoved);
+
 
 	if (AgentInfo->IsOwnerActorAuthoritative())
 	{
 		AuthRemoveAllActions();
 	}
-	
+
 	if (OldAgentInfo != *AgentInfo && !AgentInfo->IsOwnerActorAuthoritative() && AgentInfo->IsLocallyControlled())
 	{
 		for (auto& ActionDefinition : ActionDefinitionArray.Items)
@@ -58,22 +57,15 @@ void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitionArray, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, NetPredictionHandleArray, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UGunnerActionComponent, SideEffectDefinitionArray, COND_OwnerOnly);
-
 	DOREPLIFETIME(UGunnerActionComponent, PropertyArray);
 }
 
-void UGunnerActionComponent::ReadyForReplication()
-{
-	Super::ReadyForReplication();
-	for (const auto& [Tag, Value] : StartProperties)
-	{
-		AuthAddProperty(Tag, Value);
-	}
-}
 
 void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	PropertyArray.Tick();
+	SideEffectDefinitionArray.Tick(DeltaTime);
 }
 
 FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunnerActionDefinition& ActionDefinition)
@@ -90,8 +82,8 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunne
 
 	FGunnerActionDefinition NewActionDefinition = ActionDefinition;
 	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
-	HandleTriggerableActionOnAdded(NewActionDefinition);
 	ActionDefinitionArray.AuthAdd(NewActionDefinition);
+	HandleTriggerableActionOnAdded(NewActionDefinition);
 
 	return NewActionDefinition.Handle;
 }
@@ -305,7 +297,6 @@ UGunnerActionComponent* UGunnerActionComponent::GetActionComponentFromActor(AAct
 		return GunnerActionComponentInterface->GetActionComponent();
 	}
 
-
 	return nullptr;
 }
 
@@ -327,9 +318,12 @@ bool UGunnerActionComponent::HasActionTriggerAuthority(UGunnerAction* Action) co
 	return false;
 }
 
-FGunnerActionSideEffectDefinition UGunnerActionComponent::MakeSideEffectDefinition(TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
+FGunnerActionSideEffectDefinition UGunnerActionComponent::MakeSideEffectDefinition(UGunnerAction* Action, TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
 {
-	return FGunnerActionSideEffectDefinition(SideEffectClass);
+	check(Action);
+	FGunnerActionSideEffectDefinition NewSideEffectDefinition{SideEffectClass};
+	NewSideEffectDefinition.SideEffectInstance = NewObject<UGunnerActionSideEffect>(Action->GetOwnerActor(), SideEffectClass);
+	return NewSideEffectDefinition;
 }
 
 void UGunnerActionComponent::BP_TriggerSideEffectToActor(UGunnerAction* Action, AActor* SideEffectTarget, TSubclassOf<UGunnerActionSideEffect> SideEffectClass)
@@ -342,11 +336,18 @@ void UGunnerActionComponent::BP_TriggerSideEffectToActor(UGunnerAction* Action, 
 
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffect(MakeSideEffectDefinition(SideEffectClass), Action);
+		ActionComponent->TriggerSideEffect(SideEffectClass, Action);
 	}
 }
 
-void UGunnerActionComponent::BP_TriggerSideEffectToActorWithSideEffectDefinition(UGunnerAction* Action, AActor* SideEffectTarget, const FGunnerActionSideEffectDefinition& SideEffectDefinition)
+void UGunnerActionComponent::TriggerSideEffect(TSubclassOf<UGunnerActionSideEffect> SideEffectClass, UGunnerAction* Action)
+{
+	check(Action);
+	FGunnerActionSideEffectDefinition NewSideEffectDefinition = MakeSideEffectDefinition(Action, SideEffectClass);
+	TriggerSideEffectByDefinition(NewSideEffectDefinition, Action);
+}
+
+void UGunnerActionComponent::BP_TriggerSideEffectToActorByDefinition(UGunnerAction* Action, AActor* SideEffectTarget, const FGunnerActionSideEffectDefinition& SideEffectDefinition)
 {
 	check(Action);
 	if (!SideEffectTarget)
@@ -356,11 +357,11 @@ void UGunnerActionComponent::BP_TriggerSideEffectToActorWithSideEffectDefinition
 
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffect(SideEffectDefinition, Action);
+		ActionComponent->TriggerSideEffectByDefinition(SideEffectDefinition, Action);
 	}
 }
 
-void UGunnerActionComponent::TriggerSideEffect(const FGunnerActionSideEffectDefinition& NewSideEffectDefinition, UGunnerAction* Action)
+void UGunnerActionComponent::TriggerSideEffectByDefinition(const FGunnerActionSideEffectDefinition& NewSideEffectDefinition, UGunnerAction* Action)
 {
 	check(Action);
 	SideEffectDefinitionArray.Add(NewSideEffectDefinition, NetPredictionHandle, AgentInfo->IsOwnerActorAuthoritative());
@@ -471,9 +472,9 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 		}
 
 
-		for (const FGunnerActionSideEffectDefinitionItem& Item : SideEffectDefinitionArray.Items)
+		for (const FGunnerActionSideEffectDefinition& Item : SideEffectDefinitionArray.Items)
 		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("SideEffect: %s"), *Item.SideEffectDefinition.SideEffectClass->GetName()));
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("SideEffect: %s"), *Item.SideEffectClass->GetName()));
 		}
 	}
 }
@@ -628,7 +629,7 @@ void UGunnerActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 	FGunnerActionProperty NewProperty;
 	NewProperty.Tag = Tag;
 	NewProperty.StaticValue = Value;
-	NewProperty.MarkPropertyDirty();
+	NewProperty.bIsDirty = true;
 	PropertyArray.AuthAdd(NewProperty);
 }
 
@@ -661,14 +662,24 @@ FGunnerActionProperty* UGunnerActionComponent::GetProperty(FGameplayTag Tag)
 	return nullptr;
 }
 
-void UGunnerActionComponent::OnSideEffectDefinitionAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionComponent::AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
 {
-	PropertyArray.OnSideEffectDefinitionAdded(SideEffectDefinition, PredictionHandle.IsValid() && !AgentInfo->IsOwnerActorAuthoritative());
+	PropertyArray.AddStaticOperation(Tag, Operation);
 }
 
-void UGunnerActionComponent::OnSideEffectDefinitionRemoved(FGunnerActionSideEffectDefinitionHandle SideEffectDefinitionHandle)
+void UGunnerActionComponent::AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
 {
-	PropertyArray.OnSideEffectDefinitionRemoved(SideEffectDefinitionHandle);
+	PropertyArray.AddDynamicOperation(Tag, Operation);
+}
+
+void UGunnerActionComponent::RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle)
+{
+	PropertyArray.RemoveOperationByHandle(Tag, OperationHandle);
+}
+
+FGunnerActionPropertyOperation* UGunnerActionComponent::FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle)
+{
+	return PropertyArray.FindOperationByHandle(OperationHandle);
 }
 
 float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag)

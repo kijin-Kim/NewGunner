@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionProperty.h"
 #include "UObject/Object.h"
 #include "GunnerActionSideEffect.generated.h"
@@ -17,22 +18,10 @@ enum class ESideEffectDurationType
 	Infinite
 };
 
-/**
- * 
- */
-UCLASS(Blueprintable)
-class GUNNER_API UGunnerActionSideEffect : public UObject
+USTRUCT()
+struct FGunnerPropertyModifier
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ESideEffectDurationType::Duration", EditConditionHides))
-	float Duration;
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ESideEffectDurationType::Instant", EditConditionHides))
-	float Interval;
-
 
 	UPROPERTY(EditAnywhere, Category = "Property Operation")
 	FGameplayTag PropertyTag;
@@ -43,8 +32,50 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::Direct)", EditConditionHides))
 	float DirectValue;
-	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::FromOutside)", EditConditionHides))
-	FGameplayTag OutsideSource;
 	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::PropertyBased)", EditConditionHides))
 	FGameplayTag BaseProperty;
+	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != EGunnerActionPropertyCalculationType::None) && (CalculationType == EGunnerActionPropertyCalculationType::FromOutside)", EditConditionHides))
+	FGameplayTag InjectedValueTag;
+};
+
+/**
+ * 
+ */
+UCLASS(Blueprintable)
+class GUNNER_API UGunnerActionSideEffect : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	void OnApplied(FGunnerActionNetPredictionHandle PredictionHandle);
+	void OnTick(float DeltaTime);
+	void OnRemoved();
+
+	UFUNCTION(BlueprintCallable)
+	void SetInjectedValue(FGameplayTag Tag, float Value);
+	
+
+private:
+	void ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle);
+	void ApplyAllModifiers(FGunnerActionNetPredictionHandle PredictionHandle);
+
+
+public:
+	UPROPERTY(EditAnywhere)
+	ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ESideEffectDurationType::Duration", EditConditionHides))
+	float Duration;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ESideEffectDurationType::Instant", EditConditionHides))
+	float Interval;
+
+
+	UPROPERTY(EditAnywhere)
+	TArray<FGunnerPropertyModifier> Modifiers;
+
+	float RemainingDuration = 0.0f;
+	float ElapsedTime = 0.0f;
+
+	TMap<FGameplayTag, float> InjectedValues;
+
+	TArray<FGunnerActionPropertyOperationHandle> OperationHandles;
 };

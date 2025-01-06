@@ -75,6 +75,11 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	if (UGunnerActionComponent* ActionComponent = GetActionComponent())
 	{
 		ActionComponent->InitActionComponent(NewPlayerState, this);
+		for (const auto& [Tag, Value] : PropertiesToAddOnSpawn)
+		{
+			ActionComponent->AuthAddProperty(Tag, Value);
+		}
+		
 		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
 		{
 			if (ActionClass)
@@ -87,10 +92,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 			}
 		}
 
-		for (const auto& [Tag, Value] : PropertiesToAddOnSpawn)
-		{
-			ActionComponent->AuthAddProperty(Tag, Value);
-		}
+		
 	}
 
 	EquipmentManagerComponent->InitEquipmentManagerComponent();

@@ -78,11 +78,21 @@ void AGunnerEquipment::OnEquipped()
 	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
-		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
-		for (const auto& [Tag, Value] : PropertiesToAddOnEquip)
-		{
-			ActionComponent->AuthAddProperty(Tag, Value);
-		}
+
+		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+		check(ActionComponent);
+
+		FGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		BulletProperty->StaticValue = BulletCount;
+		BulletProperty->bIsDirty = true;
+
+		FGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		MagazineBulletProperty->StaticValue = MagazineBulletCount;
+		MagazineBulletProperty->bIsDirty = true;
+
+		FGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		MaxBulletPerMagazineProperty->StaticValue = MaxBulletPerMagazineCount;
+		MaxBulletPerMagazineProperty->bIsDirty = true;
 	}
 }
 
@@ -95,13 +105,18 @@ void AGunnerEquipment::OnUnequipped()
 	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnEquip);
-		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(GetOwner());
-		for (auto& [Tag, Value] : PropertiesToAddOnEquip)
-		{
-			FGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
-			Value = Property->StaticValue;
-			ActionComponent->AuthRemoveProperty(Tag);
-		}
+
+		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+		check(ActionComponent);
+
+		FGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		BulletCount = BulletProperty->StaticValue;
+
+		FGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		MagazineBulletCount = MagazineBulletProperty->StaticValue;
+
+		FGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->StaticValue;
 	}
 }
 
@@ -160,7 +175,7 @@ void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHa
 	{
 		return;
 	}
-	
+
 	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
 

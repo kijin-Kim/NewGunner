@@ -25,9 +25,6 @@ public:
 	void OnBulletValueChanged(float OldValue, float NewValue);
 	UFUNCTION()
 	void OnMagazineBulletValueChanged(float OldValue, float NewValue);
-
-private:
-	void BindOnBulletValueChanged(APlayerState* PlayerState);
 	
 
 public:
