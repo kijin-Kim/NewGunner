@@ -82,17 +82,16 @@ void AGunnerEquipment::OnEquipped()
 		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		FGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
-		BulletProperty->StaticValue = BulletCount;
-		BulletProperty->bIsDirty = true;
+		UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		BulletProperty->SetStaticValue(BulletCount);
 
-		FGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
-		MagazineBulletProperty->StaticValue = MagazineBulletCount;
-		MagazineBulletProperty->bIsDirty = true;
 
-		FGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
-		MaxBulletPerMagazineProperty->StaticValue = MaxBulletPerMagazineCount;
-		MaxBulletPerMagazineProperty->bIsDirty = true;
+		UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		MagazineBulletProperty->SetStaticValue(MagazineBulletCount);
+
+
+		UGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		MaxBulletPerMagazineProperty->SetStaticValue(MaxBulletPerMagazineCount);
 	}
 }
 
@@ -109,14 +108,14 @@ void AGunnerEquipment::OnUnequipped()
 		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		FGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
-		BulletCount = BulletProperty->StaticValue;
+		UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		BulletCount = BulletProperty->GetStaticValue();
 
-		FGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
-		MagazineBulletCount = MagazineBulletProperty->StaticValue;
+		UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		MagazineBulletCount = MagazineBulletProperty->GetStaticValue();
 
-		FGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
-		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->StaticValue;
+		UGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->GetStaticValue();
 	}
 }
 

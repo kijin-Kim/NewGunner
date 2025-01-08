@@ -7,25 +7,24 @@
 #include "Gunner/Gunner.h"
 
 
-void UGunnerActionSideEffect::OnApplied(FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionSideEffect::OnApplied(FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
 {
 	GR_LOG_SUB(LogGunner, Display, TEXT( "SideEffect Applied [%s]" ), *GetName());
 	RemainingDuration = Duration;
-	ApplyAllModifiers(PredictionHandle);
+	ApplyAllModifiers(PredictionHandle, bHasAuthority);
 }
 
-void UGunnerActionSideEffect::OnTick(float DeltaTime)
+void UGunnerActionSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 {
 	if (DurationType == ESideEffectDurationType::Duration)
 	{
 		RemainingDuration -= DeltaTime;
 	}
-
+	
 	if (Interval <= 0.0f)
 	{
 		return;
 	}
-
 
 	float TimePaseedBeforeDuration = DeltaTime;
 	if (RemainingDuration < 0.0f)
@@ -41,11 +40,10 @@ void UGunnerActionSideEffect::OnTick(float DeltaTime)
 	int32 ApplyCount = ElapsedTime / Interval;
 	ElapsedTime -= ApplyCount * Interval;
 
-	for( int32 i = 0; i < ApplyCount; ++i)
+	for (int32 i = 0; i < ApplyCount; ++i)
 	{
-		ApplyAllModifiers(FGunnerActionNetPredictionHandle());
+		ApplyAllModifiers(FGunnerActionNetPredictionHandle(), bHasAuthority);
 	}
-	
 }
 
 void UGunnerActionSideEffect::OnRemoved()
@@ -68,15 +66,21 @@ void UGunnerActionSideEffect::SetInjectedValue(FGameplayTag Tag, float Value)
 	InjectedValues.FindOrAdd(Tag, Value);
 }
 
-void UGunnerActionSideEffect::ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionSideEffect::ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
 {
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
 	UGunnerActionComponent* ActionComponent = ActorOwner->GetComponentByClass<UGunnerActionComponent>();
 	check(ActionComponent);
 
+	if (DurationType != ESideEffectDurationType::Instant && Interval > 0.0f
+		&& !bHasAuthority)
+	{
+		return;
+	}
 
-	FGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty(Modifier.PropertyTag);
-	if (!PropertyPtr)
+
+	UGunnerActionProperty* Property = ActionComponent->GetProperty(Modifier.PropertyTag);
+	if (!Property)
 	{
 		return;
 	}
@@ -108,21 +112,21 @@ void UGunnerActionSideEffect::ApplyModifier(const FGunnerPropertyModifier& Modif
 		|| (PredictionHandle.IsValid() && !ActorOwner->HasAuthority()))
 	{
 		FGunnerActionPropertyOperation NewOperation{DesiredValue, Modifier.Operator};
-		OperationHandles.Add(NewOperation.GetHandle());
+		OperationHandles.Add(NewOperation.Handle);
 		ActionComponent->AddDynamicOperation(Modifier.PropertyTag, NewOperation);
 	}
 	else
 	{
 		FGunnerActionPropertyOperation NewOperation{DesiredValue, Modifier.Operator};
-		OperationHandles.Add(NewOperation.GetHandle());
+		OperationHandles.Add(NewOperation.Handle);
 		ActionComponent->AddStaticOperation(Modifier.PropertyTag, NewOperation);
 	}
 }
 
-void UGunnerActionSideEffect::ApplyAllModifiers(FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionSideEffect::ApplyAllModifiers(FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
 {
 	for (const FGunnerPropertyModifier& Modifier : Modifiers)
 	{
-		ApplyModifier(Modifier, PredictionHandle);
+		ApplyModifier(Modifier, PredictionHandle, bHasAuthority);
 	}
 }

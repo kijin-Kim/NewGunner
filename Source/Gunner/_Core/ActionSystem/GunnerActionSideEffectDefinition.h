@@ -34,8 +34,8 @@ struct FGunnerActionSideEffectDefinition : public FFastArraySerializerItem
 	void PostReplicatedAdd(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
 	void PreReplicatedRemove(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
 	void PostReplicatedChange(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
+
 	
-	UPROPERTY()
 	FGunnerActionSideEffectDefinitionHandle Handle;
 	UPROPERTY()
 	TSubclassOf<UGunnerActionSideEffect> SideEffectClass;
@@ -52,19 +52,23 @@ struct FGunnerActionSideEffectDefinitionArray : public FFastArraySerializer
 {
 	GENERATED_USTRUCT_BODY()
 
-	void Add(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority);
-	void OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle) const;
-
+	void Init(AActor* InOwnerActor);
+	void Add(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle);
 	void Remove(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle);
-	void OnRemoved(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle) const;
-	
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+
+	void OnAdded(FGunnerActionSideEffectDefinition& SideEffectDefinition) const;
+	void OnRemoved(const FGunnerActionSideEffectDefinition& SideEffectDefinition) const;
 
 	void Tick(float DeltaTime);
 
 
 	UPROPERTY()
 	TArray<FGunnerActionSideEffectDefinition> Items;
+
+private:
+	AActor* OwnerActor;
+	bool bHasAuthority;
 };
 
 template <>

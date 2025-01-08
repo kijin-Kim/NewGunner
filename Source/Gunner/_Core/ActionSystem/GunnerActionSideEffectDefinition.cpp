@@ -27,12 +27,14 @@ bool FGunnerActionSideEffectDefinition::operator!=(const FGunnerActionSideEffect
 
 void FGunnerActionSideEffectDefinition::PostReplicatedAdd(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
 {
-	InArraySerializer.OnAdded(*this, PredictionHandle);
+	UE_LOG(LogTemp, Warning, TEXT( "FGunnerActionSideEffectDefinition::PostReplicatedAdd: [%s]" ), *SideEffectClass->GetName());
+	InArraySerializer.OnAdded(*this);
 }
 
 void FGunnerActionSideEffectDefinition::PreReplicatedRemove(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
 {
-	InArraySerializer.OnRemoved(Handle);
+	UE_LOG(LogTemp, Warning, TEXT( "FGunnerActionSideEffectDefinition::PreReplicatedRemove: [%s]" ), *SideEffectClass->GetName());
+	InArraySerializer.OnRemoved(*this);
 }
 
 void FGunnerActionSideEffectDefinition::PostReplicatedChange(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
@@ -40,32 +42,27 @@ void FGunnerActionSideEffectDefinition::PostReplicatedChange(const FGunnerAction
 	UE_DEBUG_BREAK();
 }
 
-void FGunnerActionSideEffectDefinitionArray::Add(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
+void FGunnerActionSideEffectDefinitionArray::Init(AActor* InOwnerActor)
+{
+	check(InOwnerActor);
+	OwnerActor = InOwnerActor;
+	bHasAuthority = InOwnerActor->HasAuthority();
+}
+
+void FGunnerActionSideEffectDefinitionArray::Add(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle)
 {
 	FGunnerActionSideEffectDefinition NewItem;
 	NewItem.Handle = SideEffectDefinition.Handle;
 	NewItem.SideEffectClass = SideEffectDefinition.SideEffectClass;
 	NewItem.SideEffectInstance = SideEffectDefinition.SideEffectInstance;
 	NewItem.PredictionHandle = PredictionHandle;
-	NewItem.SideEffectInstance->OnApplied(PredictionHandle);
+	NewItem.SideEffectInstance->OnApplied(PredictionHandle, bHasAuthority);
 
 	int Index = Items.Add(NewItem);
-	if (bHasAuthority)
+	if (bHasAuthority && NewItem.SideEffectInstance->DurationType != ESideEffectDurationType::Instant)
 	{
 		MarkItemDirty(Items[Index]);
 	}
-	else
-	{
-		MarkArrayDirty();
-	}
-
-
-	OnAdded(SideEffectDefinition, PredictionHandle);
-}
-
-void FGunnerActionSideEffectDefinitionArray::OnAdded(const FGunnerActionSideEffectDefinition& SideEffectDefinition, FGunnerActionNetPredictionHandle PredictionHandle) const
-{
-	//OnSideEffectDefinitionAddedDelegate.ExecuteIfBound(SideEffectDefinition, PredictionHandle);
 }
 
 void FGunnerActionSideEffectDefinitionArray::Remove(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle)
@@ -81,12 +78,6 @@ void FGunnerActionSideEffectDefinitionArray::Remove(const FGunnerActionSideEffec
 	});
 	check(Removed != 0);
 	MarkArrayDirty();
-	OnRemoved(SideEffectDefinitionHandle);
-}
-
-void FGunnerActionSideEffectDefinitionArray::OnRemoved(const FGunnerActionSideEffectDefinitionHandle& SideEffectDefinitionHandle) const
-{
-	//OnSideEffectDefinitionRemovedDelegate.ExecuteIfBound(SideEffectDefinitionHandle);
 }
 
 bool FGunnerActionSideEffectDefinitionArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -94,22 +85,40 @@ bool FGunnerActionSideEffectDefinitionArray::NetDeltaSerialize(FNetDeltaSerializ
 	return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionSideEffectDefinition, FGunnerActionSideEffectDefinitionArray>(Items, DeltaParms, *this);
 }
 
+void FGunnerActionSideEffectDefinitionArray::OnAdded(FGunnerActionSideEffectDefinition& SideEffectDefinition) const
+{
+	SideEffectDefinition.SideEffectInstance = NewObject<UGunnerActionSideEffect>(OwnerActor, SideEffectDefinition.SideEffectClass);
+	SideEffectDefinition.SideEffectInstance->OnApplied(SideEffectDefinition.PredictionHandle, bHasAuthority);
+}
+
+void FGunnerActionSideEffectDefinitionArray::OnRemoved(const FGunnerActionSideEffectDefinition& SideEffectDefinition) const
+{
+	SideEffectDefinition.SideEffectInstance->OnRemoved();
+}
+
 void FGunnerActionSideEffectDefinitionArray::Tick(float DeltaTime)
 {
 	for (FGunnerActionSideEffectDefinition& SideEffectDefinition : Items)
 	{
-		SideEffectDefinition.SideEffectInstance->OnTick(DeltaTime);
+		SideEffectDefinition.SideEffectInstance->OnTick(DeltaTime, bHasAuthority);
 	}
 
-	Items.RemoveAll([](const FGunnerActionSideEffectDefinition& SideEffectDefinition)
+	if (bHasAuthority)
 	{
-		ESideEffectDurationType DurationType = SideEffectDefinition.SideEffectInstance->DurationType;
-		if (DurationType == ESideEffectDurationType::Instant
-			|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDefinition.SideEffectInstance->RemainingDuration <= 0.0f)))
+		int32 Removed = Items.RemoveAll([this](const FGunnerActionSideEffectDefinition& SideEffectDefinition)
 		{
-			SideEffectDefinition.SideEffectInstance->OnRemoved();
-			return true;
+			ESideEffectDurationType DurationType = SideEffectDefinition.SideEffectInstance->DurationType;
+			if ((DurationType == ESideEffectDurationType::Instant && bHasAuthority)
+				|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDefinition.SideEffectInstance->RemainingDuration <= 0.0f)))
+			{
+				SideEffectDefinition.SideEffectInstance->OnRemoved();
+				return true;
+			}
+			return false;
+		});
+		if (Removed != 0)
+		{
+			MarkArrayDirty();
 		}
-		return false;
-	});
+	}
 }

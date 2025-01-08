@@ -36,9 +36,10 @@ struct FGunnerActionNetPredictionHandle
 	}
 
 	void GenerateNewHandle();
-	void Expire() { bIsExpired = true; }
+	void Expire();
 	bool IsValid() const { return Handle != INDEX_NONE; }
-	bool IsExpired() const { return bIsExpired; }
+	bool IsExpired() const { return IsValid() && bIsExpired; }
+
 
 	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
 	friend uint32 GetTypeHash(const FGunnerActionNetPredictionHandle& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }

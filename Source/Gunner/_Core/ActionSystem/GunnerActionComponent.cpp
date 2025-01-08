@@ -8,6 +8,7 @@
 #include "GunnerActionSideEffect.h"
 #include "GunnerActionSideEffectDefinition.h"
 #include "GunnerActionSign.h"
+#include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
@@ -22,17 +23,37 @@ UGunnerActionComponent::UGunnerActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
 	AgentInfo = MakeShared<FGunnerActionAgentInfo>();
-	bReplicateUsingRegisteredSubObjectList = true;
 	if (HasAnyFlags(RF_ClassDefaultObject))
 	{
 		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
 	}
 }
 
+void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitionArray, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UGunnerActionComponent, NetPredictionHandleArray, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UGunnerActionComponent, SideEffectDefinitionArray, COND_OwnerOnly);
+	DOREPLIFETIME(UGunnerActionComponent, Properties);
+}
+
+
+bool UGunnerActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	for (UGunnerActionProperty* Property : Properties)
+	{
+		bWroteSomething |= Channel->ReplicateSubobject(Property, *Bunch, *RepFlags);
+	}
+	return bWroteSomething;
+}
+
 void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor)
 {
 	FGunnerActionAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(InOwnerActor, InAgentActor);
+	SideEffectDefinitionArray.Init(InOwnerActor);
 	ActionDefinitionArray.OnActionDefinitionAddedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionAdded);
 	ActionDefinitionArray.OnActionDefinitionRemovedDelegate.BindUObject(this, &UGunnerActionComponent::OnActionDefinitionRemoved);
 
@@ -51,20 +72,15 @@ void UGunnerActionComponent::InitActionComponent(AActor* InOwnerActor, AActor* I
 	}
 }
 
-void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(UGunnerActionComponent, ActionDefinitionArray, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UGunnerActionComponent, NetPredictionHandleArray, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UGunnerActionComponent, SideEffectDefinitionArray, COND_OwnerOnly);
-	DOREPLIFETIME(UGunnerActionComponent, PropertyArray);
-}
 
 
 void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	PropertyArray.Tick();
+	for (UGunnerActionProperty* Property : Properties)
+	{
+		Property->Tick();
+	}
 	SideEffectDefinitionArray.Tick(DeltaTime);
 }
 
@@ -364,8 +380,10 @@ void UGunnerActionComponent::BP_TriggerSideEffectToActorByDefinition(UGunnerActi
 void UGunnerActionComponent::TriggerSideEffectByDefinition(const FGunnerActionSideEffectDefinition& NewSideEffectDefinition, UGunnerAction* Action)
 {
 	check(Action);
-	SideEffectDefinitionArray.Add(NewSideEffectDefinition, NetPredictionHandle, AgentInfo->IsOwnerActorAuthoritative());
-	if (!AgentInfo->IsOwnerActorAuthoritative() && Action->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted && !NetPredictionHandle.IsExpired()) // TODO: Expired조건문 위로 옮기기
+	check(!NetPredictionHandle.IsExpired());
+	SideEffectDefinitionArray.Add(NewSideEffectDefinition, NetPredictionHandle);
+
+	if (!AgentInfo->IsOwnerActorAuthoritative() && Action->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted)
 	{
 		GR_LOG_SUB(LogGunner, Display, TEXT("SideEffect Added [%s, %s]"), *NewSideEffectDefinition.SideEffectClass->GetName(), *NewSideEffectDefinition.Handle.ToString());
 
@@ -466,9 +484,9 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 		}
 
 
-		for (const FGunnerActionProperty& Property : PropertyArray.Items)
+		for (UGunnerActionProperty* Property : Properties)
 		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: StaticValue: %f, DynamicValue: %f"), *Property.Tag.ToString(), Property.StaticValue, Property.DynamicValue));
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: StaticValue: %f, DynamicValue: %f"), *Property->GetTag().ToString(), Property->GetStaticValue(), Property->GetDynamicValue()));
 		}
 
 
@@ -626,18 +644,21 @@ void UGunnerActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 		return;
 	}
 
-	FGunnerActionProperty NewProperty;
-	NewProperty.Tag = Tag;
-	NewProperty.StaticValue = Value;
-	NewProperty.bIsDirty = true;
-	PropertyArray.AuthAdd(NewProperty);
+
+	UGunnerActionProperty* NewProperty = NewObject<UGunnerActionProperty>(GetOwner());
+	NewProperty->SetTag(Tag);
+	NewProperty->SetStaticValue(Value);
+	Properties.Add(NewProperty);
 }
 
 void UGunnerActionComponent::AuthRemoveProperty(FGameplayTag Tag)
 {
 	if (GetOwner()->HasAuthority())
 	{
-		PropertyArray.AuthRemove(Tag);
+		Properties.RemoveAll([Tag](UGunnerActionProperty* Property)
+		{
+			return Property->GetTag() == Tag;
+		});
 	}
 }
 
@@ -645,41 +666,70 @@ void UGunnerActionComponent::AuthRemoveAllProperties()
 {
 	if (GetOwner()->HasAuthority())
 	{
-		PropertyArray.AuthRemoveAll();
+		Properties.Empty();
 	}
 }
 
 
-FGunnerActionProperty* UGunnerActionComponent::GetProperty(FGameplayTag Tag)
+UGunnerActionProperty* UGunnerActionComponent::GetProperty(FGameplayTag Tag)
 {
-	for (FGunnerActionProperty& Property : PropertyArray.Items)
+	TObjectPtr<UGunnerActionProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UGunnerActionProperty* Property)
 	{
-		if (Property.Tag == Tag)
-		{
-			return &Property;
-		}
-	}
-	return nullptr;
+		return Property->GetTag() == Tag;
+	});
+	return PropertyPtr ? *PropertyPtr : nullptr;
 }
 
 void UGunnerActionComponent::AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
 {
-	PropertyArray.AddStaticOperation(Tag, Operation);
+	TObjectPtr<UGunnerActionProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UGunnerActionProperty* Property)
+	{
+		return Property->GetTag() == Tag;
+	});
+
+	if (PropertyPtr)
+	{
+		(*PropertyPtr)->AddStaticOperation(Operation);
+	}
 }
 
 void UGunnerActionComponent::AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
 {
-	PropertyArray.AddDynamicOperation(Tag, Operation);
+	TObjectPtr<UGunnerActionProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UGunnerActionProperty* Property)
+	{
+		return Property->GetTag() == Tag;
+	});
+
+	if (PropertyPtr)
+	{
+		(*PropertyPtr)->AddDynamicOperation(Operation);
+	}
 }
 
 void UGunnerActionComponent::RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle)
 {
-	PropertyArray.RemoveOperationByHandle(Tag, OperationHandle);
+	TObjectPtr<UGunnerActionProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UGunnerActionProperty* Property)
+	{
+		return Property->GetTag() == Tag;
+	});
+
+	if (PropertyPtr)
+	{
+		(*PropertyPtr)->RemoveOperationByHandle(OperationHandle);
+	}
 }
 
 FGunnerActionPropertyOperation* UGunnerActionComponent::FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle)
 {
-	return PropertyArray.FindOperationByHandle(OperationHandle);
+	for (UGunnerActionProperty* Property : Properties)
+	{
+		if (FGunnerActionPropertyOperation* OperationPtr = Property->FindOperationByHandle(OperationHandle))
+		{
+			return OperationPtr;
+		}
+	}
+
+	return nullptr;
 }
 
 float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag)
@@ -695,13 +745,13 @@ float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplay
 		return 0.0f;
 	}
 
-	FGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty(Tag);
+	UGunnerActionProperty* PropertyPtr = ActionComponent->GetProperty(Tag);
 	if (!PropertyPtr)
 	{
 		return 0.0f;
 	}
 
-	return PropertyPtr->DynamicValue;
+	return PropertyPtr->GetDynamicValue();
 }
 
 void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated)

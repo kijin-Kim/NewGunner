@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Gunner/_Core/ReplicatableObject.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "UObject/Object.h"
 #include "GunnerActionProperty.generated.h"
 
 
 DECLARE_DELEGATE_TwoParams(FOnGunnerActionPropertyValueChangedSignature, float OldValue, float NewValue);
-DECLARE_DELEGATE_OneParam(FOnGunnerActionPropertyCountChangedSignature, const struct FGunnerActionProperty& NewProperty);
+DECLARE_DELEGATE_OneParam(FOnGunnerActionPropertyCountChangedSignature, UGunnerActionProperty* NewProperty);
 
 UENUM(BlueprintType)
 enum class EGunnerActionPropertyOperator
@@ -72,16 +73,7 @@ struct FGunnerActionPropertyOperation
 		Handle.GenerateNewHandle();
 	}
 
-	void SetOperand(float InOperand);
-	void SetOperator(EGunnerActionPropertyOperator InOperator);
-	void SetHandle(FGunnerActionPropertyOperationHandle InHandle) { Handle = InHandle; }
-
-
-	float GetOperand() const { return Operand; }
-	EGunnerActionPropertyOperator GetOperator() const { return Operator; }
-	FGunnerActionPropertyOperationHandle GetHandle() const { return Handle; }
-
-private:
+public:
 	float Operand;
 	EGunnerActionPropertyOperator Operator;
 	FGunnerActionPropertyOperationHandle Handle;
@@ -91,77 +83,82 @@ private:
  * 
  */
 
-
-USTRUCT(BlueprintType)
-struct FGunnerActionProperty : public FFastArraySerializerItem
+UCLASS(BlueprintType)
+class GUNNER_API UGunnerActionProperty : public UReplicatableObject
 {
-	GENERATED_USTRUCT_BODY()
-
-	friend struct FGunnerActionPropertyArray;
+	GENERATED_BODY()
 
 public:
-	bool operator==(const FGunnerActionProperty& Other) const
-	{
-		return Tag == Other.Tag;
-	}
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	bool operator==(const UGunnerActionProperty* Other) const { return Tag == Other->Tag; }
+	bool operator!=(const UGunnerActionProperty* Other) const { return !(*this == Other); }
 
-	bool operator!=(const FGunnerActionProperty& Other) const
-	{
-		return !(*this == Other);
-	}
+	void Tick();
 
-	void PostReplicatedAdd(const FGunnerActionPropertyArray& InArraySerializer);
-	void PreReplicatedRemove(const FGunnerActionPropertyArray& InArraySerializer);
-	void PostReplicatedChange(const FGunnerActionPropertyArray& InArraySerializer);
+
+	void SetStaticValue(float NewValue);
+	void SetDynamicValue(float NewValue);
+	void SetTag(FGameplayTag InTag);
+	float GetStaticValue() const { return StaticValue; }
+	float GetDynamicValue() const { return DynamicValue; }
+	FGameplayTag GetTag() const { return Tag; }
+
+	void AddStaticOperation(const FGunnerActionPropertyOperation& Operation);
+	void AddDynamicOperation(const FGunnerActionPropertyOperation& Operation);
+	void RemoveOperationByHandle(const FGunnerActionPropertyOperationHandle& OperationHandle);
+	FGunnerActionPropertyOperation* FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle);
+	
 
 private:
 	void Evaluate();
 	void EvaluateOperations(const TArray<FGunnerActionPropertyOperation>& PropertyOperations, float& TargetValue);
 
 public:
-	UPROPERTY(BlueprintReadOnly)
+	FOnGunnerActionPropertyValueChangedSignature OnGunnerActionPropertyValueChangedDelegate;
+
+private:
+	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	FGameplayTag Tag;
-	UPROPERTY()
+
+	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float StaticValue;
-	UPROPERTY(NotReplicated, BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float DynamicValue;
 
 	TArray<FGunnerActionPropertyOperation> StaticOperations;
 	TArray<FGunnerActionPropertyOperation> DynamicOperations;
-
-	FOnGunnerActionPropertyValueChangedSignature OnGunnerActionPropertyValueChangedDelegate;
-
+	
 	bool bIsDirty = false;
 };
 
-USTRUCT()
-struct FGunnerActionPropertyArray : public FFastArraySerializer
-{
-	GENERATED_USTRUCT_BODY()
-
-	void AuthAdd(const FGunnerActionProperty& Property);
-	void AuthRemove(FGameplayTag Tag);
-	void AuthRemoveAll();
-
-	void AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
-	void AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
-	void RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle);
-	FGunnerActionPropertyOperation* FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle);
-
-
-	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
-	void Tick();
-
-public:
-	UPROPERTY()
-	TArray<FGunnerActionProperty> Items;
-};
-
-template <>
-struct TStructOpsTypeTraits<FGunnerActionPropertyArray> : public TStructOpsTypeTraitsBase2<FGunnerActionPropertyArray>
-{
-	enum
-	{
-		WithNetDeltaSerializer = true,
-	};
-};
+// USTRUCT()
+// struct FGunnerActionPropertyArray : public FFastArraySerializer
+// {
+// 	GENERATED_USTRUCT_BODY()
+//
+// 	void AuthAdd(const FGunnerActionProperty& Property);
+// 	void AuthRemove(FGameplayTag Tag);
+// 	void AuthRemoveAll();
+//
+// 	void AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
+// 	void AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
+// 	void RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle);
+// 	FGunnerActionPropertyOperation* FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle);
+//
+//
+// 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+// 	void Tick();
+//
+// public:
+// 	UPROPERTY()
+// 	TArray<FGunnerActionProperty> Items;
+// };
+//
+// template <>
+// struct TStructOpsTypeTraits<FGunnerActionPropertyArray> : public TStructOpsTypeTraitsBase2<FGunnerActionPropertyArray>
+// {
+// 	enum
+// 	{
+// 		WithNetDeltaSerializer = true,
+// 	};
+// };

@@ -8,7 +8,7 @@
 #include "GunnerOverlayWidgetController.generated.h"
 
 
-struct FGunnerActionProperty;
+class UGunnerActionProperty;
 /**
  * 
  */
@@ -18,7 +18,6 @@ class GUNNER_API UGunnerOverlayWidgetController : public UGunnerUserWidgetContro
 	GENERATED_BODY()
 
 public:
-	void OnBulletPropertyAdded(const FGunnerActionProperty& Property);
 	virtual void InitWidgetController(APlayerState* PlayerState) override;
 
 	UFUNCTION()
@@ -35,5 +34,5 @@ public:
 	
 
 private:
-	FGunnerActionProperty* GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag);
+	UGunnerActionProperty* GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag);
 };

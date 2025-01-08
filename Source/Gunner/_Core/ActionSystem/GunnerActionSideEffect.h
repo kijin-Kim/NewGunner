@@ -47,8 +47,8 @@ class GUNNER_API UGunnerActionSideEffect : public UObject
 	GENERATED_BODY()
 
 public:
-	void OnApplied(FGunnerActionNetPredictionHandle PredictionHandle);
-	void OnTick(float DeltaTime);
+	void OnApplied(FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority);
+	void OnTick(float DeltaTime, bool bHasAuthority);
 	void OnRemoved();
 
 	UFUNCTION(BlueprintCallable)
@@ -56,8 +56,8 @@ public:
 	
 
 private:
-	void ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle);
-	void ApplyAllModifiers(FGunnerActionNetPredictionHandle PredictionHandle);
+	void ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority);
+	void ApplyAllModifiers(FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority);
 
 
 public:

@@ -3,11 +3,18 @@
 
 #include "GunnerActionNetPrediction.h"
 
+#include "Gunner/Gunner.h"
+
 void FGunnerActionNetPredictionHandle::GenerateNewHandle()
 {
 	static int32 HandleCounter = 1;
 	Handle = HandleCounter++;
 	bIsExpired = false;
+}
+
+void FGunnerActionNetPredictionHandle::Expire()
+{
+	bIsExpired = true;
 }
 
 void FGunnerActionNetPredictionHandleItem::PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray)
@@ -95,4 +102,3 @@ void FGunneractionNetPredictionEvents::BroadcastOnPredictionFailed(FGunnerAction
 	}
 	PredictionEvents.Remove(PredictionHandle);
 }
-

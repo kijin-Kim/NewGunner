@@ -50,6 +50,7 @@ public:
 		return NewAction;
 	}
 
+	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	void InitActionComponent(AActor* InOwnerActor, AActor* InAgentActor);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -147,13 +148,11 @@ private:
 	FGunnerActionSideEffectDefinitionArray SideEffectDefinitionArray;
 
 public:
-	UFUNCTION(BlueprintCallable)
 	void AuthAddProperty(FGameplayTag Tag, float Value);
-	UFUNCTION(BlueprintCallable)
 	void AuthRemoveProperty(FGameplayTag Tag);
 	void AuthRemoveAllProperties();
-	FGunnerActionProperty* GetProperty(FGameplayTag Tag);
-	const TArray<FGunnerActionProperty>& GetProperties() const { return PropertyArray.Items; }
+	UGunnerActionProperty* GetProperty(FGameplayTag Tag);
+	const TArray<UGunnerActionProperty*>& GetProperties() const { return Properties; }
 
 	void AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
 	void AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
@@ -165,7 +164,7 @@ public:
 	
 
 	UPROPERTY(Replicated)
-	FGunnerActionPropertyArray PropertyArray;
+	TArray<TObjectPtr<UGunnerActionProperty>> Properties;
 
 	FGunnerActionNetPredictionHandle NetPredictionHandle;
 

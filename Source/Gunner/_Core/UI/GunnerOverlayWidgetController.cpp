@@ -9,9 +9,9 @@
 
 void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerState)
 {
-	FGunnerActionProperty* PropertyPtr = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
-	check(PropertyPtr);
-	PropertyPtr->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+	UGunnerActionProperty* Property = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
+	check(Property);
+	Property->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
 }
 
 void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float NewValue)
@@ -24,7 +24,7 @@ void UGunnerOverlayWidgetController::OnMagazineBulletValueChanged(float OldValue
 	OnMagazineBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
 }
 
-FGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag)
+UGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag)
 {
 	if (!PlayerState || !Tag.IsValid())
 	{
@@ -37,6 +37,6 @@ FGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerStat
 		return nullptr;
 	}
 
-	FGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
+	UGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
 	return Property;
 }
