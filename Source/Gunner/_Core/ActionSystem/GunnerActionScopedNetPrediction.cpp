@@ -5,20 +5,20 @@ FGunnerActionScopedNetPrediction::FGunnerActionScopedNetPrediction(UGunnerAction
 	: ActionComponent(InActionComponent),
 	  bHasAuthority(bInHasAuthority)
 {
-	PrevNetPredictionHandle = ActionComponent.NetPredictionHandle;
-	ActionComponent.NetPredictionHandle = InPredictionHandle;
+	PrevNetPredictionHandle = ActionComponent.CurrentNetPredictionHandle;
+	ActionComponent.CurrentNetPredictionHandle = InPredictionHandle;
 }
 
 FGunnerActionScopedNetPrediction::~FGunnerActionScopedNetPrediction()
 {
-	if (ActionComponent.NetPredictionHandle.IsValid() && bHasAuthority)
+	if (ActionComponent.CurrentNetPredictionHandle.IsValid() && bHasAuthority)
 	{
-		ActionComponent.GetNetPredictionHandleArray().ReplicatedNetPredictionHandle(ActionComponent.NetPredictionHandle);
+		ActionComponent.GetNetPredictionHandles().ReplicatedNetPredictionHandle(ActionComponent.CurrentNetPredictionHandle);
 	}
 
-	ActionComponent.NetPredictionHandle.Expire();
-	if (PrevNetPredictionHandle != ActionComponent.NetPredictionHandle)
+	ActionComponent.CurrentNetPredictionHandle.Expire();
+	if (PrevNetPredictionHandle != ActionComponent.CurrentNetPredictionHandle)
 	{
-		ActionComponent.NetPredictionHandle = PrevNetPredictionHandle;
+		ActionComponent.CurrentNetPredictionHandle = PrevNetPredictionHandle;
 	}
 }

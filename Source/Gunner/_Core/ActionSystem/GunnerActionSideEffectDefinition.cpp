@@ -37,11 +37,6 @@ void FGunnerActionSideEffectDefinition::PreReplicatedRemove(const FGunnerActionS
 	InArraySerializer.OnRemoved(*this);
 }
 
-void FGunnerActionSideEffectDefinition::PostReplicatedChange(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
-{
-	UE_DEBUG_BREAK();
-}
-
 void FGunnerActionSideEffectDefinitionArray::Init(AActor* InOwnerActor)
 {
 	check(InOwnerActor);

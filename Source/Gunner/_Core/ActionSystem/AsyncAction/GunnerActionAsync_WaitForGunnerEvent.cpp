@@ -66,10 +66,10 @@ TArray<FGunnerEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupE
 		{
 			if (bReplciates)
 			{
-				ActionComponent->NetPredictionHandle.GenerateNewHandle();
-				ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->NetPredictionHandle);
+				ActionComponent->CurrentNetPredictionHandle.GenerateNewHandle();
+				ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->CurrentNetPredictionHandle);
 			}
-			FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->NetPredictionHandle);
+			FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->CurrentNetPredictionHandle);
 			
 			UGunnerActionAsync_WaitForGunnerEvent* Strong = Weak.Get();
 			if (Strong && Strong->ShouldBroadcastDelegates())

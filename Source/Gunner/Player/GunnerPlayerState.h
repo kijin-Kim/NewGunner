@@ -7,6 +7,7 @@
 #include "Gunner/_Core/ActionSystem/GunnerActionDefinition.h"
 #include "GunnerPlayerState.generated.h"
 
+class UGunnerActionSetupComponent;
 class UGunnerEventManagerComponent;
 class UGunnerActionComponent;
 /**
@@ -30,6 +31,8 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UGunnerActionSetupComponent> ActionSetupComponent;
 	UPROPERTY()
 	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
 };

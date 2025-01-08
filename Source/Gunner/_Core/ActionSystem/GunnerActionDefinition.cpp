@@ -35,18 +35,6 @@ void FGunnerActionDefinition::PreReplicatedRemove(const FGunnerActionDefinitionA
 	InArraySerializer.OnRemoved(*this);
 }
 
-void FGunnerActionDefinition::PostReplicatedChange(const FGunnerActionDefinitionArray& InArraySerializer)
-{
-	UE_DEBUG_BREAK();
-}
-
-FGunnerActionDefinitionArray::FGunnerActionDefinitionArray()
-{
-	// for (FGunnerActionDefinition& Item : Items)
-	// {
-	// 	MarkItemDirty(Item);
-	// }
-}
 
 void FGunnerActionDefinitionArray::AuthAdd(const FGunnerActionDefinition& ActionDefinition)
 {

@@ -10,16 +10,6 @@
 UCameraControllerComponent::UCameraControllerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	bWantsInitializeComponent = true;
-}
-
-void UCameraControllerComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-	if (AGunnerCharacter* GunnerCharacterOwner = GetOwner<AGunnerCharacter>())
-	{
-		GunnerCharacterOwner->OnPlayerStateChangedDelegate.AddUObject(this, &ThisClass::OnPlayerStateChanged);
-	}
 }
 
 TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
@@ -33,7 +23,7 @@ TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	return {};
 }
 
-void UCameraControllerComponent::OnPlayerStateChanged(APlayerState* OldPlayerState, APlayerState* NewPlayerState)
+void UCameraControllerComponent::InitCameraController()
 {
 	APawn* PawnOwner = GetOwner<APawn>();
 	if (!PawnOwner->IsLocallyControlled())

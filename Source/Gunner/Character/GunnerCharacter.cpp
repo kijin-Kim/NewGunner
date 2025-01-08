@@ -11,10 +11,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "PhysicsEngine/PhysicsAsset.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -67,37 +65,12 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
-	if (!NewPlayerState)
+	if (NewPlayerState)
 	{
-		return;
+		EquipmentManagerComponent->InitEquipmentManagerComponent();
+		CameraControllerComponent->InitCameraController();
+		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
 	}
-
-	if (UGunnerActionComponent* ActionComponent = GetActionComponent())
-	{
-		ActionComponent->InitActionComponent(NewPlayerState, this);
-		for (const auto& [Tag, Value] : PropertiesToAddOnSpawn)
-		{
-			ActionComponent->AuthAddProperty(Tag, Value);
-		}
-		
-		for (TSubclassOf<UGunnerAction> ActionClass : InitialActions)
-		{
-			if (ActionClass)
-			{
-				FGunnerActionDefinition ActionDefinition(this, ActionClass);
-				if (HasAuthority())
-				{
-					ActionComponent->AuthAddAction(ActionDefinition);
-				}
-			}
-		}
-
-		
-	}
-
-	EquipmentManagerComponent->InitEquipmentManagerComponent();
-	GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
-	OnPlayerStateChangedDelegate.Broadcast(OldPlayerState, NewPlayerState);
 }
 
 bool AGunnerCharacter::CanJumpInternal_Implementation() const

@@ -3,6 +3,7 @@
 
 #include "GunnerPlayerState.h"
 
+#include "Gunner/_Core/GunnerActionSetupComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
@@ -10,21 +11,40 @@ AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
+	ActionSetupComponent = CreateDefaultSubobject<UGunnerActionSetupComponent>(TEXT("ActionSetupComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
 
 void AGunnerPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	if (OnPawnSet.IsBound())
+	{
+		OnPawnSet.RemoveDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
+	}
 	OnPawnSet.AddDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
 }
 
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
-	if (!NewPawn && OldPawn && HasAuthority())
+	if (!HasAuthority())
 	{
-		ActionComponent->AuthRemoveAllActions();
-		ActionComponent->AuthRemoveAllProperties();
+		if (NewPawn)
+		{
+			ActionComponent->InitActionComponent(NewPawn);
+		}
+		return;
+	}
+
+	if (NewPawn && NewPawn != OldPawn)
+	{
+		ActionComponent->ReleaseActionComponent();
+		ActionComponent->InitActionComponent(NewPawn);
+		ActionSetupComponent->AuthSetupActionSets();
+	}
+	else if (!NewPawn)
+	{
+		ActionComponent->ReleaseActionComponent();
 		EventManagerComponent->UnbindAllEventCallbacks();
 	}
 }

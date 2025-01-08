@@ -23,7 +23,7 @@ void UGunnerAnimMontagePlayerComponent::GetLifetimeReplicatedProps(TArray<FLifet
 void UGunnerAnimMontagePlayerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	check(GetOwner()->Implements<UGunnerAnimMontagePlayerInterface>() && "Owner Must Implements AnimMontagePlayerInterface");
+	checkf(GetOwner()->Implements<UGunnerAnimMontagePlayerInterface>(), TEXT("Owner Must Implements AnimMontagePlayerInterface"));
 }
 
 void UGunnerAnimMontagePlayerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

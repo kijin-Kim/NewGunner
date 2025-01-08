@@ -22,9 +22,9 @@ void UGunnerActionAsync_WaitForSync::Activate()
 		return;
 	}
 
-	ActionComponent->NetPredictionHandle.GenerateNewHandle();
-	FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->NetPredictionHandle);
-	ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->NetPredictionHandle);
+	ActionComponent->CurrentNetPredictionHandle.GenerateNewHandle();
+	FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->CurrentNetPredictionHandle);
+	ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->CurrentNetPredictionHandle);
 	OnSync();
 }
 

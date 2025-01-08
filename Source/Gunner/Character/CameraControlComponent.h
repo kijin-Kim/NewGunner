@@ -18,14 +18,13 @@ class GUNNER_API UCameraControllerComponent : public UActorComponent, public IGu
 
 public:
 	UCameraControllerComponent();
-	virtual void InitializeComponent() override;
+	void InitCameraController();
 
 protected:
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
 
 private:
-	UFUNCTION()
-	void OnPlayerStateChanged(APlayerState* OldPlayerState, APlayerState* NewPlayerState);
+
 	void Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
 
 private:

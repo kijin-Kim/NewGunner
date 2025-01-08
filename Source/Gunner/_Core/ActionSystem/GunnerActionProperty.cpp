@@ -4,7 +4,7 @@
 #include "GunnerActionProperty.h"
 
 #include "GunnerActionSideEffect.h"
-#include "GunnerActionSideEffectDefinition.h"
+#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 void FGunnerActionPropertyOperationHandle::GenerateNewHandle()
@@ -72,28 +72,6 @@ void UGunnerActionProperty::RemoveOperationByHandle(const FGunnerActionPropertyO
 	bIsDirty = true;
 }
 
-FGunnerActionPropertyOperation* UGunnerActionProperty::FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle)
-{
-	if (FGunnerActionPropertyOperation* OperationPtr = StaticOperations.FindByPredicate([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-	{
-		return Operation.Handle == OperationHandle;
-	}))
-	{
-		return OperationPtr;
-	}
-
-	if (FGunnerActionPropertyOperation* OperationPtr = DynamicOperations.FindByPredicate([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-	{
-		return Operation.Handle == OperationHandle;
-	}))
-	{
-		return OperationPtr;
-	}
-
-	return nullptr;
-}
-
-
 void UGunnerActionProperty::Evaluate()
 {
 	float OldValue = DynamicValue;
@@ -101,7 +79,11 @@ void UGunnerActionProperty::Evaluate()
 	StaticOperations.Empty();
 	EvaluateOperations(DynamicOperations, DynamicValue);
 	bIsDirty = false;
-	OnGunnerActionPropertyValueChangedDelegate.ExecuteIfBound(OldValue, DynamicValue);
+	if (OldValue != DynamicValue)
+	{
+		GR_LOG_SUB(LogGunner, Display, TEXT("Property [%s] Changed: %f -> %f"), *Tag.ToString(), OldValue, DynamicValue);
+		OnGunnerActionPropertyValueChangedDelegate.ExecuteIfBound(OldValue, DynamicValue);
+	}
 }
 
 
@@ -154,124 +136,3 @@ void UGunnerActionProperty::EvaluateOperations(const TArray<FGunnerActionPropert
 		TargetValue = ((StaticValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
 	}
 }
-
-
-// void FGunnerActionPropertyArray::AuthAdd(const FGunnerActionProperty& Item)
-// {
-// 	check(Items.Find(Item) == INDEX_NONE);
-// 	const int32 Index = Items.Add(Item);
-// 	Items[Index].bIsDirty = true;
-// 	MarkItemDirty(Items[Index]);
-// }
-//
-// void FGunnerActionPropertyArray::AuthRemove(FGameplayTag Tag)
-// {
-// 	if (FGunnerActionProperty* PropertyPtr = Items.FindByPredicate([Tag](const FGunnerActionProperty& Property)
-// 	{
-// 		return Property.Tag == Tag;
-// 	}))
-// 	{
-// 		PropertyPtr->bIsDirty = true;
-// 	}
-//
-// 	Items.RemoveAll([Tag](const FGunnerActionProperty& Property)
-// 	{
-// 		return Property.Tag == Tag;
-// 	});
-// 	MarkArrayDirty();
-// }
-//
-// void FGunnerActionPropertyArray::AuthRemoveAll()
-// {
-// 	for (FGunnerActionProperty& Property : Items)
-// 	{
-// 		Property.bIsDirty = true;
-// 	}
-// 	Items.Empty();
-// 	MarkArrayDirty();
-// }
-//
-// void FGunnerActionPropertyArray::AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
-// {
-// 	if (FGunnerActionProperty* PropertyPtr = Items.FindByPredicate([Tag](const FGunnerActionProperty& Property)
-// 	{
-// 		return Property.Tag == Tag;
-// 	}))
-// 	{
-// 		PropertyPtr->StaticOperations.Add(Operation);
-// 		PropertyPtr->bIsDirty = true;
-// 	}
-// }
-//
-// void FGunnerActionPropertyArray::AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation)
-// {
-// 	if (FGunnerActionProperty* PropertyPtr = Items.FindByPredicate([Tag](const FGunnerActionProperty& Property)
-// 	{
-// 		return Property.Tag == Tag;
-// 	}))
-// 	{
-// 		PropertyPtr->DynamicOperations.Add(Operation);
-// 		PropertyPtr->bIsDirty = true;
-// 	}
-// }
-//
-//
-// void FGunnerActionPropertyArray::RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle)
-// {
-// 	if (FGunnerActionProperty* PropertyPtr = Items.FindByPredicate([Tag](const FGunnerActionProperty& Property)
-// 	{
-// 		return Property.Tag == Tag;
-// 	}))
-// 	{
-// 		PropertyPtr->StaticOperations.RemoveAll([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-// 		{
-// 			return Operation.Handle == OperationHandle;
-// 		});
-// 		PropertyPtr->DynamicOperations.RemoveAll([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-// 		{
-// 			return Operation.Handle == OperationHandle;
-// 		});
-// 		PropertyPtr->bIsDirty = true;
-// 	}
-// }
-//
-// FGunnerActionPropertyOperation* FGunnerActionPropertyArray::FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle)
-// {
-// 	for (FGunnerActionProperty& Property : Items)
-// 	{
-// 		if (FGunnerActionPropertyOperation* OperationPtr = Property.StaticOperations.FindByPredicate([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-// 		{
-// 			return Operation.Handle == OperationHandle;
-// 		}))
-// 		{
-// 			return OperationPtr;
-// 		}
-//
-// 		if (FGunnerActionPropertyOperation* OperationPtr = Property.DynamicOperations.FindByPredicate([OperationHandle](const FGunnerActionPropertyOperation& Operation)
-// 		{
-// 			return Operation.Handle == OperationHandle;
-// 		}))
-// 		{
-// 			return OperationPtr;
-// 		}
-// 	}
-//
-// 	return nullptr;
-// }
-//
-// bool FGunnerActionPropertyArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
-// {
-// 	return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionProperty, FGunnerActionPropertyArray>(Items, DeltaParms, *this);
-// }
-//
-// void FGunnerActionPropertyArray::Tick()
-// {
-// 	for (FGunnerActionProperty& Property : Items)
-// 	{
-// 		if (Property.bIsDirty)
-// 		{
-// 			Property.Evaluate();
-// 			MarkItemDirty(Property);
-// 		}
-// 	}
-// }

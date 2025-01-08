@@ -33,7 +33,6 @@ struct FGunnerActionSideEffectDefinition : public FFastArraySerializerItem
 
 	void PostReplicatedAdd(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
 	void PreReplicatedRemove(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
-	void PostReplicatedChange(const struct FGunnerActionSideEffectDefinitionArray& InArraySerializer);
 
 	
 	FGunnerActionSideEffectDefinitionHandle Handle;

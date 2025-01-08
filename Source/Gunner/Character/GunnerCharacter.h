@@ -19,7 +19,6 @@ class UGunnerEquipmentManagerComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGunnerCharacterPlayerStateChanged, APlayerState* OldPlayerState, APlayerState* NewPlayerState);
 
 UCLASS()
 class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface
@@ -58,8 +57,6 @@ public:
 
 
 
-public:
-	FOnGunnerCharacterPlayerStateChanged OnPlayerStateChangedDelegate;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

@@ -18,6 +18,8 @@ DECLARE_DELEGATE_OneParam(FOnActionDefinitionAddedSignature, FGunnerActionDefini
 DECLARE_DELEGATE_OneParam(FOnActionDefinitionRemovedSignature, FGunnerActionDefinition& /*ActionDefinition*/);
 
 
+struct FGunnerActionDefinitionArray;
+
 USTRUCT()
 struct FGunnerActionDefinition : public FFastArraySerializerItem
 {
@@ -28,9 +30,8 @@ struct FGunnerActionDefinition : public FFastArraySerializerItem
 	bool operator==(const FGunnerActionDefinition& Other) const;
 	bool operator!=(const FGunnerActionDefinition& Other) const;
 
-	void PostReplicatedAdd(const struct FGunnerActionDefinitionArray& InArraySerializer);
-	void PreReplicatedRemove(const struct FGunnerActionDefinitionArray& InArraySerializer);
-	void PostReplicatedChange(const struct FGunnerActionDefinitionArray& InArraySerializer);
+	void PostReplicatedAdd(const FGunnerActionDefinitionArray& InArraySerializer);
+	void PreReplicatedRemove(const FGunnerActionDefinitionArray& InArraySerializer);
 
 	UPROPERTY()
 	FGunnerActionDefinitionHandle Handle;
@@ -45,7 +46,6 @@ struct FGunnerActionDefinitionArray : public FFastArraySerializer
 {
 	GENERATED_BODY()
 
-	FGunnerActionDefinitionArray();
 
 	void AuthAdd(const FGunnerActionDefinition& ActionDefinition);
 	void AuthRemove(const FGunnerActionDefinitionHandle& Handle);

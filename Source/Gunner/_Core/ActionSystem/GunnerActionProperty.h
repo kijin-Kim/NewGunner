@@ -106,7 +106,6 @@ public:
 	void AddStaticOperation(const FGunnerActionPropertyOperation& Operation);
 	void AddDynamicOperation(const FGunnerActionPropertyOperation& Operation);
 	void RemoveOperationByHandle(const FGunnerActionPropertyOperationHandle& OperationHandle);
-	FGunnerActionPropertyOperation* FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle);
 	
 
 private:
@@ -130,35 +129,3 @@ private:
 	
 	bool bIsDirty = false;
 };
-
-// USTRUCT()
-// struct FGunnerActionPropertyArray : public FFastArraySerializer
-// {
-// 	GENERATED_USTRUCT_BODY()
-//
-// 	void AuthAdd(const FGunnerActionProperty& Property);
-// 	void AuthRemove(FGameplayTag Tag);
-// 	void AuthRemoveAll();
-//
-// 	void AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
-// 	void AddDynamicOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
-// 	void RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle);
-// 	FGunnerActionPropertyOperation* FindOperationByHandle(FGunnerActionPropertyOperationHandle OperationHandle);
-//
-//
-// 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
-// 	void Tick();
-//
-// public:
-// 	UPROPERTY()
-// 	TArray<FGunnerActionProperty> Items;
-// };
-//
-// template <>
-// struct TStructOpsTypeTraits<FGunnerActionPropertyArray> : public TStructOpsTypeTraitsBase2<FGunnerActionPropertyArray>
-// {
-// 	enum
-// 	{
-// 		WithNetDeltaSerializer = true,
-// 	};
-// };
