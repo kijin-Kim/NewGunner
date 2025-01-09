@@ -159,11 +159,7 @@ void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByEquipmentType(EEquip
 	{
 		AGunnerEquipment* LastEquipment = CurrentEquippedEquipment;
 		CurrentEquippedEquipment = SlotPtr->SlottedEquipment;
-		AActor* ActorOwner = GetOwner();
-		if (ActorOwner && ActorOwner->HasAuthority())
-		{
-			OnRep_CurrentEquippedEquipment(LastEquipment);
-		}
+		OnRep_CurrentEquippedEquipment(LastEquipment);
 	}
 }
 
@@ -216,6 +212,11 @@ void UGunnerEquipmentManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AH
 
 void UGunnerEquipmentManagerComponent::OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment)
 {
+	if(CurrentEquippedEquipment == OldEquippedEquipment)
+	{
+		return;
+	}
+	
 	if (OldEquippedEquipment)
 	{
 		OldEquippedEquipment->OnUnequipped();
