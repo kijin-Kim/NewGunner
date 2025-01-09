@@ -16,7 +16,14 @@ void UGunnerActionAsync_WaitForSync::Activate()
 {
 	Super::Activate();
 
-	if (Action->IsOwnerActorAuthoritative() && !ActionComponent->GetAgentInfo().Pin()->IsLocallyControlled())
+	if (Action->GetActionNetMethod() != EGunnerActionNetMethod::LocalPredicted
+		|| (Action->IsLocallyControlled() && Action->IsOwnerActorAuthoritative()))
+	{
+		OnSync();
+		return;
+	}
+
+	if (Action->IsOwnerActorAuthoritative() && !Action->IsLocallyControlled())
 	{
 		ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UGunnerActionAsync_WaitForSync::OnSync));
 		return;
@@ -33,5 +40,6 @@ void UGunnerActionAsync_WaitForSync::OnSync()
 	if (ShouldBroadcastDelegates() && OnSyncDelegate.IsBound())
 	{
 		OnSyncDelegate.Broadcast();
+		Cancel();
 	}
 }

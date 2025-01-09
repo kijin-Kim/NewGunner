@@ -49,7 +49,7 @@ bool FGunnerActionNetPredictionHandleArray::NetDeltaSerialize(FNetDeltaSerialize
 	return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionNetPredictionHandle, FGunnerActionNetPredictionHandleArray>(Items, DeltaParms, *this);
 }
 
-void FGunnerActionNetPredictionHandleArray::ReplicatedNetPredictionHandle(FGunnerActionNetPredictionHandle PredictionHandle)
+void FGunnerActionNetPredictionHandleArray::ReplicatedNetPredictionHandle(const FGunnerActionNetPredictionHandle& PredictionHandle)
 {
 	if (PredictionHandle.IsExpired())
 	{
@@ -66,7 +66,7 @@ void FGunneractionNetPredictionEvents::ResetPredictionEvents()
 	PredictionEvents.Empty();
 }
 
-void FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(FGunnerActionNetPredictionHandle PredictionHandle)
+void FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(const FGunnerActionNetPredictionHandle& PredictionHandle)
 {
 	if (!PredictionHandle.IsValid())
 	{
@@ -89,7 +89,7 @@ void FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(FGunnerActionN
 	}
 }
 
-void FGunneractionNetPredictionEvents::BroadcastOnPredictionFailed(FGunnerActionNetPredictionHandle PredictionHandle)
+void FGunneractionNetPredictionEvents::BroadcastOnPredictionFailed(const FGunnerActionNetPredictionHandle& PredictionHandle)
 {
 	if (!PredictionHandle.IsValid())
 	{

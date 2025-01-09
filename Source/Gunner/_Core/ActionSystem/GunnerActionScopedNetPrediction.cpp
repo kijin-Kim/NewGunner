@@ -13,10 +13,11 @@ FGunnerActionScopedNetPrediction::~FGunnerActionScopedNetPrediction()
 {
 	if (ActionComponent.CurrentNetPredictionHandle.IsValid() && bHasAuthority)
 	{
-		ActionComponent.GetNetPredictionHandles().ReplicatedNetPredictionHandle(ActionComponent.CurrentNetPredictionHandle);
+		ActionComponent.ReplicatedNetPredictionHandle(ActionComponent.CurrentNetPredictionHandle);
 	}
 
 	ActionComponent.CurrentNetPredictionHandle.Expire();
+
 	if (PrevNetPredictionHandle != ActionComponent.CurrentNetPredictionHandle)
 	{
 		ActionComponent.CurrentNetPredictionHandle = PrevNetPredictionHandle;

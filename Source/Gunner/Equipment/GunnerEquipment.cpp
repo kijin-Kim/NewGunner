@@ -20,10 +20,8 @@ AGunnerEquipment::AGunnerEquipment()
 	SetRootComponent(DefaultSceneRootComponent);
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
-	FirstPersonMeshComponent->SetIsReplicated(true);
 	ThirdPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonMesh"));
 	ThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
-	ThirdPersonMeshComponent->SetIsReplicated(true);
 
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;

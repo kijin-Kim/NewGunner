@@ -2,11 +2,9 @@
 
 
 #include "GunnerActionAsync_WaitForGunnerEvent.h"
-
-#include "Gunner/_Core/ActionSystem/GunnerActionScopedNetPrediction.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
-UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, bool bInReplicates, UScriptStruct* InEventMessageType)
+UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType)
 {
 	UGunnerActionAsync_WaitForGunnerEvent* SelfObject = NewGunnerAsync<UGunnerActionAsync_WaitForGunnerEvent>(InAction);
 	if (!EventTargetActor || !InEventTag.IsValid() || !InEventMessageType)
@@ -22,30 +20,14 @@ UGunnerActionAsync_WaitForGunnerEvent* UGunnerActionAsync_WaitForGunnerEvent::Wa
 
 	SelfObject->EventTag = InEventTag;
 	SelfObject->EventMesageType = InEventMessageType;
-	SelfObject->bReplciates = bInReplicates;
 	SelfObject->RegisterWithGameInstance(EventTargetActor->GetWorld());
 
 	return SelfObject;
 }
 
-void UGunnerActionAsync_WaitForGunnerEvent::OnSync()
-{
-	OnEventReceivedDelegate.Broadcast(EventTag);
-	Cancel();
-}
-
 void UGunnerActionAsync_WaitForGunnerEvent::Activate()
 {
 	Super::Activate();
-
-	if (bReplciates)
-	{
-		if (Action->IsOwnerActorAuthoritative() && !ActionComponent->GetAgentInfo().Pin()->IsLocallyControlled())
-		{
-			ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UGunnerActionAsync_WaitForGunnerEvent::OnSync));
-			return;
-		}
-	}
 
 	UnbindEvents(TargetEventManagerComponent.Get());
 	BindEvents();
@@ -64,13 +46,6 @@ TArray<FGunnerEventCallbackHandle> UGunnerActionAsync_WaitForGunnerEvent::SetupE
 	return {
 		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak, this](FGameplayTag Tag, const void* MessagePtr)
 		{
-			if (bReplciates)
-			{
-				ActionComponent->CurrentNetPredictionHandle.GenerateNewHandle();
-				ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefinitionHandle(), Action->InitPredictionHandle, ActionComponent->CurrentNetPredictionHandle);
-			}
-			FGunnerActionScopedNetPrediction ScopedNetPrediction(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->CurrentNetPredictionHandle);
-			
 			UGunnerActionAsync_WaitForGunnerEvent* Strong = Weak.Get();
 			if (Strong && Strong->ShouldBroadcastDelegates())
 			{

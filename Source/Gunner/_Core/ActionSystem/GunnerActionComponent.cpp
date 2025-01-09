@@ -268,6 +268,11 @@ void UGunnerActionComponent::CallOrAddSNetyncPointDelegate(FGunnerActionDefiniti
 	NetSyncPointDelegates.RemoveAt(Index);
 }
 
+void UGunnerActionComponent::ReplicatedNetPredictionHandle(const FGunnerActionNetPredictionHandle& PredictionHandle)
+{
+	NetPredictionHandles.ReplicatedNetPredictionHandle(PredictionHandle);
+}
+
 void UGunnerActionComponent::IncreaseActionListLock()
 {
 	ActionScopeLockCount++;
@@ -648,7 +653,7 @@ bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& Act
 		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("보유 금지 태그: %s"), *OwnedForbiddenTags.ToStringSimple(true));
 		return false;
 	}
-	
+
 	return true;
 }
 

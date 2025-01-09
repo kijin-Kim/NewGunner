@@ -23,9 +23,8 @@ class GUNNER_API UGunnerActionAsync_WaitForGunnerEvent : public UGunnerCancellab
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
-	static UGunnerActionAsync_WaitForGunnerEvent* WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag EventTag, bool bReplicates, UScriptStruct* EventMessageType);
-
-	void OnSync();
+	static UGunnerActionAsync_WaitForGunnerEvent* WaitForGunnerEvent(UGunnerAction* InAction, AActor* EventTargetActor, FGameplayTag EventTag, UScriptStruct* EventMessageType);
+	
 	//~ Begin UCancellableAsyncAction Interface.
 	virtual void Activate() override;
 	virtual void SetReadyToDestroy() override;
@@ -35,8 +34,7 @@ public:
 	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
 	//~ Begin IGunnerEventCallbackBindInterface Interface.
 
-	
-	
+
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "OutMessage"))
 	bool GetMessage(UPARAM(ref) int32& OutMessage);
 	DECLARE_FUNCTION(execGetMessage);
@@ -50,5 +48,4 @@ private:
 	TWeakObjectPtr<UGunnerEventManagerComponent> TargetEventManagerComponent;
 	TWeakObjectPtr<UScriptStruct> EventMesageType;
 	FGameplayTag EventTag;
-	bool bReplciates = false;
 };

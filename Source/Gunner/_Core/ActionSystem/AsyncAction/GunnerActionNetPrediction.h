@@ -71,7 +71,7 @@ struct FGunnerActionNetPredictionHandleArray : public FFastArraySerializer
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	//~ End FFastArraySerializer Interface.
 
-	void ReplicatedNetPredictionHandle(FGunnerActionNetPredictionHandle PredictionHandle);
+	void ReplicatedNetPredictionHandle(const FGunnerActionNetPredictionHandle& PredictionHandle);
 
 	UPROPERTY()
 	TArray<FGunnerActionNetPredictionHandle> Items;
@@ -100,10 +100,9 @@ public:
 	};
 
 	static void ResetPredictionEvents();
-	static void BroadcastOnPredictionEnded(FGunnerActionNetPredictionHandle PredictionHandle);
-	static void BroadcastOnPredictionFailed(FGunnerActionNetPredictionHandle PredictionHandle);
-
-	static FPredictionEvent& GetPredictionEvent(FGunnerActionNetPredictionHandle PredictionHandle) { return PredictionEvents.FindOrAdd(PredictionHandle); }
+	static void BroadcastOnPredictionEnded(const FGunnerActionNetPredictionHandle& PredictionHandle);
+	static void BroadcastOnPredictionFailed(const FGunnerActionNetPredictionHandle& PredictionHandle);
+	static FPredictionEvent& GetPredictionEvent(const FGunnerActionNetPredictionHandle& PredictionHandle) { return PredictionEvents.FindOrAdd(PredictionHandle); }
 
 private:
 	inline static TMap<FGunnerActionNetPredictionHandle, FPredictionEvent> PredictionEvents;
