@@ -30,18 +30,15 @@ void UGunnerAction::SetActionCurrentEventMessage(const FGunnerEventMessage& InEv
 
 void UGunnerAction::OnActionAdded_Implementation()
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
 }
 
 bool UGunnerAction::OnCanTriggerAction_Implementation() const
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
-	return (bIsRetriggerable || !bIsTriggering);
+	return true;
 }
 
 void UGunnerAction::OnTriggerAction_Implementation()
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
 	check(ActionDefinitionHandle.IsValid());
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
@@ -57,8 +54,6 @@ void UGunnerAction::OnTriggerAction_Implementation()
 
 void UGunnerAction::OnEndAction_Implementation()
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("[%s]"), *GetName());
-
 	if (!bIsTriggering)
 	{
 		return;

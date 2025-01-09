@@ -12,10 +12,16 @@
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
-#include "Gunner/Gunner.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 #include "Net/UnrealNetwork.h"
+
+bool bShowActionFailedReason = false;
+FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
+	TEXT("ActionSystem.Debug.ActionTriggerFailedReason"),
+	bShowActionFailedReason,
+	TEXT("")
+);
 
 
 UGunnerActionComponent::UGunnerActionComponent()
@@ -105,7 +111,7 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunne
 	ACTION_LIST_SCOPE_LOCK();
 
 	FGunnerActionDefinition NewActionDefinition = ActionDefinition;
-	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
+	NewActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
 	ActionDefinitions.AuthAdd(NewActionDefinition);
 	HandleTriggerableActionOnAdded(NewActionDefinition);
 
@@ -158,12 +164,11 @@ void UGunnerActionComponent::TryTriggerAction(FGunnerActionDefinitionHandle Acti
 	ensureMsgf(ActionDefinition, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
 	ensureMsgf(AgentInfo->AgentActor->GetLocalRole() != ROLE_SimulatedProxy,
 	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 Action [%s]을(를) 실행할 수 없습니다"), *AgentInfo->AgentActor->GetName(),
-	           *ActionDefinition->ActionClass->GetName());
+	           *ActionDefinition->ActionInstance->GetName());
 
-
-	if (!CanTriggerAction(*ActionDefinition, EventMessage))
+	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessage);
+	if (!CanTriggerAction(*ActionDefinition))
 	{
-		GR_LOG_SUB(LogGunner, Warning, TEXT("Action [%s]을(를) 실행이 거부되었습니다"), *ActionDefinition->ActionClass->GetName());
 		return;
 	}
 
@@ -382,18 +387,16 @@ void UGunnerActionComponent::TriggerSideEffectByDefinition(const FGunnerActionSi
 
 	if (!GetOwner()->HasAuthority() && Action->GetActionNetMethod() == EGunnerActionNetMethod::LocalPredicted)
 	{
-		GR_LOG_SUB(LogGunner, Display, TEXT("SideEffect Added [%s, %s]"), *NewSideEffectDefinition.SideEffectClass->GetName(), *NewSideEffectDefinition.Handle.ToString());
-
 		FGunneractionNetPredictionEvents::FPredictionEvent& PredictionEvent = FGunneractionNetPredictionEvents::GetPredictionEvent(CurrentNetPredictionHandle);
 		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
 		{
-			GR_LOG_SUB(LogGunner, Display, TEXT("PredictionEnded And Removed [%s]"), *SideEffectDefinitionHandle.ToString());
+			GR_LOG_SUB(LogGunnerSideEffect, Verbose, TEXT("SideEffect [%s] 삭제 (예측 종료)"), *SideEffectDefinitionHandle.ToString());
 			SideEffectDefinitions.Remove(SideEffectDefinitionHandle);
 		});
 
 		PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
 		{
-			GR_LOG_SUB(LogGunner, Display, TEXT("PredictionFailed And Removed [%s]"), *SideEffectDefinitionHandle.ToString());
+			GR_LOG_SUB(LogGunnerSideEffect, Error, TEXT("SideEffect [%s] 삭제 (예측 실패)"), *SideEffectDefinitionHandle.ToString());
 			SideEffectDefinitions.Remove(SideEffectDefinitionHandle);
 		});
 	}
@@ -439,8 +442,8 @@ void UGunnerActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UGunn
 
 void UGunnerActionComponent::InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("Signal [%s]"), *SignClass->GetName());
 	UGunnerActionSign* Sign = SignClass.GetDefaultObject();
+	GR_LOG_SUB(LogGunnerSignal, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
 	check(Sign);
 	Sign->SetSignalDataObject(SignalDataObject);
 	Sign->OnSignaled();
@@ -496,7 +499,7 @@ void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* 
 
 void UGunnerActionComponent::OnActionDefinitionAdded(FGunnerActionDefinition& ActionDefinition)
 {
-	ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(GetOwner(), ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
+	ActionDefinition.ActionInstance = NewGunnerAction<UGunnerAction>(ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
 	HandleTriggerableActionOnAdded(ActionDefinition);
 }
 
@@ -571,6 +574,7 @@ void UGunnerActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, co
 
 void UGunnerActionComponent::OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action)
 {
+	GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 종료"), *Action->GetName());
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 }
 
@@ -589,20 +593,70 @@ FGunnerActionDefinition* UGunnerActionComponent::FindActionDefinitionByHandle(FG
 	});
 }
 
-bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& ActionDefinition, const FGunnerEventMessage& EventMessage) const
+bool UGunnerActionComponent::CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const
 {
-	ActionDefinition.ActionInstance->SetActionCurrentEventMessage(EventMessage);
-	return ActionDefinition.ActionInstance->OnCanTriggerAction()
-		&& OwnedTags.HasAll(ActionDefinition.ActionInstance->GetShouldHaveTags())
-		&& !OwnedTags.HasAny(ActionDefinition.ActionInstance->GetShouldNotHaveTags());
+	bool bIsNotTriggeringOrRetriggerable = ActionDefinition.ActionInstance->IsRetriggerable() || !ActionDefinition.ActionInstance->IsTriggering();
+	bool bMetTriggerCondition = ActionDefinition.ActionInstance->OnCanTriggerAction();
+	bool bHasRequiredTags = OwnedTags.HasAll(ActionDefinition.ActionInstance->GetShouldHaveTags());
+	bool bDontHaveForbiddenTags = !OwnedTags.HasAny(ActionDefinition.ActionInstance->GetShouldNotHaveTags());
+
+	if (!bShowActionFailedReason)
+	{
+		return bIsNotTriggeringOrRetriggerable && bMetTriggerCondition && bHasRequiredTags && bDontHaveForbiddenTags;
+	}
+
+	if (!bIsNotTriggeringOrRetriggerable)
+	{
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 거부 (실행 중)"), *ActionDefinition.ActionInstance->GetName());
+		return false;
+	}
+
+	if (!bMetTriggerCondition)
+	{
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 거부 (조건 미충족)"), *ActionDefinition.ActionInstance->GetName());
+		return false;
+	}
+
+	if (!bHasRequiredTags)
+	{
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 거부 (필수 태그 미보유)"), *ActionDefinition.ActionInstance->GetName());
+		const FGameplayTagContainer& ShouldHaveTags = ActionDefinition.ActionInstance->GetShouldHaveTags();
+		FGameplayTagContainer NotOwnedTags;
+		for (FGameplayTag Tag : ShouldHaveTags)
+		{
+			if (!OwnedTags.HasTag(Tag))
+			{
+				NotOwnedTags.AddTag(Tag);
+			}
+		}
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("미보유 태그: %s"), *NotOwnedTags.ToStringSimple(true));
+		return false;
+	}
+
+	if (!bDontHaveForbiddenTags)
+	{
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 거부 (금지 태그 보유)"), *ActionDefinition.ActionInstance->GetName());
+		const FGameplayTagContainer& ShouldNotHaveTags = ActionDefinition.ActionInstance->GetShouldNotHaveTags();
+		FGameplayTagContainer OwnedForbiddenTags;
+		for (FGameplayTag Tag : ShouldNotHaveTags)
+		{
+			if (OwnedTags.HasTag(Tag))
+			{
+				OwnedForbiddenTags.AddTag(Tag);
+			}
+		}
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("보유 금지 태그: %s"), *OwnedForbiddenTags.ToStringSimple(true));
+		return false;
+	}
+	
+	return true;
 }
 
 void UGunnerActionComponent::LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionNetPredictionHandle PredictionHandle /*= FGunnerActionNetPredictionHandle()*/)
 {
+	GR_LOG_SUB(LogGunnerAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDefinition->ActionInstance->GetName());
 	check(ActionDefinition->ActionInstance);
 	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
-
-
 	ActionDefinition->ActionInstance->InitPredictionHandle = PredictionHandle;
 	FGunnerActionScopedNetPrediction ScopedNetPrediction(*this, GetOwner()->HasAuthority(), PredictionHandle);
 	ActionDefinition->ActionInstance->OnTriggerAction();
@@ -614,8 +668,6 @@ void UGunnerActionComponent::ClientTriggerActionRequestFailed_Implementation(FGu
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
 	check(ActionDefinition);
 	ActionDefinition->ActionInstance->OnEndAction();
-
-	GR_LOG_SUB(LogGunner, Display, TEXT("PredictionHandle [%s]"), *PredictionHandle.ToString());
 	FGunneractionNetPredictionEvents::BroadcastOnPredictionFailed(PredictionHandle);
 }
 
@@ -740,7 +792,6 @@ void UGunnerActionComponent::ClientTriggerAction_Implementation(FGunnerActionDef
 
 void UGunnerActionComponent::ServerTryTriggerAction_Implementation(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, FGunnerActionNetPredictionHandle PredictionHandle)
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT("PredictionHandle [%s]"), *PredictionHandle.ToString());
 	if (!ActionDefinitionHandle.IsValid())
 	{
 		unimplemented(); // FAIL DESYNC

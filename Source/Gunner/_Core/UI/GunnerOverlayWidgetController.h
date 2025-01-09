@@ -31,8 +31,4 @@ public:
 	FGunnerUserWidgetSimpleTwoParamSignature OnBulletValueChangedDelegate;
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnMagazineBulletValueChanged"))
 	FGunnerUserWidgetSimpleTwoParamSignature OnMagazineBulletValueChangedDelegate;
-	
-
-private:
-	UGunnerActionProperty* GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag);
 };

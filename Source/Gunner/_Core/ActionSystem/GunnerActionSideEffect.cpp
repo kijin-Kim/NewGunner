@@ -9,7 +9,7 @@
 
 void UGunnerActionSideEffect::OnApplied(FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT( "SideEffect Applied [%s]" ), *GetName());
+	GR_LOG_SUB(LogGunnerSideEffect, Verbose, TEXT("SideEffect [%s] 적용"), *GetName());
 	RemainingDuration = Duration;
 	ApplyAllModifiers(PredictionHandle, bHasAuthority);
 }
@@ -20,7 +20,7 @@ void UGunnerActionSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 	{
 		RemainingDuration -= DeltaTime;
 	}
-	
+
 	if (Interval <= 0.0f)
 	{
 		return;
@@ -48,7 +48,7 @@ void UGunnerActionSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 
 void UGunnerActionSideEffect::OnRemoved()
 {
-	GR_LOG_SUB(LogGunner, Display, TEXT( "SideEffect Removed [%s]" ), *GetName());
+	GR_LOG_SUB(LogGunnerSideEffect, Verbose, TEXT("SideEffect [%s] 삭제"), *GetName());
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
 	UGunnerActionComponent* ActionComponent = ActorOwner->GetComponentByClass<UGunnerActionComponent>();
 	check(ActionComponent);

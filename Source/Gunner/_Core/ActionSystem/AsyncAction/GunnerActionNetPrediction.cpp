@@ -17,28 +17,28 @@ void FGunnerActionNetPredictionHandle::Expire()
 	bIsExpired = true;
 }
 
-void FGunnerActionNetPredictionHandleItem::PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray)
+void FGunnerActionNetPredictionHandle::PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray)
 {
-	PredictionHandle.Expire();
-	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
+	Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
-void FGunnerActionNetPredictionHandleItem::PreReplicatedRemove(const FGunnerActionNetPredictionHandleArray& InArray)
+void FGunnerActionNetPredictionHandle::PreReplicatedRemove(const FGunnerActionNetPredictionHandleArray& InArray)
 {
-	PredictionHandle.Expire();
-	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
+	Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
-void FGunnerActionNetPredictionHandleItem::PostReplicatedChange(const FGunnerActionNetPredictionHandleArray& InArray)
+void FGunnerActionNetPredictionHandle::PostReplicatedChange(const FGunnerActionNetPredictionHandleArray& InArray)
 {
-	PredictionHandle.Expire();
-	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(PredictionHandle);
+	Expire();
+	FGunneractionNetPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 FGunnerActionNetPredictionHandleArray::FGunnerActionNetPredictionHandleArray()
 {
 	Items.SetNum(MaximumPredictionHandles);
-	for (FGunnerActionNetPredictionHandleItem& Item : Items)
+	for (FGunnerActionNetPredictionHandle& Item : Items)
 	{
 		MarkItemDirty(Item);
 	}
@@ -46,7 +46,7 @@ FGunnerActionNetPredictionHandleArray::FGunnerActionNetPredictionHandleArray()
 
 bool FGunnerActionNetPredictionHandleArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
-	return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionNetPredictionHandleItem, FGunnerActionNetPredictionHandleArray>(Items, DeltaParms, *this);
+	return FFastArraySerializer::FastArrayDeltaSerialize<FGunnerActionNetPredictionHandle, FGunnerActionNetPredictionHandleArray>(Items, DeltaParms, *this);
 }
 
 void FGunnerActionNetPredictionHandleArray::ReplicatedNetPredictionHandle(FGunnerActionNetPredictionHandle PredictionHandle)
@@ -56,7 +56,7 @@ void FGunnerActionNetPredictionHandleArray::ReplicatedNetPredictionHandle(FGunne
 		return;
 	}
 
-	Items[StartIndex].PredictionHandle = PredictionHandle;
+	Items[StartIndex] = PredictionHandle;
 	MarkItemDirty(Items[StartIndex]);
 	StartIndex = (StartIndex + 1) % MaximumPredictionHandles;
 }

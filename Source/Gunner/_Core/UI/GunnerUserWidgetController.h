@@ -18,5 +18,6 @@ class GUNNER_API UGunnerUserWidgetController : public UObject
 public:
 	virtual void InitWidgetController(APlayerState* PlayerState)
 	{
+		
 	}
 };

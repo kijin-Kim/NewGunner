@@ -16,7 +16,7 @@ DECLARE_MULTICAST_DELEGATE(FGunnerActionPredictionEventSiganture)
  * 
  */
 USTRUCT()
-struct FGunnerActionNetPredictionHandle
+struct FGunnerActionNetPredictionHandle  : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
@@ -34,6 +34,15 @@ struct FGunnerActionNetPredictionHandle
 	{
 		return Handle == Other.Handle;
 	}
+	
+	
+	//~ Begin FFastArraySerializerItem Interface.
+	void PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray);
+	void PreReplicatedRemove(const FGunnerActionNetPredictionHandleArray& InArray);
+	void PostReplicatedChange(const FGunnerActionNetPredictionHandleArray& InArray);
+	//~ End FFastArraySerializerItem Interface.
+
+	void OnRepPredictionHandle();
 
 	void GenerateNewHandle();
 	void Expire();
@@ -52,25 +61,6 @@ private:
 
 
 USTRUCT()
-struct FGunnerActionNetPredictionHandleItem : public FFastArraySerializerItem
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-	//~ Begin FFastArraySerializerItem Interface.
-	void PostReplicatedAdd(const FGunnerActionNetPredictionHandleArray& InArray);
-	void PreReplicatedRemove(const FGunnerActionNetPredictionHandleArray& InArray);
-	void PostReplicatedChange(const FGunnerActionNetPredictionHandleArray& InArray);
-	//~ End FFastArraySerializerItem Interface.
-
-	void OnRepPredictionHandle();
-
-public:
-	UPROPERTY()
-	FGunnerActionNetPredictionHandle PredictionHandle;
-};
-
-USTRUCT()
 struct FGunnerActionNetPredictionHandleArray : public FFastArraySerializer
 {
 	GENERATED_USTRUCT_BODY()
@@ -84,7 +74,7 @@ struct FGunnerActionNetPredictionHandleArray : public FFastArraySerializer
 	void ReplicatedNetPredictionHandle(FGunnerActionNetPredictionHandle PredictionHandle);
 
 	UPROPERTY()
-	TArray<FGunnerActionNetPredictionHandleItem> Items;
+	TArray<FGunnerActionNetPredictionHandle> Items;
 
 	int32 StartIndex = 0;
 	static constexpr int32 MaximumPredictionHandles = 16;

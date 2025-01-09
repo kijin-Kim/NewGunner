@@ -11,6 +11,7 @@
 #include "GunnerActionSign.h"
 #include "AsyncAction/GunnerActionNetPrediction.h"
 #include "Components/ActorComponent.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
 #include "GunnerActionComponent.generated.h"
@@ -30,12 +31,13 @@ public:
 	UGunnerActionComponent();
 
 	template <typename T>
-	T* NewGunnerAction(UObject* Outer, const UClass* Class, FGunnerActionDefinitionHandle ActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> AgentInfo)
+	T* NewGunnerAction(const UClass* Class, FGunnerActionDefinitionHandle ActionDefinitionHandle, TWeakPtr<FGunnerActionAgentInfo> AgentInfo)
 	{
 		T* NewAction = NewObject<UGunnerAction>(GetOwner(), Class);
 		NewAction->OnGunnerActionEndedDelegate.AddUObject(this, &UGunnerActionComponent::OnActionEnded);
 		NewAction->InitializeGunnerAction(ActionDefinitionHandle, AgentInfo);
 		NewAction->OnActionAdded();
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 생성 및 추가"), *NewAction->GetName());
 		return NewAction;
 	}
 
@@ -104,7 +106,7 @@ private:
 	void OnActionEnded(FGunnerActionDefinitionHandle ActionDefinitionHandle, UGunnerAction* Action);
 	FGunnerActionDefinition* FindActionDefinitionByHandle(FGunnerActionDefinitionHandle ActionDefinitionHandle);
 
-	bool CanTriggerAction(const FGunnerActionDefinition& ActionDefinition, const FGunnerEventMessage& EventMessage) const;
+	bool CanTriggerAction(const FGunnerActionDefinition& ActionDefinition) const;
 	void LocalTriggerAction(FGunnerActionDefinition* ActionDefinition, FGunnerActionNetPredictionHandle PredictionHandle = FGunnerActionNetPredictionHandle());
 	UFUNCTION(Reliable, Server)
 	void ServerTryTriggerAction(FGunnerActionDefinitionHandle ActionDefinitionHandle, const FGunnerEventMessageReplicated& EventMessageReplicated, FGunnerActionNetPredictionHandle PredictionHandle);

@@ -27,13 +27,11 @@ bool FGunnerActionSideEffectDefinition::operator!=(const FGunnerActionSideEffect
 
 void FGunnerActionSideEffectDefinition::PostReplicatedAdd(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
 {
-	UE_LOG(LogTemp, Warning, TEXT( "FGunnerActionSideEffectDefinition::PostReplicatedAdd: [%s]" ), *SideEffectClass->GetName());
 	InArraySerializer.OnAdded(*this);
 }
 
 void FGunnerActionSideEffectDefinition::PreReplicatedRemove(const FGunnerActionSideEffectDefinitionArray& InArraySerializer)
 {
-	UE_LOG(LogTemp, Warning, TEXT( "FGunnerActionSideEffectDefinition::PreReplicatedRemove: [%s]" ), *SideEffectClass->GetName());
 	InArraySerializer.OnRemoved(*this);
 }
 

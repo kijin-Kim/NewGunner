@@ -22,6 +22,4 @@ public:
 	TMap<FGameplayTag, float> InitialProperties;
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UGunnerAction>> InitialActionClasses;
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UGunnerActionSideEffect>> InitialSideEffectClasses;
 };

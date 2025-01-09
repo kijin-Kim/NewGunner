@@ -2,16 +2,25 @@
 
 
 #include "GunnerOverlayWidgetController.h"
-
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "GameFramework/PlayerState.h"
 
 
 void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerState)
 {
-	UGunnerActionProperty* Property = GetPropertyFromPlayerState(PlayerState, FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
-	check(Property);
-	Property->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+	check(PlayerState);
+	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState);
+	check(ActionComponent);
+
+	UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"));
+	check(BulletProperty);
+	BulletProperty->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+	OnBulletValueChanged(BulletProperty->GetStaticValue(), BulletProperty->GetDynamicValue());
+
+	UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
+	check(MagazineBulletProperty);
+	MagazineBulletProperty->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+	OnMagazineBulletValueChanged(MagazineBulletProperty->GetStaticValue(), MagazineBulletProperty->GetDynamicValue());
 }
 
 void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float NewValue)
@@ -22,21 +31,4 @@ void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float 
 void UGunnerOverlayWidgetController::OnMagazineBulletValueChanged(float OldValue, float NewValue)
 {
 	OnMagazineBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
-}
-
-UGunnerActionProperty* UGunnerOverlayWidgetController::GetPropertyFromPlayerState(APlayerState* PlayerState, FGameplayTag Tag)
-{
-	if (!PlayerState || !Tag.IsValid())
-	{
-		return nullptr;
-	}
-
-	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(PlayerState);
-	if (!ActionComponent)
-	{
-		return nullptr;
-	}
-
-	UGunnerActionProperty* Property = ActionComponent->GetProperty(Tag);
-	return Property;
 }

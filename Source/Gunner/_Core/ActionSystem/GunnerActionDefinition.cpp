@@ -35,7 +35,6 @@ void FGunnerActionDefinition::PreReplicatedRemove(const FGunnerActionDefinitionA
 	InArraySerializer.OnRemoved(*this);
 }
 
-
 void FGunnerActionDefinitionArray::AuthAdd(const FGunnerActionDefinition& ActionDefinition)
 {
 	int32 Index = Items.Add(ActionDefinition);
