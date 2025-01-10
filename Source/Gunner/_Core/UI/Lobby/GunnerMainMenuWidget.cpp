@@ -53,7 +53,13 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			FString MapName;
 			SearchResult.Session.SessionSettings.Get(FName("ROOM_NAME"), RoomName);
 			SearchResult.Session.SessionSettings.Get(FName("MAP_NAME"), MapName);
-			FRoomInfo NewRoomInfo{RoomName, MapName, SearchResult.PingInMs};
+			FRoomInfo NewRoomInfo{
+				RoomName,
+				MapName,
+				SearchResult.Session.SessionSettings.NumPublicConnections - SearchResult.Session.NumOpenPublicConnections,
+				SearchResult.Session.SessionSettings.NumPublicConnections,
+				SearchResult.PingInMs
+			};
 			RoomInfos.Add(NewRoomInfo);
 			UE_LOG(LogGunner, Verbose, TEXT("%s"), *NewRoomInfo.ToString());
 		}
@@ -86,7 +92,7 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 	}
 }
 
-void UGunnerMainMenuWidget::FindSessions()
+void UGunnerMainMenuWidget::FindSession(FString RoomName)
 {
 	if (GIsPlayInEditorWorld)
 	{
@@ -99,6 +105,10 @@ void UGunnerMainMenuWidget::FindSessions()
 	SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
 	SessionSearch->MaxSearchResults = 10000;
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	if (!RoomName.IsEmpty())
+	{
+		SessionSearch->QuerySettings.Set(FName("ROOM_NAME"), RoomName, EOnlineComparisonOp::Equals);
+	}
 
 	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
 

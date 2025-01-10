@@ -22,11 +22,15 @@ struct FRoomInfo
 	UPROPERTY(BlueprintReadOnly)
 	FString MapName;
 	UPROPERTY(BlueprintReadOnly)
+	int32 PlayerCount;
+	UPROPERTY(BlueprintReadOnly)
+	int32 MaxPlayerCount;
+	UPROPERTY(BlueprintReadOnly)
 	int32 PingInMs;
 
 	FString ToString() const
 	{
-		return FString::Printf(TEXT("RoomName: %s, MapName: %s, PingInMs: %d"), *RoomName, *MapName, PingInMs);
+		return FString::Printf(TEXT("방 이름: %s, 맵 이름: %s, 플레이어 수: %d/%d, 핑: %dms"), *RoomName, *MapName, PlayerCount, MaxPlayerCount, PingInMs);
 	}
 };
 
@@ -56,7 +60,7 @@ private:
 
 	void JoinSession();
 	UFUNCTION(BlueprintCallable)
-	void FindSessions();
+	void FindSession(FString RoomName);
 
 public:
 	UPROPERTY(BlueprintAssignable)
