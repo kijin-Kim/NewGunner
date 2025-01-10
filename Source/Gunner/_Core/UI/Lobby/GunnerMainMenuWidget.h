@@ -11,6 +11,23 @@
 class UWidgetSwitcher;
 class UGunnerButtonWidget;
 class FOnlineSessionSearch;
+
+USTRUCT(BlueprintType)
+struct FRoomInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FString RoomName;
+	UPROPERTY(BlueprintReadOnly)
+	FString MapName;
+	UPROPERTY(BlueprintReadOnly)
+	int32 PingInMs;
+};
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionFindCompletedSignature, const TArray<FRoomInfo>&, RoomInfos);
+
 /**
  * 
  */
@@ -20,7 +37,6 @@ class GUNNER_API UGunnerMainMenuWidget : public UGunnerUserWidget
 	GENERATED_BODY()
 
 public:
-	
 	virtual void NativeConstruct() override;
 
 private:
@@ -29,16 +45,22 @@ private:
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Arg);
 
 	UFUNCTION(BlueprintCallable)
-	void OnJoinButtonClicked();
-	UFUNCTION(BlueprintCallable)
-	void OnHostButtonClicked();
+	void OnHostButtonClicked(FString RoomName, FString MapName);
 	UFUNCTION(BlueprintCallable)
 	void OnShutdownButtonClicked();
+
+	void JoinSession();
+	UFUNCTION(BlueprintCallable)
+	void FindSessions();
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnSessionFindCompletedSignature OnSessionFindCompleted;
 
 private:
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
-	
+
 	IOnlineSessionPtr SessionInterfacePtr;
 
 	FDelegateHandle OnCreateSessionCompleteDelegateHandle;

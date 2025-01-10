@@ -19,16 +19,6 @@ void UGunnerMainMenuWidget::NativeConstruct()
 	check(OnlineSubsystem);
 	SessionInterfacePtr = OnlineSubsystem->GetSessionInterface();
 	check(SessionInterfacePtr);
-	// HostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnHostButtonClicked);
-	// JoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnJoinButtonClicked);
-	// DeveloperToolButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnDeveloperToolButtonClicked);
-	// ShutdownButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnShutdownButtonClicked);
-	//
-	// LoopbackJoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackJoinButtonClicked);
-	// LoopbackHostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackHostButtonClicked);
-	// BackwardButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnBackwardButtonClicked);
-	//
-	// QuitMenuButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnQuitMenuButtonClicked);
 }
 
 void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -36,33 +26,43 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 	SessionInterfacePtr->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
 	if (bWasSuccessful)
 	{
-		UE_LOG(LogGunner, Display, TEXT("Session created: %s"), *SessionName.ToString());
+		// log session name room name map name
+		FString RoomName;
+		FString MapName;
+		SessionInterfacePtr->GetNamedSession(NAME_GameSession)->SessionSettings.Get(FName("ROOM_NAME"), RoomName);
+		SessionInterfacePtr->GetNamedSession(NAME_GameSession)->SessionSettings.Get(FName("MAP_NAME"), MapName);
+		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
+
 		GetWorld()->ServerTravel("/Game/Maps/FirstPersonMap?listen");
+		return;
 	}
-	else
-	{
-		UE_LOG(LogGunner, Error, TEXT("Session creation failed"));
-	}
+
+	UE_LOG(LogGunner, Error, TEXT("세션 생성 실패"));
 }
+
 
 void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 {
 	SessionInterfacePtr->ClearOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegateHandle);
+	TArray<FRoomInfo> RoomInfos;
 	if (bWasSuccessful && SessionSearch.IsValid())
 	{
-		UE_LOG(LogGunner, Display, TEXT("Session found"));
-		const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-		OnJoinSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnJoinSessionComplete));
-		if (!SessionInterfacePtr->JoinSession(LocalPlayer->GetControllerId(), NAME_GameSession, SessionSearch->SearchResults[0]))
+		for (const FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
 		{
-			SessionInterfacePtr->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
-			OnJoinSessionComplete(NAME_None, EOnJoinSessionCompleteResult::UnknownError);
+			FString RoomName;
+			FString MapName;
+			SearchResult.Session.SessionSettings.Get(FName("ROOM_NAME"), RoomName);
+			SearchResult.Session.SessionSettings.Get(FName("MAP_NAME"), MapName);
+
+			UE_LOG(LogGunner, Verbose, TEXT("방 이름 [%], 맵 이름 [%s]"), *RoomName, *MapName);
 		}
 	}
 	else
 	{
-		UE_LOG(LogGunner, Error, TEXT("Session not found"));
+		UE_LOG(LogGunner, Error, TEXT("세션 검색 실패"));
 	}
+
+	OnSessionFindCompleted.Broadcast(RoomInfos);
 }
 
 void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Arg)
@@ -70,7 +70,6 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 	SessionInterfacePtr->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
 	if (Arg == EOnJoinSessionCompleteResult::Success)
 	{
-		UE_LOG(LogGunner, Display, TEXT("Session joined"));
 		FString Address;
 		SessionInterfacePtr->GetResolvedConnectString(NAME_GameSession, Address);
 		GetOwningPlayer()->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
@@ -81,25 +80,19 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 	}
 }
 
-void UGunnerMainMenuWidget::OnJoinButtonClicked()
+void UGunnerMainMenuWidget::FindSessions()
 {
-	// LastWidgetIndex = WidgetSwitcher->GetActiveWidgetIndex();
-	// WidgetSwitcher->SetActiveWidgetIndex(2);
-
-
 	if (GIsPlayInEditorWorld)
 	{
-		UE_LOG(LogGunner, Error, TEXT("Cannot join in editor world"));
+		UE_LOG(LogGunner, Error, TEXT("에디터에서 실행 중에는 사용할 수 없습니다."));
+		OnFindSessionsComplete(false);
 		return;
 	}
 
-
-	// Join Session
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
 	SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
 	SessionSearch->MaxSearchResults = 10000;
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-
 
 	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
 
@@ -111,7 +104,7 @@ void UGunnerMainMenuWidget::OnJoinButtonClicked()
 	}
 }
 
-void UGunnerMainMenuWidget::OnHostButtonClicked()
+void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapName)
 {
 	if (GIsPlayInEditorWorld)
 	{
@@ -119,21 +112,26 @@ void UGunnerMainMenuWidget::OnHostButtonClicked()
 		return;
 	}
 
+	check(!MapName.IsEmpty());
+
 	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
 	{
 		SessionInterfacePtr->DestroySession(NAME_GameSession);
 	}
 	OnCreateSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnCreateSessionComplete));
 
-	FOnlineSessionSettings NewSessionSettings;
-	NewSessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
-	NewSessionSettings.bUseLobbiesIfAvailable = true;
-	NewSessionSettings.bShouldAdvertise = true;
-	NewSessionSettings.bUsesPresence = true;
-	NewSessionSettings.NumPublicConnections = 2;
-	NewSessionSettings.BuildUniqueId = 1;
+	FOnlineSessionSettings SessionSettings;
+	SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
+	SessionSettings.bUseLobbiesIfAvailable = true;
+	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bUsesPresence = true;
+	SessionSettings.NumPublicConnections = 2;
+	SessionSettings.BuildUniqueId = 1;
 
-	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, NewSessionSettings))
+	SessionSettings.Set(FName("SESSION_NAME"), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(FName("MAP_NAME"), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
+
+	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, SessionSettings))
 	{
 		SessionInterfacePtr->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
 		OnCreateSessionComplete(NAME_None, false);
@@ -148,4 +146,16 @@ void UGunnerMainMenuWidget::OnShutdownButtonClicked()
 	}
 
 	UKismetSystemLibrary::QuitGame(GetWorld(), GetOwningPlayer(), EQuitPreference::Quit, false);
+}
+
+
+void UGunnerMainMenuWidget::JoinSession()
+{
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnJoinSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnJoinSessionComplete));
+	if (!SessionInterfacePtr->JoinSession(LocalPlayer->GetControllerId(), NAME_GameSession, SessionSearch->SearchResults[0]))
+	{
+		SessionInterfacePtr->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
+		OnJoinSessionComplete(NAME_None, EOnJoinSessionCompleteResult::UnknownError);
+	}
 }
