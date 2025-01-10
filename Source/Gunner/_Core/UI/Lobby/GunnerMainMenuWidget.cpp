@@ -19,16 +19,16 @@ void UGunnerMainMenuWidget::NativeConstruct()
 	check(OnlineSubsystem);
 	SessionInterfacePtr = OnlineSubsystem->GetSessionInterface();
 	check(SessionInterfacePtr);
-	HostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnHostButtonClicked);
-	JoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnJoinButtonClicked);
-	DeveloperToolButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnDeveloperToolButtonClicked);
-	ShutdownButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnShutdownButtonClicked);
-
-	LoopbackJoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackJoinButtonClicked);
-	LoopbackHostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackHostButtonClicked);
-	BackwardButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnBackwardButtonClicked);
-
-	QuitMenuButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnQuitMenuButtonClicked);
+	// HostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnHostButtonClicked);
+	// JoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnJoinButtonClicked);
+	// DeveloperToolButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnDeveloperToolButtonClicked);
+	// ShutdownButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnShutdownButtonClicked);
+	//
+	// LoopbackJoinButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackJoinButtonClicked);
+	// LoopbackHostButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnLoopbackHostButtonClicked);
+	// BackwardButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnBackwardButtonClicked);
+	//
+	// QuitMenuButton->Button->OnClicked.AddDynamic(this, &UGunnerMainMenuWidget::OnQuitMenuButtonClicked);
 }
 
 void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -83,8 +83,8 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 
 void UGunnerMainMenuWidget::OnJoinButtonClicked()
 {
-	LastWidgetIndex = WidgetSwitcher->GetActiveWidgetIndex();
-	WidgetSwitcher->SetActiveWidgetIndex(2);
+	// LastWidgetIndex = WidgetSwitcher->GetActiveWidgetIndex();
+	// WidgetSwitcher->SetActiveWidgetIndex(2);
 
 
 	if (GIsPlayInEditorWorld)
@@ -130,8 +130,6 @@ void UGunnerMainMenuWidget::OnHostButtonClicked()
 	NewSessionSettings.bUseLobbiesIfAvailable = true;
 	NewSessionSettings.bShouldAdvertise = true;
 	NewSessionSettings.bUsesPresence = true;
-	NewSessionSettings.bAllowJoinInProgress = true;
-	NewSessionSettings.bAllowJoinViaPresence = true;
 	NewSessionSettings.NumPublicConnections = 2;
 	NewSessionSettings.BuildUniqueId = 1;
 
@@ -142,12 +140,6 @@ void UGunnerMainMenuWidget::OnHostButtonClicked()
 	}
 }
 
-void UGunnerMainMenuWidget::OnDeveloperToolButtonClicked()
-{
-	LastWidgetIndex = WidgetSwitcher->GetActiveWidgetIndex();
-	WidgetSwitcher->SetActiveWidgetIndex(1);
-}
-
 void UGunnerMainMenuWidget::OnShutdownButtonClicked()
 {
 	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
@@ -156,25 +148,4 @@ void UGunnerMainMenuWidget::OnShutdownButtonClicked()
 	}
 
 	UKismetSystemLibrary::QuitGame(GetWorld(), GetOwningPlayer(), EQuitPreference::Quit, false);
-}
-
-void UGunnerMainMenuWidget::OnLoopbackJoinButtonClicked()
-{
-	UGameplayStatics::OpenLevel(GetWorld(), TEXT("127.0.0.1"));
-}
-
-void UGunnerMainMenuWidget::OnLoopbackHostButtonClicked()
-{
-	GetWorld()->ServerTravel(TEXT("/Game/Maps/FirstPersonMap?listen"));
-}
-
-void UGunnerMainMenuWidget::OnBackwardButtonClicked()
-{
-	LastWidgetIndex = WidgetSwitcher->GetActiveWidgetIndex();
-	WidgetSwitcher->SetActiveWidgetIndex(0);
-}
-
-void UGunnerMainMenuWidget::OnQuitMenuButtonClicked()
-{
-	WidgetSwitcher->SetActiveWidgetIndex(LastWidgetIndex);
 }

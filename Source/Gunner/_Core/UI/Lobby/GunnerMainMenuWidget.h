@@ -28,50 +28,15 @@ private:
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Arg);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnJoinButtonClicked();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnHostButtonClicked();
-	UFUNCTION()
-	void OnDeveloperToolButtonClicked();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnShutdownButtonClicked();
-
-	UFUNCTION()
-	void OnLoopbackJoinButtonClicked();
-	UFUNCTION()
-	void OnLoopbackHostButtonClicked();
-	UFUNCTION()
-	void OnBackwardButtonClicked();
-	
-	UFUNCTION()
-	void OnQuitMenuButtonClicked();
 
 private:
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
-	
-	UPROPERTY(meta = (BindWidget))
-	UWidgetSwitcher* WidgetSwitcher;
-	
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* JoinButton;
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* HostButton;
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* DeveloperToolButton;
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* ShutdownButton;
-	
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* LoopbackJoinButton;
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* LoopbackHostButton;
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* BackwardButton;
-	
-	UPROPERTY(meta = (BindWidget))
-	UGunnerButtonWidget* QuitMenuButton;
-	uint32 LastWidgetIndex = 0;
 
 	
 	IOnlineSessionPtr SessionInterfacePtr;
