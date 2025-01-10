@@ -74,6 +74,8 @@ private:
 
 	UFUNCTION(BlueprintCallable)
 	void StartGame();
+	UFUNCTION(BlueprintCallable)
+	bool CanStartGame() const;
 
 	UFUNCTION(BlueprintCallable)
 	void JoinSession(FString SessionId);

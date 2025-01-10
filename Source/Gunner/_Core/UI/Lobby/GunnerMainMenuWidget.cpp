@@ -258,6 +258,12 @@ void UGunnerMainMenuWidget::StartGame()
 	GetWorld()->ServerTravel("/Game/Maps/FirstPersonMap?listen");
 }
 
+bool UGunnerMainMenuWidget::CanStartGame() const
+{
+	FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
+	return Session && Session->RegisteredPlayers.Num() > 1;
+}
+
 
 void UGunnerMainMenuWidget::JoinSession(FString SessionId)
 {
