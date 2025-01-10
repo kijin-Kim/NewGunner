@@ -23,6 +23,11 @@ struct FRoomInfo
 	FString MapName;
 	UPROPERTY(BlueprintReadOnly)
 	int32 PingInMs;
+
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("RoomName: %s, MapName: %s, PingInMs: %d"), *RoomName, *MapName, PingInMs);
+	}
 };
 
 

@@ -53,13 +53,19 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			FString MapName;
 			SearchResult.Session.SessionSettings.Get(FName("ROOM_NAME"), RoomName);
 			SearchResult.Session.SessionSettings.Get(FName("MAP_NAME"), MapName);
-
-			UE_LOG(LogGunner, Verbose, TEXT("방 이름 [%], 맵 이름 [%s]"), *RoomName, *MapName);
+			FRoomInfo NewRoomInfo{RoomName, MapName, SearchResult.PingInMs};
+			RoomInfos.Add(NewRoomInfo);
+			UE_LOG(LogGunner, Verbose, TEXT("%s"), *NewRoomInfo.ToString());
 		}
 	}
 	else
 	{
 		UE_LOG(LogGunner, Error, TEXT("세션 검색 실패"));
+	}
+
+	if (!RoomInfos.IsEmpty())
+	{
+		RoomInfos.Sort([](const FRoomInfo& A, const FRoomInfo& B) { return A.PingInMs < B.PingInMs; });
 	}
 
 	OnSessionFindCompleted.Broadcast(RoomInfos);
