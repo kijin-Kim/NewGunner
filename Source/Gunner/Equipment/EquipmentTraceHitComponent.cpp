@@ -47,6 +47,9 @@ void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, co
 	                               CameraLocation + CameraForward * 10000.0f,
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 
+	APawn* EquippedPawn = Cast<APawn>(EquippedActor);
+	check(EquippedPawn);
+
 	if (!EquippedActor->HasAuthority())
 	{
 		TArray<AActor*> HitActors;
@@ -59,7 +62,7 @@ void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, co
 		}
 		ServerRequestHitScanConfirm(HitActors, World->GetTimeSeconds());
 	}
-	else
+	else if(EquippedPawn->IsLocallyControlled())
 	{
 		AuthApplyDamageByHitResults(OutHitResults);
 	}

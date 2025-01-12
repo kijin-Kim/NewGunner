@@ -90,7 +90,7 @@ void ULagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& Neares
 		FTransform NewTransform{NewRotation, NewLocation};
 
 		DummyMeshComponent = Cast<USkeletalMeshComponent>(CharacterOwner->AddComponentByClass(USkeletalMeshComponent::StaticClass(), false, FTransform::Identity, false));
-		DummyMeshComponent->RegisterComponent();
+		//DummyMeshComponent->RegisterComponent();
 		DummyMeshComponent->SetCollisionResponseToChannels(CharacterOwner->GetMesh()->GetCollisionResponseToChannels());
 		DummyMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		DummyMeshComponent->SetWorldTransform(NewTransform * CharacterOwner->GetMesh()->GetRelativeTransform());

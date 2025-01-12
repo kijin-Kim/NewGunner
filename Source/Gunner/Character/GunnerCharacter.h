@@ -74,11 +74,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<TSubclassOf<UGunnerAction>> InitialActions;
-	UPROPERTY(EditAnywhere)
-	TMap<FGameplayTag, float> PropertiesToAddOnSpawn;
+	
 
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
