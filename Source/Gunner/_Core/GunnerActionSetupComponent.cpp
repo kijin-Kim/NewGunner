@@ -19,7 +19,7 @@ void UGunnerActionSetupComponent::AuthSetupActionSets()
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
 	check(ActorOwner->HasAuthority());
-	UGunnerActionComponent* ActionComponent = ActorOwner->GetComponentByClass<UGunnerActionComponent>();
+	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);;
 	check(ActionComponent);
 
 

@@ -11,6 +11,7 @@
 #include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
 #include "GunnerCharacter.generated.h"
 
+class UGunnerActionSetupComponent;
 class UCameraComponent;
 class UCameraControllerComponent;
 class UGunnerAction;
@@ -79,4 +80,7 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ULagCompensationComponent> LagCompensationComponent;
+
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UGunnerActionSetupComponent> ActionSetupComponent;
 };

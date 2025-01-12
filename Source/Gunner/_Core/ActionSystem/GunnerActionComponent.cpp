@@ -85,6 +85,7 @@ void UGunnerActionComponent::ReleaseActionComponent()
 	{
 		AuthRemoveAllActions();
 		AuthRemoveAllProperties();
+		OwnedTags.Reset();
 	}
 }
 

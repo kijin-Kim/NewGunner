@@ -11,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
+#include "Gunner/_Core/GunnerActionSetupComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
@@ -50,6 +51,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	LagCompensationComponent = CreateDefaultSubobject<ULagCompensationComponent>(TEXT("LagCompensationComponent"));
+	ActionSetupComponent = CreateDefaultSubobject<UGunnerActionSetupComponent>(TEXT("ActionSetupComponent"));
 }
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -67,6 +69,11 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 	if (NewPlayerState)
 	{
+		if (HasAuthority())
+		{
+			ActionSetupComponent->AuthSetupActionSets();
+		}
+
 		EquipmentManagerComponent->InitEquipmentManagerComponent();
 		CameraControllerComponent->InitCameraController();
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();

@@ -16,6 +16,7 @@ class GUNNER_API AGunnerHUD : public AHUD
 	GENERATED_BODY()
 public:
 	void SetupHUD(APlayerState* PlayerState);
+	virtual void GetDebugActorList(TArray<AActor*>& InOutList) override;
 
 
 public:

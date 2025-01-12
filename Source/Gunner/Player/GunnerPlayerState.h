@@ -31,8 +31,6 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UGunnerActionSetupComponent> ActionSetupComponent;
 	UPROPERTY()
 	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
 };

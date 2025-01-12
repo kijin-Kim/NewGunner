@@ -22,6 +22,7 @@ class UGunnerActionProperty;
 class UGunnerActionSideEffect;
 
 
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerActionComponent : public UActorComponent
 {

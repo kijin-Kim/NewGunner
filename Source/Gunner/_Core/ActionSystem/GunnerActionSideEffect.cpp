@@ -50,7 +50,7 @@ void UGunnerActionSideEffect::OnRemoved()
 {
 	GR_LOG_SUB(LogGunnerSideEffect, Verbose, TEXT("SideEffect [%s] 삭제"), *GetName());
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
-	UGunnerActionComponent* ActionComponent = ActorOwner->GetComponentByClass<UGunnerActionComponent>();
+	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
 	for (FGunnerPropertyModifier& Modifier : Modifiers)
 	{
@@ -69,7 +69,7 @@ void UGunnerActionSideEffect::SetInjectedValue(FGameplayTag Tag, float Value)
 void UGunnerActionSideEffect::ApplyModifier(const FGunnerPropertyModifier& Modifier, FGunnerActionNetPredictionHandle PredictionHandle, bool bHasAuthority)
 {
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
-	UGunnerActionComponent* ActionComponent = ActorOwner->GetComponentByClass<UGunnerActionComponent>();
+	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);;
 	check(ActionComponent);
 
 	if (DurationType != ESideEffectDurationType::Instant && Interval > 0.0f

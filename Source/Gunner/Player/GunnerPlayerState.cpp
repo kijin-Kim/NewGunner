@@ -3,7 +3,6 @@
 
 #include "GunnerPlayerState.h"
 
-#include "Gunner/_Core/GunnerActionSetupComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 
@@ -11,7 +10,6 @@ AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
-	ActionSetupComponent = CreateDefaultSubobject<UGunnerActionSetupComponent>(TEXT("ActionSetupComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
 
@@ -40,7 +38,6 @@ void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, AP
 	{
 		ActionComponent->ReleaseActionComponent();
 		ActionComponent->InitActionComponent(NewPawn);
-		ActionSetupComponent->AuthSetupActionSets();
 	}
 	else if (!NewPawn)
 	{
