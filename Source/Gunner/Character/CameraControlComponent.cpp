@@ -5,6 +5,7 @@
 
 #include "GunnerCharacter.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UCameraControllerComponent::UCameraControllerComponent()
@@ -41,7 +42,8 @@ void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FGunnerEve
 	const FVector2D LookAxisVector = EventMessage.InputActionValue.Get<FVector2D>();
 	if (PawnOwner->GetController())
 	{
-		PawnOwner->AddControllerYawInput(LookAxisVector.X * BaseTurnRate * MouseSensitivity);
-		PawnOwner->AddControllerPitchInput(LookAxisVector.Y * BaseTurnRate * MouseSensitivity);
+		float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+		PawnOwner->AddControllerYawInput(LookAxisVector.X * BaseTurnRate * MouseSensitivity * GlobalTimeDilation);
+		PawnOwner->AddControllerPitchInput(LookAxisVector.Y * BaseTurnRate * MouseSensitivity * GlobalTimeDilation);
 	}
 }

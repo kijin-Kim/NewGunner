@@ -62,7 +62,7 @@ void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, co
 		}
 		ServerRequestHitScanConfirm(HitActors, World->GetTimeSeconds());
 	}
-	else if(EquippedPawn->IsLocallyControlled())
+	else if (EquippedPawn->IsLocallyControlled())
 	{
 		AuthApplyDamageByHitResults(OutHitResults);
 	}
@@ -138,7 +138,8 @@ void UEquipmentTraceHitComponent::AuthApplyDamage(AActor* HitActor, FName BoneNa
 	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FGunnerEventMessage HitScanMessage;
-		HitScanMessage.Instigator = GetOwner();
+		APawn* EquipmentPawnOwner = Cast<APawn>(EquipmentOwner->GetOwner());
+		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
 		HitMessageData->HitBoneName = BoneName;
 		HitMessageData->HitNormal = HitNormal;

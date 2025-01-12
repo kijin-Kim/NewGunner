@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "GunnerHUD.generated.h"
 
+class UGunnerOverlayWidget;
 class UGunnerUserWidget;
 /**
  * 
@@ -17,13 +18,11 @@ class GUNNER_API AGunnerHUD : public AHUD
 public:
 	void SetupHUD(APlayerState* PlayerState);
 	virtual void GetDebugActorList(TArray<AActor*>& InOutList) override;
-
+	
 
 public:
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<UGunnerUserWidget> OverlayWidgetClass;
-
-private:
+	TSubclassOf<UGunnerOverlayWidget> OverlayWidgetClass;
 	UPROPERTY()
-	TObjectPtr<UGunnerUserWidget> OverlayWidget;
+	TObjectPtr<UGunnerOverlayWidget> OverlayWidget;
 };

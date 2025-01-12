@@ -5,6 +5,7 @@
 
 #include "EngineUtils.h"
 #include "GunnerUserWidget.h"
+#include "Gunner/_Core/GunnerOverlayWidget.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/UI/GunnerOverlayWidgetController.h"
 
@@ -14,7 +15,7 @@ void AGunnerHUD::SetupHUD(APlayerState* PlayerState)
 	check(OverlayWidgetClass);
 	if (!OverlayWidget)
 	{
-		OverlayWidget = CreateWidget<UGunnerUserWidget>(GetOwningPlayerController(), OverlayWidgetClass);
+		OverlayWidget = CreateWidget<UGunnerOverlayWidget>(GetOwningPlayerController(), OverlayWidgetClass);
 		UGunnerOverlayWidgetController* OverlayWidgetController = NewObject<UGunnerOverlayWidgetController>(GetOwningPlayerController());
 		OverlayWidgetController->InitWidgetController(PlayerState);
 		OverlayWidget->InitUserWidget(OverlayWidgetController);

@@ -24,7 +24,7 @@ struct GUNNER_API FGunnerEventMessage
 	{
 	}
 
-	FGunnerEventMessage(AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+	FGunnerEventMessage(AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
 		: Instigator(InInstigator)
 		  , TargetActor(InTargetActor)
 		  , InputActionValue(InInputActionValue)
@@ -34,7 +34,7 @@ struct GUNNER_API FGunnerEventMessage
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<AActor> Instigator;
+	TObjectPtr<AController> Instigator;
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AActor> TargetActor;
 	UPROPERTY(BlueprintReadWrite)
@@ -75,7 +75,7 @@ struct GUNNER_API FGunnerEventMessageReplicated
 	{
 	}
 
-	FGunnerEventMessageReplicated(AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+	FGunnerEventMessageReplicated(AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
 		: Instigator(InInstigator)
 		  , TargetActor(InTargetActor)
 		  , ReplicatedInputActionValue(InInputActionValue)
@@ -98,7 +98,7 @@ struct GUNNER_API FGunnerEventMessageReplicated
 
 private:
 	UPROPERTY()
-	TObjectPtr<AActor> Instigator;
+	TObjectPtr<AController> Instigator;
 	UPROPERTY()
 	TObjectPtr<AActor> TargetActor;
 	UPROPERTY()

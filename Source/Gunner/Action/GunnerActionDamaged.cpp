@@ -23,7 +23,9 @@ EGunnerHitDirectionType UGunnerActionDamaged::GetHitDirectionType() const
 	AActor* AgentActor = GetAgentActor();
 	check(AgentActor);
 
-	const FVector HitCauserLocation = EventMessage.Instigator->GetActorLocation();
+	APawn* HitCauser = EventMessage.Instigator->GetPawn();
+	check(HitCauser);
+	const FVector HitCauserLocation = HitCauser->GetActorLocation();
 	const FVector AgentLocation = AgentActor->GetActorLocation();
 	const FVector ToHitCauser = (HitCauserLocation - AgentLocation).GetSafeNormal2D();
 	const FVector AgentForward = AgentActor->GetActorForwardVector();
