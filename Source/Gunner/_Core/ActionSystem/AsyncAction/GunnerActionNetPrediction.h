@@ -103,6 +103,7 @@ public:
 	static void BroadcastOnPredictionEnded(const FGunnerActionNetPredictionHandle& PredictionHandle);
 	static void BroadcastOnPredictionFailed(const FGunnerActionNetPredictionHandle& PredictionHandle);
 	static FPredictionEvent& GetPredictionEvent(const FGunnerActionNetPredictionHandle& PredictionHandle) { return PredictionEvents.FindOrAdd(PredictionHandle); }
+	static void Clear();
 
 private:
 	inline static TMap<FGunnerActionNetPredictionHandle, FPredictionEvent> PredictionEvents;

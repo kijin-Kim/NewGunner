@@ -102,3 +102,8 @@ void FGunneractionNetPredictionEvents::BroadcastOnPredictionFailed(const FGunner
 	}
 	PredictionEvents.Remove(PredictionHandle);
 }
+
+void FGunneractionNetPredictionEvents::Clear()
+{
+	PredictionEvents.Empty();
+}

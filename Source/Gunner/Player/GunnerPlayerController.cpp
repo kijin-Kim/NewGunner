@@ -49,11 +49,11 @@ void AGunnerPlayerController::OnRep_PlayerState()
 		}
 		OnShowDebugInfoDelegateHandle = AHUD::OnShowDebugInfo.AddUObject(this, &ThisClass::OnShowDebugInfo);
 
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-		{
-			ServerRTT(GetWorld()->GetTimeSeconds());
-		}, 1.0f, true, 0.0f);
+		// FTimerHandle TimerHandle;
+		// GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		// {
+		// 	ServerRTT(GetWorld()->GetTimeSeconds());
+		// }, 1.0f, true, 0.0f);
 	}
 }
 

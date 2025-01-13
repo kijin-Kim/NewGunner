@@ -4,6 +4,7 @@
 #include "GunnerGameState.h"
 
 #include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -30,6 +31,7 @@ void AGunnerGameState::HandleMatchHasEnded()
 void AGunnerGameState::NetMulticastBroadcastWinners_Implementation(const TArray<int32>& WinnerIds)
 {
 	OnMatchEndedDelegate.Broadcast(WinnerIds);
+	UGameplayStatics::OpenLevel(GetWorld(), TEXT("/Game/Maps/MainMenu"));
 }
 
 void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim)

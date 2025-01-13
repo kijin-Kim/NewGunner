@@ -35,6 +35,12 @@ UGunnerActionComponent::UGunnerActionComponent()
 	}
 }
 
+void UGunnerActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	FGunneractionNetPredictionEvents::Clear();
+}
+
 void UGunnerActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
