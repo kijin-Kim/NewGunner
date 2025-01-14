@@ -42,9 +42,12 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 		check(Session);
 		FString RoomName;
 		FString MapName;
-		Session->SessionSettings.Get(FName("ROOM_NAME"), RoomName);
-		Session->SessionSettings.Get(FName("MAP_NAME"), MapName);
-		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
+
+		Session->SessionSettings.Get(FName(TEXT("ROOM_NAME")), RoomName);
+		Session->SessionSettings.Get(FName(TEXT("MAP_NAME")), MapName);
+		
+
+		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%s], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
 		FRoomInfo RoomInfo{
 			RoomName,
 			MapName,
@@ -69,12 +72,15 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 	{
 		for (const FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
 		{
+			if (!SearchResult.IsSessionInfoValid())
+			{
+				continue;
+			}
+
 			FString RoomName;
 			FString MapName;
-			SearchResult.Session.SessionSettings.Get(FName("ROOM_NAME"), RoomName);
-			SearchResult.Session.SessionSettings.Get(FName("MAP_NAME"), MapName);
-
-
+			SearchResult.Session.SessionSettings.Get(FName(TEXT("ROOM_NAME")), RoomName);
+			SearchResult.Session.SessionSettings.Get(FName(TEXT("MAP_NAME")), MapName);
 			FRoomInfo NewRoomInfo{
 				RoomName,
 				MapName,
@@ -83,9 +89,6 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 				SearchResult.PingInMs,
 				SearchResult.GetSessionIdStr()
 			};
-			FNamedOnlineSession* NamedOnlineSession = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
-			check(NamedOnlineSession);
-			NewRoomInfo.Participants = GetParticipants(NamedOnlineSession);
 			RoomInfos.Add(NewRoomInfo);
 			UE_LOG(LogGunner, Verbose, TEXT("%s"), *NewRoomInfo.ToString());
 		}
@@ -113,10 +116,9 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 		check(Session);
 		FString RoomName;
 		FString MapName;
-		Session->SessionSettings.Get(FName("ROOM_NAME"), RoomName);
-		Session->SessionSettings.Get(FName("MAP_NAME"), MapName);
-		RoomInfo.RoomName = RoomName;
-		RoomInfo.MapName = MapName;
+		Session->SessionSettings.Get(FName(TEXT("ROOM_NAME")), RoomName);
+		Session->SessionSettings.Get(FName(TEXT("MAP_NAME")), MapName);
+
 		RoomInfo.PlayerCount = Session->RegisteredPlayers.Num();
 		RoomInfo.MaxPlayerCount = Session->SessionSettings.NumPublicConnections;
 		//RoomInfo.PingInMs = TODO 
@@ -146,7 +148,7 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	if (!RoomName.IsEmpty())
 	{
-		SessionSearch->QuerySettings.Set(FName("ROOM_NAME"), RoomName, EOnlineComparisonOp::Equals);
+		SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineComparisonOp::Equals);
 	}
 
 	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
@@ -196,7 +198,7 @@ TArray<FString> UGunnerMainMenuWidget::GetParticipants(FNamedOnlineSession* Sess
 {
 	TArray<FString> Participants;
 	Participants.Reserve(Session->RegisteredPlayers.Num() + 1);
-	Participants.Add(GetPlayerNickname(*Session->LocalOwnerId));
+	Participants.Add(GetPlayerNickname(*Session->OwningUserId));
 	for (const FUniqueNetIdRef& PlayerId : Session->RegisteredPlayers)
 	{
 		Participants.Add(GetPlayerNickname(*PlayerId));
@@ -228,8 +230,9 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 	SessionSettings.NumPublicConnections = 2;
 	SessionSettings.BuildUniqueId = 1;
 
-	SessionSettings.Set(FName("SESSION_NAME"), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
-	SessionSettings.Set(FName("MAP_NAME"), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
+
+	SessionSettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(FName(TEXT("MAP_NAME")), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
 
 
 	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, SessionSettings))

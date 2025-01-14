@@ -15,7 +15,7 @@ class GUNNER_API AGunnerDeathMatchGameMode : public AGunnerGameMode
 	GENERATED_BODY()
 public:
 	AGunnerDeathMatchGameMode();
-	virtual void AuthRegisterKill(AController* Killer, AController* Victim) override;
+	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
 
 
 private:

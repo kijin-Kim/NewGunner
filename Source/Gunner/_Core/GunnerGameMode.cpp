@@ -8,9 +8,9 @@
 #include "UObject/ConstructorHelpers.h"
 
 
-void AGunnerGameMode::AuthRegisterKill(AController* Killer, AController* Victim)
+void AGunnerGameMode::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
 {
-	GetGameState<AGunnerGameState>()->AuthRegisterKill(Killer, Victim);
+	GetGameState<AGunnerGameState>()->AuthRegisterKill(Killer, Victim, KillCauserName);
 }
 
 bool AGunnerGameMode::ReadyToEndMatch_Implementation()

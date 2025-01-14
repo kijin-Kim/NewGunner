@@ -48,6 +48,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
 	EEquipmentType GetEquipmentType() const { return EquipmentType; }
+	FName GetEquipmentName() const { return EquipmentName; }
 
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
@@ -91,5 +92,7 @@ private:
 	float MagazineBulletCount;
 	UPROPERTY(EditAnywhere)
 	float MaxBulletPerMagazineCount;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FName EquipmentName;
 };

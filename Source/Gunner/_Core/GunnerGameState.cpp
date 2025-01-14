@@ -4,21 +4,27 @@
 #include "GunnerGameState.h"
 
 #include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+
+FString FGunnerKillLog::ToString() const
+{
+	return FString::Printf(TEXT("Killer: %s, Victim: %s, Cause: %s"), *KillerPlayerState->GetPlayerName(), *VictimPlayerState->GetPlayerName(), *KillCauserName.ToString());
+}
 
 void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AGunnerGameState, MatchTimeLimit, COND_InitialOnly);
-	DOREPLIFETIME(AGunnerGameState, PlayerKills);
+	DOREPLIFETIME(AGunnerGameState, KillInfos);
 }
 
-FGunnerPlayerKillInfo* AGunnerGameState::GetKillerInfo(AController* Killer)
+FGunnerKillInfo* AGunnerGameState::GetKillerInfo(AController* Killer)
 {
-	return PlayerKills.FindByPredicate([Killer](const FGunnerPlayerKillInfo& Info)
+	return KillInfos.FindByPredicate([Killer](const FGunnerKillInfo& Info)
 	{
-		return Info.PlayerId == Killer->PlayerState->GetPlayerId();
+		return Info.KillerPlayerId == Killer->PlayerState->GetPlayerId();
 	});
 }
 
@@ -28,23 +34,43 @@ void AGunnerGameState::HandleMatchHasEnded()
 	NetMulticastBroadcastWinners(DetermineWinners());
 }
 
+void AGunnerGameState::NetMulticastBroadcastKill_Implementation(const FGunnerKillLog& KillLog)
+{
+	GR_LOG_FN(LogGunner, Verbose, TEXT("[%s]"), *KillLog.ToString());
+	OnNewKillConfirmedDelegate.Broadcast(KillLog);
+}
+
 void AGunnerGameState::NetMulticastBroadcastWinners_Implementation(const TArray<int32>& WinnerIds)
 {
 	OnMatchEndedDelegate.Broadcast(WinnerIds);
-	UGameplayStatics::OpenLevel(GetWorld(), TEXT("/Game/Maps/MainMenu"));
+	FTimerHandle TimerHandle;
+
+	if (HasAuthority())
+	{
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			UGameplayStatics::OpenLevel(GetWorld(), TEXT("/Game/Maps/MainMenu"));
+		}, 5.f * UGameplayStatics::GetGlobalTimeDilation(GetWorld()), false);
+	}
 }
 
-void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim)
+void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
 {
 	check(HasAuthority());
-	if (FGunnerPlayerKillInfo* KillerInfo = GetKillerInfo(Killer))
+	if (FGunnerKillInfo* KillerInfo = GetKillerInfo(Killer))
 	{
 		KillerInfo->Kills++;
 		return;
 	}
 
-	FGunnerPlayerKillInfo NewInfo;
-	NewInfo.PlayerId = Killer->PlayerState->GetPlayerId();
+	FGunnerKillInfo NewInfo;
+	NewInfo.KillerPlayerId = Killer->PlayerState->GetPlayerId();
 	NewInfo.Kills = 1;
-	PlayerKills.Add(NewInfo);
+	KillInfos.Add(NewInfo);
+
+	FGunnerKillLog KillLog;
+	KillLog.KillerPlayerState = Killer->PlayerState;
+	KillLog.VictimPlayerState = Victim->PlayerState;
+	KillLog.KillCauserName = KillCauserName;
+	NetMulticastBroadcastKill(KillLog);
 }

@@ -16,7 +16,7 @@ class AGunnerGameMode : public AGameMode
 
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual void AuthRegisterKill(AController* Killer, AController* Victim);
+	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	virtual bool ReadyToEndMatch_Implementation() override;
 	virtual void HandleMatchHasEnded() override;
 	

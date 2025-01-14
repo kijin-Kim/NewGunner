@@ -10,9 +10,9 @@ AGunnerDeathMatchGameMode::AGunnerDeathMatchGameMode()
 	GameStateClass = AGunnerDeathMatchGameState::StaticClass();
 }
 
-void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AController* Victim)
+void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
 {
-	Super::AuthRegisterKill(Killer, Victim);
+	Super::AuthRegisterKill(Killer, Victim, KillCauserName);
 	AGunnerGameState* GS = GetGameState<AGunnerGameState>();
 	if (GS->GetKillerInfo(Killer)->Kills >= KillLimit)
 	{

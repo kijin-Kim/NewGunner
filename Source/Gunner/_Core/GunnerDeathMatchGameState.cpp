@@ -40,12 +40,12 @@ TArray<int32> AGunnerDeathMatchGameState::DetermineWinners() const
 {
 	int32 MaxKills = 0;
 	int32 WinnerID = 0;
-	for (const FGunnerPlayerKillInfo& Info : PlayerKills)
+	for (const FGunnerKillInfo& Info : KillInfos)
 	{
 		if (Info.Kills > MaxKills)
 		{
 			MaxKills = Info.Kills;
-			WinnerID = Info.PlayerId;
+			WinnerID = Info.KillerPlayerId;
 		}
 	}
 	return {WinnerID};
