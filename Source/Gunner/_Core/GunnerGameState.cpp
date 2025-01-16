@@ -57,6 +57,12 @@ void AGunnerGameState::NetMulticastBroadcastWinners_Implementation(const TArray<
 void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
 {
 	check(HasAuthority());
+	FGunnerKillLog KillLog;
+	KillLog.KillerPlayerState = Killer->PlayerState;
+	KillLog.VictimPlayerState = Victim->PlayerState;
+	KillLog.KillCauserName = KillCauserName;
+	NetMulticastBroadcastKill(KillLog);
+	
 	if (FGunnerKillInfo* KillerInfo = GetKillerInfo(Killer))
 	{
 		KillerInfo->Kills++;
@@ -68,9 +74,5 @@ void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim
 	NewInfo.Kills = 1;
 	KillInfos.Add(NewInfo);
 
-	FGunnerKillLog KillLog;
-	KillLog.KillerPlayerState = Killer->PlayerState;
-	KillLog.VictimPlayerState = Victim->PlayerState;
-	KillLog.KillCauserName = KillCauserName;
-	NetMulticastBroadcastKill(KillLog);
+	
 }
