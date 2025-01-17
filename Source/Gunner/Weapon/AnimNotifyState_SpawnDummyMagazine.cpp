@@ -9,31 +9,17 @@ void UAnimNotifyState_SpawnDummyMagazine::NotifyBegin(USkeletalMeshComponent* Me
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	if (DummyMagazine)
-	{
-		DummyMagazine->Destroy();
-	}
-	
-	FTransform MagazineSocketTransform = MeshComp->GetSocketTransform(TEXT("Magazine_Main"));
+	FTransform MagazineSocketTransform = MeshComp->GetSocketTransform(SocketName);
 	DummyMagazine = MeshComp->GetWorld()->SpawnActor<AStaticMeshActor>(MagazineSocketTransform.GetLocation(), MagazineSocketTransform.GetRotation().Rotator());
+	DummyMagazine->SetOwner(MeshComp->GetOwner());
 	DummyMagazine->SetMobility(EComponentMobility::Type::Movable);
 	DummyMagazine->GetStaticMeshComponent()->SetStaticMesh(StaticMesh);
 	DummyMagazine->GetStaticMeshComponent()->SetMaterial(0, Material);
 	DummyMagazine->GetStaticMeshComponent()->SetSimulatePhysics(true);
 	DummyMagazine->GetStaticMeshComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
 	DummyMagazine->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	DummyMagazine->SetOwner(MeshComp->GetOwner());
 	DummyMagazine->GetStaticMeshComponent()->SetOnlyOwnerSee(MeshComp->bOnlyOwnerSee);
 	DummyMagazine->GetStaticMeshComponent()->SetOwnerNoSee(MeshComp->bOwnerNoSee);
-}
-
-void UAnimNotifyState_SpawnDummyMagazine::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
-{
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-
+	DummyMagazine->SetLifeSpan(2.0f);
 	
-	if (DummyMagazine)
-	{
-		DummyMagazine->Destroy();
-	}
 }

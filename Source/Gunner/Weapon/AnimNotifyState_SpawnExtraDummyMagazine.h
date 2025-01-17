@@ -23,8 +23,13 @@ public:
 	TObjectPtr<UStaticMesh> StaticMesh;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMaterialInterface> Material;
+	UPROPERTY(EditAnywhere)
+	FName SocketName = TEXT("Magazine_Extra");
 
 private:
 	UPROPERTY()
 	TObjectPtr<AStaticMeshActor> ExtraDummyMagazine;
+
+	
+	
 };

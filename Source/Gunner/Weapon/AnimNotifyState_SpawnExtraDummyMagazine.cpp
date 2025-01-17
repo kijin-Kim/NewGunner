@@ -19,7 +19,7 @@ void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponen
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetStaticMesh(StaticMesh);
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetMaterial(0, Material);
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	ExtraDummyMagazine->AttachToComponent(MeshComp, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("Magazine_Extra"));
+	ExtraDummyMagazine->AttachToComponent(MeshComp, FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
 	ExtraDummyMagazine->SetOwner(MeshComp->GetOwner());
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetOnlyOwnerSee(MeshComp->bOnlyOwnerSee);
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetOwnerNoSee(MeshComp->bOwnerNoSee);
