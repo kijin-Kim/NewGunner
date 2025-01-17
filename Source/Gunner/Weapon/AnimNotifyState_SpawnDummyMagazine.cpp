@@ -20,6 +20,14 @@ void UAnimNotifyState_SpawnDummyMagazine::NotifyBegin(USkeletalMeshComponent* Me
 	DummyMagazine->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	DummyMagazine->GetStaticMeshComponent()->SetOnlyOwnerSee(MeshComp->bOnlyOwnerSee);
 	DummyMagazine->GetStaticMeshComponent()->SetOwnerNoSee(MeshComp->bOwnerNoSee);
-	DummyMagazine->SetLifeSpan(2.0f);
-	
+	DummyMagazine->SetLifeSpan(Animation->GetPlayLength());
+}
+
+void UAnimNotifyState_SpawnDummyMagazine::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+{
+	Super::NotifyEnd(MeshComp, Animation);
+	if(DummyMagazine)
+	{
+		DummyMagazine->Destroy();
+	}
 }

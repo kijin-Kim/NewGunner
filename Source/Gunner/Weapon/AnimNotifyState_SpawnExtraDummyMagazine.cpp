@@ -23,6 +23,7 @@ void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponen
 	ExtraDummyMagazine->SetOwner(MeshComp->GetOwner());
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetOnlyOwnerSee(MeshComp->bOnlyOwnerSee);
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetOwnerNoSee(MeshComp->bOwnerNoSee);
+	ExtraDummyMagazine->SetLifeSpan(Animation->GetPlayLength());
 	
 }
 
