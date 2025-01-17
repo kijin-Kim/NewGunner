@@ -82,7 +82,7 @@ void UGunnerActionProperty::Evaluate()
 	if (OldValue != DynamicValue)
 	{
 		GR_LOG_SUB(LogGunnerProperty, Verbose, TEXT("Property [%s] 값 변경 %f -> %f"), *Tag.ToString(), OldValue, DynamicValue);
-		OnGunnerActionPropertyValueChangedDelegate.ExecuteIfBound(OldValue, DynamicValue);
+		OnGunnerActionPropertyValueChangedDelegate.Broadcast(OldValue, DynamicValue);
 	}
 }
 

@@ -5,13 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Gunner/_Core/ReplicatableObject.h"
-#include "Net/Serialization/FastArraySerializer.h"
 #include "UObject/Object.h"
 #include "GunnerActionProperty.generated.h"
 
 
-DECLARE_DELEGATE_TwoParams(FOnGunnerActionPropertyValueChangedSignature, float OldValue, float NewValue);
-DECLARE_DELEGATE_OneParam(FOnGunnerActionPropertyCountChangedSignature, UGunnerActionProperty* NewProperty);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGunnerActionPropertyValueChangedSignature, float, OldValue, float, NewValue);
+
 
 UENUM(BlueprintType)
 enum class EGunnerActionPropertyOperator
@@ -106,13 +105,13 @@ public:
 	void AddStaticOperation(const FGunnerActionPropertyOperation& Operation);
 	void AddDynamicOperation(const FGunnerActionPropertyOperation& Operation);
 	void RemoveOperationByHandle(const FGunnerActionPropertyOperationHandle& OperationHandle);
-	
 
 private:
 	void Evaluate();
 	void EvaluateOperations(const TArray<FGunnerActionPropertyOperation>& PropertyOperations, float& TargetValue);
 
 public:
+	UPROPERTY(BlueprintAssignable)
 	FOnGunnerActionPropertyValueChangedSignature OnGunnerActionPropertyValueChangedDelegate;
 
 private:
@@ -126,6 +125,6 @@ private:
 
 	TArray<FGunnerActionPropertyOperation> StaticOperations;
 	TArray<FGunnerActionPropertyOperation> DynamicOperations;
-	
+
 	bool bIsDirty = false;
 };

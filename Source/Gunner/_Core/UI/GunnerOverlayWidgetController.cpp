@@ -14,12 +14,12 @@ void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerSt
 
 	UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"));
 	check(BulletProperty);
-	BulletProperty->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+	BulletProperty->OnGunnerActionPropertyValueChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
 	OnBulletValueChanged(BulletProperty->GetStaticValue(), BulletProperty->GetDynamicValue());
 
 	UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
 	check(MagazineBulletProperty);
-	MagazineBulletProperty->OnGunnerActionPropertyValueChangedDelegate.BindUObject(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+	MagazineBulletProperty->OnGunnerActionPropertyValueChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
 	OnMagazineBulletValueChanged(MagazineBulletProperty->GetStaticValue(), MagazineBulletProperty->GetDynamicValue());
 }
 

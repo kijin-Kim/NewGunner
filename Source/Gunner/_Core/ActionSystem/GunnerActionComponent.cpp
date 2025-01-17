@@ -771,6 +771,22 @@ void UGunnerActionComponent::RemoveOperationByHandle(FGameplayTag Tag, const FGu
 	}
 }
 
+UGunnerActionProperty* UGunnerActionComponent::GetPropertyFromActor(AActor* Actor, FGameplayTag Tag)
+{
+	if (!Actor)
+	{
+		return nullptr;
+	}
+
+	UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(Actor);
+	if (!ActionComponent)
+	{
+		return nullptr;
+	}
+
+	return ActionComponent->GetProperty(Tag);
+}
+
 float UGunnerActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag)
 {
 	if (!Actor)

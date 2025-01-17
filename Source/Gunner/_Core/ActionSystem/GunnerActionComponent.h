@@ -22,7 +22,6 @@ class UGunnerActionProperty;
 class UGunnerActionSideEffect;
 
 
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUNNER_API UGunnerActionComponent : public UActorComponent
 {
@@ -95,6 +94,7 @@ public:
 	void AuthAddProperty(FGameplayTag Tag, float Value);
 	void AuthRemoveProperty(FGameplayTag Tag);
 	void AuthRemoveAllProperties();
+	UFUNCTION(BlueprintCallable)
 	UGunnerActionProperty* GetProperty(FGameplayTag Tag);
 
 	void AddStaticOperation(FGameplayTag Tag, FGunnerActionPropertyOperation Operation);
@@ -102,10 +102,9 @@ public:
 	void RemoveOperationByHandle(FGameplayTag Tag, const FGunnerActionPropertyOperationHandle& OperationHandle);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static UGunnerActionProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
-	
-
-
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
@@ -166,8 +165,6 @@ private:
 
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UGunnerActionProperty>> Properties;
-
-
 
 
 	struct FNetSyncPointDelegate
