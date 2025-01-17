@@ -19,5 +19,4 @@ public:
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	virtual bool ReadyToEndMatch_Implementation() override;
 	virtual void HandleMatchHasEnded() override;
-	
 };

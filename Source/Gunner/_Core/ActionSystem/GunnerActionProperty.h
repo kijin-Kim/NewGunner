@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGunnerActionPropertyValueChanged
 
 
 UENUM(BlueprintType)
-enum class EGunnerActionPropertyOperator
+enum class EGunnerActionPropertyOperator : uint8
 {
 	Add,
 	Subtract,
@@ -23,7 +23,7 @@ enum class EGunnerActionPropertyOperator
 };
 
 UENUM(BlueprintType)
-enum class EGunnerActionPropertyCalculationType
+enum class EGunnerActionPropertyCalculationType : uint8
 {
 	None,
 	Direct,

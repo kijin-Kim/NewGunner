@@ -7,6 +7,7 @@
 #include "TraceHitMessageData.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "Gunner/_Core/GunnerGameMode.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
@@ -146,7 +147,7 @@ void UEquipmentTraceHitComponent::AuthApplyDamage(AActor* HitActor, FName BoneNa
 		HitMessageData->HitEquipment = EquipmentOwner;
 		HitMessageData->DamageAmount = DamageAmount;
 		HitScanMessage.EventDataObject = HitMessageData;
-
+		
 		EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
 	}
 }

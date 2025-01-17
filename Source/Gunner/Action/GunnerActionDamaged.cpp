@@ -56,6 +56,23 @@ EGunnerHitBoneType UGunnerActionDamaged::GetHitBoneType(FName HitBoneName) const
 	return EGunnerHitBoneType::Body;
 }
 
+FString UGunnerActionDamaged::GetHitBoneTypeAsString(FName HitBoneName) const
+{
+	EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
+	switch (HitBoneType)
+	{
+	case EGunnerHitBoneType::Head:
+		return TEXT("Head");
+	case EGunnerHitBoneType::Body:
+		return TEXT("Body");
+	case EGunnerHitBoneType::Leg:
+		return TEXT("Leg");
+	default:
+		return TEXT("None");
+	}
+	checkNoEntry();
+}
+
 UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) const
 {
 	const EGunnerHitDirectionType HitDirectionType = GetHitDirectionType();

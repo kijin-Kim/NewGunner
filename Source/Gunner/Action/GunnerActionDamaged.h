@@ -10,7 +10,7 @@
 class UGunnerHitMessageData;
 
 UENUM(BlueprintType)
-enum class EGunnerHitDirectionType
+enum class EGunnerHitDirectionType : uint8
 {
 	Front,
 	Back,
@@ -19,11 +19,11 @@ enum class EGunnerHitDirectionType
 };
 
 UENUM(BlueprintType)
-enum class EGunnerHitBoneType
+enum class EGunnerHitBoneType : uint8
 {
-	Head,
-	Body,
-	Leg,
+	Head UMETA(DisplayName = "Head"),
+	Body UMETA(DisplayName = "Body"),
+	Leg UMETA(DisplayName = "Leg"),
 };
 
 USTRUCT(BlueprintType)
@@ -66,6 +66,8 @@ public:
 	EGunnerHitDirectionType GetHitDirectionType() const;
 	UFUNCTION(BlueprintCallable)
 	EGunnerHitBoneType GetHitBoneType(FName HitBoneName) const;
+	UFUNCTION(BlueprintCallable)
+	FString GetHitBoneTypeAsString(FName HitBoneName) const;
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetDesiredHitMontage(FName HitBoneName) const;
 	UFUNCTION(BlueprintCallable)
