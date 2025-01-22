@@ -85,7 +85,7 @@ void UEquipmentTraceHitComponent::ServerRequestHitScanConfirm_Implementation(con
 			LagCompensationTargetCharacters.AddUnique(Character);
 		}
 	}
-
+ 
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
 		ULagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompensationComponent>();
