@@ -29,6 +29,11 @@ AGunnerEquipment::AGunnerEquipment()
 
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+}
+
+void AGunnerEquipment::BeginPlay()
+{
+	Super::BeginPlay();
 	SetMeshVisibility(false);
 }
 

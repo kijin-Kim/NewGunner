@@ -32,6 +32,7 @@ class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlay
 
 public:
 	AGunnerEquipment();
+	virtual void BeginPlay() override;
 	void AttachEquipmentToOwner();
 
 	void OnAuthAcquired();
