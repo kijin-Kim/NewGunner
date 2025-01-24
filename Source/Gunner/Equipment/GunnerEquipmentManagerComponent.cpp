@@ -220,7 +220,12 @@ void UGunnerEquipmentManagerComponent::OnRep_CurrentEquippedEquipment(AGunnerEqu
 			Slot.SlottedEquipment->SetMeshVisibility(false);
 		}
 	}
-	
+
+	if (OldEquippedEquipment)
+	{
+		OldEquippedEquipment->OnUnequipped();
+	}
+
 	if (CurrentEquippedEquipment)
 	{
 		CurrentEquippedEquipment->OnEquipped();

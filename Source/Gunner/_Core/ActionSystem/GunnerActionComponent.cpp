@@ -133,15 +133,18 @@ FGunnerActionDefinitionHandle UGunnerActionComponent::AuthAddAction(const FGunne
 void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandle& ActionDefinitionHandle)
 {
 	check(GetOwner()->HasAuthority());
-	if (ActionScopeLockCount > 0)
-	{
-		ActionPendingRemoves.Add(ActionDefinitionHandle);
-		return;
-	}
+	
 
 	FGunnerActionDefinition* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
 	if (!ActionDefinition)
 	{
+		return;
+	}
+	GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 제거"), *ActionDefinition->ActionInstance->GetName());
+	
+	if (ActionScopeLockCount > 0)
+	{
+		ActionPendingRemoves.Add(ActionDefinitionHandle);
 		return;
 	}
 
@@ -155,12 +158,12 @@ void UGunnerActionComponent::AuthRemoveAction(const FGunnerActionDefinitionHandl
 void UGunnerActionComponent::AuthRemoveAllActions()
 {
 	check(GetOwner()->HasAuthority());
-
 	ACTION_LIST_SCOPE_LOCK();
 	for (const auto& ActionDefinition : ActionDefinitions.Items)
 	{
 		ActionDefinition.ActionInstance->EndAction();
 		HandleTriggerableActionOnRemoved(ActionDefinition);
+		GR_LOG_SUB(LogGunnerAction, Verbose, TEXT("Action [%s] 제거"), *ActionDefinition.ActionInstance->GetName());
 	}
 	ActionDefinitions.AuthRemoveAll();
 }
