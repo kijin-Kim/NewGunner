@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Gunner/_Core/ReplicatableObject.h"
 #include "UObject/Object.h"
 #include "GunnerActionProperty.generated.h"
 
@@ -83,11 +82,12 @@ public:
  */
 
 UCLASS(BlueprintType)
-class GUNNER_API UGunnerActionProperty : public UReplicatableObject
+class GUNNER_API UGunnerActionProperty : public UObject
 {
 	GENERATED_BODY()
 
 public:
+	virtual bool IsSupportedForNetworking() const override { return true; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool operator==(const UGunnerActionProperty* Other) const { return Tag == Other->Tag; }
 	bool operator!=(const UGunnerActionProperty* Other) const { return !(*this == Other); }

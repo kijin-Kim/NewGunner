@@ -42,7 +42,7 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 	TestThirdPersonMeshComponent = Cast<USkeletalMeshComponent>(AddComponentByClass(USkeletalMeshComponent::StaticClass(), true, FTransform::Identity, true));
 	TestThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
 	TestThirdPersonMeshComponent->SetAnimInstanceClass(FirstPersonMeshComponent->GetAnimClass());
-	TestThirdPersonMeshComponent->SetSkeletalMesh(FirstPersonMeshComponent->SkeletalMesh);
+	TestThirdPersonMeshComponent->SetSkeletalMesh(FirstPersonMeshComponent->GetSkeletalMeshAsset());
 	TestThirdPersonMeshComponent->bOwnerNoSee = true;
 
 	TArray<UMaterialInterface*> Materials = FirstPersonMeshComponent->GetMaterials();
