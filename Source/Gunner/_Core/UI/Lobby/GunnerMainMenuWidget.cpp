@@ -53,7 +53,8 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 			0,
 			Session->SessionSettings.NumPublicConnections,
 			0,
-			Session->GetSessionIdStr()
+			Session->GetSessionIdStr(),
+			GetParticipants(Session)
 		};
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
 		return;
@@ -82,7 +83,6 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			SearchResult.Session.SessionSettings.Get(TEXT("MAP_NAME"), MapName);
 			RoomName = DecodeString(RoomName);
 			MapName = DecodeString(MapName);
-
 
 			FRoomInfo NewRoomInfo{
 				RoomName,
@@ -117,7 +117,7 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 		FRoomInfo RoomInfo;
 		FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
 		check(Session);
-		FString RoomName; 
+		FString RoomName;
 		FString MapName;
 
 		Session->SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
@@ -158,6 +158,8 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 		SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineComparisonOp::Equals);
 	}
 
+	SessionSearch->QuerySettings.Set(FName(TEXT("HI_FELLOW_DEVS")), FString("TESTING"), EOnlineComparisonOp::Equals);
+
 	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
@@ -167,6 +169,15 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 		OnFindSessionsComplete(false);
 	}
 }
+
+void UGunnerMainMenuWidget::LeaveSession()
+{
+	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
+	{
+		SessionInterfacePtr->DestroySession(NAME_GameSession);
+	}
+}
+
 
 bool UGunnerMainMenuWidget::IsLocalPlayerHost() const
 {
@@ -213,10 +224,6 @@ TArray<FString> UGunnerMainMenuWidget::GetParticipants(FNamedOnlineSession* Sess
 	return Participants;
 }
 
-FString UGunnerMainMenuWidget::EncodeString(const FString& TargetString) const
-{
-	return std::string(TCHAR_TO_UTF8(*TargetString)).c_str();
-}
 
 FString UGunnerMainMenuWidget::DecodeString(const FString& TargetString) const
 {
@@ -244,10 +251,7 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 
 	check(!MapName.IsEmpty());
 
-	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
-	{
-		SessionInterfacePtr->DestroySession(NAME_GameSession);
-	}
+	LeaveSession();
 	OnCreateSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnCreateSessionComplete));
 
 	FOnlineSessionSettings SessionSettings;
@@ -260,6 +264,7 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 
 	SessionSettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
 	SessionSettings.Set(FName(TEXT("MAP_NAME")), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(FName(TEXT("HI_FELLOW_DEVS")), FString("TESTING"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 
 	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, SessionSettings))
@@ -271,11 +276,7 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 
 void UGunnerMainMenuWidget::OnShutdownButtonClicked()
 {
-	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
-	{
-		SessionInterfacePtr->DestroySession(NAME_GameSession);
-	}
-
+	LeaveSession();
 	UKismetSystemLibrary::QuitGame(GetWorld(), GetOwningPlayer(), EQuitPreference::Quit, false);
 }
 
@@ -297,6 +298,7 @@ bool UGunnerMainMenuWidget::CanStartGame() const
 
 void UGunnerMainMenuWidget::JoinSession(FString SessionId)
 {
+	LeaveSession();
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnJoinSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnJoinSessionComplete));
 	FOnlineSessionSearchResult* SearchResultPtr = SessionSearch->SearchResults.FindByPredicate([&SessionId](const FOnlineSessionSearchResult& SearchResult)

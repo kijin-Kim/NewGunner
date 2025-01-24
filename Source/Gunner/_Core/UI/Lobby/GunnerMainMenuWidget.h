@@ -81,14 +81,16 @@ private:
 	void JoinSession(FString SessionId);
 	UFUNCTION(BlueprintCallable)
 	void FindSession(FString RoomName);
+	UFUNCTION(BlueprintCallable)
+	void LeaveSession();
+
+	
 
 	UFUNCTION(BlueprintCallable)
 	bool IsLocalPlayerHost() const;
 	
 	FString GetPlayerNickname(const FUniqueNetId& UserId) const;
 	TArray<FString> GetParticipants(FNamedOnlineSession* Session) const;
-
-	FString EncodeString(const FString& TargetString) const;
 	FString DecodeString(const FString& TargetString) const;
 
 
