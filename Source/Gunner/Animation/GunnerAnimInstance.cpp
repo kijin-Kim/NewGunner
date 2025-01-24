@@ -3,6 +3,8 @@
 
 #include "GunnerAnimInstance.h"
 
+#include "GunnerLocomotionAnimSet.h"
+
 void UGunnerAnimInstance::SetLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet)
 {
 	LocomotionAnimSet = InLocomotionAnimSet;

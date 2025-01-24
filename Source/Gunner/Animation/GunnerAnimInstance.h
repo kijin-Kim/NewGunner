@@ -18,6 +18,7 @@ class GUNNER_API UGunnerAnimInstance : public UAnimInstance
 public:
 	void SetLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
 	void ClearLocomotionAnimSet();
+	UGunnerLocomotionAnimSet* GetLocomotionAnimSet() const { return LocomotionAnimSet; }
 	
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

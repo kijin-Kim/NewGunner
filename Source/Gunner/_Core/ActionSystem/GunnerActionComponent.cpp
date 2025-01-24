@@ -102,7 +102,10 @@ void UGunnerActionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	for (UGunnerActionProperty* Property : Properties)
 	{
-		Property->Tick();
+		if (Property)
+		{
+			Property->Tick();
+		}
 	}
 	SideEffectDefinitions.Tick(DeltaTime);
 }

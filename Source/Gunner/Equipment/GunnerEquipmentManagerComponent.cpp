@@ -80,6 +80,7 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlotByClass(TSubclassOf
 	}
 
 	SlotPtr->SlottedEquipment = NewEquipment;
+	SlotPtr->SlottedEquipment->SetMeshVisibility(false);
 }
 
 void UGunnerEquipmentManagerComponent::AuthAddEquipment(AGunnerEquipment* NewEquipment)
@@ -212,15 +213,29 @@ void UGunnerEquipmentManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AH
 
 void UGunnerEquipmentManagerComponent::OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment)
 {
-	if (OldEquippedEquipment)
+	for (const FEquipmentSlot& Slot : EquipmentSlots)
 	{
-		OldEquippedEquipment->OnUnequipped();
+		if (Slot.SlottedEquipment && (Slot.SlottedEquipment != CurrentEquippedEquipment))
+		{
+			Slot.SlottedEquipment->SetMeshVisibility(false);
+		}
 	}
-
+	
 	if (CurrentEquippedEquipment)
 	{
 		CurrentEquippedEquipment->OnEquipped();
 	}
 
 	OnEquippedEquipmentChangedDelegate.Broadcast(CurrentEquippedEquipment, OldEquippedEquipment);
+}
+
+void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots()
+{
+	for (const FEquipmentSlot& Slot : EquipmentSlots)
+	{
+		if (Slot.SlottedEquipment && (Slot.SlottedEquipment != CurrentEquippedEquipment))
+		{
+			Slot.SlottedEquipment->SetMeshVisibility(false);
+		}
+	}
 }

@@ -58,15 +58,17 @@ public:
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-
+	
 	UFUNCTION()
 	void OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment);
+	UFUNCTION()
+	void OnRep_EquipmentSlots();
 
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquippedEquipment)
 	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
-	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<FEquipmentSlot> EquipmentSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

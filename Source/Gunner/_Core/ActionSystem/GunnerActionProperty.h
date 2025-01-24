@@ -110,6 +110,9 @@ private:
 	void Evaluate();
 	void EvaluateOperations(const TArray<FGunnerActionPropertyOperation>& PropertyOperations, float& TargetValue);
 
+	UFUNCTION()
+	void OnRep_DynamicValue(float OldValue);
+
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerActionPropertyValueChangedSignature OnGunnerActionPropertyValueChangedDelegate;
@@ -120,7 +123,7 @@ private:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float StaticValue;
-	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(ReplicatedUsing=OnRep_DynamicValue, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float DynamicValue;
 
 	TArray<FGunnerActionPropertyOperation> StaticOperations;

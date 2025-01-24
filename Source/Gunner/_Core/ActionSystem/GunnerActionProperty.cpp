@@ -136,3 +136,8 @@ void UGunnerActionProperty::EvaluateOperations(const TArray<FGunnerActionPropert
 		TargetValue = ((StaticValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
 	}
 }
+
+void UGunnerActionProperty::OnRep_DynamicValue(float OldValue)
+{
+	OnGunnerActionPropertyValueChangedDelegate.Broadcast(OldValue, DynamicValue);
+}

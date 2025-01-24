@@ -39,8 +39,10 @@ public:
 	void OnAuthLost();
 	void OnEquipped();
 	void OnUnequipped();
+	void SetMeshVisibility(bool bVisible);
 
 	virtual void OnRep_Owner() override;
+	
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer();
@@ -58,7 +60,7 @@ private:
 	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
-	void SetMeshVisibility(bool bVisible);
+	
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -97,6 +99,5 @@ private:
 	FName EquipmentName;
 	
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> TestThirdPersonMeshComponent;
+	
 };

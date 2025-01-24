@@ -9,8 +9,6 @@
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 
-#define TEST 1
-
 
 // Sets default values
 AGunnerEquipment::AGunnerEquipment()
@@ -23,14 +21,7 @@ AGunnerEquipment::AGunnerEquipment()
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
-	FirstPersonMeshComponent->SetCastShadow(false);
-
-
-#if TEST == 0
-	ThirdPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonMesh"));
-	ThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
-	ThirdPersonMeshComponent->bOwnerNoSee = true;
-#endif
+	FirstPersonMeshComponent->CastShadow = false;
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 }
@@ -38,23 +29,29 @@ AGunnerEquipment::AGunnerEquipment()
 void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-#if TEST
-	TestThirdPersonMeshComponent = Cast<USkeletalMeshComponent>(AddComponentByClass(USkeletalMeshComponent::StaticClass(), true, FTransform::Identity, true));
-	TestThirdPersonMeshComponent->SetupAttachment(GetRootComponent());
-	TestThirdPersonMeshComponent->SetAnimInstanceClass(FirstPersonMeshComponent->GetAnimClass());
-	TestThirdPersonMeshComponent->SetSkeletalMesh(FirstPersonMeshComponent->GetSkeletalMeshAsset());
-	TestThirdPersonMeshComponent->bOwnerNoSee = true;
 
-	TArray<UMaterialInterface*> Materials = FirstPersonMeshComponent->GetMaterials();
-	for (int i = 0; i < Materials.Num(); ++i)
+	ThirdPersonMeshComponent = DuplicateObject(FirstPersonMeshComponent, this);
+	ThirdPersonMeshComponent->Rename(TEXT("ThirdPersonMeshComponent"), this);
+	ThirdPersonMeshComponent->bOnlyOwnerSee = false;
+	ThirdPersonMeshComponent->CastShadow = true;
+	ThirdPersonMeshComponent->bOwnerNoSee = true;
+	ThirdPersonMeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+	ThirdPersonMeshComponent->RegisterComponent();
+
+	TArray<USceneComponent*> FPChildren;
+	FirstPersonMeshComponent->GetChildrenComponents(true, FPChildren);
+	for (USceneComponent* Child : FPChildren)
 	{
-		TestThirdPersonMeshComponent->SetMaterial(i, Materials[i]);
+		if (Child->IsA<UPrimitiveComponent>())
+		{
+			UPrimitiveComponent* NewChild = Cast<UPrimitiveComponent>(DuplicateObject(Child, this));
+			NewChild->bOnlyOwnerSee = false;
+			NewChild->CastShadow = true;
+			NewChild->bOwnerNoSee = true;
+			NewChild->AttachToComponent(ThirdPersonMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, Child->GetAttachSocketName());
+			NewChild->RegisterComponent();
+		}
 	}
-
-	TestThirdPersonMeshComponent->RegisterComponent();
-#endif
-
-	SetMeshVisibility(false);
 }
 
 void AGunnerEquipment::AttachEquipmentToOwner()
@@ -67,11 +64,7 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 
 		AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("CameraSocket"));
 		FirstPersonMeshComponent->AttachToComponent(OwnerFPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
-#if TEST
-		TestThirdPersonMeshComponent->AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
-#else
 		ThirdPersonMeshComponent->AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
-#endif
 	}
 }
 
@@ -99,8 +92,8 @@ void AGunnerEquipment::OnAuthLost()
 void AGunnerEquipment::OnEquipped()
 {
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
-	AActor* ActorOwner = GetOwner();
 	SetMeshVisibility(true);
+	AActor* ActorOwner = GetOwner();
 	if (ActorOwner && ActorOwner->HasAuthority())
 	{
 		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
@@ -145,6 +138,13 @@ void AGunnerEquipment::OnUnequipped()
 	}
 }
 
+void AGunnerEquipment::SetMeshVisibility(bool bVisible)
+{
+	FirstPersonMeshComponent->SetVisibility(bVisible, true);
+	ThirdPersonMeshComponent->SetVisibility(bVisible, true);
+}
+
+
 void AGunnerEquipment::OnRep_Owner()
 {
 	Super::OnRep_Owner();
@@ -164,11 +164,7 @@ USkeletalMeshComponent* AGunnerEquipment::GetFirstPersonMeshComponent_Implementa
 
 USkeletalMeshComponent* AGunnerEquipment::GetThirdPersonMeshComponent_Implementation() const
 {
-#if TEST
-	return TestThirdPersonMeshComponent;
-#else
 	return ThirdPersonMeshComponent;
-#endif
 }
 
 void AGunnerEquipment::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -242,19 +238,10 @@ void AGunnerEquipment::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLoc
 		{
 			AnimInstance->SetLocomotionAnimSet(InLocomotionAnimSet);
 		}
-		else
+		else if(AnimInstance->GetLocomotionAnimSet() == LocomotionAnimSet)
 		{
 			AnimInstance->ClearLocomotionAnimSet();
 		}
 	}
 }
 
-void AGunnerEquipment::SetMeshVisibility(bool bVisible)
-{
-	FirstPersonMeshComponent->SetVisibility(bVisible, true);
-#if TEST
-	TestThirdPersonMeshComponent->SetVisibility(bVisible, true);
-#else
-	ThirdPersonMeshComponent->SetVisibility(bVisible, true);
-#endif
-}
