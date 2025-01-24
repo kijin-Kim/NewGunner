@@ -19,7 +19,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	FName MagazineSocketName = TEXT("Magazine_Main");
+	FName MagazineSocketName = TEXT("Magazine");
 
 private:
 	UPROPERTY()

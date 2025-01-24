@@ -22,11 +22,7 @@ public:
 	
 public:
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UStaticMesh> StaticMesh;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterialInterface> Material;
-	UPROPERTY(EditAnywhere)
-	FName SocketName = TEXT("Magazine_Main");
+	FName SocketName = TEXT("Magazine");
 	
 private:
 	UPROPERTY()
