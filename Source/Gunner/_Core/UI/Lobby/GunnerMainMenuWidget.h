@@ -90,8 +90,7 @@ private:
 
 	FString EncodeString(const FString& TargetString) const;
 	FString DecodeString(const FString& TargetString) const;
-	
-	FString GetSessionSettingString(const FOnlineSession* Session, const FString& Key) const;
+
 
 	
 

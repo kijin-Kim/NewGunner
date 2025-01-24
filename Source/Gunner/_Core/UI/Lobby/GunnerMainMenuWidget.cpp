@@ -40,8 +40,11 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 	{
 		FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(SessionName);
 		check(Session);
-		FString RoomName = GetSessionSettingString(Session, TEXT("ROOM_NAME"));
-		FString MapName = GetSessionSettingString(Session, TEXT("MAP_NAME"));
+
+		FString RoomName;
+		FString MapName;
+		Session->SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
+		Session->SessionSettings.Get(TEXT("MAP_NAME"), MapName);
 
 		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%s], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
 		FRoomInfo RoomInfo{
@@ -73,8 +76,14 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 				continue;
 			}
 
-			FString RoomName = GetSessionSettingString(&SearchResult.Session, TEXT("ROOM_NAME"));
-			FString MapName = GetSessionSettingString(&SearchResult.Session, TEXT("MAP_NAME"));
+			FString RoomName;
+			FString MapName;
+			SearchResult.Session.SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
+			SearchResult.Session.SessionSettings.Get(TEXT("MAP_NAME"), MapName);
+			RoomName = DecodeString(RoomName);
+			MapName = DecodeString(MapName);
+
+
 			FRoomInfo NewRoomInfo{
 				RoomName,
 				MapName,
@@ -108,8 +117,13 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 		FRoomInfo RoomInfo;
 		FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
 		check(Session);
-		FString RoomName = GetSessionSettingString(Session, TEXT("ROOM_NAME"));
-		FString MapName = GetSessionSettingString(Session, TEXT("MAP_NAME"));
+		FString RoomName; 
+		FString MapName;
+
+		Session->SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
+		Session->SessionSettings.Get(TEXT("MAP_NAME"), MapName);
+		RoomInfo.RoomName = DecodeString(RoomName);
+		RoomInfo.MapName = DecodeString(MapName);
 
 
 		RoomInfo.PlayerCount = Session->RegisteredPlayers.Num();
@@ -141,7 +155,7 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	if (!RoomName.IsEmpty())
 	{
-		SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), EncodeString(RoomName), EOnlineComparisonOp::Equals);
+		SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineComparisonOp::Equals);
 	}
 
 	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
@@ -219,12 +233,6 @@ FString UGunnerMainMenuWidget::DecodeString(const FString& TargetString) const
 	return RestoredString;
 }
 
-FString UGunnerMainMenuWidget::GetSessionSettingString(const FOnlineSession* Session, const FString& Key) const
-{
-	FString Value;
-	Session->SessionSettings.Get(FName(*Key), Value);
-	return DecodeString(Value);
-}
 
 void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapName)
 {
@@ -250,8 +258,8 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 	SessionSettings.NumPublicConnections = 2;
 	SessionSettings.BuildUniqueId = 1;
 
-	SessionSettings.Set(FName(TEXT("ROOM_NAME")), EncodeString(RoomName), EOnlineDataAdvertisementType::ViaOnlineService);
-	SessionSettings.Set(FName(TEXT("MAP_NAME")), EncodeString(MapName), EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(FName(TEXT("MAP_NAME")), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
 
 
 	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, SessionSettings))
