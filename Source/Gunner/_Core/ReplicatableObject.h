@@ -14,6 +14,7 @@ class GUNNER_API UReplicatableObject : public UObject
 {
 	GENERATED_BODY()
 
+public:
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	 
 };

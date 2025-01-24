@@ -11,6 +11,8 @@
 #include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
+#include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
+
 
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Gunner/_Core/Input/GunnerEventMessage.h"
@@ -414,18 +416,20 @@ void UGunnerActionComponent::TriggerSideEffectByDefinition(const FGunnerActionSi
 	}
 }
 
-void UGunnerActionComponent::BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+void UGunnerActionComponent::BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData)
 {
 	check(Action);
+	auto Temp = UGunnerBlueprintFunctionLibrary::MakeHitTargetData(Action->GetOwnerActor(), {});
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
 	check(ActorOwner);
 	if (UGunnerActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
 	{
-		ActionComponent->Signal(Action, SignClass, SignalDataObject);
+		ActionComponent->Signal(Action, SignClass, TargetData);
 	}
 }
 
-void UGunnerActionComponent::Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+void UGunnerActionComponent::Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData)
+
 {
 	if (!SignClass || !Action)
 	{
@@ -434,33 +438,41 @@ void UGunnerActionComponent::Signal(UGunnerAction* Action, TSubclassOf<UGunnerAc
 
 	if (GetOwner()->HasAuthority())
 	{
-		NetMulticastSignal(SignClass, SignalDataObject, CurrentNetPredictionHandle);
+		NetMulticastSignal(SignClass, CurrentNetPredictionHandle, TargetData);
 		return;
 	}
 
 	if (Action->GetActionNetMethod() != EGunnerActionNetMethod::ServerAuthoritative)
 	{
-		InternalSignal(SignClass, SignalDataObject);
+		InternalSignal(SignClass, TargetData);
 	}
 }
 
-void UGunnerActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject, FGunnerActionNetPredictionHandle PredictionHandle)
+void UGunnerActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UGunnerActionSign> SignClass, FGunnerActionNetPredictionHandle PredictionHandle, FGunnerTargetDataHandle TargetData)
 {
 	if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionHandle.IsValid()))
 	{
-		InternalSignal(SignClass, SignalDataObject);
+		InternalSignal(SignClass, TargetData);
 	}
 }
 
-void UGunnerActionComponent::InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject)
+
+void UGunnerActionComponent::InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData)
 {
+	if (!SignClass)
+	{
+		return;
+	}
+
 	UGunnerActionSign* Sign = SignClass.GetDefaultObject();
 	GR_LOG_SUB(LogGunnerSignal, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
 	check(Sign);
-	Sign->SetSignalDataObject(SignalDataObject);
+
+	Sign->SetSignalTargetData(TargetData);
 	Sign->OnSignaled();
-	Sign->SetSignalDataObject(nullptr);
+	Sign->SetSignalTargetData(FGunnerTargetDataHandle());
 }
+
 
 void UGunnerActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {

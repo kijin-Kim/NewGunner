@@ -81,11 +81,11 @@ public:
 	void TriggerSideEffectByDefinition(const FGunnerActionSideEffectDefinition& SideEffectDefinition, UGunnerAction* Action);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Signal"))
-	static void BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
-	void Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
+	static void BP_Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData);
+	void Signal(UGunnerAction* Action, TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject, FGunnerActionNetPredictionHandle PredictionHandle);
-	void InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, UObject* SignalDataObject);
+	void NetMulticastSignal(TSubclassOf<UGunnerActionSign> SignClass, FGunnerActionNetPredictionHandle PredictionHandle, FGunnerTargetDataHandle TargetData);
+	void InternalSignal(TSubclassOf<UGunnerActionSign> SignClass, FGunnerTargetDataHandle TargetData);
 
 	TWeakPtr<FGunnerActionAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	FGunnerActionNetPredictionHandleArray& GetNetPredictionHandles() { return NetPredictionHandles; }

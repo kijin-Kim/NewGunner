@@ -47,7 +47,7 @@ void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
 void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UGunnerEquipmentManagerComponent, NewEquipmentSlots);
+	DOREPLIFETIME(UGunnerEquipmentManagerComponent, EquipmentSlots);
 	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, CurrentEquippedEquipment, COND_None, REPNOTIFY_Always);
 }
 
@@ -64,7 +64,7 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlotByClass(TSubclassOf
 	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentClass, SpawnParams);
 	NewEquipment->OnAuthAcquired();
 
-	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentClass](const FEquipmentSlot& Slot)
+	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([EquipmentClass](const FEquipmentSlot& Slot)
 	{
 		return Slot.DesiredEquipmentType == EquipmentClass.GetDefaultObject()->GetEquipmentType();
 	});
@@ -91,7 +91,7 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipment(AGunnerEquipment* NewEqu
 	NewEquipment->SetOwner(GetOwner());
 	NewEquipment->OnAuthAcquired();
 
-	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([Equipment = NewEquipment](const FEquipmentSlot& Slot)
+	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([Equipment = NewEquipment](const FEquipmentSlot& Slot)
 	{
 		return Slot.DesiredEquipmentType == Equipment->GetEquipmentType();
 	});
@@ -112,14 +112,14 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipment(AGunnerEquipment* NewEqu
 
 void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
 {
-	for (FEquipmentSlot& Slot : NewEquipmentSlots)
+	for (FEquipmentSlot& Slot : EquipmentSlots)
 	{
 		if (Slot.SlottedEquipment)
 		{
 			Slot.SlottedEquipment->Destroy();
 		}
 	}
-	NewEquipmentSlots.Empty();
+	EquipmentSlots.Empty();
 }
 
 AGunnerEquipment* UGunnerEquipmentManagerComponent::DropCurrentEquipment()
@@ -127,7 +127,7 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::DropCurrentEquipment()
 	AGunnerEquipment* LastEquipment = nullptr;
 	if (CurrentEquippedEquipment)
 	{
-		FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([Equipment = CurrentEquippedEquipment.Get()](const FEquipmentSlot& Slot)
+		FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([Equipment = CurrentEquippedEquipment.Get()](const FEquipmentSlot& Slot)
 		{
 			return Slot.SlottedEquipment == Equipment;
 		});
@@ -150,7 +150,7 @@ AGunnerEquipment* UGunnerEquipmentManagerComponent::GetCurrentEquippedEquipment(
 
 void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByEquipmentType(EEquipmentType EquipmentType)
 {
-	FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
+	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
 	{
 		return Slot.DesiredEquipmentType == EquipmentType;
 	});
@@ -165,7 +165,7 @@ void UGunnerEquipmentManagerComponent::SetCurrentEquipmentByEquipmentType(EEquip
 
 AGunnerEquipment* UGunnerEquipmentManagerComponent::GetEquipmentByEquipmentType(EEquipmentType EquipmentType) const
 {
-	const FEquipmentSlot* SlotPtr = NewEquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
+	const FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([EquipmentType](const FEquipmentSlot& Slot)
 	{
 		return Slot.DesiredEquipmentType == EquipmentType;
 	});
@@ -212,11 +212,6 @@ void UGunnerEquipmentManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AH
 
 void UGunnerEquipmentManagerComponent::OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment)
 {
-	if(CurrentEquippedEquipment == OldEquippedEquipment)
-	{
-		return;
-	}
-	
 	if (OldEquippedEquipment)
 	{
 		OldEquippedEquipment->OnUnequipped();

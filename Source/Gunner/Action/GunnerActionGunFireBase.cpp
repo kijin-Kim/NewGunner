@@ -3,6 +3,15 @@
 
 #include "GunnerActionGunFireBase.h"
 
+#include "Net/UnrealNetwork.h"
+
+
+void UHitScanSignDataObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UHitScanSignDataObject, AgentActor);
+	DOREPLIFETIME(UHitScanSignDataObject, LocalHitResult);
+}
 
 UHitScanSignDataObject* UGunnerActionGunFireBase::MakeHitScanSignDataObject(AActor* AgentActor, const TArray<FHitResult>& HitResults)
 {

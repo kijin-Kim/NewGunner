@@ -15,9 +15,12 @@ class UHitScanSignDataObject : public UReplicatableObject
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadOnly)
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	AActor* AgentActor;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<FHitResult> LocalHitResult;
 };
 

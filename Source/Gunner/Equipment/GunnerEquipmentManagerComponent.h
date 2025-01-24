@@ -67,7 +67,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquippedEquipment)
 	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
 	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<FEquipmentSlot> NewEquipmentSlots;
+	TArray<FEquipmentSlot> EquipmentSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<AGunnerEquipment>> InitialEquipmentClasses;

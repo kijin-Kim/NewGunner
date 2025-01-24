@@ -32,7 +32,7 @@ class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlay
 
 public:
 	AGunnerEquipment();
-	virtual void BeginPlay() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 	void AttachEquipmentToOwner();
 
 	void OnAuthAcquired();
@@ -58,7 +58,6 @@ private:
 	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
-
 	void SetMeshVisibility(bool bVisible);
 
 private:
@@ -96,4 +95,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FName EquipmentName;
+	
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> TestThirdPersonMeshComponent;
 };
