@@ -10,11 +10,11 @@ public class Gunner : ModuleRules
 		
 		if(Target.bBuildEditor)
 		{
-			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GameplayTags", "UnrealPSKPSA", "OnlineSubsystem", "OnlineSubsystemSteam", "Niagara" });
+			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GameplayTags", "UnrealPSKPSA", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull","Niagara" });
 		}
 		else
 		{
-			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG","Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam" });
+			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG","Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull" });
 		}
 		PrivateDependencyModuleNames.AddRange(new string[] { "NetCore" });
 	}

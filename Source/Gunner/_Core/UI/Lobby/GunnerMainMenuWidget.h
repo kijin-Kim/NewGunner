@@ -47,6 +47,7 @@ struct FRoomInfo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionFindCompletedSignature, const TArray<FRoomInfo>&, RoomInfos);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJoinSessionLobbySucceededSignature, const FRoomInfo&, RoomInfo);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJoinedSessionParticipantsChangedSignature, const TArray<FString>&, Participants);
 
 /**
@@ -58,14 +59,17 @@ class GUNNER_API UGunnerMainMenuWidget : public UGunnerUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void NativeConstruct() override;
+	UGunnerMainMenuWidget();
 
 private:
-	void OnParticipantsChanged(FName SessionName, const FUniqueNetId& UniqueNetId, bool bJoined);
+	void OnSessionParticipantJoined(FName Name, const FUniqueNetId& UniqueNetId);
+	void OnSessionParticipantLeft(FName Name, const FUniqueNetId& UniqueNetId, EOnSessionParticipantLeftReason OnSessionParticipantLeftReason);
 
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Arg);
+	void OnStartSessionComplete(FName Name, bool bArg);
+
 
 	UFUNCTION(BlueprintCallable)
 	void OnHostButtonClicked(FString RoomName, FString MapName);
@@ -84,17 +88,13 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void LeaveSession();
 
-	
 
 	UFUNCTION(BlueprintCallable)
 	bool IsLocalPlayerHost() const;
-	
+
 	FString GetPlayerNickname(const FUniqueNetId& UserId) const;
 	TArray<FString> GetParticipants(FNamedOnlineSession* Session) const;
 	FString DecodeString(const FString& TargetString) const;
-
-
-	
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -107,12 +107,19 @@ public:
 private:
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
-
-	IOnlineSessionPtr SessionInterfacePtr;
-
+	FDelegateHandle OnSessionParticipantJoinedDelegateHandle;
+	FDelegateHandle OnSessionParticipantLeftDelegateHandle;
 	FDelegateHandle OnCreateSessionCompleteDelegateHandle;
-	FDelegateHandle OnStartSessionCompleteDelegateHandle;
 	FDelegateHandle OnFindSessionsCompleteDelegateHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
-	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
+	FDelegateHandle OnStartSessionCompleteDelegateHandle;
+
+
+	// Delegates
+	FOnSessionParticipantJoinedDelegate OnSessionParticipantJoinedDelegate;
+	FOnSessionParticipantLeftDelegate OnSessionParticipantLeftDelegate;
+	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+	FOnStartSessionCompleteDelegate OnStartSessionCompleteDelegate;
 };

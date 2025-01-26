@@ -5,37 +5,56 @@
 
 #include "GunnerButtonWidget.h"
 #include "OnlineSessionSettings.h"
+#include "OnlineSubsystemUtils.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
+#include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
 
-void UGunnerMainMenuWidget::NativeConstruct()
-{
-	Super::NativeConstruct();
-	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
-	check(OnlineSubsystem);
-	SessionInterfacePtr = OnlineSubsystem->GetSessionInterface();
-	check(SessionInterfacePtr);
 
-	SessionInterfacePtr->OnSessionParticipantsChangeDelegates.AddUObject(this, &ThisClass::OnParticipantsChanged);
+UGunnerMainMenuWidget::UGunnerMainMenuWidget()
+	: OnSessionParticipantJoinedDelegate(FOnSessionParticipantJoinedDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnSessionParticipantJoined)),
+	  OnSessionParticipantLeftDelegate(FOnSessionParticipantLeftDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnSessionParticipantLeft)),
+	  OnCreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnCreateSessionComplete)),
+	  OnFindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete)),
+	  OnJoinSessionCompleteDelegate(FOnJoinSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnJoinSessionComplete)),
+	  OnStartSessionCompleteDelegate(FOnStartSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnStartSessionComplete))
+{
 }
 
-void UGunnerMainMenuWidget::OnParticipantsChanged(FName SessionName, const FUniqueNetId& UniqueNetId, bool bJoined)
+void UGunnerMainMenuWidget::OnSessionParticipantJoined(FName Name, const FUniqueNetId& UniqueNetId)
 {
-	UE_LOG(LogGunner, Verbose, TEXT("OnParticipantsChanged: %s, %s, %d"), *SessionName.ToString(), *UniqueNetId.ToString(), bJoined);
-	FNamedOnlineSession* NamedOnlineSession = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
-	check(NamedOnlineSession);
-	OnJoinedSessionParticipantsChanged.Broadcast(GetParticipants(NamedOnlineSession));
+	if (Name == NAME_GameSession)
+	{
+		IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+		OnJoinedSessionParticipantsChanged.Broadcast(GetParticipants(SessionInterfacePtr->GetNamedSession(NAME_GameSession)));
+		UE_LOG(LogGunner, Verbose, TEXT("Player joined session: %s"), *UniqueNetId.ToString());
+	}
 }
 
+void UGunnerMainMenuWidget::OnSessionParticipantLeft(FName Name, const FUniqueNetId& UniqueNetId, EOnSessionParticipantLeftReason OnSessionParticipantLeftReason)
+{
+	if (Name == NAME_GameSession)
+	{
+		IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+		OnJoinedSessionParticipantsChanged.Broadcast(GetParticipants(SessionInterfacePtr->GetNamedSession(NAME_GameSession)));
+		UE_LOG(LogGunner, Verbose, TEXT("Player left session: %s Reeson: %s"), *UniqueNetId.ToString(), *ToLogString(OnSessionParticipantLeftReason));
+	}
+}
 
 void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+	OnSessionParticipantJoinedDelegateHandle = SessionInterfacePtr->AddOnSessionParticipantJoinedDelegate_Handle(OnSessionParticipantJoinedDelegate);
+	OnSessionParticipantLeftDelegateHandle = SessionInterfacePtr->AddOnSessionParticipantLeftDelegate_Handle(OnSessionParticipantLeftDelegate);
+
+
 	SessionInterfacePtr->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
+
 	if (bWasSuccessful)
 	{
 		FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(SessionName);
@@ -45,6 +64,7 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 		FString MapName;
 		Session->SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
 		Session->SessionSettings.Get(TEXT("MAP_NAME"), MapName);
+
 
 		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%s], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
 		FRoomInfo RoomInfo{
@@ -57,6 +77,7 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 			GetParticipants(Session)
 		};
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
+		GetWorld()->ServerTravel("/Game/Maps/Lobby?listen");
 		return;
 	}
 
@@ -66,6 +87,9 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 
 void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	IOnlineSessionPtr SessionInterface = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
 	SessionInterfacePtr->ClearOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegateHandle);
 	TArray<FRoomInfo> RoomInfos;
 	if (bWasSuccessful && SessionSearch.IsValid())
@@ -111,6 +135,9 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 
 void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Arg)
 {
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
+
 	SessionInterfacePtr->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
 	if (Arg == EOnJoinSessionCompleteResult::Success)
 	{
@@ -128,11 +155,20 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 
 		RoomInfo.PlayerCount = Session->RegisteredPlayers.Num();
 		RoomInfo.MaxPlayerCount = Session->SessionSettings.NumPublicConnections;
+
 		//RoomInfo.PingInMs = TODO 
 		RoomInfo.SessionId = Session->GetSessionIdStr();
 		RoomInfo.Participants = GetParticipants(Session);
 
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
+		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 참가 성공. 방 이름 [%s], 맵 이름 [%s]"), *Name.ToString(), *RoomName, *MapName);
+		FString Address;
+		SessionInterfacePtr->GetResolvedConnectString(NAME_GameSession, Address);
+		UE_LOG(LogGunner, Verbose, TEXT("주소: %s"), *Address);
+		if (APlayerController* PC = GetOwningPlayer())
+		{
+			PC->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+		}
 	}
 	else
 	{
@@ -140,9 +176,24 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 	}
 }
 
+void UGunnerMainMenuWidget::OnStartSessionComplete(FName Name, bool bArg)
+{
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+	SessionInterfacePtr->ClearOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegateHandle);
+
+	if (bArg)
+	{
+		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 시작 성공"), *Name.ToString());
+	}
+	else
+	{
+		UE_LOG(LogGunner, Error, TEXT("세션 시작 실패"));
+	}
+}
+
 void UGunnerMainMenuWidget::FindSession(FString RoomName)
 {
-	if (GIsPlayInEditorWorld)
+	if (GIsPlayInEditorWorld && Online::GetSubsystem(GetWorld())->GetSubsystemName() != "NULL")
 	{
 		UE_LOG(LogGunner, Error, TEXT("에디터에서 실행 중에는 사용할 수 없습니다."));
 		OnFindSessionsComplete(false);
@@ -150,17 +201,19 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 	}
 
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
-	SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
+	SessionSearch->bIsLanQuery = Online::GetSubsystem(GetWorld())->GetSubsystemName() == "NULL" ? true : false;
 	SessionSearch->MaxSearchResults = 10000;
-	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-	if (!RoomName.IsEmpty())
-	{
-		SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineComparisonOp::Equals);
-	}
+	// SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	// if (!RoomName.IsEmpty())
+	// {
+	// 	SessionSearch->QuerySettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineComparisonOp::Equals);
+	// }
+	//
+	// SessionSearch->QuerySettings.Set(FName(TEXT("HI_FELLOW_DEVS")), FString("TESTING"), EOnlineComparisonOp::Equals);
 
-	SessionSearch->QuerySettings.Set(FName(TEXT("HI_FELLOW_DEVS")), FString("TESTING"), EOnlineComparisonOp::Equals);
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
 
-	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnFindSessionsComplete));
+	OnFindSessionsCompleteDelegateHandle = SessionInterfacePtr->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if (!SessionInterfacePtr->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef()))
@@ -172,8 +225,16 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 
 void UGunnerMainMenuWidget::LeaveSession()
 {
-	if (SessionInterfacePtr->GetNamedSession(NAME_GameSession))
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
+	if (FNamedOnlineSession* NamedOnlineSession = SessionInterfacePtr->GetNamedSession(NAME_GameSession))
 	{
+		if (NamedOnlineSession->bHosting)
+		{
+			SessionInterfacePtr->ClearOnSessionParticipantJoinedDelegate_Handle(OnSessionParticipantJoinedDelegateHandle);
+			SessionInterfacePtr->ClearOnSessionParticipantLeftDelegate_Handle(OnSessionParticipantLeftDelegateHandle);
+		}
+
 		SessionInterfacePtr->DestroySession(NAME_GameSession);
 	}
 }
@@ -181,7 +242,7 @@ void UGunnerMainMenuWidget::LeaveSession()
 
 bool UGunnerMainMenuWidget::IsLocalPlayerHost() const
 {
-	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
 	if (!OnlineSubsystem) return false;
 
 	IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
@@ -203,7 +264,7 @@ bool UGunnerMainMenuWidget::IsLocalPlayerHost() const
 FString UGunnerMainMenuWidget::GetPlayerNickname(const FUniqueNetId& UserId) const
 {
 	check(UserId.IsValid());
-	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
 	check(OnlineSubsystem);
 
 	IOnlineIdentityPtr IdentityInterface = OnlineSubsystem->GetIdentityInterface();
@@ -215,11 +276,10 @@ FString UGunnerMainMenuWidget::GetPlayerNickname(const FUniqueNetId& UserId) con
 TArray<FString> UGunnerMainMenuWidget::GetParticipants(FNamedOnlineSession* Session) const
 {
 	TArray<FString> Participants;
-	Participants.Reserve(Session->RegisteredPlayers.Num() + 1);
-	Participants.Add(GetPlayerNickname(*Session->OwningUserId));
+	Participants.Add(Session->OwningUserName);
 	for (const FUniqueNetIdRef& PlayerId : Session->RegisteredPlayers)
 	{
-		Participants.Add(GetPlayerNickname(*PlayerId));
+		Participants.Add(PlayerId->ToString());
 	}
 	return Participants;
 }
@@ -243,31 +303,46 @@ FString UGunnerMainMenuWidget::DecodeString(const FString& TargetString) const
 
 void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapName)
 {
-	if (GIsPlayInEditorWorld)
+	if (GIsPlayInEditorWorld && Online::GetSubsystem(GetWorld())->GetSubsystemName() != "NULL")
 	{
 		UE_LOG(LogGunner, Error, TEXT("Cannot host in editor world"));
 		return;
 	}
 
+
 	check(!MapName.IsEmpty());
 
 	LeaveSession();
-	OnCreateSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnCreateSessionComplete));
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
+	OnCreateSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
+
 
 	FOnlineSessionSettings SessionSettings;
-	SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
+	SessionSettings.bIsLANMatch = Online::GetSubsystem(GetWorld())->GetSubsystemName() == "NULL" ? true : false;
+	SessionSettings.NumPrivateConnections = 0;
 	SessionSettings.bUseLobbiesIfAvailable = true;
+	SessionSettings.bIsDedicated = false;
+	SessionSettings.bUsesStats = false;
 	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bAllowJoinInProgress = true;
+	SessionSettings.bAllowInvites = true;
 	SessionSettings.bUsesPresence = true;
-	SessionSettings.NumPublicConnections = 2;
-	SessionSettings.BuildUniqueId = 1;
+	SessionSettings.bAllowJoinViaPresence = true;
+	SessionSettings.bAllowJoinViaPresenceFriendsOnly = false;
+	SessionSettings.NumPublicConnections = 3;
+	SessionSettings.BuildUniqueId = 0;
+
 
 	SessionSettings.Set(FName(TEXT("ROOM_NAME")), RoomName, EOnlineDataAdvertisementType::ViaOnlineService);
 	SessionSettings.Set(FName(TEXT("MAP_NAME")), MapName, EOnlineDataAdvertisementType::ViaOnlineService);
 	SessionSettings.Set(FName(TEXT("HI_FELLOW_DEVS")), FString("TESTING"), EOnlineDataAdvertisementType::ViaOnlineService);
 
 
-	if (!SessionInterfacePtr->CreateSession(0, NAME_GameSession, SessionSettings))
+	auto PC = GetWorld()->GetFirstPlayerController();
+	APlayerState* PS = PC->PlayerState;
+
+	if (!SessionInterfacePtr->CreateSession(*PS->GetUniqueId().GetUniqueNetId(), NAME_GameSession, SessionSettings))
 	{
 		SessionInterfacePtr->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
 		OnCreateSessionComplete(NAME_None, false);
@@ -283,14 +358,19 @@ void UGunnerMainMenuWidget::OnShutdownButtonClicked()
 void UGunnerMainMenuWidget::StartGame()
 {
 	// Get Session and update session state
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
 	FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
 	check(Session);
 	Session->SessionState = EOnlineSessionState::InProgress;
+
 	GetWorld()->ServerTravel("/Game/Maps/FirstPersonMap?listen");
 }
 
 bool UGunnerMainMenuWidget::CanStartGame() const
 {
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
 	FNamedOnlineSession* Session = SessionInterfacePtr->GetNamedSession(NAME_GameSession);
 	return Session && Session->RegisteredPlayers.Num() > 1;
 }
@@ -300,7 +380,9 @@ void UGunnerMainMenuWidget::JoinSession(FString SessionId)
 {
 	LeaveSession();
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	OnJoinSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(this, &UGunnerMainMenuWidget::OnJoinSessionComplete));
+	IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
+
+	OnJoinSessionCompleteDelegateHandle = SessionInterfacePtr->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
 	FOnlineSessionSearchResult* SearchResultPtr = SessionSearch->SearchResults.FindByPredicate([&SessionId](const FOnlineSessionSearchResult& SearchResult)
 	{
 		return SearchResult.GetSessionIdStr() == SessionId;
