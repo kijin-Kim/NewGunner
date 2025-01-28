@@ -28,12 +28,28 @@ void UGunnerSessionHelperSubsystem::Initialize(FSubsystemCollectionBase& Collect
 {
 	Super::Initialize(Collection);
 	GEngine->NetworkFailureEvent.AddUObject(this, &UGunnerSessionHelperSubsystem::OnNetworkFailure);
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+	if (OnlineSubsystem && OnlineSubsystem->GetSessionInterface())
+	{
+		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
+		SessionInterface->AddOnSessionFailureDelegate_Handle(OnSessionFailureDelegate);
+		SessionInterface->AddOnRegisterPlayersCompleteDelegate_Handle(OnRegisterPlayersCompleteDelegate);
+		SessionInterface->AddOnUnregisterPlayersCompleteDelegate_Handle(OnUnregisterPlayersCompleteDelegate);
+	}
 }
 
 void UGunnerSessionHelperSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
 	GEngine->NetworkFailureEvent.RemoveAll(this);
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+	if (OnlineSubsystem && OnlineSubsystem->GetSessionInterface())
+	{
+		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
+		SessionInterface->ClearOnSessionFailureDelegate_Handle(OnSessionFailureDelegateHandle);
+		SessionInterface->ClearOnRegisterPlayersCompleteDelegate_Handle(OnRegisterPlayersCompleteDelegateHandle);
+		SessionInterface->ClearOnUnregisterPlayersCompleteDelegate_Handle(OnUnregisterPlayersCompleteDelegateHandle);
+	}
 }
 
 void UGunnerSessionHelperSubsystem::CreateSession(FString LobbyName, FString MapName, int32 MaxNumPlayers)
@@ -122,31 +138,6 @@ void UGunnerSessionHelperSubsystem::CancelFindSessions()
 	}
 }
 
-void UGunnerSessionHelperSubsystem::EnableTraceSessionFailure(bool bEnable)
-{
-	if (bEnable)
-	{
-		GetSessionInterface()->AddOnSessionFailureDelegate_Handle(OnSessionFailureDelegate);
-	}
-	else
-	{
-		GetSessionInterface()->ClearOnSessionFailureDelegate_Handle(OnSessionFailureDelegateHandle);
-	}
-}
-
-void UGunnerSessionHelperSubsystem::EnableTraceRegisteredPlayers(bool bEnable)
-{
-	if (bEnable)
-	{
-		GetSessionInterface()->AddOnRegisterPlayersCompleteDelegate_Handle(OnRegisterPlayersCompleteDelegate);
-		GetSessionInterface()->AddOnUnregisterPlayersCompleteDelegate_Handle(OnUnregisterPlayersCompleteDelegate);
-	}
-	else
-	{
-		GetSessionInterface()->ClearOnRegisterPlayersCompleteDelegate_Handle(OnRegisterPlayersCompleteDelegateHandle);
-		GetSessionInterface()->ClearOnUnregisterPlayersCompleteDelegate_Handle(OnUnregisterPlayersCompleteDelegateHandle);
-	}
-}
 
 IOnlineSessionPtr UGunnerSessionHelperSubsystem::GetSessionInterface() const
 {
@@ -157,6 +148,40 @@ IOnlineIdentityPtr UGunnerSessionHelperSubsystem::GetIdentityInterface() const
 {
 	return Online::GetSubsystem(GetWorld())->GetIdentityInterface();
 }
+
+FString UGunnerSessionHelperSubsystem::BP_GetNickNameFromUniqueNetId(const FUniqueNetIdRepl& UniqueNetId) const
+{
+	return GetNickNameFromUniqueNetId(*UniqueNetId.GetUniqueNetId());
+}
+
+FString UGunnerSessionHelperSubsystem::GetNickNameFromUniqueNetId(const FUniqueNetId& UniqueNetId) const
+{
+	return GetIdentityInterface()->GetPlayerNickname(UniqueNetId);
+}
+
+TArray<FUniqueNetIdRepl> UGunnerSessionHelperSubsystem::BP_GetRegisteredPlayers() const
+{
+	TArray<FUniqueNetIdRepl> RegisteredPlayers;
+
+	for (const FUniqueNetIdRef& Player : GetRegisteredPlayers())
+	{
+		RegisteredPlayers.Add(*Player);
+	}
+	return RegisteredPlayers;
+}
+
+
+TArray<FUniqueNetIdRef> UGunnerSessionHelperSubsystem::GetRegisteredPlayers() const
+{
+	TArray<FUniqueNetIdRef> RegisteredPlayers;
+	IOnlineSessionPtr SessionInterface = GetSessionInterface();
+	if (FNamedOnlineSession* NamedOnlineSession = SessionInterface->GetNamedSession(NAME_GameSession))
+	{
+		RegisteredPlayers = NamedOnlineSession->RegisteredPlayers;
+	}
+	return RegisteredPlayers;
+}
+
 
 void UGunnerSessionHelperSubsystem::OnRegisterPlayersComplete(FName SessionName, const TArray<FUniqueNetIdRef>& Players, bool bWasSuccessful)
 {
@@ -196,7 +221,7 @@ void UGunnerSessionHelperSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 		{
 			continue;
 		}
-		
+
 		SearchResult.Session.SessionSettings.Get(SETTING_MAPNAME, LobbyInfo.MapName);
 		LobbyInfo.PingInMs = SearchResult.PingInMs;
 		LobbyInfo.NumPublicConnections = SearchResult.Session.SessionSettings.NumPublicConnections;

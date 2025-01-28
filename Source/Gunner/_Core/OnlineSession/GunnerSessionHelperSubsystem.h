@@ -73,14 +73,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CancelFindSessions();
 
-	UFUNCTION(BlueprintCallable)
-	void EnableTraceSessionFailure(bool bEnable);
-	UFUNCTION(BlueprintCallable)
-	void EnableTraceRegisteredPlayers(bool bEnable);
 
 	IOnlineSessionPtr GetSessionInterface() const;
 	IOnlineIdentityPtr GetIdentityInterface() const;
 	TSharedPtr<FOnlineSessionSearch> GetOnlineSessionSearch() const { return OnlineSessionSearch; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get NickName From UniqueNetId"))
+	FString BP_GetNickNameFromUniqueNetId(const FUniqueNetIdRepl& UniqueNetId) const;
+	FString GetNickNameFromUniqueNetId(const FUniqueNetId& UniqueNetId) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "Get Registered Players"))
+	TArray<FUniqueNetIdRepl> BP_GetRegisteredPlayers() const;
+	TArray<FUniqueNetIdRef> GetRegisteredPlayers() const;
 
 private:
 	void OnRegisterPlayersComplete(FName SessionName, const TArray<FUniqueNetIdRef>& Players, bool bWasSuccessful);

@@ -4,8 +4,6 @@
 #include "GunnerSessionAsync_FindSession.h"
 
 #include "GunnerSessionHelperSubsystem.h"
-#include "OnlineSessionSettings.h"
-#include "Online/OnlineSessionNames.h"
 
 UGunnerSessionAsync_FindSession* UGunnerSessionAsync_FindSession::FindSession(UObject* InWorldContextObject, FString InLobbyName)
 {
