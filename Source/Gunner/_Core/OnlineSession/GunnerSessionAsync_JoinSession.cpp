@@ -5,12 +5,12 @@
 
 #include "GunnerSessionHelperSubsystem.h"
 
-UGunnerSessionAsync_JoinSession* UGunnerSessionAsync_JoinSession::JoinSession(UObject* InWorldContextObject, APlayerController* InPlayerController, int32 InSessionResultIndex)
+UGunnerSessionAsync_JoinSession* UGunnerSessionAsync_JoinSession::JoinSession(UObject* InWorldContextObject, APlayerController* InPlayerController, FString InSessionIdStr)
 {
 	UGunnerSessionAsync_JoinSession* SelfObject = NewObject<UGunnerSessionAsync_JoinSession>(InWorldContextObject);
 	SelfObject->WorldContextObject = InWorldContextObject;
 	SelfObject->PlayerController = InPlayerController;
-	SelfObject->SessionResultIndex = InSessionResultIndex;
+	SelfObject->SeesionIdStr = InSessionIdStr;
 	return SelfObject;
 }
 
@@ -30,18 +30,18 @@ void UGunnerSessionAsync_JoinSession::Activate()
 	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GameInstance->GetSubsystem<UGunnerSessionHelperSubsystem>();
 	check(SessionHelperSubsystem);
 	SessionHelperSubsystem->OnJoinSessionCompleteDelegateMulticast.AddDynamic(this, &ThisClass::OnJoinSessionComplete);
-	SessionHelperSubsystem->JoinSession(SessionResultIndex);
+	SessionHelperSubsystem->JoinSession(SeesionIdStr);
 }
 
 void UGunnerSessionAsync_JoinSession::OnJoinSessionComplete(FName SessionName, FString JoinSessionCompleteResult)
 {
 	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = WorldContextObject->GetWorld()->GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
 	check(SessionHelperSubsystem);
+	SessionHelperSubsystem->OnJoinSessionCompleteDelegateMulticast.RemoveDynamic(this, &ThisClass::OnJoinSessionComplete);
+	
 	OnCompleted.Broadcast(SessionName, JoinSessionCompleteResult);
+	
 	Cancel();
 	const int32 LocalPlayerIndex = PlayerController->GetLocalPlayer()->GetLocalPlayerIndex();
-	if (!SessionHelperSubsystem->GetGameInstance()->ClientTravelToSession(LocalPlayerIndex, SessionName))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to travel to session %s"), *SessionName.ToString());
-	}
+	SessionHelperSubsystem->GetGameInstance()->ClientTravelToSession(LocalPlayerIndex, SessionName);
 }

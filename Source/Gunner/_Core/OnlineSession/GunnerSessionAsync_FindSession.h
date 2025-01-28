@@ -7,17 +7,6 @@
 #include "GunnerSessionHelperSubsystem.h"
 #include "GunnerSessionAsync_FindSession.generated.h"
 
-USTRUCT()
-struct FGunnerSessionLobbyInfo
-{
-	GENERATED_BODY()
-	
-	int32 PingInMs;
-	FString LobbyName;
-	FString MapName;
-	int32 CurrentPlayerCount;
-	int32 MaxPlayerCount;
-};
 
 
 /**
@@ -35,7 +24,7 @@ public:
 
 private:
 	UFUNCTION()
-	void OnFindSessionComplete(bool bWasSuccessful);
+	void OnFindSessionComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos);
 
 public:
 	UPROPERTY(BlueprintAssignable)

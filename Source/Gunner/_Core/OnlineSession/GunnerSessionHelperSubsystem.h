@@ -8,6 +8,29 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "GunnerSessionHelperSubsystem.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FGunnerSessionLobbyInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FString LobbyName;
+	UPROPERTY(BlueprintReadOnly)
+	FString MapName;
+	UPROPERTY(BlueprintReadOnly)
+	FString OwningUserName;
+	UPROPERTY(BlueprintReadOnly)
+	int32 NumOpenPublicConnections;
+	UPROPERTY(BlueprintReadOnly)
+	int32 NumPublicConnections;
+	UPROPERTY(BlueprintReadOnly)
+	int32 PingInMs;
+	UPROPERTY(BlueprintReadOnly)
+	FString SessionIdStr;
+};
+
+
 #define DECLARE_DELEGATE_AND_HANDLE(DelegateType, DelegateName) \
 DelegateType DelegateName; \
 FDelegateHandle DelegateName##Handle;
@@ -18,7 +41,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUnregisterPlayersCompleteSigna
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCreateSessionCompleteSignature, FName, SessionName, bool, bWasSuccessful);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFindSessionsCompleteSignature, bool, bWasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFindSessionsCompleteSignature, bool, bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>&, LobbyInfos);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnJoinSessionCompleteSignature, FName, SessionName, FString, JoinSessionCompleteResult);
 
@@ -44,7 +67,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FindSessions(FString LobbyName = TEXT("None"));
 	UFUNCTION(BlueprintCallable)
-	void JoinSession(int32 SessionResultIndex);
+	void JoinSession(FString SessionIdStr);
 	UFUNCTION(BlueprintCallable)
 	void DestroySession();
 	UFUNCTION(BlueprintCallable)
@@ -67,7 +90,7 @@ private:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnSessionFailure(const FUniqueNetId& UniqueNetId, ESessionFailure::Type FailureType);
-	
+
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& FailureString);
 
 public:
@@ -94,7 +117,8 @@ public:
 
 private:
 	TSharedPtr<FOnlineSessionSearch> OnlineSessionSearch;
-	
+	FString SearchLobbyName;
+
 	DECLARE_DELEGATE_AND_HANDLE(FOnRegisterPlayersCompleteDelegate, OnRegisterPlayersCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnUnregisterPlayersCompleteDelegate, OnUnregisterPlayersCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnCreateSessionCompleteDelegate, OnCreateSessionCompleteDelegate);

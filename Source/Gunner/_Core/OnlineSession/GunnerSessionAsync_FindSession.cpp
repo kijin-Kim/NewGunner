@@ -4,6 +4,8 @@
 #include "GunnerSessionAsync_FindSession.h"
 
 #include "GunnerSessionHelperSubsystem.h"
+#include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
 
 UGunnerSessionAsync_FindSession* UGunnerSessionAsync_FindSession::FindSession(UObject* InWorldContextObject, FString InLobbyName)
 {
@@ -32,10 +34,11 @@ void UGunnerSessionAsync_FindSession::Activate()
 	SessionHelperSubsystem->FindSessions(LobbyName);
 }
 
-void UGunnerSessionAsync_FindSession::OnFindSessionComplete(bool bWasSuccessful)
+void UGunnerSessionAsync_FindSession::OnFindSessionComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos)
 {
 	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = WorldContextObject->GetWorld()->GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
 	check(SessionHelperSubsystem);
-	OnCompleted.Broadcast(bWasSuccessful);
+	SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.RemoveDynamic(this, &ThisClass::OnFindSessionComplete);
+	OnCompleted.Broadcast(bWasSuccessful, LobbyInfos);
 	Cancel();
 }

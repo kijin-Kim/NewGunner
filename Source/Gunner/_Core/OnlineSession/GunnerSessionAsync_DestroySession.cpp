@@ -36,6 +36,8 @@ void UGunnerSessionAsync_DestroySession::OnDestroySessionComplete(FName InSessio
 {
 	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = WorldContextObject->GetWorld()->GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
 	check(SessionHelperSubsystem);
+	SessionHelperSubsystem->OnDestroySessionCompleteDelegateMulticast.RemoveDynamic(this, &ThisClass::OnDestroySessionComplete);
+	
 	OnCompleted.Broadcast(InSessionName, bWasSuccessful);
 	Cancel();
 }

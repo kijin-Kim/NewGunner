@@ -17,24 +17,20 @@ class GUNNER_API UGunnerSessionAsync_JoinSession : public UGunnerOnlineSessionCa
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Gunner|OnlineSession", meta = (WorldContext = "InWorldContextObject", BlueprintInternalUseOnly = "true", DisplayName = "Join Session"))
-	static UGunnerSessionAsync_JoinSession* JoinSession(UObject* InWorldContextObject, APlayerController* InPlayerController, int32 InSessionResultIndex);
-	
+	static UGunnerSessionAsync_JoinSession* JoinSession(UObject* InWorldContextObject, APlayerController* InPlayerController, FString InSessionIdStr);
+
 	virtual void Activate() override;
 
 private:
 	UFUNCTION()
 	void OnJoinSessionComplete(FName SessionName, FString JoinSessionCompleteResult);
-	
 
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnJoinSessionCompleteSignature OnCompleted;
-	
-	
 
 private:
 	TWeakObjectPtr<UObject> WorldContextObject;
 	TWeakObjectPtr<APlayerController> PlayerController;
-	int32 SessionResultIndex;
-	
+	FString SeesionIdStr;
 };
