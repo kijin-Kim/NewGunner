@@ -23,6 +23,11 @@ void AGunnerPlayerState::PostInitializeComponents()
 	OnPawnSet.AddDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
 }
 
+void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
+{
+	TeamID = InTeamID;
+}
+
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
 	if (!HasAuthority())
