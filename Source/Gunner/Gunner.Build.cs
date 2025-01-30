@@ -16,6 +16,6 @@ public class Gunner : ModuleRules
 		{
 			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG","Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull" });
 		}
-		PrivateDependencyModuleNames.AddRange(new string[] { "NetCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "NetCore", "AIModule" });
 	}
 }
