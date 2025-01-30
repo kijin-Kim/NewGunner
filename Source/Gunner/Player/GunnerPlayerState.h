@@ -23,6 +23,7 @@ class GUNNER_API AGunnerPlayerState : public APlayerState, public IGenericTeamAg
 public:
 	AGunnerPlayerState();
 	virtual void PostInitializeComponents() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 

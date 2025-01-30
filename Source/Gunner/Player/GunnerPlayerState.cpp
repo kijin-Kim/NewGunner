@@ -5,6 +5,7 @@
 
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AGunnerPlayerState::AGunnerPlayerState()
 {
@@ -21,6 +22,12 @@ void AGunnerPlayerState::PostInitializeComponents()
 		OnPawnSet.RemoveDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
 	}
 	OnPawnSet.AddDynamic(this, &AGunnerPlayerState::OnPawnSetEvent);
+}
+
+void AGunnerPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGunnerPlayerState, TeamID);
 }
 
 void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
