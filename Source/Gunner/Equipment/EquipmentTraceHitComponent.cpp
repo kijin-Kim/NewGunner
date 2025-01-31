@@ -3,6 +3,7 @@
 
 #include "EquipmentTraceHitComponent.h"
 
+#include "GenericTeamAgentInterface.h"
 #include "GunnerEquipment.h"
 #include "TraceHitMessageData.h"
 #include "Camera/CameraComponent.h"
@@ -35,13 +36,29 @@ void UEquipmentTraceHitComponent::BeginPlay()
 	check(EquipmentOwner);
 }
 
-void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& CollisionQueryParams)
+void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& InCollisionQueryParams)
 {
 	AActor* EquippedActor = EquipmentOwner->GetOwner();
 	UWorld* World = EquippedActor->GetWorld();
 	UCameraComponent* CameraComponet = EquippedActor->GetComponentByClass<UCameraComponent>();
 	FVector CameraLocation = CameraComponet->GetComponentLocation();
 	FVector CameraForward = CameraComponet->GetForwardVector();
+
+
+	FCollisionQueryParams CollisionQueryParams = InCollisionQueryParams;
+	if (IGenericTeamAgentInterface* OwnerTeamAgentInterface = Cast<IGenericTeamAgentInterface>(EquippedActor))
+	{
+		TArray<AActor*> OtherAgents;
+		UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UGenericTeamAgentInterface::StaticClass(), OtherAgents);
+		for (AActor* OtherAgent : OtherAgents)
+		{
+			if (OwnerTeamAgentInterface->GetTeamAttitudeTowards(*OtherAgent) != ETeamAttitude::Hostile)
+			{
+				CollisionQueryParams.AddIgnoredActor(OtherAgent);
+			}
+		}
+	}
+
 
 	World->LineTraceMultiByChannel(OutHitResults,
 	                               CameraLocation,
@@ -85,7 +102,7 @@ void UEquipmentTraceHitComponent::ServerRequestHitScanConfirm_Implementation(con
 			LagCompensationTargetCharacters.AddUnique(Character);
 		}
 	}
- 
+
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
 		ULagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompensationComponent>();
@@ -147,7 +164,7 @@ void UEquipmentTraceHitComponent::AuthApplyDamage(AActor* HitActor, FName BoneNa
 		HitMessageData->HitEquipment = EquipmentOwner;
 		HitMessageData->DamageAmount = DamageAmount;
 		HitScanMessage.EventDataObject = HitMessageData;
-		
+
 		EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
 	}
 }

@@ -8,7 +8,6 @@
 #include "GunnerPlayerState.generated.h"
 
 
-
 class UGunnerActionSetupComponent;
 class UGunnerEventManagerComponent;
 class UGunnerActionComponent;
@@ -27,12 +26,9 @@ public:
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 
-
 private:
 	UFUNCTION()
 	void OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);
-	
-	
 
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
@@ -40,5 +36,5 @@ private:
 	UPROPERTY()
 	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
 	UPROPERTY(Replicated)
-	FGenericTeamId TeamID;
+	FGenericTeamId TeamID = 0;
 };

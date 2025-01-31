@@ -3,9 +3,9 @@
 
 #include "KnifeHitboxComponent.h"
 
+#include "GenericTeamAgentInterface.h"
 #include "Camera/CameraComponent.h"
 #include "Event/GunnerEventManagerComponent.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/TraceHitMessageData.h"
 #include "Input/GunnerEventMessage.h"
@@ -37,6 +37,15 @@ void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	check(Owner);
 	AActor* EquippedActor = Owner->GetOwner();
 	check(EquippedActor);
+
+	if (IGenericTeamAgentInterface* EquippedOwnerTeamAgentInterface = Cast<IGenericTeamAgentInterface>(EquippedActor))
+	{
+		if (EquippedOwnerTeamAgentInterface->GetTeamAttitudeTowards(*OtherActor) != ETeamAttitude::Hostile)
+		{
+			return;
+		}
+	}
+
 
 	if (GetOwner() == OtherActor || EquippedActor == OtherActor || AlreadyHitDetectedActors.Contains(OtherActor))
 	{

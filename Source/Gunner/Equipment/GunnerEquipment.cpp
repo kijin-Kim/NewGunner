@@ -42,9 +42,9 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 	FirstPersonMeshComponent->GetChildrenComponents(true, FPChildren);
 	for (USceneComponent* Child : FPChildren)
 	{
-		if (Child->IsA<UPrimitiveComponent>())
+		if (Child->IsA<UMeshComponent>())
 		{
-			UPrimitiveComponent* NewChild = Cast<UPrimitiveComponent>(DuplicateObject(Child, this));
+			UMeshComponent* NewChild = Cast<UMeshComponent>(DuplicateObject(Child, this));
 			NewChild->bOnlyOwnerSee = false;
 			NewChild->CastShadow = true;
 			NewChild->bOwnerNoSee = true;

@@ -102,3 +102,29 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 	const APlayerState* PS = GetPlayerState<APlayerState>();
 	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
 }
+
+void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)
+{
+	if (IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	{
+		PS->SetGenericTeamId(TeamID);
+	}
+}
+
+FGenericTeamId AGunnerCharacter::GetGenericTeamId() const
+{
+	if (const IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	{
+		return PS->GetGenericTeamId();
+	}
+	return FGenericTeamId::NoTeam;
+}
+
+ETeamAttitude::Type AGunnerCharacter::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	if (const IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	{
+		return PS->GetTeamAttitudeTowards(Other);
+	}
+	return ETeamAttitude::Hostile;
+}

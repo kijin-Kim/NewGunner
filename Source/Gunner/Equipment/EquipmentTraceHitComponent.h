@@ -20,7 +20,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "TraceHit"))
 	void BP_TraceHit(TArray<FHitResult>& OutHitResults);
 	virtual void BeginPlay() override;
-	virtual void TraceHit(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& CollisionQueryParams);
+	virtual void TraceHit(TArray<FHitResult>& OutHitResults, const FCollisionQueryParams& InCollisionQueryParams);
 	UFUNCTION(BlueprintNativeEvent)
 	float CalculateDamage(const FHitResult& HitResult) const;
 
