@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionDefinitionHandle.h"
@@ -60,7 +61,7 @@ private:
 	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
 
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
-	
+	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

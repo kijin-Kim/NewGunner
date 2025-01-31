@@ -28,12 +28,14 @@ void AGunnerPlayerState::PostInitializeComponents()
 void AGunnerPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGunnerPlayerState, TeamID);
+	DOREPLIFETIME_CONDITION_NOTIFY(AGunnerPlayerState, TeamID, COND_None, REPNOTIFY_Always);
 }
 
 void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
 {
+	FGenericTeamId OldTeamID = TeamID;
 	TeamID = InTeamID;
+	OnTeamSet.Broadcast(OldTeamID, TeamID);
 }
 
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
@@ -57,4 +59,9 @@ void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, AP
 		ActionComponent->ReleaseActionComponent();
 		EventManagerComponent->UnbindAllEventCallbacks();
 	}
+}
+
+void AGunnerPlayerState::OnRep_TeamID(FGenericTeamId OldTeamID)
+{
+	OnTeamSet.Broadcast(OldTeamID, TeamID);
 }

@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
-#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
+#include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
 #include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
@@ -23,7 +22,7 @@ class UWeaponManagerComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface, public IGenericTeamAgentInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface, public IGunnerTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -35,7 +34,6 @@ public:
 	//~ Begin APawn Interface.
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	//~ End APawn Interface.
-
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -61,9 +59,11 @@ public:
 	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override;
 	//~ End IGenericTeamAgentInterface Interface.
 	
-
+private:
+	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
 
 
 private:

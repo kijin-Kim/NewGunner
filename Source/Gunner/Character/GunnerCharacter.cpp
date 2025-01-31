@@ -33,8 +33,9 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
-	FirstPersonMeshComponent->SetOnlyOwnerSee(true);
-	FirstPersonMeshComponent->SetCastShadow(false);
+	FirstPersonMeshComponent->bOnlyOwnerSee = true;
+	FirstPersonMeshComponent->CastShadow = true;
+	FirstPersonMeshComponent->bRenderCustomDepth = true;
 	GetMesh()->SetOwnerNoSee(true);
 
 
@@ -77,6 +78,14 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		EquipmentManagerComponent->InitEquipmentManagerComponent();
 		CameraControllerComponent->InitCameraController();
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
+
+		// TODO: Callon match start
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
+			OnTeamSetEvent(GetGenericTeamId(), GetGenericTeamId());
+		}, 1.0f, false);
 	}
 }
 
@@ -105,7 +114,7 @@ UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 
 void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)
 {
-	if (IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	if (IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
 	{
 		PS->SetGenericTeamId(TeamID);
 	}
@@ -113,7 +122,7 @@ void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)
 
 FGenericTeamId AGunnerCharacter::GetGenericTeamId() const
 {
-	if (const IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	if (const IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
 	{
 		return PS->GetGenericTeamId();
 	}
@@ -122,9 +131,43 @@ FGenericTeamId AGunnerCharacter::GetGenericTeamId() const
 
 ETeamAttitude::Type AGunnerCharacter::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	if (const IGenericTeamAgentInterface* PS = GetPlayerState<IGenericTeamAgentInterface>())
+	if (const IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
 	{
 		return PS->GetTeamAttitudeTowards(Other);
 	}
 	return ETeamAttitude::Neutral;
+}
+
+FOnGunnerTeamSetSignature* AGunnerCharacter::GetOnTeamSetDelegate()
+{
+	if (IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
+	{
+		return PS->GetOnTeamSetDelegate();
+	}
+	return nullptr;
+}
+
+void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
+{
+	if (!IsLocallyControlled())
+	{
+		for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		{
+			APlayerController* PlayerController = Iterator->Get();
+			if (PlayerController && PlayerController->IsLocalPlayerController())
+			{
+				IGunnerTeamAgentInterface* TeamAgentInterface = PlayerController->GetPlayerState<IGunnerTeamAgentInterface>();
+				ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*this);
+				if (Attitude == ETeamAttitude::Friendly)
+				{
+					GetMesh()->SetRenderCustomDepth(true);
+					GetMesh()->SetCustomDepthStencilValue(1);
+				}
+				else
+				{
+					GetMesh()->SetRenderCustomDepth(false);
+				}
+			}
+		}
+	}
 }

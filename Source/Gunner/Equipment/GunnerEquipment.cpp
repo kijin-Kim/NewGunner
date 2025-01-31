@@ -6,6 +6,7 @@
 #include "Engine/Canvas.h"
 #include "Gunner/Animation/GunnerAnimInstance.h"
 #include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
+#include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/ActionSystem/GunnerAction.h"
 #include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
 
@@ -22,6 +23,7 @@ AGunnerEquipment::AGunnerEquipment()
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	FirstPersonMeshComponent->CastShadow = false;
+	FirstPersonMeshComponent->bRenderCustomDepth = true;
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 }
@@ -35,6 +37,7 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 	ThirdPersonMeshComponent->bOnlyOwnerSee = false;
 	ThirdPersonMeshComponent->CastShadow = true;
 	ThirdPersonMeshComponent->bOwnerNoSee = true;
+	ThirdPersonMeshComponent->bRenderCustomDepth = false;
 	ThirdPersonMeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	ThirdPersonMeshComponent->RegisterComponent();
 
@@ -42,13 +45,14 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 	FirstPersonMeshComponent->GetChildrenComponents(true, FPChildren);
 	for (USceneComponent* Child : FPChildren)
 	{
-		if (Child->IsA<UMeshComponent>())
+		if (UMeshComponent* ChildMesh = Cast<UMeshComponent>(Child))
 		{
-			UMeshComponent* NewChild = Cast<UMeshComponent>(DuplicateObject(Child, this));
+			ChildMesh->bRenderCustomDepth = true;
+			UMeshComponent* NewChild = Cast<UMeshComponent>(DuplicateObject(ChildMesh, this));
 			NewChild->bOnlyOwnerSee = false;
 			NewChild->CastShadow = true;
 			NewChild->bOwnerNoSee = true;
-			NewChild->AttachToComponent(ThirdPersonMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, Child->GetAttachSocketName());
+			NewChild->AttachToComponent(ThirdPersonMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, ChildMesh->GetAttachSocketName());
 			NewChild->RegisterComponent();
 		}
 	}
@@ -66,6 +70,16 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 		FirstPersonMeshComponent->AttachToComponent(OwnerFPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
 		ThirdPersonMeshComponent->AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
 	}
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+	{
+		if (IGunnerTeamAgentInterface* TeamAgentOwner = Cast<IGunnerTeamAgentInterface>(GetOwner()))
+		{
+			TeamAgentOwner->GetOnTeamSetDelegate()->AddUObject(this, &AGunnerEquipment::OnTeamSetEvent);
+			OnTeamSetEvent(TeamAgentOwner->GetGenericTeamId(), TeamAgentOwner->GetGenericTeamId());
+		}
+	}, 1.0f, false);
 }
 
 void AGunnerEquipment::OnAuthAcquired()
@@ -238,10 +252,55 @@ void AGunnerEquipment::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLoc
 		{
 			AnimInstance->SetLocomotionAnimSet(InLocomotionAnimSet);
 		}
-		else if(AnimInstance->GetLocomotionAnimSet() == LocomotionAnimSet)
+		else if (AnimInstance->GetLocomotionAnimSet() == LocomotionAnimSet)
 		{
 			AnimInstance->ClearLocomotionAnimSet();
 		}
 	}
 }
 
+void AGunnerEquipment::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
+{
+	APawn* PawnOwner = GetOwner<APawn>();
+	if (!PawnOwner->IsLocallyControlled())
+	{
+		for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		{
+			APlayerController* PlayerController = Iterator->Get();
+			if (PlayerController && PlayerController->IsLocalPlayerController())
+			{
+				IGunnerTeamAgentInterface* TeamAgentInterface = PlayerController->GetPlayerState<IGunnerTeamAgentInterface>();
+				ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*PawnOwner);
+				if (Attitude == ETeamAttitude::Friendly)
+				{
+					ThirdPersonMeshComponent->SetRenderCustomDepth(true);
+					ThirdPersonMeshComponent->SetCustomDepthStencilValue(1);
+
+					TArray<USceneComponent*> TPChildren;
+					ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
+					for (USceneComponent* Child : TPChildren)
+					{
+						if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
+						{
+							MeshComponent->SetRenderCustomDepth(true);
+							MeshComponent->SetCustomDepthStencilValue(1);
+						}
+					}
+				}
+				else
+				{
+					ThirdPersonMeshComponent->SetRenderCustomDepth(false);
+					TArray<USceneComponent*> TPChildren;
+					ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
+					for (USceneComponent* Child : TPChildren)
+					{
+						if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
+						{
+							MeshComponent->SetRenderCustomDepth(false);
+						}
+					}
+				}
+			}
+		}
+	}
+}
