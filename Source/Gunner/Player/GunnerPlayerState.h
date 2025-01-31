@@ -8,6 +8,8 @@
 #include "GunnerPlayerState.generated.h"
 
 
+
+
 class UGunnerActionSetupComponent;
 class UGunnerEventManagerComponent;
 class UGunnerActionComponent;
@@ -25,6 +27,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
+
+	
 
 private:
 	UFUNCTION()

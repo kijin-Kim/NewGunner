@@ -7,6 +7,7 @@
 #include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
 #include "Net/UnrealNetwork.h"
 
+
 AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;

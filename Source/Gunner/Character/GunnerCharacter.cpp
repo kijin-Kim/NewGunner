@@ -126,5 +126,5 @@ ETeamAttitude::Type AGunnerCharacter::GetTeamAttitudeTowards(const AActor& Other
 	{
 		return PS->GetTeamAttitudeTowards(Other);
 	}
-	return ETeamAttitude::Hostile;
+	return ETeamAttitude::Neutral;
 }
