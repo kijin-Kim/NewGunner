@@ -13,4 +13,17 @@ UCLASS()
 class GUNNER_API AGunnerLobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+public:
+	virtual void PreInitializeComponents() override;
+
+
+private:
+	UFUNCTION()
+	void OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	UFUNCTION(Client, Reliable)
+	void NotifyClientUpdateSessionComplete(FName SessionName, bool bWasSuccessful);
+	
+	UFUNCTION()
+	void OnFindSessionsComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos);
 };

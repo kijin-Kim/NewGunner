@@ -20,7 +20,8 @@ UGunnerSessionHelperSubsystem::UGunnerSessionHelperSubsystem() :
 	DELEGATE_INITIALIZER(OnFindSessionsComplete),
 	DELEGATE_INITIALIZER(OnJoinSessionComplete),
 	DELEGATE_INITIALIZER(OnDestroySessionComplete),
-	DELEGATE_INITIALIZER(OnSessionFailure)
+	DELEGATE_INITIALIZER(OnSessionFailure),
+	DELEGATE_INITIALIZER(OnUpdateSessionComplete)
 {
 }
 
@@ -35,6 +36,7 @@ void UGunnerSessionHelperSubsystem::Initialize(FSubsystemCollectionBase& Collect
 		SessionInterface->AddOnSessionFailureDelegate_Handle(OnSessionFailureDelegate);
 		SessionInterface->AddOnRegisterPlayersCompleteDelegate_Handle(OnRegisterPlayersCompleteDelegate);
 		SessionInterface->AddOnUnregisterPlayersCompleteDelegate_Handle(OnUnregisterPlayersCompleteDelegate);
+		SessionInterface->AddOnUpdateSessionCompleteDelegate_Handle(OnUpdateSessionCompleteDelegate);
 	}
 }
 
@@ -81,7 +83,6 @@ void UGunnerSessionHelperSubsystem::FindSessions(FString LobbyName)
 	OnlineSessionSearch->PingBucketSize = 10;
 	OnlineSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	OnlineSessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-	OnlineSessionSearch->QuerySettings.Set(SEARCH_MINSLOTSAVAILABLE, 1, EOnlineComparisonOp::Equals);
 	SearchLobbyName = LobbyName;
 
 	GetSessionInterface()->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
@@ -138,6 +139,24 @@ void UGunnerSessionHelperSubsystem::CancelFindSessions()
 	}
 }
 
+void UGunnerSessionHelperSubsystem::ChangeLobbyName(FString NewSessionName)
+{
+	if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
+	{
+		OnlineSession->SessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, NewSessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
+	}
+}
+
+void UGunnerSessionHelperSubsystem::ChangeMapName(FString NewMapName)
+{
+	if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
+	{
+		OnlineSession->SessionSettings.Set(SETTING_MAPNAME, NewMapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
+	}
+}
+
 
 IOnlineSessionPtr UGunnerSessionHelperSubsystem::GetSessionInterface() const
 {
@@ -180,6 +199,22 @@ TArray<FUniqueNetIdRef> UGunnerSessionHelperSubsystem::GetRegisteredPlayers() co
 		RegisteredPlayers = NamedOnlineSession->RegisteredPlayers;
 	}
 	return RegisteredPlayers;
+}
+
+FGunnerSessionLobbyInfo UGunnerSessionHelperSubsystem::GetCurrentLobbyInfo() const
+{
+	FGunnerSessionLobbyInfo LobbyInfo;
+	IOnlineSessionPtr SessionInterface = GetSessionInterface();
+	if (FNamedOnlineSession* NamedOnlineSession = SessionInterface->GetNamedSession(NAME_GameSession))
+	{
+		NamedOnlineSession->SessionSettings.Get(SETTING_SESSION_TEMPLATE_NAME, LobbyInfo.LobbyName);
+		NamedOnlineSession->SessionSettings.Get(SETTING_MAPNAME, LobbyInfo.MapName);
+		LobbyInfo.NumPublicConnections = NamedOnlineSession->SessionSettings.NumPublicConnections;
+		LobbyInfo.NumOpenPublicConnections = NamedOnlineSession->NumOpenPublicConnections;
+		LobbyInfo.OwningUserName = NamedOnlineSession->OwningUserName;
+		LobbyInfo.SessionIdStr = NamedOnlineSession->GetSessionIdStr();
+	}
+	return LobbyInfo;
 }
 
 
@@ -249,6 +284,11 @@ void UGunnerSessionHelperSubsystem::OnDestroySessionComplete(FName SessionName, 
 void UGunnerSessionHelperSubsystem::OnSessionFailure(const FUniqueNetId& UniqueNetId, ESessionFailure::Type FailureType)
 {
 	OnSessionFailureDelegateMulticast.Broadcast(UniqueNetId, LexToString(FailureType));
+}
+
+void UGunnerSessionHelperSubsystem::OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	OnUpdateSessionCompleteDelegateMulticast.Broadcast(SessionName, bWasSuccessful);
 }
 
 void UGunnerSessionHelperSubsystem::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& FailureString)
