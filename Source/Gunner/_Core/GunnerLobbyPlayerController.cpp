@@ -11,6 +11,10 @@
 void AGunnerLobbyPlayerController::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
+	if(!GetGameInstance())
+	{
+		return;
+	}
 	if (UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>())
 	{
 		SessionHelperSubsystem->OnUpdateSessionCompleteDelegateMulticast.AddDynamic(this, &AGunnerLobbyPlayerController::OnUpdateSessionComplete);

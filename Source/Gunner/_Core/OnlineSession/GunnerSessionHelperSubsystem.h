@@ -43,6 +43,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCreateSessionCompleteSignature, 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFindSessionsCompleteSignature, bool, bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>&, LobbyInfos);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCancelFindSessionsCompleteSignature, bool, bWasSuccessful);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnJoinSessionCompleteSignature, FName, SessionName, FString, JoinSessionCompleteResult);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDestroySessionCompleteSignature, FName, SessionName, bool, bWasSuccessful);
@@ -74,7 +76,7 @@ public:
 	void DestroySession();
 	UFUNCTION(BlueprintCallable)
 	void CancelFindSessions();
-
+	
 	UFUNCTION(BlueprintCallable)
 	void ChangeLobbyName(FString NewSessionName);
 	UFUNCTION(BlueprintCallable)
@@ -99,6 +101,7 @@ private:
 	void OnUnregisterPlayersComplete(FName SessionName, const TArray<FUniqueNetIdRef>& Players, bool bWasSuccessful);
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSessionsComplete(bool bWasSuccessful);
+	void OnCancelFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnSessionFailure(const FUniqueNetId& UniqueNetId, ESessionFailure::Type FailureType);
@@ -118,6 +121,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnFindSessionsComplete"))
 	FOnFindSessionsCompleteSignature OnFindSessionsCompleteDelegateMulticast;
+
+	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnCancelFindSessionsComplete"))
+	FOnCancelFindSessionsCompleteSignature OnCancelFindSessionsCompleteDelegateMulticast;
 
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnJoinSessionComplete"))
 	FOnJoinSessionCompleteSignature OnJoinSessionCompleteDelegateMulticast;
@@ -139,6 +145,7 @@ private:
 	DECLARE_DELEGATE_AND_HANDLE(FOnUnregisterPlayersCompleteDelegate, OnUnregisterPlayersCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnCreateSessionCompleteDelegate, OnCreateSessionCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnFindSessionsCompleteDelegate, OnFindSessionsCompleteDelegate);
+	DECLARE_DELEGATE_AND_HANDLE(FOnCancelFindSessionsCompleteDelegate, OnCancelFindSessionsCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnJoinSessionCompleteDelegate, OnJoinSessionCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnDestroySessionCompleteDelegate, OnDestroySessionCompleteDelegate);
 	DECLARE_DELEGATE_AND_HANDLE(FOnSessionFailureDelegate, OnSessionFailureDelegate);

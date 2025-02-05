@@ -8,7 +8,6 @@
 #include "GunnerSessionAsync_FindSession.generated.h"
 
 
-
 /**
  * 
  */
@@ -21,10 +20,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gunner|OnlineSession", meta = (WorldContext = "InWorldContextObject", BlueprintInternalUseOnly = "true", DisplayName = "Find Session"))
 	static UGunnerSessionAsync_FindSession* FindSession(UObject* InWorldContextObject, FString InLobbyName);
 	virtual void Activate() override;
+	virtual void Cancel() override;
 
 private:
 	UFUNCTION()
 	void OnFindSessionComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos);
+
 
 public:
 	UPROPERTY(BlueprintAssignable)

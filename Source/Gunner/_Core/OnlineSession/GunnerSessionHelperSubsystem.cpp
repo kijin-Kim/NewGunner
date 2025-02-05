@@ -18,6 +18,7 @@ UGunnerSessionHelperSubsystem::UGunnerSessionHelperSubsystem() :
 	DELEGATE_INITIALIZER(OnUnregisterPlayersComplete),
 	DELEGATE_INITIALIZER(OnCreateSessionComplete),
 	DELEGATE_INITIALIZER(OnFindSessionsComplete),
+	DELEGATE_INITIALIZER(OnCancelFindSessionsComplete),
 	DELEGATE_INITIALIZER(OnJoinSessionComplete),
 	DELEGATE_INITIALIZER(OnDestroySessionComplete),
 	DELEGATE_INITIALIZER(OnSessionFailure),
@@ -80,7 +81,7 @@ void UGunnerSessionHelperSubsystem::FindSessions(FString LobbyName)
 	OnlineSessionSearch = MakeShareable(new FOnlineSessionSearch());
 	OnlineSessionSearch->bIsLanQuery = Online::GetSubsystem(GetWorld())->GetSubsystemName() == "NULL";
 	OnlineSessionSearch->MaxSearchResults = 10;
-	OnlineSessionSearch->PingBucketSize = 10;
+	OnlineSessionSearch->PingBucketSize = 50;
 	OnlineSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	OnlineSessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	SearchLobbyName = LobbyName;
@@ -95,8 +96,6 @@ void UGunnerSessionHelperSubsystem::FindSessions(FString LobbyName)
 void UGunnerSessionHelperSubsystem::JoinSession(FString SessionIdStr)
 {
 	GetSessionInterface()->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
-	CancelFindSessions();
-
 
 	FOnlineSessionSearchResult* SessionSearchResultPtr = OnlineSessionSearch->SearchResults.FindByPredicate([SessionIdStr](const FOnlineSessionSearchResult& SearchResult)
 	{
@@ -133,28 +132,29 @@ void UGunnerSessionHelperSubsystem::DestroySession()
 
 void UGunnerSessionHelperSubsystem::CancelFindSessions()
 {
-	if (OnlineSessionSearch->SearchState == EOnlineAsyncTaskState::InProgress)
+	GetSessionInterface()->AddOnCancelFindSessionsCompleteDelegate_Handle(OnCancelFindSessionsCompleteDelegate);
+	if (!GetSessionInterface()->CancelFindSessions())
 	{
-		GetSessionInterface()->CancelFindSessions();
+		OnCancelFindSessionsComplete(false);
 	}
 }
 
 void UGunnerSessionHelperSubsystem::ChangeLobbyName(FString NewSessionName)
 {
-	if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
-	{
-		OnlineSession->SessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, NewSessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-		GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
-	}
+	// if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
+	// {
+	// 	OnlineSession->SessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, NewSessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	// 	GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
+	// }
 }
 
 void UGunnerSessionHelperSubsystem::ChangeMapName(FString NewMapName)
 {
-	if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
-	{
-		OnlineSession->SessionSettings.Set(SETTING_MAPNAME, NewMapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-		GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
-	}
+	// if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
+	// {
+	// 	OnlineSession->SessionSettings.Set(SETTING_MAPNAME, NewMapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	// 	GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
+	// }
 }
 
 
@@ -269,6 +269,12 @@ void UGunnerSessionHelperSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 	OnFindSessionsCompleteDelegateMulticast.Broadcast(bWasSuccessful, LobbyInfos);
 }
 
+void UGunnerSessionHelperSubsystem::OnCancelFindSessionsComplete(bool bWasSuccessful)
+{
+	Online::GetSubsystem(GetWorld())->GetSessionInterface()->ClearOnCancelFindSessionsCompleteDelegate_Handle(OnCancelFindSessionsCompleteDelegateHandle);
+	OnCancelFindSessionsCompleteDelegateMulticast.Broadcast(bWasSuccessful);
+}
+
 void UGunnerSessionHelperSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
 	Online::GetSubsystem(GetWorld())->GetSessionInterface()->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
@@ -294,4 +300,5 @@ void UGunnerSessionHelperSubsystem::OnUpdateSessionComplete(FName SessionName, b
 void UGunnerSessionHelperSubsystem::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& FailureString)
 {
 	UE_LOG(LogGunner, Error, TEXT("네트워크 실패: %s, %s"), ToString(FailureType), *FailureString);
+	DestroySession();
 }

@@ -25,18 +25,45 @@ void UGunnerSessionAsync_FindSession::Activate()
 	check(World);
 	UGameInstance* GameInstance = World->GetGameInstance();
 	check(GameInstance);
-
 	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GameInstance->GetSubsystem<UGunnerSessionHelperSubsystem>();
+
 	check(SessionHelperSubsystem);
 	SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.AddDynamic(this, &ThisClass::OnFindSessionComplete);
 	SessionHelperSubsystem->FindSessions(LobbyName);
 }
 
+void UGunnerSessionAsync_FindSession::Cancel()
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject.Get(), EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		return;
+	}
+
+	UGameInstance* GameInstance = World->GetGameInstance();
+	if (!GameInstance)
+	{
+		return;
+	}
+
+	if (UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GameInstance->GetSubsystem<UGunnerSessionHelperSubsystem>())
+	{
+		SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.RemoveDynamic(this, &ThisClass::OnFindSessionComplete);
+	}
+
+
+	Super::Cancel();
+}
+
 void UGunnerSessionAsync_FindSession::OnFindSessionComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos)
 {
-	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = WorldContextObject->GetWorld()->GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject.Get(), EGetWorldErrorMode::LogAndReturnNull);
+	check(World);
+	UGameInstance* GameInstance = World->GetGameInstance();
+	check(GameInstance);
+	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GameInstance->GetSubsystem<UGunnerSessionHelperSubsystem>();
+
 	check(SessionHelperSubsystem);
-	SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.RemoveDynamic(this, &ThisClass::OnFindSessionComplete);
 	OnCompleted.Broadcast(bWasSuccessful, LobbyInfos);
 	Cancel();
 }
