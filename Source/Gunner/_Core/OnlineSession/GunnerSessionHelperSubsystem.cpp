@@ -139,25 +139,6 @@ void UGunnerSessionHelperSubsystem::CancelFindSessions()
 	}
 }
 
-void UGunnerSessionHelperSubsystem::ChangeLobbyName(FString NewSessionName)
-{
-	// if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
-	// {
-	// 	OnlineSession->SessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, NewSessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-	// 	GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
-	// }
-}
-
-void UGunnerSessionHelperSubsystem::ChangeMapName(FString NewMapName)
-{
-	// if (FNamedOnlineSession* OnlineSession = GetSessionInterface()->GetNamedSession(NAME_GameSession))
-	// {
-	// 	OnlineSession->SessionSettings.Set(SETTING_MAPNAME, NewMapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-	// 	GetSessionInterface()->UpdateSession(NAME_GameSession, OnlineSession->SessionSettings, true);
-	// }
-}
-
-
 IOnlineSessionPtr UGunnerSessionHelperSubsystem::GetSessionInterface() const
 {
 	return Online::GetSubsystem(GetWorld())->GetSessionInterface();
@@ -215,6 +196,16 @@ FGunnerSessionLobbyInfo UGunnerSessionHelperSubsystem::GetCurrentLobbyInfo() con
 		LobbyInfo.SessionIdStr = NamedOnlineSession->GetSessionIdStr();
 	}
 	return LobbyInfo;
+}
+
+bool UGunnerSessionHelperSubsystem::IsHostPlayer(const FUniqueNetIdRepl& UniqueNetId) const
+{
+	IOnlineSessionPtr SessionInterface = GetSessionInterface();
+	if (FNamedOnlineSession* NamedOnlineSession = SessionInterface->GetNamedSession(NAME_GameSession))
+	{
+		return NamedOnlineSession->OwningUserId == UniqueNetId;
+	}
+	return false;
 }
 
 

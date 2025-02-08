@@ -76,11 +76,6 @@ public:
 	void DestroySession();
 	UFUNCTION(BlueprintCallable)
 	void CancelFindSessions();
-	
-	UFUNCTION(BlueprintCallable)
-	void ChangeLobbyName(FString NewSessionName);
-	UFUNCTION(BlueprintCallable)
-	void ChangeMapName(FString NewMapName);
 
 
 	IOnlineSessionPtr GetSessionInterface() const;
@@ -95,6 +90,8 @@ public:
 	TArray<FUniqueNetIdRef> GetRegisteredPlayers() const;
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FGunnerSessionLobbyInfo GetCurrentLobbyInfo() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsHostPlayer(const FUniqueNetIdRepl& UniqueNetId) const;
 
 private:
 	void OnRegisterPlayersComplete(FName SessionName, const TArray<FUniqueNetIdRef>& Players, bool bWasSuccessful);

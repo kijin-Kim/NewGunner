@@ -3,65 +3,33 @@
 
 #include "GunnerLobbyPlayerController.h"
 
-#include "OnlineSessionSettings.h"
-#include "OnlineSubsystemUtils.h"
-#include "OnlineSession/GunnerSessionHelperSubsystem.h"
+#include "GunnerLobbyGameState.h"
+#include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
 
 
-void AGunnerLobbyPlayerController::PreInitializeComponents()
+void AGunnerLobbyPlayerController::ChangeTeamBoxSlot()
 {
-	Super::PreInitializeComponents();
-	if(!GetGameInstance())
+	if (HasAuthority())
 	{
-		return;
+		AGunnerLobbyGameState* GS = GetWorld()->GetGameState<AGunnerLobbyGameState>();
+		check(GS);
+		GS->AuthChangeTeamBoxSlot(PlayerState);
 	}
-	if (UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>())
+	else
 	{
-		SessionHelperSubsystem->OnUpdateSessionCompleteDelegateMulticast.AddDynamic(this, &AGunnerLobbyPlayerController::OnUpdateSessionComplete);
+		ServerChangeTeamBoxSlot(PlayerState);
 	}
 }
 
-void AGunnerLobbyPlayerController::OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful)
+void AGunnerLobbyPlayerController::OnRep_PlayerState()
 {
-	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
-	IOnlineSessionPtr SessionInterface = SessionHelperSubsystem->GetSessionInterface();
-	FNamedOnlineSession* CurrentSession = SessionInterface->GetNamedSession(NAME_GameSession);
-	if (!CurrentSession || !HasAuthority() || IsLocalController() || Online::GetSubsystem(GetWorld())->GetSubsystemName() != "NULL")
-	{
-		return;
-	}
-	
-	NotifyClientUpdateSessionComplete(SessionName, bWasSuccessful);
+	Super::OnRep_PlayerState();
+	GR_LOG(LogGunner, Verbose, TEXT("PlayerState: %s"), *PlayerState->GetPlayerName());
+	SetupTeamBoxSlotEvent();
 }
 
-void AGunnerLobbyPlayerController::OnFindSessionsComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos)
+void AGunnerLobbyPlayerController::ServerChangeTeamBoxSlot_Implementation(APlayerState* InPlayerState)
 {
-	UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
-	IOnlineSessionPtr SessionInterface = SessionHelperSubsystem->GetSessionInterface();
-	FNamedOnlineSession* NamedOnlineSession = SessionInterface->GetNamedSession(NAME_GameSession);
-	if (!NamedOnlineSession)
-	{
-		return;
-	}
-
-	SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.RemoveDynamic(this, &AGunnerLobbyPlayerController::OnFindSessionsComplete);
-	TSharedPtr<FOnlineSessionSearch> SessionSearch = SessionHelperSubsystem->GetOnlineSessionSearch();
-
-	for (FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
-	{
-		if (SearchResult.GetSessionIdStr() == NamedOnlineSession->GetSessionIdStr())
-		{
-			SessionInterface->UpdateSession(NAME_GameSession, SearchResult.Session.SessionSettings, false);
-		}
-	}
-}
-
-void AGunnerLobbyPlayerController::NotifyClientUpdateSessionComplete_Implementation(FName SessionName, bool bWasSuccessful)
-{
-	if (UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>())
-	{
-		SessionHelperSubsystem->OnFindSessionsCompleteDelegateMulticast.AddDynamic(this, &AGunnerLobbyPlayerController::OnFindSessionsComplete);
-		SessionHelperSubsystem->FindSessions();
-		SessionHelperSubsystem->OnUpdateSessionCompleteDelegateMulticast.Broadcast(SessionName, bWasSuccessful);
-	}
+	ChangeTeamBoxSlot();
 }

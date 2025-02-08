@@ -14,16 +14,15 @@ class GUNNER_API AGunnerLobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	virtual void PreInitializeComponents() override;
+	UFUNCTION(BlueprintCallable)
+	void ChangeTeamBoxSlot();
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void SetupTeamBoxSlotEvent();
+	
+	virtual void OnRep_PlayerState() override;
 
 private:
-	UFUNCTION()
-	void OnUpdateSessionComplete(FName SessionName, bool bWasSuccessful);
-
-	UFUNCTION(Client, Reliable)
-	void NotifyClientUpdateSessionComplete(FName SessionName, bool bWasSuccessful);
-	
-	UFUNCTION()
-	void OnFindSessionsComplete(bool bWasSuccessful, const TArray<FGunnerSessionLobbyInfo>& LobbyInfos);
+	UFUNCTION(Server, Reliable)
+	void ServerChangeTeamBoxSlot(APlayerState* InPlayerState);
 };

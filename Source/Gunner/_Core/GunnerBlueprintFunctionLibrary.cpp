@@ -2,3 +2,10 @@
 
 
 #include "GunnerBlueprintFunctionLibrary.h"
+
+#include "GunnerLobbyGameState.h"
+
+bool UGunnerBlueprintFunctionLibrary::IsTeamBoxSlotValid(const FTeamBoxSlot& Slot)
+{
+	return Slot.IsValid();
+}

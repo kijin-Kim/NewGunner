@@ -16,6 +16,7 @@ UCLASS()
 class GUNNER_API UGunnerBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
 public:
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
 	static FGunnerTargetDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
@@ -63,4 +64,7 @@ public:
 
 		return FGunnerTargetData_Actor();
 	}
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|Lobby")
+	static bool IsTeamBoxSlotValid(const FTeamBoxSlot& Slot);
 };
