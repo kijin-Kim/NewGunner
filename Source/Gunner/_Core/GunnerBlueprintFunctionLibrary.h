@@ -9,6 +9,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GunnerBlueprintFunctionLibrary.generated.h"
 
+struct FTeamBoxSlot;
 /**
  * 
  */
@@ -67,4 +68,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Lobby")
 	static bool IsTeamBoxSlotValid(const FTeamBoxSlot& Slot);
+
+	UFUNCTION(BlueprintCallable)
+	static void ServerTravelBySoftObjectPtr(const UObject* WorldContextObject, const TSoftObjectPtr<UWorld> Level, bool bAbsolute, FString Options);
 };
