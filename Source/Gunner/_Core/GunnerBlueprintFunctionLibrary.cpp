@@ -4,6 +4,7 @@
 #include "GunnerBlueprintFunctionLibrary.h"
 
 #include "GunnerLobbyGameState.h"
+#include "GameFramework/PlayerState.h"
 
 bool UGunnerBlueprintFunctionLibrary::IsTeamBoxSlotValid(const FTeamBoxSlot& Slot)
 {
@@ -19,4 +20,18 @@ void UGunnerBlueprintFunctionLibrary::ServerTravelBySoftObjectPtr(const UObject*
 	World->ServerTravel(URL, bAbsolute);
 }
 
+ETeamAttitude::Type UGunnerBlueprintFunctionLibrary::GetTeamAttitude(APlayerState* PlayerState, APlayerState* OtherPlayerState)
+{
+	if (PlayerState == nullptr || OtherPlayerState == nullptr)
+	{
+		return ETeamAttitude::Neutral;
+	}
 
+	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(PlayerState);
+	if (TeamAgentInterface == nullptr)
+	{
+		return ETeamAttitude::Neutral;
+	}
+	
+	return TeamAgentInterface->GetTeamAttitudeTowards(*OtherPlayerState);
+}

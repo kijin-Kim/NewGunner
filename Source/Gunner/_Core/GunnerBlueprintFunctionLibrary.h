@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "ActionSystem/GunnerActionSign.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
@@ -71,4 +72,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static void ServerTravelBySoftObjectPtr(const UObject* WorldContextObject, const TSoftObjectPtr<UWorld> Level, bool bAbsolute, FString Options);
+
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
+	static ETeamAttitude::Type GetTeamAttitude(APlayerState* PlayerState, APlayerState* OtherPlayerState);
 };
