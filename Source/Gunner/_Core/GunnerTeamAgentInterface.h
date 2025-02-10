@@ -10,6 +10,10 @@
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGunnerTeamSetSignature, FGenericTeamId, /*OldTeamID*/ FGenericTeamId /*NewTeamID*/);
 
+inline const FGenericTeamId AttackerTeam(0);
+inline const FGenericTeamId DefenderTeam(1);
+
+
 /**
  * 
  */
@@ -24,7 +28,9 @@ class GUNNER_API IGunnerTeamAgentInterface : public IGenericTeamAgentInterface
 	GENERATED_IINTERFACE_BODY()
 
 public:
-	 virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() { return nullptr; }
+
+
 	
 };

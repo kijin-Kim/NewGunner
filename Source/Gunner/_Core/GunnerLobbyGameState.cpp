@@ -3,6 +3,8 @@
 
 #include "GunnerLobbyGameState.h"
 
+#include "GenericTeamAgentInterface.h"
+#include "GunnerTeamAgentInterface.h"
 #include "OnlineSessionSettings.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
@@ -80,6 +82,7 @@ void AGunnerLobbyGameState::AuthOnPlayerJoinedLobby(APlayerState* PlayerState)
 	TeamBoxSlots[SlotIndex].NickName = SessionHelperSubsystem->GetNickNameFromUniqueNetId(*PlayerState->GetUniqueId());
 	TeamBoxSlots[SlotIndex].PingInMs = PlayerState->GetPingInMilliseconds();
 	TeamBoxSlots[SlotIndex].UniqueNetId = PlayerState->GetUniqueId();
+	AuthGrantTeamByIndex(PlayerState, SlotIndex);
 	OnTeamBoxSlotsDirty.Broadcast();
 }
 
@@ -99,6 +102,7 @@ void AGunnerLobbyGameState::AuthOnPlayerLeftLobby(APlayerState* PlayerState)
 void AGunnerLobbyGameState::AuthChangeTeamBoxSlot(APlayerState* PlayerState)
 {
 	int32 CurrentSlotIndex = -1;
+	
 	for (int i = 0; i < TeamBoxSlots.Num(); i++)
 	{
 		if (TeamBoxSlots[i].UniqueNetId == PlayerState->GetUniqueId())
@@ -109,6 +113,7 @@ void AGunnerLobbyGameState::AuthChangeTeamBoxSlot(APlayerState* PlayerState)
 	}
 	check(CurrentSlotIndex != -1);
 
+	int32 DestinationSlotIndex = -1;
 	if (CurrentSlotIndex < 5)
 	{
 		for (int i = 5; i < 10; i++)
@@ -116,6 +121,7 @@ void AGunnerLobbyGameState::AuthChangeTeamBoxSlot(APlayerState* PlayerState)
 			if (!TeamBoxSlots[i].IsValid())
 			{
 				TeamBoxSlots.Swap(CurrentSlotIndex, i);
+				DestinationSlotIndex = i;
 				break;
 			}
 		}
@@ -127,12 +133,22 @@ void AGunnerLobbyGameState::AuthChangeTeamBoxSlot(APlayerState* PlayerState)
 			if (!TeamBoxSlots[i].IsValid())
 			{
 				TeamBoxSlots.Swap(CurrentSlotIndex, i);
+				DestinationSlotIndex = i;
 				break;
 			}
 		}
 	}
+	AuthGrantTeamByIndex(PlayerState, DestinationSlotIndex);
 	RearrangeTeamBoxSlots();
 	OnTeamBoxSlotsDirty.Broadcast();
+}
+
+void AGunnerLobbyGameState::AuthGrantTeamByIndex(APlayerState* PlayerState, int32 Index)
+{
+	const bool bIsTeamGame = true;
+	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(PlayerState);
+	check(TeamAgentInterface);
+	TeamAgentInterface->SetGenericTeamId(bIsTeamGame ? (Index < 5 ? AttackerTeam : DefenderTeam) : FGenericTeamId::NoTeam);
 }
 
 FNormalizedTeamBoxSlots AGunnerLobbyGameState::GetNormalizedTeamBoxSlots() const

@@ -89,10 +89,11 @@ public:
 	void AuthSetMapName(FString NewMapName);
 	UFUNCTION(BlueprintCallable)
 	void AuthSetLobbyName(FString NewLobbyName);
-
+	
 	void AuthOnPlayerJoinedLobby(APlayerState* PlayerState);
 	void AuthOnPlayerLeftLobby(APlayerState* PlayerState);
 	void AuthChangeTeamBoxSlot(APlayerState* PlayerState);
+	void AuthGrantTeamByIndex(APlayerState* PlayerState, int32 Index);
 
 	UFUNCTION(BlueprintCallable)
 	FNormalizedTeamBoxSlots GetNormalizedTeamBoxSlots() const;

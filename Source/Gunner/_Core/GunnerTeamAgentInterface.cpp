@@ -15,6 +15,11 @@ ETeamAttitude::Type IGunnerTeamAgentInterface::GetTeamAttitudeTowards(const AAct
 	{
 		return ETeamAttitude::Neutral;
 	}
+	
+	if (GetGenericTeamId() == FGenericTeamId::NoTeam || OtherTeamAgent->GetGenericTeamId() == FGenericTeamId::NoTeam)
+	{
+		return ETeamAttitude::Hostile;
+	}
 
 	return GetGenericTeamId() == OtherTeamAgent->GetGenericTeamId() ? ETeamAttitude::Friendly : ETeamAttitude::Hostile;
 }

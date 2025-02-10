@@ -3,42 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GunnerTeamAgentInterface.h"
 #include "GameFramework/PlayerState.h"
-#include "Gunner/_Core/GunnerTeamAgentInterface.h"
-#include "GunnerPlayerState.generated.h"
+#include "GunnerLobbyPlayerState.generated.h"
 
-
-class UGunnerActionSetupComponent;
-class UGunnerEventManagerComponent;
-class UGunnerActionComponent;
 /**
  * 
  */
 UCLASS()
-class GUNNER_API AGunnerPlayerState : public APlayerState, public IGunnerTeamAgentInterface
+class GUNNER_API AGunnerLobbyPlayerState : public APlayerState, public IGunnerTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerPlayerState();
-	
-	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void CopyProperties(APlayerState* PlayerState) override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override { return &OnTeamSet; }
 
 private:
 	UFUNCTION()
-	void OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);
-	UFUNCTION()
 	void OnRep_TeamID(FGenericTeamId OldTeamID);
 
-private:
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UGunnerActionComponent> ActionComponent;
-	UPROPERTY()
-	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
+public:
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID = 0;
 

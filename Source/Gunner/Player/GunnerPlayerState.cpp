@@ -14,7 +14,6 @@ AGunnerPlayerState::AGunnerPlayerState()
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
 }
-
 void AGunnerPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
