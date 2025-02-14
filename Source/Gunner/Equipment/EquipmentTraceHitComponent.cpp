@@ -93,7 +93,7 @@ float UEquipmentTraceHitComponent::CalculateDamage_Implementation(const FHitResu
 
 void UEquipmentTraceHitComponent::ServerRequestHitScanConfirm_Implementation(const TArray<AActor*>& HitActors, float TimeStamp)
 {
-	TArray<ACharacter*> LagCompensationTargetCharacters;
+	TArray<ACharacter*> LagCompensationTargetCharacters; 
 	for (AActor* HitActor : HitActors)
 	{
 		ACharacter* Character = Cast<ACharacter>(HitActor);

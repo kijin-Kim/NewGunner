@@ -34,7 +34,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(FirstPersonSpringArmComponent);
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
-	FirstPersonMeshComponent->CastShadow = true;
+	FirstPersonMeshComponent->CastShadow = false;
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
 	GetMesh()->SetOwnerNoSee(true);
 
