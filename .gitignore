@@ -18,4 +18,4 @@ Windows
 *.xcodeproj
 *.xcworkspace
 
-Plugins/BlueprintAssist/NodeSizeCache
+Plugins\BlueprintAssist\NodeSizeCache
