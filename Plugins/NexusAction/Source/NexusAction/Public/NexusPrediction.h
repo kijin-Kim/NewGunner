@@ -42,7 +42,7 @@ struct NEXUSACTION_API FNexusPredictionTag  : public FFastArraySerializerItem
 	void PostReplicatedChange(const FNexusPredictionTagContainer& InArray);
 	//~ End FFastArraySerializerItem Interface.
 
-	void OnRepPredictionHandle();
+	void OnRepPredictionTag();
 
 	void GenerateNewHandle();
 	void Expire();
@@ -71,13 +71,13 @@ struct NEXUSACTION_API FNexusPredictionTagContainer : public FFastArraySerialize
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	//~ End FFastArraySerializer Interface.
 
-	void ReplicatedNetPredictionHandle(const FNexusPredictionTag& PredictionHandle);
+	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 	UPROPERTY()
 	TArray<FNexusPredictionTag> Items;
 
 	int32 StartIndex = 0;
-	static constexpr int32 MaximumPredictionHandles = 16;
+	static constexpr int32 MaximumPredictionTags = 16;
 };
 
 template <>
@@ -100,9 +100,9 @@ public:
 	};
 
 	static void ResetPredictionEvents();
-	static void BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionHandle);
-	static void BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionHandle);
-	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionHandle) { return PredictionEvents.FindOrAdd(PredictionHandle); }
+	static void BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag);
+	static void BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionTag);
+	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionTag) { return PredictionEvents.FindOrAdd(PredictionTag); }
 	static void Clear();
 
 private:

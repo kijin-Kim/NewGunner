@@ -42,14 +42,14 @@ void FNexusSideEffectDefContainer::Init(AActor* InOwnerActor)
 	bHasAuthority = InOwnerActor->HasAuthority();
 }
 
-void FNexusSideEffectDefContainer::Add(const FNexusSideEffectDef& SideEffectDefinition, FNexusPredictionTag PredictionHandle)
+void FNexusSideEffectDefContainer::Add(const FNexusSideEffectDef& SideEffectDef, FNexusPredictionTag PredictionTag)
 {
 	FNexusSideEffectDef NewItem;
-	NewItem.Handle = SideEffectDefinition.Handle;
-	NewItem.SideEffectClass = SideEffectDefinition.SideEffectClass;
-	NewItem.SideEffectInstance = SideEffectDefinition.SideEffectInstance;
-	NewItem.PredictionHandle = PredictionHandle;
-	NewItem.SideEffectInstance->OnApplied(PredictionHandle, bHasAuthority);
+	NewItem.Handle = SideEffectDef.Handle;
+	NewItem.SideEffectClass = SideEffectDef.SideEffectClass;
+	NewItem.SideEffectInstance = SideEffectDef.SideEffectInstance;
+	NewItem.PredictionTag = PredictionTag;
+	NewItem.SideEffectInstance->OnApplied(PredictionTag, bHasAuthority);
 
 	int Index = Items.Add(NewItem);
 	if (bHasAuthority && NewItem.SideEffectInstance->DurationType != ESideEffectDurationType::Instant)
@@ -58,13 +58,13 @@ void FNexusSideEffectDefContainer::Add(const FNexusSideEffectDef& SideEffectDefi
 	}
 }
 
-void FNexusSideEffectDefContainer::Remove(const FNexusSideEffectDefHandle& SideEffectDefinitionHandle)
+void FNexusSideEffectDefContainer::Remove(const FNexusSideEffectDefHandle& SideEffectDefHandle)
 {
-	int32 Removed = Items.RemoveAll([SideEffectDefinitionHandle](const FNexusSideEffectDef& SideEffectDefinitionItem)
+	int32 Removed = Items.RemoveAll([SideEffectDefHandle](const FNexusSideEffectDef& SideEffectDefItem)
 	{
-		if (SideEffectDefinitionHandle == SideEffectDefinitionItem.Handle)
+		if (SideEffectDefHandle == SideEffectDefItem.Handle)
 		{
-			SideEffectDefinitionItem.SideEffectInstance->OnRemoved();
+			SideEffectDefItem.SideEffectInstance->OnRemoved();
 			return true;
 		}
 		return false;
@@ -78,33 +78,33 @@ bool FNexusSideEffectDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& Del
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusSideEffectDef, FNexusSideEffectDefContainer>(Items, DeltaParms, *this);
 }
 
-void FNexusSideEffectDefContainer::OnAdded(FNexusSideEffectDef& SideEffectDefinition) const
+void FNexusSideEffectDefContainer::OnAdded(FNexusSideEffectDef& SideEffectDef) const
 {
-	SideEffectDefinition.SideEffectInstance = NewObject<UNexusSideEffect>(OwnerActor, SideEffectDefinition.SideEffectClass);
-	SideEffectDefinition.SideEffectInstance->OnApplied(SideEffectDefinition.PredictionHandle, bHasAuthority);
+	SideEffectDef.SideEffectInstance = NewObject<UNexusSideEffect>(OwnerActor, SideEffectDef.SideEffectClass);
+	SideEffectDef.SideEffectInstance->OnApplied(SideEffectDef.PredictionTag, bHasAuthority);
 }
 
-void FNexusSideEffectDefContainer::OnRemoved(const FNexusSideEffectDef& SideEffectDefinition) const
+void FNexusSideEffectDefContainer::OnRemoved(const FNexusSideEffectDef& SideEffectDef) const
 {
-	SideEffectDefinition.SideEffectInstance->OnRemoved();
+	SideEffectDef.SideEffectInstance->OnRemoved();
 }
 
 void FNexusSideEffectDefContainer::Tick(float DeltaTime)
 {
-	for (FNexusSideEffectDef& SideEffectDefinition : Items)
+	for (FNexusSideEffectDef& SideEffectDef : Items)
 	{
-		SideEffectDefinition.SideEffectInstance->OnTick(DeltaTime, bHasAuthority);
+		SideEffectDef.SideEffectInstance->OnTick(DeltaTime, bHasAuthority);
 	}
 
 	if (bHasAuthority)
 	{
-		int32 Removed = Items.RemoveAll([this](const FNexusSideEffectDef& SideEffectDefinition)
+		int32 Removed = Items.RemoveAll([this](const FNexusSideEffectDef& SideEffectDef)
 		{
-			ESideEffectDurationType DurationType = SideEffectDefinition.SideEffectInstance->DurationType;
+			ESideEffectDurationType DurationType = SideEffectDef.SideEffectInstance->DurationType;
 			if ((DurationType == ESideEffectDurationType::Instant && bHasAuthority)
-				|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDefinition.SideEffectInstance->RemainingDuration <= 0.0f)))
+				|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDef.SideEffectInstance->RemainingDuration <= 0.0f)))
 			{
-				SideEffectDefinition.SideEffectInstance->OnRemoved();
+				SideEffectDef.SideEffectInstance->OnRemoved();
 				return true;
 			}
 			return false;

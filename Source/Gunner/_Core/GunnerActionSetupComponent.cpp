@@ -33,8 +33,8 @@ void UGunnerActionSetupComponent::AuthSetupActionSets()
 		{
 			if (ActionClass)
 			{
-				FNexusActionDef ActionDefinition(ActorOwner, ActionClass);
-				ActionComponent->AuthAddAction(ActionDefinition);
+				FNexusActionDef ActionDef(ActorOwner, ActionClass);
+				ActionComponent->AuthAddAction(ActionDef);
 			}
 		}
 	}

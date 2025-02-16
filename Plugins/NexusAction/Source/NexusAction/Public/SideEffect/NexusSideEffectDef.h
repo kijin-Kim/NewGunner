@@ -13,8 +13,8 @@ struct FNexusSideEffectDef;
 class UNexusSideEffect;
 
 
-DECLARE_DELEGATE_TwoParams(FOnSideEffectDefinitionAddedSignature, const FNexusSideEffectDef& /*SideEffectDefinition*/, FNexusPredictionTag /*PredictionHandle*/);
-DECLARE_DELEGATE_OneParam(FOnSideEffectDefinitionRemovedSignature, FNexusSideEffectDefHandle /*SideEffectDefinitionHandle*/);
+DECLARE_DELEGATE_TwoParams(FOnSideEffectDefAddedSignature, const FNexusSideEffectDef& /*SideEffectDef*/, FNexusPredictionTag /*PredictionTag*/);
+DECLARE_DELEGATE_OneParam(FOnSideEffectDefRemovedSignature, FNexusSideEffectDefHandle /*SideEffectDefHandle*/);
 
 
 /**
@@ -42,7 +42,7 @@ struct FNexusSideEffectDef : public FFastArraySerializerItem
 	TObjectPtr<UNexusSideEffect> SideEffectInstance;
 
 	UPROPERTY()
-	FNexusPredictionTag PredictionHandle;
+	FNexusPredictionTag PredictionTag;
 };
 
 USTRUCT()
@@ -51,12 +51,12 @@ struct FNexusSideEffectDefContainer : public FFastArraySerializer
 	GENERATED_USTRUCT_BODY()
 
 	void Init(AActor* InOwnerActor);
-	void Add(const FNexusSideEffectDef& SideEffectDefinition, FNexusPredictionTag PredictionHandle);
-	void Remove(const FNexusSideEffectDefHandle& SideEffectDefinitionHandle);
+	void Add(const FNexusSideEffectDef& SideEffectDef, FNexusPredictionTag PredictionTag);
+	void Remove(const FNexusSideEffectDefHandle& SideEffectDefHandle);
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
-	void OnAdded(FNexusSideEffectDef& SideEffectDefinition) const;
-	void OnRemoved(const FNexusSideEffectDef& SideEffectDefinition) const;
+	void OnAdded(FNexusSideEffectDef& SideEffectDef) const;
+	void OnRemoved(const FNexusSideEffectDef& SideEffectDef) const;
 
 	void Tick(float DeltaTime);
 

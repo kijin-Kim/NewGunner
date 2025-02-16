@@ -69,14 +69,10 @@ class NEXUSACTION_API UNexusCue : public UObject
 public:
 	virtual UWorld* GetWorld() const override;
 	UFUNCTION(BlueprintNativeEvent)
-	void OnSignaled();
-	void SetSignalDataObject(UObject* InSignalDataObject) { SignalDataObject = InSignalDataObject; }
-	void SetSignalTargetData(const FNexusRepDataHandle& InSignalTargetData) { SignalTargetData = InSignalTargetData; }
-	UFUNCTION(BlueprintCallable)
-	UObject* GetSignalDataObject() const { return SignalDataObject.Get(); }
-
+	void OnTriggered();
+	void SetCueRepData(const FNexusRepDataHandle& InRepDataHandle) { RepDataHandle = InRepDataHandle; }
+	
 private:
-	TWeakObjectPtr<UObject> SignalDataObject;
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	FNexusRepDataHandle SignalTargetData;
+	FNexusRepDataHandle RepDataHandle;
 };

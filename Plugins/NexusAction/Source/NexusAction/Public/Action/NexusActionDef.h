@@ -14,8 +14,8 @@
 struct FNexusActionDef;
 class UNexusAction;
 
-DECLARE_DELEGATE_OneParam(FOnActionDefinitionAddedSignature, FNexusActionDef& /*ActionDefinition*/);
-DECLARE_DELEGATE_OneParam(FOnActionDefinitionRemovedSignature, FNexusActionDef& /*ActionDefinition*/);
+DECLARE_DELEGATE_OneParam(FOnActionDefAddedSignature, FNexusActionDef& /*ActionDef*/);
+DECLARE_DELEGATE_OneParam(FOnActionDefRemovedSignature, FNexusActionDef& /*ActionDef*/);
 
 
 struct FNexusActionDefContainer;
@@ -47,20 +47,20 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	GENERATED_BODY()
 
 
-	void AuthAdd(const FNexusActionDef& ActionDefinition);
+	void AuthAdd(const FNexusActionDef& ActionDef);
 	void AuthRemove(const FNexusActionDefHandle& Handle);
 	void AuthRemoveAll();
-	FNexusActionDef* FindActionDefinitionByHandle(const FNexusActionDefHandle& Handle);
+	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
-	void OnAdded(FNexusActionDef& ActionDefinition) const;
-	void OnRemoved(FNexusActionDef& ActionDefinition) const;
+	void OnAdded(FNexusActionDef& ActionDef) const;
+	void OnRemoved(FNexusActionDef& ActionDef) const;
 	
 
 	UPROPERTY()
 	TArray<FNexusActionDef> Items;
-	FOnActionDefinitionAddedSignature OnActionDefinitionAddedDelegate;
-	FOnActionDefinitionRemovedSignature OnActionDefinitionRemovedDelegate;
+	FOnActionDefAddedSignature OnActionDefAddedDelegate;
+	FOnActionDefRemovedSignature OnActionDefRemovedDelegate;
 };
 
 

@@ -14,11 +14,11 @@ UWorld* UNexusAction::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UNexusAction::InitializeAction(FNexusActionDefHandle InActionDefinitionHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusAction::InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
-	check(InActionDefinitionHandle.IsValid());
+	check(InActionDefHandle.IsValid());
 	check(InAgentInfo.IsValid());
-	ActionDefinitionHandle = InActionDefinitionHandle;
+	ActionDefHandle = InActionDefHandle;
 	AgentInfo = InAgentInfo;
 }
 
@@ -38,7 +38,7 @@ bool UNexusAction::OnCanTriggerAction_Implementation() const
 
 void UNexusAction::OnTriggerAction_Implementation()
 {
-	check(ActionDefinitionHandle.IsValid());
+	check(ActionDefHandle.IsValid());
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
 
@@ -58,8 +58,8 @@ void UNexusAction::OnEndAction_Implementation()
 		return;
 	}
 	bIsTriggering = false;
-	check(ActionDefinitionHandle.IsValid());
-	OnActionEndedDelegate.Broadcast(ActionDefinitionHandle, this);
+	check(ActionDefHandle.IsValid());
+	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
 }
 
 void UNexusAction::EndAction()

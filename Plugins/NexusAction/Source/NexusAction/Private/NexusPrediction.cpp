@@ -35,7 +35,7 @@ void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContaine
 
 FNexusPredictionTagContainer::FNexusPredictionTagContainer()
 {
-	Items.SetNum(MaximumPredictionHandles);
+	Items.SetNum(MaximumPredictionTags);
 	for (FNexusPredictionTag& Item : Items)
 	{
 		MarkItemDirty(Item);
@@ -47,16 +47,16 @@ bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& Del
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusPredictionTag, FNexusPredictionTagContainer>(Items, DeltaParms, *this);
 }
 
-void FNexusPredictionTagContainer::ReplicatedNetPredictionHandle(const FNexusPredictionTag& PredictionHandle)
+void FNexusPredictionTagContainer::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
-	if (PredictionHandle.IsExpired())
+	if (PredictionTag.IsExpired())
 	{
 		return;
 	}
 
-	Items[StartIndex] = PredictionHandle;
+	Items[StartIndex] = PredictionTag;
 	MarkItemDirty(Items[StartIndex]);
-	StartIndex = (StartIndex + 1) % MaximumPredictionHandles;
+	StartIndex = (StartIndex + 1) % MaximumPredictionTags;
 }
 
 void FNexusPredictionEvents::ResetPredictionEvents()
@@ -64,22 +64,22 @@ void FNexusPredictionEvents::ResetPredictionEvents()
 	PredictionEvents.Empty();
 }
 
-void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionHandle)
+void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag)
 {
-	if (!PredictionHandle.IsValid())
+	if (!PredictionTag.IsValid())
 	{
 		return;
 	}
 
-	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionHandle))
+	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
 	{
 		Event->OnPredictionEnded.Broadcast();
 	}
-	PredictionEvents.Remove(PredictionHandle);
+	PredictionEvents.Remove(PredictionTag);
 
 	for (auto It = PredictionEvents.CreateIterator(); It; ++It)
 	{
-		if (It.Key() <= PredictionHandle)
+		if (It.Key() <= PredictionTag)
 		{
 			It.Value().OnPredictionEnded.Broadcast();
 			It.RemoveCurrent();
@@ -87,18 +87,18 @@ void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTa
 	}
 }
 
-void FNexusPredictionEvents::BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionHandle)
+void FNexusPredictionEvents::BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionTag)
 {
-	if (!PredictionHandle.IsValid())
+	if (!PredictionTag.IsValid())
 	{
 		return;
 	}
 
-	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionHandle))
+	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
 	{
 		Event->OnPredictionFailed.Broadcast();
 	}
-	PredictionEvents.Remove(PredictionHandle);
+	PredictionEvents.Remove(PredictionTag);
 }
 
 void FNexusPredictionEvents::Clear()

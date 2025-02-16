@@ -46,9 +46,9 @@ void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefinitions, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UNexusActionComponent, NetPredictionHandles, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefinitions, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UNexusActionComponent, NetPredictionTags, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
 }
 
@@ -68,9 +68,9 @@ void UNexusActionComponent::InitActionComponent(AActor* InAgentActor)
 	check(InAgentActor);
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
-	SideEffectDefinitions.Init(GetOwner());
-	ActionDefinitions.OnActionDefinitionAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefinitionAdded);
-	ActionDefinitions.OnActionDefinitionRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefinitionRemoved);
+	SideEffectDefs.Init(GetOwner());
+	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
+	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
 
 
 	if (GetOwner()->HasAuthority())
@@ -80,9 +80,9 @@ void UNexusActionComponent::InitActionComponent(AActor* InAgentActor)
 
 	if (OldAgentInfo != *AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
 	{
-		for (auto& ActionDefinition : ActionDefinitions.Items)
+		for (auto& ActionDef : ActionDefs.Items)
 		{
-			OnActionDefinitionAdded(ActionDefinition);
+			OnActionDefAdded(ActionDef);
 		}
 	}
 }
@@ -107,82 +107,82 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 			Property->Tick();
 		}
 	}
-	SideEffectDefinitions.Tick(DeltaTime);
+	SideEffectDefs.Tick(DeltaTime);
 }
 
-FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef& ActionDefinition)
+FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef& ActionDef)
 {
 	check(GetOwner()->HasAuthority());
 
 	if (ActionScopeLockCount > 0)
 	{
-		ActionPendingAdds.Add(ActionDefinition);
-		return ActionDefinition.Handle;
+		ActionPendingAdds.Add(ActionDef);
+		return ActionDef.Handle;
 	}
 
 	ACTION_LIST_SCOPE_LOCK();
 
-	FNexusActionDef NewActionDefinition = ActionDefinition;
-	NewActionDefinition.ActionInstance = NewAction<UNexusAction>(NewActionDefinition.ActionClass, NewActionDefinition.Handle, AgentInfo);
-	ActionDefinitions.AuthAdd(NewActionDefinition);
-	HandleTriggerableActionOnAdded(NewActionDefinition);
+	FNexusActionDef NewActionDef = ActionDef;
+	NewActionDef.ActionInstance = NewAction<UNexusAction>(NewActionDef.ActionClass, NewActionDef.Handle, AgentInfo);
+	ActionDefs.AuthAdd(NewActionDef);
+	HandleTriggerableActionOnAdded(NewActionDef);
 
-	return NewActionDefinition.Handle;
+	return NewActionDef.Handle;
 }
 
-void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& ActionDefinitionHandle)
+void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle)
 {
 	check(GetOwner()->HasAuthority());
 
 
-	FNexusActionDef* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	if (!ActionDefinition)
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
+	if (!ActionDef)
 	{
 		return;
 	}
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDefinition->ActionInstance->GetName());
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef->ActionInstance->GetName());
 
 	if (ActionScopeLockCount > 0)
 	{
-		ActionPendingRemoves.Add(ActionDefinitionHandle);
+		ActionPendingRemoves.Add(ActionDefHandle);
 		return;
 	}
 
-	ActionDefinition->ActionInstance->EndAction();
-	HandleTriggerableActionOnRemoved(*ActionDefinition);
+	ActionDef->ActionInstance->EndAction();
+	HandleTriggerableActionOnRemoved(*ActionDef);
 
 	ACTION_LIST_SCOPE_LOCK();
-	ActionDefinitions.AuthRemove(ActionDefinitionHandle);
+	ActionDefs.AuthRemove(ActionDefHandle);
 }
 
 void UNexusActionComponent::AuthRemoveAllActions()
 {
 	check(GetOwner()->HasAuthority());
 	ACTION_LIST_SCOPE_LOCK();
-	for (const auto& ActionDefinition : ActionDefinitions.Items)
+	for (const auto& ActionDef : ActionDefs.Items)
 	{
-		ActionDefinition.ActionInstance->EndAction();
-		HandleTriggerableActionOnRemoved(ActionDefinition);
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDefinition.ActionInstance->GetName());
+		ActionDef.ActionInstance->EndAction();
+		HandleTriggerableActionOnRemoved(ActionDef);
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef.ActionInstance->GetName());
 	}
-	ActionDefinitions.AuthRemoveAll();
+	ActionDefs.AuthRemoveAll();
 }
 
-void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
-	check(ActionDefinitionHandle.IsValid());
-	FNexusActionDef* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
+	check(ActionDefHandle.IsValid());
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
 
 	check(AgentInfo->OwnerActor.IsValid());
-	check(ActionDefinition->ActionInstance);
+	check(ActionDef->ActionInstance);
 
-	ensureMsgf(ActionDefinition, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
+	ensureMsgf(ActionDef, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
 	ensureMsgf(AgentInfo->AgentActor->GetLocalRole() != ROLE_SimulatedProxy,
 	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 Action [%s]을(를) 실행할 수 없습니다"), *AgentInfo->AgentActor->GetName(),
-	           *ActionDefinition->ActionInstance->GetName());
+	           *ActionDef->ActionInstance->GetName());
 
-	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessage);
-	if (!CanTriggerAction(*ActionDefinition))
+	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessage);
+	if (!CanTriggerAction(*ActionDef))
 	{
 		return;
 	}
@@ -190,34 +190,34 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefinit
 
 	if (AgentInfo->OwnerActor->GetNetMode() == NM_Standalone)
 	{
-		LocalTriggerAction(ActionDefinition);
+		LocalTriggerAction(ActionDef);
 		return;
 	}
 
 	const bool bIsLocallyControlled = AgentInfo->IsLocallyControlled();
 	const bool bIsOwnerActorAuthoritative = GetOwner()->HasAuthority();
-	const ENexusActionNetMethod ActionNetMethod = ActionDefinition->ActionInstance->GetActionNetMethod();
-	const bool bIsRemoteTriggerable = ActionDefinition->ActionInstance->IsRemoteTriggerable();
+	const ENexusActionNetMethod ActionNetMethod = ActionDef->ActionInstance->GetActionNetMethod();
+	const bool bIsRemoteTriggerable = ActionDef->ActionInstance->IsRemoteTriggerable();
 
 
 	if (bIsOwnerActorAuthoritative)
 	{
 		if (bIsLocallyControlled || ActionNetMethod == ENexusActionNetMethod::ServerOnly)
 		{
-			LocalTriggerAction(ActionDefinition);
+			LocalTriggerAction(ActionDef);
 			return;
 		}
 
 		if (ActionNetMethod == ENexusActionNetMethod::ServerAuthoritative)
 		{
-			LocalTriggerAction(ActionDefinition);
-			ClientTriggerAction(ActionDefinitionHandle, EventMessage);
+			LocalTriggerAction(ActionDef);
+			ClientTriggerAction(ActionDefHandle, EventMessage);
 			return;
 		}
 
 		if (bIsRemoteTriggerable)
 		{
-			ClientRemoteRequestTryTriggerAction(ActionDefinitionHandle, EventMessage);
+			ClientRemoteRequestTryTriggerAction(ActionDefHandle, EventMessage);
 			return;
 		}
 
@@ -229,21 +229,21 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefinit
 	{
 		if (ActionNetMethod == ENexusActionNetMethod::LocalOnly)
 		{
-			LocalTriggerAction(ActionDefinition);
+			LocalTriggerAction(ActionDef);
 			return;
 		}
 
 		if (ActionNetMethod == ENexusActionNetMethod::LocalPredicted)
 		{
 			CurrentPredictionTag.GenerateNewHandle();
-			LocalTriggerAction(ActionDefinition, CurrentPredictionTag);
-			ServerTryTriggerAction(ActionDefinitionHandle, EventMessage, CurrentPredictionTag);
+			LocalTriggerAction(ActionDef, CurrentPredictionTag);
+			ServerTryTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
 			return;
 		}
 
 		if (bIsRemoteTriggerable)
 		{
-			ServerRemoteRequestTryTriggerAction(ActionDefinitionHandle, EventMessage);
+			ServerRemoteRequestTryTriggerAction(ActionDefHandle, EventMessage);
 			return;
 		}
 
@@ -251,41 +251,41 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefinit
 	}
 }
 
-void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionHandle, FNexusPredictionTag NewPredictionHandle)
+void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FNexusPredictionTag NewPredictionTag)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionHandle));
+	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag));
 	if (Index == INDEX_NONE)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionHandle), NewPredictionHandle));
+		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag), NewPredictionTag));
 		return;
 	}
 
 	if (NetSyncPointDelegates[Index].OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope ScopedNetPrediction(*this, GetOwner()->HasAuthority(), NewPredictionHandle);
+		FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), NewPredictionTag);
 		NetSyncPointDelegates[Index].OnSyncDelegate.Broadcast();
 	}
 	NetSyncPointDelegates.RemoveAt(Index);
 }
 
 
-void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionHandle, FSimpleMulticastDelegate::FDelegate&& Delegate)
+void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionHandle));
+	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag));
 	if (Index == INDEX_NONE)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionHandle), MoveTemp(Delegate)));
+		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag), MoveTemp(Delegate)));
 		return;
 	}
 
-	FNexusPredictionScope ScopedNetPrediction(*this, GetOwner()->HasAuthority(), NetSyncPointDelegates[Index].NewPredictionHandle);
+	FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), NetSyncPointDelegates[Index].NewPredictionTag);
 	Delegate.ExecuteIfBound();
 	NetSyncPointDelegates.RemoveAt(Index);
 }
 
-void UNexusActionComponent::ReplicatedNetPredictionHandle(const FNexusPredictionTag& PredictionHandle)
+void UNexusActionComponent::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
-	NetPredictionHandles.ReplicatedNetPredictionHandle(PredictionHandle);
+	NetPredictionTags.ReplicatedNetPredictionTag(PredictionTag);
 }
 
 
@@ -302,19 +302,19 @@ void UNexusActionComponent::DecreaseActionListLock()
 		TArray<FNexusActionDef> PendingAdds = MoveTemp(ActionPendingAdds);
 		TArray<FNexusActionDefHandle> PendingRemoves = MoveTemp(ActionPendingRemoves);
 
-		for (const auto& ActionDefinition : PendingAdds)
+		for (const auto& ActionDef : PendingAdds)
 		{
 			if (GetOwner()->HasAuthority())
 			{
-				AuthAddAction(ActionDefinition);
+				AuthAddAction(ActionDef);
 			}
 		}
 
-		for (const auto& ActionDefinition : PendingRemoves)
+		for (const auto& ActionDef : PendingRemoves)
 		{
 			if (GetOwner()->HasAuthority())
 			{
-				AuthRemoveAction(ActionDefinition);
+				AuthRemoveAction(ActionDef);
 			}
 		}
 	}
@@ -357,12 +357,12 @@ bool UNexusActionComponent::HasActionTriggerAuthority(UNexusAction* Action) cons
 	return false;
 }
 
-FNexusSideEffectDef UNexusActionComponent::MakeSideEffectDefinition(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass)
+FNexusSideEffectDef UNexusActionComponent::MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass)
 {
 	check(Action);
-	FNexusSideEffectDef NewSideEffectDefinition{SideEffectClass};
-	NewSideEffectDefinition.SideEffectInstance = NewObject<UNexusSideEffect>(Action->GetOwnerActor(), SideEffectClass);
-	return NewSideEffectDefinition;
+	FNexusSideEffectDef NewSideEffectDef{SideEffectClass};
+	NewSideEffectDef.SideEffectInstance = NewObject<UNexusSideEffect>(Action->GetOwnerActor(), SideEffectClass);
+	return NewSideEffectDef;
 }
 
 void UNexusActionComponent::BP_TriggerSideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass)
@@ -382,11 +382,11 @@ void UNexusActionComponent::BP_TriggerSideEffectToActor(UNexusAction* Action, AA
 void UNexusActionComponent::TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action)
 {
 	check(Action);
-	FNexusSideEffectDef NewSideEffectDefinition = MakeSideEffectDefinition(Action, SideEffectClass);
-	TriggerSideEffectByDefinition(NewSideEffectDefinition, Action);
+	FNexusSideEffectDef NewSideEffectDef = MakeSideEffectDef(Action, SideEffectClass);
+	TriggerSideEffectByDef(NewSideEffectDef, Action);
 }
 
-void UNexusActionComponent::BP_TriggerSideEffectToActorByDefinition(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDefinition)
+void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef)
 {
 	check(Action);
 	if (!SideEffectTarget)
@@ -396,87 +396,87 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDefinition(UNexusAction
 
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffectByDefinition(SideEffectDefinition, Action);
+		ActionComponent->TriggerSideEffectByDef(SideEffectDef, Action);
 	}
 }
 
-void UNexusActionComponent::TriggerSideEffectByDefinition(const FNexusSideEffectDef& NewSideEffectDefinition, UNexusAction* Action)
+void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action)
 {
 	check(Action);
 	check(!CurrentPredictionTag.IsExpired());
-	SideEffectDefinitions.Add(NewSideEffectDefinition, CurrentPredictionTag);
+	SideEffectDefs.Add(NewSideEffectDef, CurrentPredictionTag);
 
 	if (!GetOwner()->HasAuthority() && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
 	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
-		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
+		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
-			NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 삭제 (예측 종료)"), *SideEffectDefinitionHandle.ToString());
-			SideEffectDefinitions.Remove(SideEffectDefinitionHandle);
+			NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 삭제 (예측 종료)"), *SideEffectDefHandle.ToString());
+			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 
-		PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefinitionHandle = NewSideEffectDefinition.Handle]()
+		PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
-			NX_LOG_SUB(LogNexusSideEffect, Error, TEXT("SideEffect [%s] 삭제 (예측 실패)"), *SideEffectDefinitionHandle.ToString());
-			SideEffectDefinitions.Remove(SideEffectDefinitionHandle);
+			NX_LOG_SUB(LogNexusSideEffect, Error, TEXT("SideEffect [%s] 삭제 (예측 실패)"), *SideEffectDefHandle.ToString());
+			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 	}
 }
 
-void UNexusActionComponent::BP_Signal(UNexusAction* Action, TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
 	check(ActorOwner);
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
 	{
-		ActionComponent->Signal(Action, SignClass, TargetData);
+		ActionComponent->TriggerCue(Action, CueClass, TargetData);
 	}
 }
 
-void UNexusActionComponent::Signal(UNexusAction* Action, TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
 
 {
-	if (!SignClass || !Action)
+	if (!CueClass || !Action)
 	{
 		return;
 	}
 
 	if (GetOwner()->HasAuthority())
 	{
-		NetMulticastSignal(SignClass, CurrentPredictionTag, TargetData);
+		NetMulticastTriggerCue(CueClass, CurrentPredictionTag, TargetData);
 		return;
 	}
 
 	if (Action->GetActionNetMethod() != ENexusActionNetMethod::ServerAuthoritative)
 	{
-		InternalSignal(SignClass, TargetData);
+		InternalTriggerCue(CueClass, TargetData);
 	}
 }
 
-void UNexusActionComponent::NetMulticastSignal_Implementation(TSubclassOf<UNexusCue> SignClass, FNexusPredictionTag PredictionHandle, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusPredictionTag PredictionTag, FNexusRepDataHandle TargetData)
 {
-	if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionHandle.IsValid()))
+	if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
 	{
-		InternalSignal(SignClass, TargetData);
+		InternalTriggerCue(CueClass, TargetData);
 	}
 }
 
 
-void UNexusActionComponent::InternalSignal(TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
 {
-	if (!SignClass)
+	if (!CueClass)
 	{
 		return;
 	}
 
-	UNexusCue* Sign = SignClass.GetDefaultObject();
+	UNexusCue* Sign = CueClass.GetDefaultObject();
 	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
 	check(Sign);
 
-	Sign->SetSignalTargetData(TargetData);
-	Sign->OnSignaled();
-	Sign->SetSignalTargetData(FNexusRepDataHandle());
+	Sign->SetCueRepData(TargetData);
+	Sign->OnTriggered();
+	Sign->SetCueRepData(FNexusRepDataHandle());
 }
 
 
@@ -520,50 +520,50 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		}
 
 
-		for (const FNexusSideEffectDef& Item : SideEffectDefinitions.Items)
+		for (const FNexusSideEffectDef& Item : SideEffectDefs.Items)
 		{
 			DisplayDebugManager.DrawString(FString::Printf(TEXT("SideEffect: %s"), *Item.SideEffectClass->GetName()));
 		}
 	}
 }
 
-void UNexusActionComponent::OnActionDefinitionAdded(FNexusActionDef& ActionDefinition)
+void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 {
-	ActionDefinition.ActionInstance = NewAction<UNexusAction>(ActionDefinition.ActionClass, ActionDefinition.Handle, AgentInfo);
-	HandleTriggerableActionOnAdded(ActionDefinition);
+	ActionDef.ActionInstance = NewAction<UNexusAction>(ActionDef.ActionClass, ActionDef.Handle, AgentInfo);
+	HandleTriggerableActionOnAdded(ActionDef);
 }
 
-void UNexusActionComponent::OnActionDefinitionRemoved(FNexusActionDef& ActionDefinition)
+void UNexusActionComponent::OnActionDefRemoved(FNexusActionDef& ActionDef)
 {
-	ActionDefinition.ActionInstance->EndAction();
-	HandleTriggerableActionOnRemoved(ActionDefinition);
+	ActionDef.ActionInstance->EndAction();
+	HandleTriggerableActionOnRemoved(ActionDef);
 }
 
-void UNexusActionComponent::HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDefinition)
+void UNexusActionComponent::HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDef)
 {
-	if (!HasActionTriggerAuthority(NewActionDefinition.ActionInstance))
+	if (!HasActionTriggerAuthority(NewActionDef.ActionInstance))
 	{
 		return;
 	}
 
-	BindActionTriggerEvent(NewActionDefinition);
-	if (NewActionDefinition.ActionInstance->ShouldTriggerOnAdded())
+	BindActionTriggerEvent(NewActionDef);
+	if (NewActionDef.ActionInstance->ShouldTriggerOnAdded())
 	{
-		TryTriggerAction(NewActionDefinition.Handle, FNexusEventMessage());
+		TryTriggerAction(NewActionDef.Handle, FNexusEventMessage());
 	}
 }
 
-void UNexusActionComponent::HandleTriggerableActionOnRemoved(const FNexusActionDef& ActionDefinition)
+void UNexusActionComponent::HandleTriggerableActionOnRemoved(const FNexusActionDef& ActionDef)
 {
-	if (HasActionTriggerAuthority(ActionDefinition.ActionInstance))
+	if (HasActionTriggerAuthority(ActionDef.ActionInstance))
 	{
-		UnbindActionTriggerEvent(ActionDefinition);
+		UnbindActionTriggerEvent(ActionDef);
 	}
 }
 
-void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewActionDefinition)
+void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewActionDef)
 {
-	UNexusAction* Action = NewActionDefinition.ActionInstance;
+	UNexusAction* Action = NewActionDef.ActionInstance;
 
 	FGameplayTagContainer ActionTriggerEventTags = Action->GetActionTriggerEventTags();
 	UNexusEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UNexusEventManagerComponent>();
@@ -574,14 +574,14 @@ void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewAct
 
 	for (FGameplayTag Tag : ActionTriggerEventTags)
 	{
-		FNexusEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FNexusEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDefinition.Handle);
-		BoundedActionEventHandles.FindOrAdd(NewActionDefinition.Handle).Add(EventCallbackHandle);
+		FNexusEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FNexusEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDef.Handle);
+		BoundedActionEventHandles.FindOrAdd(NewActionDef.Handle).Add(EventCallbackHandle);
 	}
 }
 
-void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDef& ActionDefinition)
+void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDef& ActionDef)
 {
-	if (TArray<FNexusEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDefinition.Handle))
+	if (TArray<FNexusEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDef.Handle))
 	{
 		UNexusEventManagerComponent* EventManagerComponent = AgentInfo->OwnerActor->GetComponentByClass<UNexusEventManagerComponent>();
 		if (!EventManagerComponent)
@@ -593,42 +593,42 @@ void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDef& Acti
 		{
 			EventManagerComponent->UnbindEventCallback(EventCallbackHandle);
 		}
-		BoundedActionEventHandles.Remove(ActionDefinition.Handle);
+		BoundedActionEventHandles.Remove(ActionDef.Handle);
 	}
 }
 
-void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefinitionHandle)
+void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle)
 {
-	TryTriggerAction(ActionDefinitionHandle, EventMessage);
+	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefinitionHandle, UNexusAction* Action)
+void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action)
 {
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 종료"), *Action->GetName());
 	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
 }
 
-FNexusActionDef* UNexusActionComponent::FindActionDefinitionByHandle(FNexusActionDefHandle ActionDefinitionHandle)
+FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle)
 {
-	check(ActionDefinitionHandle.IsValid());
-	if (FNexusActionDef* ActionDefinitionPtr = ActionDefinitions.FindActionDefinitionByHandle(ActionDefinitionHandle))
+	check(ActionDefHandle.IsValid());
+	if (FNexusActionDef* ActionDefPtr = ActionDefs.FindActionDefByHandle(ActionDefHandle))
 	{
-		return ActionDefinitionPtr;
+		return ActionDefPtr;
 	}
 
-	// If not found in ActionDefinitions, try to find in ActionPendingAdds
-	return ActionPendingAdds.FindByPredicate([ActionDefinitionHandle](const FNexusActionDef& ActionDefinition)
+	// If not found in ActionDefs, try to find in ActionPendingAdds
+	return ActionPendingAdds.FindByPredicate([ActionDefHandle](const FNexusActionDef& ActionDef)
 	{
-		return ActionDefinition.Handle == ActionDefinitionHandle;
+		return ActionDef.Handle == ActionDefHandle;
 	});
 }
 
-bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDefinition) const
+bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) const
 {
-	bool bIsNotTriggeringOrRetriggerable = ActionDefinition.ActionInstance->IsRetriggerable() || !ActionDefinition.ActionInstance->IsTriggering();
-	bool bMetTriggerCondition = ActionDefinition.ActionInstance->OnCanTriggerAction();
-	bool bHasRequiredTags = OwnedTags.HasAll(ActionDefinition.ActionInstance->GetShouldHaveTags());
-	bool bDontHaveForbiddenTags = !OwnedTags.HasAny(ActionDefinition.ActionInstance->GetShouldNotHaveTags());
+	bool bIsNotTriggeringOrRetriggerable = ActionDef.ActionInstance->IsRetriggerable() || !ActionDef.ActionInstance->IsTriggering();
+	bool bMetTriggerCondition = ActionDef.ActionInstance->OnCanTriggerAction();
+	bool bHasRequiredTags = OwnedTags.HasAll(ActionDef.ActionInstance->GetShouldHaveTags());
+	bool bDontHaveForbiddenTags = !OwnedTags.HasAny(ActionDef.ActionInstance->GetShouldNotHaveTags());
 
 	if (!bShowActionFailedReason)
 	{
@@ -637,20 +637,20 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDefini
 
 	if (!bIsNotTriggeringOrRetriggerable)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (실행 중)"), *ActionDefinition.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (실행 중)"), *ActionDef.ActionInstance->GetName());
 		return false;
 	}
 
 	if (!bMetTriggerCondition)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (조건 미충족)"), *ActionDefinition.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (조건 미충족)"), *ActionDef.ActionInstance->GetName());
 		return false;
 	}
 
 	if (!bHasRequiredTags)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (필수 태그 미보유)"), *ActionDefinition.ActionInstance->GetName());
-		const FGameplayTagContainer& ShouldHaveTags = ActionDefinition.ActionInstance->GetShouldHaveTags();
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (필수 태그 미보유)"), *ActionDef.ActionInstance->GetName());
+		const FGameplayTagContainer& ShouldHaveTags = ActionDef.ActionInstance->GetShouldHaveTags();
 		FGameplayTagContainer NotOwnedTags;
 		for (FGameplayTag Tag : ShouldHaveTags)
 		{
@@ -665,8 +665,8 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDefini
 
 	if (!bDontHaveForbiddenTags)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (금지 태그 보유)"), *ActionDefinition.ActionInstance->GetName());
-		const FGameplayTagContainer& ShouldNotHaveTags = ActionDefinition.ActionInstance->GetShouldNotHaveTags();
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (금지 태그 보유)"), *ActionDef.ActionInstance->GetName());
+		const FGameplayTagContainer& ShouldNotHaveTags = ActionDef.ActionInstance->GetShouldNotHaveTags();
 		FGameplayTagContainer OwnedForbiddenTags;
 		for (FGameplayTag Tag : ShouldNotHaveTags)
 		{
@@ -682,37 +682,37 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDefini
 	return true;
 }
 
-void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDefinition, FNexusPredictionTag PredictionHandle)
+void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef, FNexusPredictionTag PredictionTag)
 {
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDefinition->ActionInstance->GetName());
-	check(ActionDefinition->ActionInstance);
-	OwnedTags.AppendTags(ActionDefinition->ActionInstance->GetActionOwnedTags());
-	ActionDefinition->ActionInstance->InitPredictionHandle = PredictionHandle;
-	FNexusPredictionScope ScopedNetPrediction(*this, GetOwner()->HasAuthority(), PredictionHandle);
-	ActionDefinition->ActionInstance->OnTriggerAction();
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
+	check(ActionDef->ActionInstance);
+	OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
+	ActionDef->ActionInstance->InitPredictionTag = PredictionTag;
+	FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), PredictionTag);
+	ActionDef->ActionInstance->OnTriggerAction();
 }
 
 
-void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNexusActionDefHandle ActionDefinitionHandle, FNexusPredictionTag PredictionHandle)
+void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
-	FNexusActionDef* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	check(ActionDefinition);
-	ActionDefinition->ActionInstance->OnEndAction();
-	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionHandle);
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
+	check(ActionDef);
+	ActionDef->ActionInstance->OnEndAction();
+	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
 }
 
-void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefinitionHandle, FNexusPredictionTag PredictionHandle)
+void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
 }
 
-void UNexusActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
-	TryTriggerAction(ActionDefinitionHandle, EventMessage);
+	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
-	TryTriggerAction(ActionDefinitionHandle, EventMessage);
+	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
 
@@ -827,26 +827,26 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	return PropertyPtr->GetDynamicValue();
 }
 
-void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessageReplicated& EventMessageReplicated)
+void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated)
 {
-	check(ActionDefinitionHandle.IsValid());
-	FNexusActionDef* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	check(ActionDefinition)
-	ActionDefinition->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
-	LocalTriggerAction(ActionDefinition);
+	check(ActionDefHandle.IsValid());
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
+	check(ActionDef)
+	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
+	LocalTriggerAction(ActionDef);
 }
 
-void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionHandle)
+void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
 {
-	if (!ActionDefinitionHandle.IsValid())
+	if (!ActionDefHandle.IsValid())
 	{
 		unimplemented(); // FAIL DESYNC
 	}
-	FNexusActionDef* ActionDefinition = FindActionDefinitionByHandle(ActionDefinitionHandle);
-	if (!ActionDefinition)
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
+	if (!ActionDef)
 	{
 		unimplemented(); // FAIL DESYNC
 	}
 
-	LocalTriggerAction(ActionDefinition, PredictionHandle);
+	LocalTriggerAction(ActionDef, PredictionTag);
 }

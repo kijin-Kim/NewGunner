@@ -35,9 +35,9 @@ void FNexusActionDef::PreReplicatedRemove(const FNexusActionDefContainer& InArra
 	InArraySerializer.OnRemoved(*this);
 }
 
-void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDefinition)
+void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 {
-	int32 Index = Items.Add(ActionDefinition);
+	int32 Index = Items.Add(ActionDef);
 	MarkItemDirty(Items[Index]);
 }
 
@@ -60,7 +60,7 @@ void FNexusActionDefContainer::AuthRemoveAll()
 	MarkArrayDirty();
 }
 
-FNexusActionDef* FNexusActionDefContainer::FindActionDefinitionByHandle(const FNexusActionDefHandle& Handle)
+FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusActionDefHandle& Handle)
 {
 	for (FNexusActionDef& Item : Items)
 	{
@@ -77,18 +77,18 @@ bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaPa
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusActionDef, FNexusActionDefContainer>(Items, DeltaParms, *this);
 }
 
-void FNexusActionDefContainer::OnAdded(FNexusActionDef& ActionDefinition) const
+void FNexusActionDefContainer::OnAdded(FNexusActionDef& ActionDef) const
 {
-	if (OnActionDefinitionAddedDelegate.IsBound())
+	if (OnActionDefAddedDelegate.IsBound())
 	{
-		OnActionDefinitionAddedDelegate.Execute(ActionDefinition);
+		OnActionDefAddedDelegate.Execute(ActionDef);
 	}
 }
 
-void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDefinition) const
+void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDef) const
 {
-	if (OnActionDefinitionRemovedDelegate.IsBound())
+	if (OnActionDefRemovedDelegate.IsBound())
 	{
-		OnActionDefinitionRemovedDelegate.Execute(ActionDefinition);
+		OnActionDefRemovedDelegate.Execute(ActionDef);
 	}
 }

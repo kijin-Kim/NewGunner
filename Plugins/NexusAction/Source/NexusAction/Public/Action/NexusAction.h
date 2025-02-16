@@ -37,7 +37,7 @@ public:
 	virtual UWorld* GetWorld() const override;
 	//~ End UObject Interface.
 
-	void InitializeAction(FNexusActionDefHandle InActionDefinitionHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
+	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
 	UFUNCTION(BlueprintNativeEvent)
 	void OnActionAdded();
@@ -78,15 +78,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
-	FNexusActionDefHandle GetActionDefinitionHandle() const { return ActionDefinitionHandle; }
+	FNexusActionDefHandle GetActionDefHandle() const { return ActionDefHandle; }
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
 public:
-	FNexusPredictionTag InitPredictionHandle;
+	FNexusPredictionTag InitPredictionTag;
 	OnNexusActionEndedSignature OnActionEndedDelegate;
 
 protected:
-	FNexusActionDefHandle ActionDefinitionHandle;
+	FNexusActionDefHandle ActionDefHandle;
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")

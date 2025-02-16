@@ -5,12 +5,12 @@
 struct FNexusPredictionScope
 {
 public:
-	FNexusPredictionScope(UNexusActionComponent& InActionComponent, bool bInHasAuthority, FNexusPredictionTag InPredictionHandle);
+	FNexusPredictionScope(UNexusActionComponent& InActionComponent, bool bInHasAuthority, FNexusPredictionTag InPredictionTag);
 	~FNexusPredictionScope();
 
 public:
 	UNexusActionComponent& ActionComponent;
 	bool bHasAuthority;
-	FNexusPredictionTag PrevNetPredictionHandle;
+	FNexusPredictionTag PrevNetPredictionTag;
 	
 };

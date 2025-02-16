@@ -14,7 +14,7 @@ struct FNexusCueTargetDataDeleter
 };
 
 
-void UNexusCue::OnSignaled_Implementation()
+void UNexusCue::OnTriggered_Implementation()
 {
 }
 

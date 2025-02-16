@@ -33,11 +33,11 @@ public:
 	UNexusActionComponent();
 
 	template <typename T>
-	T* NewAction(const UClass* Class, FNexusActionDefHandle ActionDefinitionHandle, TWeakPtr<FNexusAgentInfo> AgentInfo)
+	T* NewAction(const UClass* Class, FNexusActionDefHandle ActionDefHandle, TWeakPtr<FNexusAgentInfo> AgentInfo)
 	{
 		T* NewAction = NewObject<UNexusAction>(GetOwner(), Class);
 		NewAction->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
-		NewAction->InitializeAction(ActionDefinitionHandle, AgentInfo);
+		NewAction->InitializeAction(ActionDefHandle, AgentInfo);
 		NewAction->OnActionAdded();
 		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 생성 및 추가"), *NewAction->GetName());
 		return NewAction;
@@ -53,17 +53,17 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
-	FNexusActionDefHandle AuthAddAction(const FNexusActionDef& ActionDefinition);
-	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefinitionHandle);
+	FNexusActionDefHandle AuthAddAction(const FNexusActionDef& ActionDef);
+	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
 
-	void TryTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage);
+	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionHandle, FNexusPredictionTag NewPredictionHandle);
-	void CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionHandle, FSimpleMulticastDelegate::FDelegate&& Delegate);
-	void ReplicatedNetPredictionHandle(const FNexusPredictionTag& PredictionHandle);
+	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FNexusPredictionTag NewPredictionTag);
+	void CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 
 	void IncreaseActionListLock();
@@ -72,25 +72,25 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
 
-
+	
 	UFUNCTION(BlueprintCallable)
-	static FNexusSideEffectDef MakeSideEffectDefinition(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
+	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
 	static void BP_TriggerSideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Definition"))
-	static void BP_TriggerSideEffectToActorByDefinition(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDefinition);
-	void TriggerSideEffectByDefinition(const FNexusSideEffectDef& SideEffectDefinition, UNexusAction* Action);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
+	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
+	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Signal"))
-	static void BP_Signal(UNexusAction* Action, TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData);
-	void Signal(UNexusAction* Action, TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
+	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastSignal(TSubclassOf<UNexusCue> SignClass, FNexusPredictionTag PredictionHandle, FNexusRepDataHandle TargetData);
-	void InternalSignal(TSubclassOf<UNexusCue> SignClass, FNexusRepDataHandle TargetData);
+	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusPredictionTag PredictionTag, FNexusRepDataHandle TargetData);
+	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
-	FNexusPredictionTagContainer& GetNetPredictionHandles() { return NetPredictionHandles; }
+	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }
 
 
 	void AuthAddProperty(FGameplayTag Tag, float Value);
@@ -114,33 +114,33 @@ private:
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
 
-	void OnActionDefinitionAdded(FNexusActionDef& ActionDefinition);
-	void OnActionDefinitionRemoved(FNexusActionDef& ActionDefinition);
+	void OnActionDefAdded(FNexusActionDef& ActionDef);
+	void OnActionDefRemoved(FNexusActionDef& ActionDef);
 
 
-	void HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDefinition);
-	void HandleTriggerableActionOnRemoved(const FNexusActionDef& ActionDefinition);
-	void BindActionTriggerEvent(const FNexusActionDef& NewActionDefinition);
-	void UnbindActionTriggerEvent(const FNexusActionDef& ActionDefinition);
-	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefinitionHandle);
-	void OnActionEnded(FNexusActionDefHandle ActionDefinitionHandle, UNexusAction* Action);
-	FNexusActionDef* FindActionDefinitionByHandle(FNexusActionDefHandle ActionDefinitionHandle);
+	void HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDef);
+	void HandleTriggerableActionOnRemoved(const FNexusActionDef& ActionDef);
+	void BindActionTriggerEvent(const FNexusActionDef& NewActionDef);
+	void UnbindActionTriggerEvent(const FNexusActionDef& ActionDef);
+	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle);
+	void OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action);
+	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle);
 
-	bool CanTriggerAction(const FNexusActionDef& ActionDefinition) const;
-	void LocalTriggerAction(FNexusActionDef* ActionDefinition, FNexusPredictionTag PredictionHandle = FNexusPredictionTag());
+	bool CanTriggerAction(const FNexusActionDef& ActionDef) const;
+	void LocalTriggerAction(FNexusActionDef* ActionDef, FNexusPredictionTag PredictionTag = FNexusPredictionTag());
 	UFUNCTION(Reliable, Server)
-	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionHandle);
+	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessageReplicated& EventMessageReplicated);
+	void ClientTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefinitionHandle, FNexusPredictionTag PredictionHandle);
+	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefinitionHandle, FNexusPredictionTag PredictionHandle);
+	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 
 	UFUNCTION(Reliable, Server)
-	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage);
+	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 	UFUNCTION(Reliable, Client)
-	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefinitionHandle, const FNexusEventMessage& EventMessage);
+	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
 public:
 	FNexusPredictionTag CurrentPredictionTag;
@@ -157,13 +157,13 @@ private:
 	TMap<FNexusActionDefHandle, TArray<FNexusEventCallbackHandle>> BoundedActionEventHandles;
 
 	UPROPERTY(Replicated)
-	FNexusActionDefContainer ActionDefinitions;
+	FNexusActionDefContainer ActionDefs;
 
 	UPROPERTY(Replicated)
-	FNexusPredictionTagContainer NetPredictionHandles;
+	FNexusPredictionTagContainer NetPredictionTags;
 
 	UPROPERTY(Replicated)
-	FNexusSideEffectDefContainer SideEffectDefinitions;
+	FNexusSideEffectDefContainer SideEffectDefs;
 
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UNexusProperty>> Properties;
@@ -184,9 +184,9 @@ private:
 		{
 		}
 
-		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FNexusPredictionTag InNewPredictionHandle)
+		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FNexusPredictionTag InNewPredictionTag)
 			: Key(InKey),
-			  NewPredictionHandle(InNewPredictionHandle)
+			  NewPredictionTag(InNewPredictionTag)
 		{
 		}
 
@@ -196,7 +196,7 @@ private:
 		}
 
 		SyncPointDelegateKeyType Key;
-		FNexusPredictionTag NewPredictionHandle;
+		FNexusPredictionTag NewPredictionTag;
 		FSimpleMulticastDelegate OnSyncDelegate;
 	};
 

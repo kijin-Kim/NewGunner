@@ -1,25 +1,25 @@
 #include "NexusPredictionScope.h"
 
 
-FNexusPredictionScope::FNexusPredictionScope(UNexusActionComponent& InActionComponent, bool bInHasAuthority, FNexusPredictionTag InPredictionHandle)
+FNexusPredictionScope::FNexusPredictionScope(UNexusActionComponent& InActionComponent, bool bInHasAuthority, FNexusPredictionTag InPredictionTag)
 	: ActionComponent(InActionComponent),
 	  bHasAuthority(bInHasAuthority)
 {
-	PrevNetPredictionHandle = ActionComponent.CurrentPredictionTag;
-	ActionComponent.CurrentPredictionTag = InPredictionHandle;
+	PrevNetPredictionTag = ActionComponent.CurrentPredictionTag;
+	ActionComponent.CurrentPredictionTag = InPredictionTag;
 }
 
 FNexusPredictionScope::~FNexusPredictionScope()
 {
 	if (ActionComponent.CurrentPredictionTag.IsValid() && bHasAuthority)
 	{
-		ActionComponent.ReplicatedNetPredictionHandle(ActionComponent.CurrentPredictionTag);
+		ActionComponent.ReplicatedNetPredictionTag(ActionComponent.CurrentPredictionTag);
 	}
 
 	ActionComponent.CurrentPredictionTag.Expire();
 
-	if (PrevNetPredictionHandle != ActionComponent.CurrentPredictionTag)
+	if (PrevNetPredictionTag != ActionComponent.CurrentPredictionTag)
 	{
-		ActionComponent.CurrentPredictionTag = PrevNetPredictionHandle;
+		ActionComponent.CurrentPredictionTag = PrevNetPredictionTag;
 	}
 }

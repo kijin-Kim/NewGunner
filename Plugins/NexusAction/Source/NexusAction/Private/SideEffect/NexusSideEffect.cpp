@@ -7,11 +7,11 @@
 #include "NexusLog.h"
 
 
-void UNexusSideEffect::OnApplied(FNexusPredictionTag PredictionHandle, bool bHasAuthority)
+void UNexusSideEffect::OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
 	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 적용"), *GetName());
 	RemainingDuration = Duration;
-	ApplyAllModifiers(PredictionHandle, bHasAuthority);
+	ApplyAllModifiers(PredictionTag, bHasAuthority);
 }
 
 void UNexusSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
@@ -66,7 +66,7 @@ void UNexusSideEffect::SetInjectedValue(FGameplayTag Tag, float Value)
 	InjectedValues.FindOrAdd(Tag, Value);
 }
 
-void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionHandle, bool bHasAuthority)
+void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);;
@@ -109,7 +109,7 @@ void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPr
 
 
 	if ((DurationType != ESideEffectDurationType::Instant && Interval <= 0.0f)
-		|| (PredictionHandle.IsValid() && !ActorOwner->HasAuthority()))
+		|| (PredictionTag.IsValid() && !ActorOwner->HasAuthority()))
 	{
 		FNexusPropertyOperation NewOperation{DesiredValue, Modifier.Operator};
 		OperationHandles.Add(NewOperation.Handle);
@@ -123,10 +123,10 @@ void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPr
 	}
 }
 
-void UNexusSideEffect::ApplyAllModifiers(FNexusPredictionTag PredictionHandle, bool bHasAuthority)
+void UNexusSideEffect::ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
 	for (const FNexusPropertyMod& Modifier : Modifiers)
 	{
-		ApplyModifier(Modifier, PredictionHandle, bHasAuthority);
+		ApplyModifier(Modifier, PredictionTag, bHasAuthority);
 	}
 }

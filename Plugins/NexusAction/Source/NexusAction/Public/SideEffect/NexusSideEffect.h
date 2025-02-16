@@ -47,7 +47,7 @@ class NEXUSACTION_API UNexusSideEffect : public UObject
 	GENERATED_BODY()
 
 public:
-	void OnApplied(FNexusPredictionTag PredictionHandle, bool bHasAuthority);
+	void OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority);
 	void OnTick(float DeltaTime, bool bHasAuthority);
 	void OnRemoved();
 
@@ -56,8 +56,8 @@ public:
 	
 
 private:
-	void ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionHandle, bool bHasAuthority);
-	void ApplyAllModifiers(FNexusPredictionTag PredictionHandle, bool bHasAuthority);
+	void ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
+	void ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority);
 
 
 public:
