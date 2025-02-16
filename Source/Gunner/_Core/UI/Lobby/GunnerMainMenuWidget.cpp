@@ -67,15 +67,15 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 
 
 		UE_LOG(LogGunner, Verbose, TEXT("세션 [%s] 생성 성공. 방 이름 [%s], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
-		FRoomInfo RoomInfo{
-			RoomName,
-			MapName,
-			0,
-			Session->SessionSettings.NumPublicConnections,
-			0,
-			Session->GetSessionIdStr(),
-			GetParticipants(Session)
-		};
+		FRoomInfo RoomInfo{};
+		RoomInfo.RoomName = RoomName;
+		RoomInfo.MapName = MapName;
+		RoomInfo.PlayerCount = 0;
+		RoomInfo.MaxPlayerCount = Session->SessionSettings.NumPublicConnections;
+		RoomInfo.PingInMs = 0;
+		RoomInfo.SessionId = Session->GetSessionIdStr();
+		RoomInfo.Participants = GetParticipants(Session);
+
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
 		GetWorld()->ServerTravel("/Game/Maps/Lobby?listen");
 		return;
@@ -108,14 +108,15 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			RoomName = DecodeString(RoomName);
 			MapName = DecodeString(MapName);
 
-			FRoomInfo NewRoomInfo{
-				RoomName,
-				MapName,
-				SearchResult.Session.SessionSettings.NumPublicConnections - SearchResult.Session.NumOpenPublicConnections,
-				SearchResult.Session.SessionSettings.NumPublicConnections,
-				SearchResult.PingInMs,
-				SearchResult.GetSessionIdStr()
-			};
+			
+			FRoomInfo NewRoomInfo;
+			NewRoomInfo.RoomName = RoomName;
+			NewRoomInfo.MapName = MapName;
+			NewRoomInfo.PlayerCount = SearchResult.Session.NumOpenPublicConnections;
+			NewRoomInfo.MaxPlayerCount = SearchResult.Session.SessionSettings.NumPublicConnections;
+			NewRoomInfo.PingInMs = SearchResult.PingInMs;
+			NewRoomInfo.SessionId = SearchResult.GetSessionIdStr();
+			
 			RoomInfos.Add(NewRoomInfo);
 			UE_LOG(LogGunner, Verbose, TEXT("%s"), *NewRoomInfo.ToString());
 		}

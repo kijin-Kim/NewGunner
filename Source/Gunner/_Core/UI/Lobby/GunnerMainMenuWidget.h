@@ -17,6 +17,16 @@ struct FRoomInfo
 {
 	GENERATED_BODY()
 
+	FRoomInfo()
+		: RoomName(TEXT("None"))
+		  , MapName(TEXT("None"))
+		  , PlayerCount(0)
+		  , MaxPlayerCount(0)
+		  , PingInMs(0)
+		  , SessionId(TEXT("None"))
+	{
+	}
+
 	UPROPERTY(BlueprintReadOnly)
 	FString RoomName;
 	UPROPERTY(BlueprintReadOnly)

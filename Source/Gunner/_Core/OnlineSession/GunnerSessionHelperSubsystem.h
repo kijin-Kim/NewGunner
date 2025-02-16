@@ -14,6 +14,17 @@ struct FGunnerSessionLobbyInfo
 {
 	GENERATED_BODY()
 
+	FGunnerSessionLobbyInfo()
+		: LobbyName(TEXT("None"))
+		  , MapName(TEXT("None"))
+		  , OwningUserName(TEXT("None"))
+		  , NumOpenPublicConnections(0)
+		  , NumPublicConnections(0)
+		  , PingInMs(0)
+		  , SessionIdStr(TEXT("None"))
+	{
+	}
+
 	UPROPERTY(BlueprintReadOnly)
 	FString LobbyName;
 	UPROPERTY(BlueprintReadOnly)

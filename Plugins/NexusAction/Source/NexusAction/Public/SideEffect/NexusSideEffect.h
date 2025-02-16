@@ -23,12 +23,22 @@ struct FNexusPropertyMod
 {
 	GENERATED_BODY()
 
+	FNexusPropertyMod()
+		: PropertyTag(FGameplayTag::EmptyTag),
+		  CalculationType(ENexusPropertyCalculationType::None),
+		  Operator(ENexusPropertyOperator::Add),
+		  DirectValue(0.0f),
+		  BaseProperty(FGameplayTag::EmptyTag),
+		  InjectedValueTag(FGameplayTag::EmptyTag)
+	{
+	}
+
 	UPROPERTY(EditAnywhere, Category = "Property Operation")
 	FGameplayTag PropertyTag;
 	UPROPERTY(EditAnywhere, Category = "Property Operation")
-	ENexusPropertyCalculationType CalculationType = ENexusPropertyCalculationType::None;
+	ENexusPropertyCalculationType CalculationType;
 	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "CalculationType != ENexusPropertyCalculationType::None", EditConditionHides))
-	ENexusPropertyOperator Operator = ENexusPropertyOperator::Add;
+	ENexusPropertyOperator Operator;
 
 	UPROPERTY(EditAnywhere, Category = "Property Operation", meta = (EditCondition = "(CalculationType != ENexusPropertyCalculationType::None) && (CalculationType == ENexusPropertyCalculationType::Direct)", EditConditionHides))
 	float DirectValue;
@@ -53,12 +63,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetInjectedValue(FGameplayTag Tag, float Value);
-	
 
 private:
 	void ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
 	void ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority);
-
 
 public:
 	UPROPERTY(EditAnywhere)

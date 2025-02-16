@@ -16,6 +16,7 @@ class UNexusAction;
 UENUM(BlueprintType)
 enum class EEquipmentType : uint8
 {
+	None,
 	Primary,
 	Secondary,
 	Melee,

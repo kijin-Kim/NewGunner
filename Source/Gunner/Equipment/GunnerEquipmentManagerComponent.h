@@ -16,6 +16,11 @@ struct FEquipmentSlot
 {
 	GENERATED_BODY()
 
+		FEquipmentSlot()
+		: DesiredEquipmentType(EEquipmentType::None)
+		, SlottedEquipment(nullptr)
+	{
+	}
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EEquipmentType DesiredEquipmentType;
 	UPROPERTY(BlueprintReadOnly)

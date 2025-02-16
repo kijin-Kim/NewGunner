@@ -15,6 +15,12 @@ class UInputAction;
 USTRUCT()
 struct FGunnerTriggerEventTagMapping
 {
+	FGunnerTriggerEventTagMapping()
+		: TriggerEvent(ETriggerEvent::None)
+		  , InputTag(FGameplayTag::EmptyTag)
+	{
+	}
+
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere)
 	ETriggerEvent TriggerEvent;
@@ -38,6 +44,12 @@ USTRUCT()
 struct GUNNER_API FGunnerInputContextAndPriority
 {
 	GENERATED_BODY()
+
+	FGunnerInputContextAndPriority()
+		: InputMappingContext(nullptr)
+		  , Priority(0)
+	{
+	}
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputMappingContext> InputMappingContext;

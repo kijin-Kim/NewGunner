@@ -12,6 +12,12 @@ struct FGunnerKillInfo
 {
 	GENERATED_BODY()
 
+	FGunnerKillInfo()
+		: KillerPlayerId(-1),
+		  Kills(0)
+	{
+	}
+
 	UPROPERTY()
 	int32 KillerPlayerId;
 	UPROPERTY()
