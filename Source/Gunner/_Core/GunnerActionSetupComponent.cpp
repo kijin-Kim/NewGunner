@@ -4,8 +4,8 @@
 #include "GunnerActionSetupComponent.h"
 
 #include "GunnerActionSet.h"
-#include "ActionSystem/GunnerActionComponent.h"
-#include "Gunner/_Core/ActionSystem/GunnerAction.h"
+#include "NexusActionComponent.h"
+#include "NexusAction.h"
 
 
 // Sets default values for this component's properties
@@ -19,7 +19,7 @@ void UGunnerActionSetupComponent::AuthSetupActionSets()
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
 	check(ActorOwner->HasAuthority());
-	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);;
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);;
 	check(ActionComponent);
 
 
@@ -29,11 +29,11 @@ void UGunnerActionSetupComponent::AuthSetupActionSets()
 		{
 			ActionComponent->AuthAddProperty(Tag, Value);
 		}
-		for (TSubclassOf<UGunnerAction> ActionClass : ActionSet->InitialActionClasses)
+		for (TSubclassOf<UNexusAction> ActionClass : ActionSet->InitialActionClasses)
 		{
 			if (ActionClass)
 			{
-				FGunnerActionDefinition ActionDefinition(ActorOwner, ActionClass);
+				FNexusActionDef ActionDefinition(ActorOwner, ActionClass);
 				ActionComponent->AuthAddAction(ActionDefinition);
 			}
 		}

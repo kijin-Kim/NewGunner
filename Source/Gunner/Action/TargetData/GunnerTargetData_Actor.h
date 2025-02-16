@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionSign.h"
+#include "NexusCue.h"
 #include "UObject/Object.h"
 #include "GunnerTargetData_Actor.generated.h"
 
@@ -11,7 +11,7 @@
  * 
  */
 USTRUCT()
-struct FGunnerTargetData_Actor : public FGunnerTargetDataBase
+struct FGunnerTargetData_Actor : public FNexusTargetDataBase
 {
 	GENERATED_BODY()
 

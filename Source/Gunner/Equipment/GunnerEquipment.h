@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
-#include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionDefinitionHandle.h"
+#include "Animation/NexusAnimMontagePlayerInterface.h"
+#include "NexusActionDefHandle.h"
 #include "GunnerEquipment.generated.h"
 
 class UGunnerLocomotionAnimSet;
-class UGunnerActionComponent;
-class UGunnerAction;
+class UNexusActionComponent;
+class UNexusAction;
 
 UENUM(BlueprintType)
 enum class EEquipmentType : uint8
@@ -27,7 +27,7 @@ enum class EEquipmentType : uint8
 
 
 UCLASS()
-class GUNNER_API AGunnerEquipment : public AActor, public IGunnerAnimMontagePlayerInterface
+class GUNNER_API AGunnerEquipment : public AActor, public INexusAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
@@ -46,7 +46,7 @@ public:
 	
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer();
+	UNexusAnimMontagePlayerComponent* GetAnimMontagePlayer();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetFirstPersonMeshComponent() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -57,8 +57,8 @@ public:
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 private:
-	void AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
-	void AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles);
+	void AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
+	void AuthRemoveDesiredActions(TArray<FNexusActionDefHandle>& AddedActionHandles);
 
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
@@ -76,15 +76,15 @@ private:
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMeshComponent;
 
 	UPROPERTY()
-	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
+	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UGunnerAction>> ActionsToAddOnAcquired;
-	TArray<FGunnerActionDefinitionHandle> AddedActionHandlesOnAcquired;
+	TArray<TSubclassOf<UNexusAction>> ActionsToAddOnAcquired;
+	TArray<FNexusActionDefHandle> AddedActionHandlesOnAcquired;
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UGunnerAction>> ActionsToAddOnEquip;
-	TArray<FGunnerActionDefinitionHandle> AddedActionHandlesOnEquip;
+	TArray<TSubclassOf<UNexusAction>> ActionsToAddOnEquip;
+	TArray<FNexusActionDefHandle> AddedActionHandlesOnEquip;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;

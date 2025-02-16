@@ -21,9 +21,6 @@
 #define GR_LOG_SUB(LogCat, Verbosity, Format, ...) UE_LOG(LogCat, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO_SUB, LOG_LOCALROLEINFO_SUB, LOG_REMOTEROLEINFO_SUB, *FString::Printf(Format, ##__VA_ARGS__))
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGunner, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogGunnerAction, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogGunnerProperty, Log, All)
-DECLARE_LOG_CATEGORY_EXTERN(LogGunnerSideEffect, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogGunnerSignal, Log, All);
+
 
 

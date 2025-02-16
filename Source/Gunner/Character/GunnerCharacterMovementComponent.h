@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NexusEventMessage.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Gunner/_Core/Event/GunnerEventCallbackBindInterface.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "Event/NexusEventInterface.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "GunnerCharacterMovementComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public IGunnerEventCallbackBindInterface
+class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public INexusEventInterface
 {
 	GENERATED_BODY()
 
@@ -27,18 +27,18 @@ public:
 
 protected:
 	//~ Begin IGunnerEventCallbackBindInterface Interface.
-	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
+	virtual TArray<FNexusEventCallbackHandle> SetupEvents() override;
 	//~ End IGunnerEventCallbackBindInterface Interface.
 
 	
 private:
 
 	
-	void Move(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
-	void Jump(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
-	void CharacterCrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
-	void CharacterUncrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
+	void Move(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
+	void Jump(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
+	void CharacterCrouch(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
+	void CharacterUncrouch(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
 
 private:
-	TArray<FGunnerEventCallbackHandle> BoundedEventCallbackHandles;
+	TArray<FNexusEventCallbackHandle> BoundedEventCallbackHandles;
 };

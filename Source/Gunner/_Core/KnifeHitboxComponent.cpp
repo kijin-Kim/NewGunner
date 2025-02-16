@@ -5,10 +5,10 @@
 
 #include "GenericTeamAgentInterface.h"
 #include "Camera/CameraComponent.h"
-#include "Event/GunnerEventManagerComponent.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/TraceHitMessageData.h"
-#include "Input/GunnerEventMessage.h"
+#include "NexusEventMessage.h"
 
 
 void UKnifeHitboxComponent::BeginPlay()
@@ -61,9 +61,9 @@ void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedCompon
 
 void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
+	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
-		FGunnerEventMessage HitScanMessage;
+		FNexusEventMessage HitScanMessage;
 		APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();

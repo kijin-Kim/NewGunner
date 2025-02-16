@@ -4,7 +4,7 @@
 #include "GunnerGameInstance.h"
 
 #include "MoviePlayer.h"
-#include "ActionSystem/AsyncAction/GunnerActionNetPrediction.h"
+#include "NexusPrediction.h"
 #include "Blueprint/UserWidget.h"
 #include "Gunner/Gunner.h"
 
@@ -59,7 +59,7 @@ void UGunnerGameInstance::StopLoadingScreen()
 void UGunnerGameInstance::Shutdown()
 {
 	Super::Shutdown();
-	FGunneractionNetPredictionEvents::ResetPredictionEvents();
+	FNexusPredictionEvents::ResetPredictionEvents();
 }
 
 UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const

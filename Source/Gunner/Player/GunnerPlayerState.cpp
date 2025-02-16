@@ -3,16 +3,17 @@
 
 #include "GunnerPlayerState.h"
 
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "NexusActionComponent.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
 AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
-	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
-	EventManagerComponent = CreateDefaultSubobject<UGunnerEventManagerComponent>(TEXT("EventManagerComponent"));
+	ActionComponent = CreateDefaultSubobject<UNexusActionComponent>(TEXT("ActionComponent"));
+	EventManagerComponent = CreateDefaultSubobject<UNexusEventManagerComponent>(TEXT("EventManagerComponent"));
+	
 }
 void AGunnerPlayerState::PostInitializeComponents()
 {

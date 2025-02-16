@@ -8,7 +8,7 @@
 #include "GunnerOverlayWidgetController.generated.h"
 
 
-class UGunnerActionProperty;
+class UNexusProperty;
 /**
  * 
  */

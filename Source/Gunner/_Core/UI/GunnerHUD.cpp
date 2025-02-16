@@ -6,7 +6,7 @@
 #include "EngineUtils.h"
 #include "GunnerUserWidget.h"
 #include "Gunner/_Core/GunnerOverlayWidget.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+#include "NexusActionComponent.h"
 #include "Gunner/_Core/UI/GunnerOverlayWidgetController.h"
 
 
@@ -28,14 +28,14 @@ void AGunnerHUD::GetDebugActorList(TArray<AActor*>& InOutList)
 	Super::GetDebugActorList(InOutList);
 	InOutList.RemoveAll([this](AActor* Actor)
 	{
-		return UGunnerActionComponent::GetActionComponentFromActor(Actor) == nullptr;
+		return UNexusActionComponent::GetActionComponentFromActor(Actor) == nullptr;
 	});
 	UWorld* World = GetWorld();
 	check(World);
 	for (TActorIterator<AActor> It(World); It; ++It)
 	{
 		AActor* Actor = *It;
-		if (IsValid(Actor) && UGunnerActionComponent::GetActionComponentFromActor(Actor) != nullptr)
+		if (IsValid(Actor) && UNexusActionComponent::GetActionComponentFromActor(Actor) != nullptr)
 		{
 			InOutList.AddUnique(Actor);
 		}

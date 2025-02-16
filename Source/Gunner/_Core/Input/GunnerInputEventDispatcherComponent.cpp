@@ -4,11 +4,11 @@
 #include "GunnerInputEventDispatcherComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GunnerEventMessage.h"
+#include "NexusEventMessage.h"
 #include "GunnerInputTagMappingData.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "Event/NexusEventManagerComponent.h"
 
 
 UGunnerInputEventDispatcherComponent::UGunnerInputEventDispatcherComponent()
@@ -32,8 +32,8 @@ void UGunnerInputEventDispatcherComponent::OnInputEvent(const FInputActionValue&
 	check(InputComponent);
 	if (APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>())
 	{
-		const FGunnerEventMessage EventMessage(PlayerController, nullptr, InputActionValue, nullptr);
-		UGunnerEventManagerComponent::SendEventToActor<FGunnerEventMessage>(InputTag, EventMessage, PlayerState);
+		const FNexusEventMessage EventMessage(PlayerController, nullptr, InputActionValue, nullptr);
+		UNexusEventManagerComponent::SendEventToActor<FNexusEventMessage>(InputTag, EventMessage, PlayerState);
 	}
 }
 

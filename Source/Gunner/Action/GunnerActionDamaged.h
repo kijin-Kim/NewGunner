@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gunner/_Core/ActionSystem/GunnerAction.h"
+#include "NexusAction.h"
 #include "GunnerActionDamaged.generated.h"
 
 
@@ -54,7 +54,7 @@ struct FGunnerDirectionalMontageSet
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerActionDamaged : public UGunnerAction
+class GUNNER_API UGunnerActionDamaged : public UNexusAction
 {
 	GENERATED_BODY()
 

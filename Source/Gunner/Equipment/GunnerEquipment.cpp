@@ -3,12 +3,12 @@
 
 #include "GunnerEquipment.h"
 
+#include "NexusAction.h"
 #include "Engine/Canvas.h"
 #include "Gunner/Animation/GunnerAnimInstance.h"
-#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
+#include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
-#include "Gunner/_Core/ActionSystem/GunnerAction.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
+#include "NexusActionComponent.h"
 
 
 // Sets default values
@@ -25,7 +25,7 @@ AGunnerEquipment::AGunnerEquipment()
 	FirstPersonMeshComponent->CastShadow = false;
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
 
-	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 }
 
 void AGunnerEquipment::OnConstruction(const FTransform& Transform)
@@ -61,10 +61,10 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 void AGunnerEquipment::AttachEquipmentToOwner()
 {
 	AActor* ActorOwner = GetOwner();
-	if (ActorOwner && ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
+	if (ActorOwner && ActorOwner->Implements<UNexusAnimMontagePlayerInterface>())
 	{
-		USkeletalMeshComponent* OwnerFPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
-		USkeletalMeshComponent* OwnerTPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
+		USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
+		USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
 
 		AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("CameraSocket"));
 		FirstPersonMeshComponent->AttachToComponent(OwnerFPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponPoint"));
@@ -112,18 +112,18 @@ void AGunnerEquipment::OnEquipped()
 	{
 		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
 
-		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
 		BulletProperty->SetStaticValue(BulletCount);
 
 
-		UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
 		MagazineBulletProperty->SetStaticValue(MagazineBulletCount);
 
 
-		UGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
 		MaxBulletPerMagazineProperty->SetStaticValue(MaxBulletPerMagazineCount);
 	}
 }
@@ -138,16 +138,16 @@ void AGunnerEquipment::OnUnequipped()
 	{
 		AuthRemoveDesiredActions(AddedActionHandlesOnEquip);
 
-		UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UGunnerActionProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
 		BulletCount = BulletProperty->GetStaticValue();
 
-		UGunnerActionProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
 		MagazineBulletCount = MagazineBulletProperty->GetStaticValue();
 
-		UGunnerActionProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
 		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->GetStaticValue();
 	}
 }
@@ -166,7 +166,7 @@ void AGunnerEquipment::OnRep_Owner()
 }
 
 
-UGunnerAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
+UNexusAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
 {
 	return AnimMontagePlayerComponent;
 }
@@ -187,17 +187,17 @@ void AGunnerEquipment::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugD
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("Equipment: %s"), *GetName()));
 }
 
-void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAction>>& ActionsToAdd, TArray<FGunnerActionDefinitionHandle>& AddedActionHandles)
+void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles)
 {
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
-	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
 	for (auto ActionClass : ActionsToAdd)
 	{
 		if (ActionClass)
 		{
-			FGunnerActionDefinition ActionDefinition(this, ActionClass);
+			FNexusActionDef ActionDefinition(this, ActionClass);
 			if (ActorOwner->HasAuthority())
 			{
 				AddedActionHandles.Add(ActionComponent->AuthAddAction(ActionDefinition));
@@ -206,7 +206,7 @@ void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UGunnerAct
 	}
 }
 
-void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHandle>& AddedActionHandles)
+void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FNexusActionDefHandle>& AddedActionHandles)
 {
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
@@ -215,7 +215,7 @@ void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHa
 		return;
 	}
 
-	UGunnerActionComponent* ActionComponent = UGunnerActionComponent::GetActionComponentFromActor(ActorOwner);
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
 
 	for (auto& ActionHandle : AddedActionHandles)
@@ -228,13 +228,13 @@ void AGunnerEquipment::AuthRemoveDesiredActions(TArray<FGunnerActionDefinitionHa
 void AGunnerEquipment::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet)
 {
 	AActor* ActorOwner = GetOwner();
-	if (!ActorOwner || !ActorOwner->Implements<UGunnerAnimMontagePlayerInterface>())
+	if (!ActorOwner || !ActorOwner->Implements<UNexusAnimMontagePlayerInterface>())
 	{
 		return;
 	}
 
-	USkeletalMeshComponent* OwnerFPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
-	USkeletalMeshComponent* OwnerTPMeshComponent = IGunnerAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
+	USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
+	USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
 
 	TArray<UGunnerAnimInstance*> AnimInstances = {
 		Cast<UGunnerAnimInstance>(OwnerFPMeshComponent->GetAnimInstance()),

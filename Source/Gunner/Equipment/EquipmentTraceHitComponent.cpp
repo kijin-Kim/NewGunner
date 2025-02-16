@@ -5,13 +5,12 @@
 
 #include "GenericTeamAgentInterface.h"
 #include "GunnerEquipment.h"
+#include "NexusEventMessage.h"
 #include "TraceHitMessageData.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
-#include "Gunner/_Core/GunnerGameMode.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -153,9 +152,9 @@ void UEquipmentTraceHitComponent::AuthApplyDamageByHitResults(const TArray<FHitR
 
 void UEquipmentTraceHitComponent::AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal, float DamageAmount)
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
+	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
-		FGunnerEventMessage HitScanMessage;
+		FNexusEventMessage HitScanMessage;
 		APawn* EquipmentPawnOwner = Cast<APawn>(EquipmentOwner->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();

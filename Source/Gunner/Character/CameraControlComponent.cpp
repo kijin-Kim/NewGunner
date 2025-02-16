@@ -3,8 +3,7 @@
 
 #include "CameraControlComponent.h"
 
-#include "GunnerCharacter.h"
-#include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "NexusEventMessage.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -13,12 +12,12 @@ UCameraControllerComponent::UCameraControllerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-TArray<FGunnerEventCallbackHandle> UCameraControllerComponent::SetupEvents()
+TArray<FNexusEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()))
+	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
 		};
 	}
 	return {};
@@ -32,11 +31,11 @@ void UCameraControllerComponent::InitCameraController()
 		return;
 	}
 
-	UnbindEvents(UGunnerEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()));
+	UnbindEvents(UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()));
 	BindEvents();
 }
 
-void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
+void UCameraControllerComponent::Look(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage)
 {
 	APawn* PawnOwner = GetOwner<APawn>();
 	const FVector2D LookAxisVector = EventMessage.InputActionValue.Get<FVector2D>();

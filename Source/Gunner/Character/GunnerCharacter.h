@@ -3,26 +3,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NexusActionInterface.h"
+#include "Animation/NexusAnimMontagePlayerInterface.h"
+#include "Event/NexusEventMangerInterface.h"
 #include "GameFramework/Character.h"
-#include "Gunner/Animation/GunnerAnimMontagePlayerInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponentInterface.h"
-#include "Gunner/_Core/Event/GunnerEventManagerInterface.h"
 #include "GunnerCharacter.generated.h"
 
 class UGunnerActionSetupComponent;
 class UCameraComponent;
 class UCameraControllerComponent;
-class UGunnerAction;
-class UGunnerActionComponent;
+class UNexusAction;
+class UNexusActionComponent;
 class UGunnerEquipmentManagerComponent;
 class USpringArmComponent;
 class UWeaponManagerComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public IGunnerAnimMontagePlayerInterface, public IGunnerActionComponentInterface, public IGunnerEventManagerInterface, public IGunnerTeamAgentInterface
+class GUNNER_API AGunnerCharacter : public ACharacter, public INexusAnimMontagePlayerInterface, public INexusActionInterface, public INexusEventManagerInterface, public IGunnerTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -41,17 +41,17 @@ public:
 
 
 	//~ Begin IGunnerAnimMontagePlayerInterface Interface.
-	virtual UGunnerAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
+	virtual UNexusAnimMontagePlayerComponent* GetAnimMontagePlayer_Implementation() override;
 	virtual USkeletalMeshComponent* GetFirstPersonMeshComponent_Implementation() const override { return FirstPersonMeshComponent; }
 	virtual USkeletalMeshComponent* GetThirdPersonMeshComponent_Implementation() const override { return GetMesh(); }
 	//~ End IGunnerAnimMontagePlayerInterface Interface.
 
 	//~ Begin IGunnerActionComponentInterface Interface.
-	virtual UGunnerActionComponent* GetActionComponent() const override;
+	virtual UNexusActionComponent* GetActionComponent() const override;
 	//~ End IGunnerActionComponentInterface Interface.
 
 	//~ Begin IGunnerEventManagerInterface Interface.
-	virtual UGunnerEventManagerComponent* GetEventManagerComponent() const override;
+	virtual UNexusEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
 
 	
@@ -79,7 +79,7 @@ private:
 	TObjectPtr<UCameraControllerComponent> CameraControllerComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UGunnerAnimMontagePlayerComponent> AnimMontagePlayerComponent;
+	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;

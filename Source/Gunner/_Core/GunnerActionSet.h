@@ -7,8 +7,8 @@
 #include "Engine/DataAsset.h"
 #include "GunnerActionSet.generated.h"
 
-class UGunnerAction;
-class UGunnerActionSideEffect;
+class UNexusAction;
+class UNexusSideEffect;
 /**
  * 
  */
@@ -21,5 +21,5 @@ public:
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> InitialProperties;
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UGunnerAction>> InitialActionClasses;
+	TArray<TSubclassOf<UNexusAction>> InitialActionClasses;
 };

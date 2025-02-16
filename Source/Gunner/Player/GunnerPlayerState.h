@@ -9,8 +9,8 @@
 
 
 class UGunnerActionSetupComponent;
-class UGunnerEventManagerComponent;
-class UGunnerActionComponent;
+class UNexusEventManagerComponent;
+class UNexusActionComponent;
 /**
  * 
  */
@@ -36,9 +36,9 @@ private:
 
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UGunnerActionComponent> ActionComponent;
+	TObjectPtr<UNexusActionComponent> ActionComponent;
 	UPROPERTY()
-	TObjectPtr<UGunnerEventManagerComponent> EventManagerComponent;
+	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID = 0;
 

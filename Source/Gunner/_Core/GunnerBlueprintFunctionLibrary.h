@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
-#include "ActionSystem/GunnerActionSign.h"
+#include "NexusCue.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
@@ -21,20 +21,20 @@ class GUNNER_API UGunnerBlueprintFunctionLibrary : public UBlueprintFunctionLibr
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
+	static FNexusRepDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
 	{
 		TSharedPtr<FGunnerTargetData_Hit> HitData = MakeShared<FGunnerTargetData_Hit>();
 		HitData->AgentActor = AgentActor;
 		HitData->LocalHitResult = HitResults;
 
-		FGunnerTargetDataHandle Handle;
+		FNexusRepDataHandle Handle;
 		Handle.SetData(HitData);
 
 		return Handle;
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Hit GetAsHitTargetData(FGunnerTargetDataHandle Handle)
+	static FGunnerTargetData_Hit GetAsHitTargetData(FNexusRepDataHandle Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Hit::StaticStruct())
 		{
@@ -45,19 +45,19 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetDataHandle MakeActorTargetData(AActor* Actor)
+	static FNexusRepDataHandle MakeActorTargetData(AActor* Actor)
 	{
 		TSharedPtr<FGunnerTargetData_Actor> ActorData = MakeShared<FGunnerTargetData_Actor>();
 		ActorData->Actor = Actor;
 
-		FGunnerTargetDataHandle Handle;
+		FNexusRepDataHandle Handle;
 		Handle.SetData(ActorData);
 
 		return Handle;
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Actor GetAsActorTargetData(FGunnerTargetDataHandle Handle)
+	static FGunnerTargetData_Actor GetAsActorTargetData(FNexusRepDataHandle Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Actor::StaticStruct())
 		{

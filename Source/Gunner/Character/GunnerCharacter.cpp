@@ -9,11 +9,11 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Gunner/Animation/GunnerAnimMontagePlayerComponent.h"
+#include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "Gunner/_Core/GunnerActionSetupComponent.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "NexusActionComponent.h"
+#include "Event/NexusEventManagerComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -44,7 +44,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
 
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
-	AnimMontagePlayerComponent = CreateDefaultSubobject<UGunnerAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
 
 	bUseControllerRotationYaw = true;
@@ -94,22 +94,22 @@ bool AGunnerCharacter::CanJumpInternal_Implementation() const
 	return JumpIsAllowedInternal();
 }
 
-UGunnerAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementation()
+UNexusAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Implementation()
 {
 	return AnimMontagePlayerComponent;
 }
 
 
-UGunnerActionComponent* AGunnerCharacter::GetActionComponent() const
+UNexusActionComponent* AGunnerCharacter::GetActionComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
-	return PS ? PS->FindComponentByClass<UGunnerActionComponent>() : FindComponentByClass<UGunnerActionComponent>();
+	return PS ? PS->FindComponentByClass<UNexusActionComponent>() : FindComponentByClass<UNexusActionComponent>();
 }
 
-UGunnerEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
+UNexusEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
-	return PS ? PS->FindComponentByClass<UGunnerEventManagerComponent>() : FindComponentByClass<UGunnerEventManagerComponent>();
+	return PS ? PS->FindComponentByClass<UNexusEventManagerComponent>() : FindComponentByClass<UNexusEventManagerComponent>();
 }
 
 void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)

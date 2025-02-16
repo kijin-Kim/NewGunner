@@ -4,9 +4,9 @@
 #include "GunnerCharacterMovementComponent.h"
 
 #include "GunnerCharacter.h"
-#include "Gunner/_Core/ActionSystem/GunnerActionComponent.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
-#include "Gunner/_Core/Input/GunnerEventMessage.h"
+#include "NexusEventMessage.h"
+#include "NexusActionComponent.h"
+#include "Event/NexusEventManagerComponent.h"
 
 
 UGunnerCharacterMovementComponent::UGunnerCharacterMovementComponent()
@@ -30,19 +30,19 @@ bool UGunnerCharacterMovementComponent::CanAttemptJump() const
 
 float UGunnerCharacterMovementComponent::GetMaxSpeed() const
 {
-	return UGunnerActionComponent::GetPropertyValueFromActor(CharacterOwner, FGameplayTag::RequestGameplayTag(FName(TEXT("Property.MaxSpeedMultiplier"))))
+	return UNexusActionComponent::GetPropertyValueFromActor(CharacterOwner, FGameplayTag::RequestGameplayTag(FName(TEXT("Property.MaxSpeedMultiplier"))))
 		* Super::GetMaxSpeed();
 }
 
-TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
+TArray<FNexusEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
 {
-	if (UGunnerEventManagerComponent* EventManagerComponent = UGunnerEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner))
+	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Move"))), this, &ThisClass::Move),
-			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Jump"))), this, &ThisClass::Jump),
-			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Crouch"))), this, &ThisClass::CharacterCrouch),
-			EventManagerComponent->BindEventCallback<FGunnerEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Uncrouch"))), this, &ThisClass::CharacterUncrouch)
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Move"))), this, &ThisClass::Move),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Jump"))), this, &ThisClass::Jump),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Crouch"))), this, &ThisClass::CharacterCrouch),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Uncrouch"))), this, &ThisClass::CharacterUncrouch)
 		};
 	}
 	return {};
@@ -50,11 +50,11 @@ TArray<FGunnerEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvent
 
 void UGunnerCharacterMovementComponent::InitEvents()
 {
-	UnbindEvents(UGunnerEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner));
+	UnbindEvents(UNexusEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner));
 	BindEvents();
 }
 
-void UGunnerCharacterMovementComponent::Move(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
+void UGunnerCharacterMovementComponent::Move(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage)
 {
 	AController* Controller = GetController();
 	if (!Controller)
@@ -70,7 +70,7 @@ void UGunnerCharacterMovementComponent::Move(FGameplayTag GameplayTag, const FGu
 	}
 }
 
-void UGunnerCharacterMovementComponent::Jump(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
+void UGunnerCharacterMovementComponent::Jump(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage)
 {
 	if (CharacterOwner)
 	{
@@ -78,7 +78,7 @@ void UGunnerCharacterMovementComponent::Jump(FGameplayTag GameplayTag, const FGu
 	}
 }
 
-void UGunnerCharacterMovementComponent::CharacterCrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
+void UGunnerCharacterMovementComponent::CharacterCrouch(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage)
 {
 	if (CharacterOwner)
 	{
@@ -86,7 +86,7 @@ void UGunnerCharacterMovementComponent::CharacterCrouch(FGameplayTag GameplayTag
 	}
 }
 
-void UGunnerCharacterMovementComponent::CharacterUncrouch(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage)
+void UGunnerCharacterMovementComponent::CharacterUncrouch(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage)
 {
 	if (CharacterOwner)
 	{

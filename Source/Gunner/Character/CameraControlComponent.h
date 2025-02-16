@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/_Core/Event/GunnerEventCallbackBindInterface.h"
-#include "Gunner/_Core/Event/GunnerEventManagerComponent.h"
+#include "Event/NexusEventInterface.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "CameraControlComponent.generated.h"
 
-struct FGunnerEventMessage;
+struct FNexusEventMessage;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UCameraControllerComponent : public UActorComponent, public IGunnerEventCallbackBindInterface
+class GUNNER_API UCameraControllerComponent : public UActorComponent, public INexusEventInterface
 {
 	GENERATED_BODY()
 
@@ -21,11 +21,11 @@ public:
 	void InitCameraController();
 
 protected:
-	virtual TArray<FGunnerEventCallbackHandle> SetupEvents() override;
+	virtual TArray<FNexusEventCallbackHandle> SetupEvents() override;
 
 private:
 
-	void Look(FGameplayTag GameplayTag, const FGunnerEventMessage& EventMessage);
+	void Look(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
 
 private:
 	UPROPERTY(EditDefaultsOnly)
