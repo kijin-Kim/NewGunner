@@ -251,12 +251,12 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	}
 }
 
-void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FNexusPredictionTag NewPredictionTag)
+void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag));
+	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag));
 	if (Index == INDEX_NONE)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag), NewPredictionTag));
+		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag), NewPredictionTag));
 		return;
 	}
 
@@ -269,12 +269,12 @@ void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDe
 }
 
 
-void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag InitPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
+void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag));
+	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag));
 	if (Index == INDEX_NONE)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, InitPredictionTag), MoveTemp(Delegate)));
+		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag), MoveTemp(Delegate)));
 		return;
 	}
 
@@ -687,7 +687,7 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef, FNexu
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
 	OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
-	ActionDef->ActionInstance->InitPredictionTag = PredictionTag;
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(PredictionTag);
 	FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), PredictionTag);
 	ActionDef->ActionInstance->OnTriggerAction();
 }

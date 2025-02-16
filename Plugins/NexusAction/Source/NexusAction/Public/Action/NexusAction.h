@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "NexusAgentInfo.h"
 #include "NexusActionDef.h"
+#include "NexusAgentInfo.h"
 #include "NexusPrediction.h"
 #include "Event/NexusEventMessage.h"
 #include "UObject/Object.h"
@@ -13,10 +13,10 @@
 
 
 class UNexusAction;
-DECLARE_MULTICAST_DELEGATE_TwoParams(OnNexusActionEndedSignature, FNexusActionDefHandle, UNexusAction*);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNexusActionEndedSignature, FNexusActionDefHandle, UNexusAction*);
 
 UENUM()
-enum class ENexusActionNetMethod
+enum class ENexusActionNetMethod : uint8
 {
 	LocalOnly UMETA(DisplayName = "Local Only"),
 	LocalPredicted UMETA(DisplayName = "Local Predicted"),
@@ -33,9 +33,7 @@ class NEXUSACTION_API UNexusAction : public UObject
 	GENERATED_BODY()
 
 public:
-	//~ Begin UObject Interface.
 	virtual UWorld* GetWorld() const override;
-	//~ End UObject Interface.
 
 	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
@@ -56,6 +54,8 @@ public:
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
+	void SetPrimaryPredictionTag(FNexusPredictionTag InPredictionTag) { PrimaryPredictionTag = InPredictionTag; }
+	FNexusPredictionTag GetPrimaryPredictionTag() const { return PrimaryPredictionTag; }
 	bool ShouldTriggerOnAdded() const { return bShouldTriggerOnAdded; }
 	bool IsTriggering() const { return bIsTriggering; }
 	bool IsRetriggerable() const { return bIsRetriggerable; }
@@ -82,8 +82,7 @@ public:
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
 public:
-	FNexusPredictionTag InitPredictionTag;
-	OnNexusActionEndedSignature OnActionEndedDelegate;
+	FOnNexusActionEndedSignature OnActionEndedDelegate;
 
 protected:
 	FNexusActionDefHandle ActionDefHandle;
@@ -117,4 +116,5 @@ protected:
 
 private:
 	bool bIsTriggering = false;
+	FNexusPredictionTag PrimaryPredictionTag;
 };

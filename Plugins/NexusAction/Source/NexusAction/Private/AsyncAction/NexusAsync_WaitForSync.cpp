@@ -25,13 +25,13 @@ void UNexusAsync_WaitForSync::Activate()
 
 	if (Action->IsOwnerActorAuthoritative() && !Action->IsLocallyControlled())
 	{
-		ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefHandle(), Action->InitPredictionTag, FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UNexusAsync_WaitForSync::OnSync));
+		ActionComponent->CallOrAddSNetyncPointDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UNexusAsync_WaitForSync::OnSync));
 		return;
 	}
 
 	ActionComponent->CurrentPredictionTag.GenerateNewHandle();
 	FNexusPredictionScope PredictionScope(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->CurrentPredictionTag);
-	ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefHandle(), Action->InitPredictionTag, ActionComponent->CurrentPredictionTag);
+	ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), ActionComponent->CurrentPredictionTag);
 	OnSync();
 }
 
