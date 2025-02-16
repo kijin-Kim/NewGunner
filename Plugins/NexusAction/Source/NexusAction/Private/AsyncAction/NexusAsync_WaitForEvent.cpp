@@ -23,6 +23,9 @@ UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* I
 	SelfObject->EventMesageType = InEventMessageType;
 	SelfObject->RegisterWithGameInstance(EventTargetActor->GetWorld());
 
+	
+	
+
 	return SelfObject;
 }
 

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusCue.h"
+#include "Cue/NexusCue.h"
 
 struct FNexusCueTargetDataDeleter
 {

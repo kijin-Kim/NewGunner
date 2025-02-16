@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusProperty.h"
+#include "SideEffect/NexusProperty.h"
 
-#include "NexusSideEffect.h"
+#include "SideEffect/NexusSideEffect.h"
 #include "NexusLog.h"
 #include "Net/UnrealNetwork.h"
 

@@ -3,7 +3,7 @@
 
 #include "GunnerEquipment.h"
 
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 #include "Engine/Canvas.h"
 #include "Gunner/Animation/GunnerAnimInstance.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"

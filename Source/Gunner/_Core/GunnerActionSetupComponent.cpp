@@ -5,7 +5,7 @@
 
 #include "GunnerActionSet.h"
 #include "NexusActionComponent.h"
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 
 
 // Sets default values for this component's properties

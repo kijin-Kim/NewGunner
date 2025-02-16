@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/CancellableAsyncAction.h"
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 #include "NexusActionComponent.h"
 #include "NexusAsync.generated.h"
 

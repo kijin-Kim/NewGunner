@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusSideEffect.h"
+#include "SideEffect/NexusSideEffect.h"
 
 #include "NexusActionComponent.h"
 #include "NexusLog.h"

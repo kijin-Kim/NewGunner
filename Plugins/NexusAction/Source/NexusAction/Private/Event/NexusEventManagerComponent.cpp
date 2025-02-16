@@ -2,6 +2,8 @@
 
 
 #include "Event/NexusEventManagerComponent.h"
+
+#include "NexusLog.h"
 #include "Event/NexusEventMangerInterface.h"
 
 

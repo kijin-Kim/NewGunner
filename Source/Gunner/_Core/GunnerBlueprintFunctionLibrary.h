@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
-#include "NexusCue.h"
+#include "Cue/NexusCue.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/BlueprintFunctionLibrary.h"

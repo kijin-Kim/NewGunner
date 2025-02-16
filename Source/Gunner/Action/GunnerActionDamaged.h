@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 #include "GunnerActionDamaged.generated.h"
 
 

@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "NexusAgentInfo.h"
+#include "Action/NexusAgentInfo.h"
 
 void FNexusAgentInfo::Init(AActor* InOwnerActor, AActor* InAgentActor)
 {

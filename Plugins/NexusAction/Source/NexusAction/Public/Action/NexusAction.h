@@ -7,7 +7,7 @@
 #include "NexusAgentInfo.h"
 #include "NexusActionDef.h"
 #include "NexusPrediction.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "UObject/Object.h"
 #include "NexusAction.generated.h"
 

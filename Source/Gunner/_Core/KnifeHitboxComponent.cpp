@@ -8,7 +8,7 @@
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/TraceHitMessageData.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 
 
 void UKnifeHitboxComponent::BeginPlay()

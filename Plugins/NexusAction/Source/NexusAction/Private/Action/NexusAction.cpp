@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 
 
 UWorld* UNexusAction::GetWorld() const

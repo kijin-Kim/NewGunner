@@ -4,7 +4,7 @@
 #include "GunnerInputEventDispatcherComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "GunnerInputTagMappingData.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"

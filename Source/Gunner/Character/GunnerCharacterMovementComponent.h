@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Event/NexusEventInterface.h"
 #include "Event/NexusEventManagerComponent.h"

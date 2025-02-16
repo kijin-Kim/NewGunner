@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusActionDefHandle.h"
+#include "Action/NexusActionDefHandle.h"
 
 
 void FNexusActionDefHandle::GenerateNewHandle()

@@ -5,7 +5,7 @@
 
 #include "GenericTeamAgentInterface.h"
 #include "GunnerEquipment.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "TraceHitMessageData.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"

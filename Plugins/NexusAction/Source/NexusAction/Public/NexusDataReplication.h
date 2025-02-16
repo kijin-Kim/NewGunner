@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusActionDefHandle.h"
+#include "Action/NexusActionDefHandle.h"
 #include "NexusPrediction.h"
 #include "NexusDataReplication.generated.h"
 

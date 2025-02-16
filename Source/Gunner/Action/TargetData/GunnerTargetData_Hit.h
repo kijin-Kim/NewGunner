@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusCue.h"
+#include "Cue/NexusCue.h"
 #include "UObject/Object.h"
 #include "GunnerTargetData_Hit.generated.h"
 

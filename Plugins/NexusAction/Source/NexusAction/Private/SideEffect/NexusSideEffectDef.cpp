@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffectDef.h"
 
-#include "NexusSideEffect.h"
+#include "SideEffect/NexusSideEffect.h"
 
 FNexusSideEffectDef::FNexusSideEffectDef(): SideEffectClass(nullptr)
 {

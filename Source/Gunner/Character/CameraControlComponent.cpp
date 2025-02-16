@@ -3,7 +3,7 @@
 
 #include "CameraControlComponent.h"
 
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "Kismet/GameplayStatics.h"
 
 

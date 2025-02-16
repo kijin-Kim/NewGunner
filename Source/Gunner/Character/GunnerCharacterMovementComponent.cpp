@@ -4,7 +4,7 @@
 #include "GunnerCharacterMovementComponent.h"
 
 #include "GunnerCharacter.h"
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 

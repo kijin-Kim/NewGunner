@@ -2,18 +2,18 @@
 
 
 #include "NexusActionComponent.h"
-#include "NexusAction.h"
+#include "Action/NexusAction.h"
 #include "NexusActionInterface.h"
-#include "NexusCue.h"
+#include "Cue/NexusCue.h"
 #include "NexusPredictionScope.h"
-#include "NexusSideEffect.h"
-#include "NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffect.h"
+#include "SideEffect/NexusSideEffectDef.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 
 
-#include "NexusEventMessage.h"
+#include "Event/NexusEventMessage.h"
 #include "NexusLog.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Net/UnrealNetwork.h"

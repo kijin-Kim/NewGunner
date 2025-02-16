@@ -6,7 +6,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
-#include "NexusActionDefHandle.h"
+#include "Action/NexusActionDefHandle.h"
 #include "GunnerEquipment.generated.h"
 
 class UGunnerLocomotionAnimSet;

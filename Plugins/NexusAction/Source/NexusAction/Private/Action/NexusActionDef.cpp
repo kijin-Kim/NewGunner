@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusActionDef.h"
-#include "NexusAction.h"
+#include "Action/NexusActionDef.h"
+#include "Action/NexusAction.h"
 
 
 FNexusActionDef::FNexusActionDef(): ActionClass(nullptr)

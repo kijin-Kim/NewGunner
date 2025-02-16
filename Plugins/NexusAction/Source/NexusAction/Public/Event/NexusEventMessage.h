@@ -41,6 +41,7 @@ public:
 	FInputActionValue InputActionValue;
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<UObject> EventDataObject;
+
 };
 
 USTRUCT()
