@@ -3,6 +3,8 @@
 
 #include "NexusPrediction.h"
 
+#include "NexusLog.h"
+
 void FNexusPredictionTag::GenerateNewHandle(bool bIsServer)
 {
 	static int32 HandleCounter = 1;
@@ -12,16 +14,19 @@ void FNexusPredictionTag::GenerateNewHandle(bool bIsServer)
 
 void FNexusPredictionTag::PostReplicatedAdd(const FNexusPredictionTagContainer& InArray)
 {
+	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 추가"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer& InArray)
 {
+	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 제거"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
+	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 변경"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
@@ -58,11 +63,7 @@ void FNexusPredictionEvents::ResetPredictionEvents()
 
 void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag)
 {
-	if (!PredictionTag.IsValid())
-	{
-		return;
-	}
-
+	check(!PredictionTag.IsValid());
 	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
 	{
 		Event->OnPredictionEnded.Broadcast();

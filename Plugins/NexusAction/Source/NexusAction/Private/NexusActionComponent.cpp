@@ -262,14 +262,14 @@ void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDe
 
 	if (NetSyncPointDelegates[Index].OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), NewPredictionTag);
+		FNexusPredictionScope PredictionScope(*this, NewPredictionTag, true);
 		NetSyncPointDelegates[Index].OnSyncDelegate.Broadcast();
 	}
 	NetSyncPointDelegates.RemoveAt(Index);
 }
 
 
-void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
+void UNexusActionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
 	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag));
 	if (Index == INDEX_NONE)
@@ -278,7 +278,7 @@ void UNexusActionComponent::CallOrAddSNetyncPointDelegate(FNexusActionDefHandle 
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), NetSyncPointDelegates[Index].NewPredictionTag);
+	FNexusPredictionScope PredictionScope(*this, NetSyncPointDelegates[Index].NewPredictionTag, true);
 	Delegate.ExecuteIfBound();
 	NetSyncPointDelegates.RemoveAt(Index);
 }
@@ -444,7 +444,7 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 
 	if (GetOwner()->HasAuthority())
 	{
-		NetMulticastTriggerCue(CueClass, CurrentPredictionTag, TargetData);
+		NetMulticastTriggerCue(CueClass, TargetData);
 		return;
 	}
 
@@ -454,14 +454,13 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusPredictionTag PredictionTag, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
 {
-	if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
-	{
-		InternalTriggerCue(CueClass, TargetData);
-	}
+	// if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
+	// {
+	// 	InternalTriggerCue(CueClass, TargetData);
+	// }
 }
-
 
 void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
 {
@@ -688,7 +687,7 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef, FNexu
 	check(ActionDef->ActionInstance);
 	OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
 	ActionDef->ActionInstance->SetPrimaryPredictionTag(PredictionTag);
-	FNexusPredictionScope PredictionScope(*this, GetOwner()->HasAuthority(), PredictionTag);
+	FNexusPredictionScope PredictionScope(*this, PredictionTag, false);
 	ActionDef->ActionInstance->OnTriggerAction();
 }
 

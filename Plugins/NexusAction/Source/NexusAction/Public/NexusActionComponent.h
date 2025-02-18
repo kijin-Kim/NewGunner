@@ -62,7 +62,7 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag);
-	void CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+	void CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
 
 	
 	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
@@ -88,7 +88,7 @@ public:
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusPredictionTag PredictionTag, FNexusRepDataHandle TargetData);
+	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
