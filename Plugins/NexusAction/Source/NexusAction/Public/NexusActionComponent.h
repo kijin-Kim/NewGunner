@@ -63,6 +63,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag);
 	void CallOrAddSNetyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+
+	
 	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 

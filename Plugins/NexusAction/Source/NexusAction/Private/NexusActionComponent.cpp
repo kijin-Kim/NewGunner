@@ -235,7 +235,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 
 		if (ActionNetMethod == ENexusActionNetMethod::LocalPredicted)
 		{
-			CurrentPredictionTag.GenerateNewHandle();
+			CurrentPredictionTag.GenerateNewHandle(false);
 			LocalTriggerAction(ActionDef, CurrentPredictionTag);
 			ServerTryTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
 			return;
@@ -403,7 +403,7 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Actio
 void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action)
 {
 	check(Action);
-	check(!CurrentPredictionTag.IsExpired());
+	check(CurrentPredictionTag.IsPredictable());
 	SideEffectDefs.Add(NewSideEffectDef, CurrentPredictionTag);
 
 	if (!GetOwner()->HasAuthority() && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)

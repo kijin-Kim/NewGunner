@@ -3,33 +3,25 @@
 
 #include "NexusPrediction.h"
 
-void FNexusPredictionTag::GenerateNewHandle()
+void FNexusPredictionTag::GenerateNewHandle(bool bIsServer)
 {
 	static int32 HandleCounter = 1;
 	Handle = HandleCounter++;
-	bIsExpired = false;
-}
-
-void FNexusPredictionTag::Expire()
-{
-	bIsExpired = true;
+	bIsServerCreated = bIsServer;
 }
 
 void FNexusPredictionTag::PostReplicatedAdd(const FNexusPredictionTagContainer& InArray)
 {
-	Expire();
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer& InArray)
 {
-	Expire();
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
-	Expire();
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
@@ -49,7 +41,7 @@ bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& Del
 
 void FNexusPredictionTagContainer::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
-	if (PredictionTag.IsExpired())
+	if (!PredictionTag.IsPredictable())
 	{
 		return;
 	}

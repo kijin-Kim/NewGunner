@@ -29,7 +29,7 @@ void UNexusAsync_WaitForSync::Activate()
 		return;
 	}
 
-	ActionComponent->CurrentPredictionTag.GenerateNewHandle();
+	ActionComponent->CurrentPredictionTag.GenerateNewHandle(Action->IsOwnerActorAuthoritative());
 	FNexusPredictionScope PredictionScope(*ActionComponent, Action->IsOwnerActorAuthoritative(), ActionComponent->CurrentPredictionTag);
 	ActionComponent->ServerSendNetSyncPoint(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), ActionComponent->CurrentPredictionTag);
 	OnSync();

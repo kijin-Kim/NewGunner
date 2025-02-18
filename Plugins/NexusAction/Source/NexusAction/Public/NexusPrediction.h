@@ -16,13 +16,15 @@ DECLARE_MULTICAST_DELEGATE(FNexusPredictionEventSignature)
  * 
  */
 USTRUCT()
-struct NEXUSACTION_API FNexusPredictionTag  : public FFastArraySerializerItem
+struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
 	FNexusPredictionTag()
-		: Handle(INDEX_NONE)
+		: Handle(INDEX_NONE),
+		  bIsServerCreated(false)
 	{
+		
 	}
 
 	auto operator<=>(const FNexusPredictionTag& Other) const
@@ -32,31 +34,30 @@ struct NEXUSACTION_API FNexusPredictionTag  : public FFastArraySerializerItem
 
 	bool operator==(const FNexusPredictionTag& Other) const
 	{
-		return Handle == Other.Handle;
+		return Handle == Other.Handle && bIsServerCreated == Other.bIsServerCreated;
 	}
-	
-	
+
 	//~ Begin FFastArraySerializerItem Interface.
 	void PostReplicatedAdd(const FNexusPredictionTagContainer& InArray);
 	void PreReplicatedRemove(const FNexusPredictionTagContainer& InArray);
 	void PostReplicatedChange(const FNexusPredictionTagContainer& InArray);
 	//~ End FFastArraySerializerItem Interface.
 
-	void OnRepPredictionTag();
 
-	void GenerateNewHandle();
-	void Expire();
+	void GenerateNewHandle(bool bIsServer);
 	bool IsValid() const { return Handle != INDEX_NONE; }
-	bool IsExpired() const { return IsValid() && bIsExpired; }
+	bool IsPredictable() const { return IsValid() && !bIsServerCreated; }
+	bool IsServerCreated() const { return bIsServerCreated; }
 
 
-	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
+	FString ToString() const { return FString::Printf(TEXT("PredictionTag(%d, %s)"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
 	friend uint32 GetTypeHash(const FNexusPredictionTag& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
 
 private:
 	UPROPERTY()
 	int32 Handle;
-	bool bIsExpired = false;
+	UPROPERTY()
+	bool bIsServerCreated = false;
 };
 
 

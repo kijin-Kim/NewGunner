@@ -16,7 +16,7 @@ FNexusPredictionScope::~FNexusPredictionScope()
 		ActionComponent.ReplicatedNetPredictionTag(ActionComponent.CurrentPredictionTag);
 	}
 
-	ActionComponent.CurrentPredictionTag.Expire();
+	ActionComponent.CurrentPredictionTag = FNexusPredictionTag();
 
 	if (PrevNetPredictionTag != ActionComponent.CurrentPredictionTag)
 	{
