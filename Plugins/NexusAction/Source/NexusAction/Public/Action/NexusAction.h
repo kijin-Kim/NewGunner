@@ -109,7 +109,7 @@ protected:
 	FGameplayTagContainer ShouldNotHaveTags;
 
 
-	TWeakPtr<FNexusAgentInfo> AgentInfo;
+	TWeakPtr<FNexusAgentInfo> AgentInfo; // 에이전트에 대한 정보. 매 실행마다 바뀌지 않는다.
 
 	UPROPERTY(BlueprintReadOnly)
 	FNexusEventMessage EventMessage;

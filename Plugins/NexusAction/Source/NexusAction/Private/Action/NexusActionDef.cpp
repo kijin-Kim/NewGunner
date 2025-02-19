@@ -5,12 +5,12 @@
 #include "Action/NexusAction.h"
 
 
-FNexusActionDef::FNexusActionDef(): ActionClass(nullptr)
+FNexusActionDef::FNexusActionDef(): SourceObject(nullptr), ActionClass(nullptr)
 {
 	Handle.GenerateNewHandle();
 }
 
-FNexusActionDef::FNexusActionDef(UObject* InSourceObject, TSubclassOf<UNexusAction> InActionClass): ActionClass(InActionClass)
+FNexusActionDef::FNexusActionDef(UObject* InSourceObject, TSubclassOf<UNexusAction> InActionClass): SourceObject(InSourceObject), ActionClass(InActionClass)
 {
 	Handle.GenerateNewHandle();
 }
