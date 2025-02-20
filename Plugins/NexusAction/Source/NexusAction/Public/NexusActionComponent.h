@@ -21,7 +21,7 @@ class UNexusActionComponent;
 class UNexusProperty;
 class UNexusSideEffect;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusRepDataSetSignature, FNexusRepDataHandle /* RepDataHandle */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusRepDataSetSignature, FNexusTargetDataHandle /* RepDataHandle */);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -85,11 +85,11 @@ public:
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
-	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
+	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
-	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData);
+	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
+	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }

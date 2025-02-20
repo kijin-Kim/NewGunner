@@ -39,7 +39,7 @@ struct NEXUSACTION_API FNexusRepDataKey
 
 	friend uint32 GetTypeHash(const FNexusRepDataKey& RepDataKey)
 	{
-		return GetTypeHash(RepDataKey.ActionDefHandle) ^ GetTypeHash(RepDataKey.PrimaryPredictionTag);
+		return HashCombine(GetTypeHash(RepDataKey.ActionDefHandle), GetTypeHash(RepDataKey.PrimaryPredictionTag));
 	}
 
 	UPROPERTY()

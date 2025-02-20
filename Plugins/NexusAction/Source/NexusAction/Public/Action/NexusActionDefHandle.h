@@ -21,7 +21,7 @@ struct NEXUSACTION_API FNexusActionDefHandle
 	bool operator==(const FNexusActionDefHandle& Other) const = default;
 	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
 
-	friend uint32 GetTypeHash(const FNexusActionDefHandle& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
+	friend uint32 GetTypeHash(const FNexusActionDefHandle& DefHandle) { return GetTypeHash(DefHandle.Handle); }
 
 private:
 	UPROPERTY()

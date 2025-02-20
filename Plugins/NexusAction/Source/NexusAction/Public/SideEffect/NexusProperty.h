@@ -45,7 +45,7 @@ struct FNexusPropertyOperationHandle
 	bool operator==(const FNexusPropertyOperationHandle& Other) const = default;
 	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
 
-	friend uint32 GetTypeHash(const FNexusPropertyOperationHandle& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
+	friend uint32 GetTypeHash(const FNexusPropertyOperationHandle& DefHandle) { return GetTypeHash(DefHandle.Handle); }
 
 private:
 	UPROPERTY()

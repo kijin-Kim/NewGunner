@@ -5,7 +5,7 @@
 
 #include "Action/NexusAction.h"
 #include "Engine/Canvas.h"
-#include "Gunner/Animation/GunnerAnimInstance.h"
+#include "Gunner/_Core/Animation/GunnerAnimInstance.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "NexusActionComponent.h"

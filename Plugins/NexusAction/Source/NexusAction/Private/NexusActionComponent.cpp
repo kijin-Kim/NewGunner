@@ -423,7 +423,7 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	}
 }
 
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
@@ -434,7 +434,7 @@ void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNex
 	}
 }
 
-void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
 
 {
 	if (!CueClass || !Action)
@@ -454,7 +454,7 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
 {
 	// if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
 	// {
@@ -462,7 +462,7 @@ void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UN
 	// }
 }
 
-void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusRepDataHandle TargetData)
+void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
 {
 	if (!CueClass)
 	{
@@ -475,7 +475,7 @@ void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, 
 
 	Sign->SetCueRepData(TargetData);
 	Sign->OnTriggered();
-	Sign->SetCueRepData(FNexusRepDataHandle());
+	Sign->SetCueRepData(FNexusTargetDataHandle());
 }
 
 

@@ -18,22 +18,22 @@ public:
 
 
 USTRUCT(BlueprintType)
-struct FNexusRepDataHandle
+struct FNexusTargetDataHandle
 {
 	GENERATED_BODY()
 
 public:
-	FNexusRepDataHandle() = default;
-	FNexusRepDataHandle(const FNexusRepDataHandle& Other) : Data(Other.Data) {}
-	FNexusRepDataHandle(FNexusRepDataHandle&& Other) : Data(MoveTemp(Other.Data)) {}
+	FNexusTargetDataHandle() = default;
+	FNexusTargetDataHandle(const FNexusTargetDataHandle& Other) : Data(Other.Data) {}
+	FNexusTargetDataHandle(FNexusTargetDataHandle&& Other) : Data(MoveTemp(Other.Data)) {}
 	
-	FNexusRepDataHandle& operator=(FNexusRepDataHandle&& Other)
+	FNexusTargetDataHandle& operator=(FNexusTargetDataHandle&& Other)
 	{
 		Data = MoveTemp(Other.Data);
 		return *this;
 	}
 
-	FNexusRepDataHandle& operator=(const FNexusRepDataHandle& Other)
+	FNexusTargetDataHandle& operator=(const FNexusTargetDataHandle& Other)
 	{
 		Data = Other.Data;
 		return *this;
@@ -48,7 +48,7 @@ private:
 };
 
 template <>
-struct TStructOpsTypeTraits<FNexusRepDataHandle> : public TStructOpsTypeTraitsBase2<FNexusRepDataHandle>
+struct TStructOpsTypeTraits<FNexusTargetDataHandle> : public TStructOpsTypeTraitsBase2<FNexusTargetDataHandle>
 {
 	enum
 	{
@@ -70,9 +70,9 @@ public:
 	virtual UWorld* GetWorld() const override;
 	UFUNCTION(BlueprintNativeEvent)
 	void OnTriggered();
-	void SetCueRepData(const FNexusRepDataHandle& InRepDataHandle) { RepDataHandle = InRepDataHandle; }
+	void SetCueRepData(const FNexusTargetDataHandle& InTargetDataHandle) { TargetDataHandle = InTargetDataHandle; }
 	
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	FNexusRepDataHandle RepDataHandle;
+	FNexusTargetDataHandle TargetDataHandle;
 };

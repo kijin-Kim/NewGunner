@@ -19,7 +19,7 @@ void UNexusCue::OnTriggered_Implementation()
 }
 
 
-bool FNexusRepDataHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
+bool FNexusTargetDataHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
 	if (Ar.IsSaving() && Data)
 	{

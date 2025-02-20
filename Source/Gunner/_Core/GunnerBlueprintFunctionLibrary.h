@@ -21,20 +21,20 @@ class GUNNER_API UGunnerBlueprintFunctionLibrary : public UBlueprintFunctionLibr
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FNexusRepDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
+	static FNexusTargetDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
 	{
 		TSharedPtr<FGunnerTargetData_Hit> HitData = MakeShared<FGunnerTargetData_Hit>();
 		HitData->AgentActor = AgentActor;
 		HitData->LocalHitResult = HitResults;
 
-		FNexusRepDataHandle Handle;
+		FNexusTargetDataHandle Handle;
 		Handle.SetData(HitData);
 
 		return Handle;
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Hit GetAsHitTargetData(FNexusRepDataHandle Handle)
+	static FGunnerTargetData_Hit GetAsHitTargetData(FNexusTargetDataHandle Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Hit::StaticStruct())
 		{
@@ -45,19 +45,19 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FNexusRepDataHandle MakeActorTargetData(AActor* Actor)
+	static FNexusTargetDataHandle MakeActorTargetData(AActor* Actor)
 	{
 		TSharedPtr<FGunnerTargetData_Actor> ActorData = MakeShared<FGunnerTargetData_Actor>();
 		ActorData->Actor = Actor;
 
-		FNexusRepDataHandle Handle;
+		FNexusTargetDataHandle Handle;
 		Handle.SetData(ActorData);
 
 		return Handle;
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Actor GetAsActorTargetData(FNexusRepDataHandle Handle)
+	static FGunnerTargetData_Actor GetAsActorTargetData(FNexusTargetDataHandle Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Actor::StaticStruct())
 		{
