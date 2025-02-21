@@ -3,9 +3,8 @@
 
 #include "GunnerCheatManager.h"
 
-#include "GunnerTeamAgentInterface.h"
+#include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GameFramework/GameModeBase.h"
-#include "Kismet/GameplayStatics.h"
 
 void UGunnerCheatManager::InitCheatManager()
 {

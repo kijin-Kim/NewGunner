@@ -8,6 +8,7 @@
 #include "GunnerEquipmentManagerComponent.generated.h"
 
 
+class UGunnerEquipmentDef;
 class AGunnerEquipment;
 
 
@@ -16,11 +17,12 @@ struct FEquipmentSlot
 {
 	GENERATED_BODY()
 
-		FEquipmentSlot()
-		: DesiredEquipmentType(EEquipmentType::None)
-		, SlottedEquipment(nullptr)
+	FEquipmentSlot()
+		: DesiredEquipmentType(EEquipmentType::EquipmentTypeCount)
+		  , SlottedEquipment(nullptr)
 	{
 	}
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EEquipmentType DesiredEquipmentType;
 	UPROPERTY(BlueprintReadOnly)
@@ -36,14 +38,17 @@ class GUNNER_API UGunnerEquipmentManagerComponent : public UActorComponent
 
 public:
 	UGunnerEquipmentManagerComponent();
-	void InitEquipmentManagerComponent();
-	void RelaseEquipmentManagerComponent();
+	void AuthInitEquipmentManagerComponent();
+	void AuthRelaseEquipmentManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipmentToSlotByClass(TSubclassOf<AGunnerEquipment> EquipmentClass);
 	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipment(AGunnerEquipment* NewEquipment);
 	void AuthRemoveAllEquipments();
+	
+	UFUNCTION(BlueprintCallable)
+    void AuthAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef);
 
 
 	UFUNCTION(BlueprintCallable)
@@ -63,21 +68,20 @@ public:
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-	
+
 	UFUNCTION()
 	void OnRep_CurrentEquippedEquipment(AGunnerEquipment* OldEquippedEquipment);
 	UFUNCTION()
 	void OnRep_EquipmentSlots();
 
-
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquippedEquipment)
 	TObjectPtr<AGunnerEquipment> CurrentEquippedEquipment;
-	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_EquipmentSlots, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<FEquipmentSlot> EquipmentSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<TSubclassOf<AGunnerEquipment>> InitialEquipmentClasses;
+	TArray<TObjectPtr<UGunnerEquipmentDef>> InitialEquipmentDefs;
 
 public:
 	UPROPERTY(EditAnywhere)

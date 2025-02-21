@@ -46,11 +46,7 @@ bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& Del
 
 void FNexusPredictionTagContainer::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
-	if (!PredictionTag.IsPredictable())
-	{
-		return;
-	}
-
+	check(PredictionTag.IsValid())
 	Items[StartIndex] = PredictionTag;
 	MarkItemDirty(Items[StartIndex]);
 	StartIndex = (StartIndex + 1) % MaximumPredictionTags;
@@ -63,7 +59,11 @@ void FNexusPredictionEvents::ResetPredictionEvents()
 
 void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag)
 {
-	check(!PredictionTag.IsValid());
+	if (!PredictionTag.IsValid())
+	{
+		return;
+	}
+	
 	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
 	{
 		Event->OnPredictionEnded.Broadcast();

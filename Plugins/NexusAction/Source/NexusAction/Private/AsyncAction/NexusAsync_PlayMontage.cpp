@@ -25,6 +25,11 @@ UNexusAsync_PlayMontage* UNexusAsync_PlayMontage::PlayMontage(UNexusAction* InAc
 	return SelfObject;
 }
 
+bool UNexusAsync_PlayMontage::ShouldBroadcastDelegates() const
+{
+	return MontageActor.IsValid() &&  Super::ShouldBroadcastDelegates();
+}
+
 void UNexusAsync_PlayMontage::Activate()
 {
 	Super::Activate();

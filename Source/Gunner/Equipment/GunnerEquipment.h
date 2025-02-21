@@ -9,6 +9,7 @@
 #include "Action/NexusActionDefHandle.h"
 #include "GunnerEquipment.generated.h"
 
+class UGunnerEquipmentDef;
 class UGunnerLocomotionAnimSet;
 class UNexusActionComponent;
 class UNexusAction;
@@ -16,14 +17,14 @@ class UNexusAction;
 UENUM(BlueprintType)
 enum class EEquipmentType : uint8
 {
-	None,
-	Primary,
+	Primary = 0,
 	Secondary,
 	Melee,
 	CSkill,
 	QSkill,
 	ESkill,
-	XSkill
+	XSkill,
+	EquipmentTypeCount,
 };
 
 
@@ -35,6 +36,7 @@ class GUNNER_API AGunnerEquipment : public AActor, public INexusAnimMontagePlaye
 public:
 	AGunnerEquipment();
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AttachEquipmentToOwner();
 
 	void OnAuthAcquired();
@@ -44,7 +46,7 @@ public:
 	void SetMeshVisibility(bool bVisible);
 
 	virtual void OnRep_Owner() override;
-	
+
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UNexusAnimMontagePlayerComponent* GetAnimMontagePlayer();
@@ -80,11 +82,8 @@ private:
 	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
 
 
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UNexusAction>> ActionsToAddOnAcquired;
+
 	TArray<FNexusActionDefHandle> AddedActionHandlesOnAcquired;
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UNexusAction>> ActionsToAddOnEquip;
 	TArray<FNexusActionDefHandle> AddedActionHandlesOnEquip;
 
 	UPROPERTY(EditAnywhere)
@@ -99,7 +98,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FName EquipmentName;
-	
-	
-	
+
+public:
+	void SetEquipmentDef(UGunnerEquipmentDef* InEquipmentDef);
+	UGunnerEquipmentDef* GetEquipmentDef() const { return EquipmentDef; }
+
+private:
+	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGunnerEquipmentDef> EquipmentDef;
 };

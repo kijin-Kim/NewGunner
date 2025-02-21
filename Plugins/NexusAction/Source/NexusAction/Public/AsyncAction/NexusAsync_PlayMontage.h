@@ -21,6 +21,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
 	static UNexusAsync_PlayMontage* PlayMontage(UNexusAction* InAction, AActor* MontageActor, UAnimMontage* MontageToPlay, bool bIsThirdPerson = false, float PlayRate = 1.0f, FName StartSectionName = NAME_None);
 	//~ Begin UCancellableAsyncAction Interface.
+	virtual bool ShouldBroadcastDelegates() const override;
 	virtual void Activate() override;
 	//~ End UCancellableAsyncAction Interface.
 	

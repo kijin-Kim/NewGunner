@@ -20,7 +20,7 @@ DECLARE_DELEGATE_OneParam(FOnActionDefRemovedSignature, FNexusActionDef& /*Actio
 
 struct FNexusActionDefContainer;
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
@@ -30,6 +30,8 @@ struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 	bool operator==(const FNexusActionDef& Other) const;
 	bool operator!=(const FNexusActionDef& Other) const;
 
+	FString ToString() const;
+
 	void PostReplicatedAdd(const FNexusActionDefContainer& InArraySerializer);
 	void PreReplicatedRemove(const FNexusActionDefContainer& InArraySerializer);
 
@@ -38,17 +40,16 @@ struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 	FNexusActionDefHandle Handle;
 
 	// 액션의 바리에이션을 위한 데이터 오브젝트. 예를 들어 각 무기별 사격 행동에 대한 애니메이션
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<UObject> SourceObject;
-	
-	UPROPERTY()
+
+	UPROPERTY(BlueprintReadWrite)
 	TSubclassOf<UNexusAction> ActionClass;
-	
+
+
 	// 액션이 추가될 시 로컬에서 각 에이전트마다 생성되는 액션 인스턴스
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UNexusAction> ActionInstance;
-
-	
 };
 
 USTRUCT()
@@ -61,11 +62,14 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	void AuthRemove(const FNexusActionDefHandle& Handle);
 	void AuthRemoveAll();
 	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
+	bool HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const;
+	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
+	
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	void OnAdded(FNexusActionDef& ActionDef) const;
 	void OnRemoved(FNexusActionDef& ActionDef) const;
-	
+
 
 	UPROPERTY()
 	TArray<FNexusActionDef> Items;

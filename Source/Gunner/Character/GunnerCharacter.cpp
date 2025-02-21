@@ -11,7 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/_Core/GunnerActionSetupComponent.h"
+#include "Gunner/Action/GunnerActionSetupComponent.h"
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 
@@ -57,9 +57,9 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (EquipmentManagerComponent)
+	if (EquipmentManagerComponent && HasAuthority())
 	{
-		EquipmentManagerComponent->RelaseEquipmentManagerComponent();
+		EquipmentManagerComponent->AuthRelaseEquipmentManagerComponent();
 	}
 	Super::EndPlay(EndPlayReason);
 }
@@ -73,9 +73,9 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (HasAuthority())
 		{
 			ActionSetupComponent->AuthSetupActionSets();
+			EquipmentManagerComponent->AuthInitEquipmentManagerComponent();
 		}
-
-		EquipmentManagerComponent->InitEquipmentManagerComponent();
+		
 		CameraControllerComponent->InitCameraController();
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
 

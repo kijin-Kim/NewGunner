@@ -5,11 +5,10 @@
 struct FNexusPredictionScope
 {
 public:
-	FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag, bool bInIsAlreadyReplicated);
+	FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag);
 	~FNexusPredictionScope();
 
 public:
 	UNexusActionComponent& ActionComponent;
 	FNexusPredictionTag PrevPredictionTag;
-	bool bIsAlreadyReplicated;
 };

@@ -2,6 +2,7 @@
 
 
 #include "Action/NexusAction.h"
+#include "Action/NexusActionDef.h"
 
 
 UWorld* UNexusAction::GetWorld() const
@@ -14,11 +15,10 @@ UWorld* UNexusAction::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UNexusAction::InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusAction::InitializeAction(const FNexusActionDef& InActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
-	check(InActionDefHandle.IsValid());
 	check(InAgentInfo.IsValid());
-	ActionDefHandle = InActionDefHandle;
+	ActionDef = InActionDef;
 	AgentInfo = InAgentInfo;
 }
 
@@ -38,7 +38,6 @@ bool UNexusAction::OnCanTriggerAction_Implementation() const
 
 void UNexusAction::OnTriggerAction_Implementation()
 {
-	check(ActionDefHandle.IsValid());
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
 
@@ -58,8 +57,7 @@ void UNexusAction::OnEndAction_Implementation()
 		return;
 	}
 	bIsTriggering = false;
-	check(ActionDefHandle.IsValid());
-	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
+	OnActionEndedDelegate.Broadcast(ActionDef.Handle, this);
 }
 
 void UNexusAction::EndAction()
@@ -69,3 +67,5 @@ void UNexusAction::EndAction()
 		OnEndAction();
 	}
 }
+
+

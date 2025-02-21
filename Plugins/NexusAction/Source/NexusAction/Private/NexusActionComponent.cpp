@@ -2,20 +2,18 @@
 
 
 #include "NexusActionComponent.h"
-#include "Action/NexusAction.h"
 #include "NexusActionInterface.h"
-#include "Cue/NexusCue.h"
 #include "NexusPredictionScope.h"
-#include "SideEffect/NexusSideEffect.h"
-#include "SideEffect/NexusSideEffectDef.h"
+#include "Action/NexusAction.h"
+#include "Cue/NexusCue.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
-
-
-#include "Event/NexusEventMessage.h"
+#include "SideEffect/NexusSideEffect.h"
+#include "SideEffect/NexusSideEffectDef.h"
 #include "NexusLog.h"
 #include "Event/NexusEventManagerComponent.h"
+#include "Event/NexusEventMessage.h"
 #include "Net/UnrealNetwork.h"
 
 bool bShowActionFailedReason = false;
@@ -35,6 +33,17 @@ UNexusActionComponent::UNexusActionComponent()
 	{
 		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
 	}
+}
+
+UNexusAction* UNexusActionComponent::NewActionInstance(const FNexusActionDef& ActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+{
+	// 하나의 액션 컴포넌트 내에서 액션 타입 하나당 하나의 인스턴스만 생성되도록 함
+	UNexusAction* NewAction = NewObject<UNexusAction>(GetOwner(), ActionDef.ActionClass);
+	NewAction->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
+	NewAction->InitializeAction(ActionDef, InAgentInfo);
+	NewAction->OnActionAdded();
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *NewAction->GetName());
+	return NewAction;
 }
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -112,19 +121,24 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef& ActionDef)
 {
-	check(GetOwner()->HasAuthority());
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return {};
+	}
+	check(ActionDef.ActionClass);
 
 	if (ActionScopeLockCount > 0)
 	{
 		ActionPendingAdds.Add(ActionDef);
 		return ActionDef.Handle;
 	}
-
 	ACTION_LIST_SCOPE_LOCK();
 
 	FNexusActionDef NewActionDef = ActionDef;
-	NewActionDef.ActionInstance = NewAction<UNexusAction>(NewActionDef.ActionClass, NewActionDef.Handle, AgentInfo);
+	NewActionDef.ActionInstance = NewActionInstance(NewActionDef, AgentInfo);
 	ActionDefs.AuthAdd(NewActionDef);
+
 	HandleTriggerableActionOnAdded(NewActionDef);
 
 	return NewActionDef.Handle;
@@ -132,8 +146,11 @@ FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef
 
 void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle)
 {
-	check(GetOwner()->HasAuthority());
-
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
 
 	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
 	if (!ActionDef)
@@ -157,7 +174,12 @@ void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& Action
 
 void UNexusActionComponent::AuthRemoveAllActions()
 {
-	check(GetOwner()->HasAuthority());
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+
 	ACTION_LIST_SCOPE_LOCK();
 	for (const auto& ActionDef : ActionDefs.Items)
 	{
@@ -166,6 +188,11 @@ void UNexusActionComponent::AuthRemoveAllActions()
 		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef.ActionInstance->GetName());
 	}
 	ActionDefs.AuthRemoveAll();
+}
+
+FNexusActionDefHandle UNexusActionComponent::FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const
+{
+	return ActionDefs.FindActionDefHandle(ActionClass, SourceObject);
 }
 
 void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
@@ -188,6 +215,13 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	}
 
 
+	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
+	FNexusPredictionTag PredictionTag;
+	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
+	FNexusPredictionScope PredictionScope(*this, PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
+
+
 	if (AgentInfo->OwnerActor->GetNetMode() == NM_Standalone)
 	{
 		LocalTriggerAction(ActionDef);
@@ -195,7 +229,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	}
 
 	const bool bIsLocallyControlled = AgentInfo->IsLocallyControlled();
-	const bool bIsOwnerActorAuthoritative = GetOwner()->HasAuthority();
+
 	const ENexusActionNetMethod ActionNetMethod = ActionDef->ActionInstance->GetActionNetMethod();
 	const bool bIsRemoteTriggerable = ActionDef->ActionInstance->IsRemoteTriggerable();
 
@@ -211,7 +245,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 		if (ActionNetMethod == ENexusActionNetMethod::ServerAuthoritative)
 		{
 			LocalTriggerAction(ActionDef);
-			ClientTriggerAction(ActionDefHandle, EventMessage);
+			ClientTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
 			return;
 		}
 
@@ -235,8 +269,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 
 		if (ActionNetMethod == ENexusActionNetMethod::LocalPredicted)
 		{
-			CurrentPredictionTag.GenerateNewHandle(false);
-			LocalTriggerAction(ActionDef, CurrentPredictionTag);
+			LocalTriggerAction(ActionDef);
 			ServerTryTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
 			return;
 		}
@@ -262,7 +295,7 @@ void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDe
 
 	if (NetSyncPointDelegates[Index].OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, NewPredictionTag, true);
+		FNexusPredictionScope PredictionScope(*this, NewPredictionTag);
 		NetSyncPointDelegates[Index].OnSyncDelegate.Broadcast();
 	}
 	NetSyncPointDelegates.RemoveAt(Index);
@@ -278,7 +311,7 @@ void UNexusActionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle 
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, NetSyncPointDelegates[Index].NewPredictionTag, true);
+	FNexusPredictionScope PredictionScope(*this, NetSyncPointDelegates[Index].NewPredictionTag);
 	Delegate.ExecuteIfBound();
 	NetSyncPointDelegates.RemoveAt(Index);
 }
@@ -287,7 +320,6 @@ void UNexusActionComponent::ReplicatedNetPredictionTag(const FNexusPredictionTag
 {
 	NetPredictionTags.ReplicatedNetPredictionTag(PredictionTag);
 }
-
 
 void UNexusActionComponent::IncreaseActionListLock()
 {
@@ -403,10 +435,15 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Actio
 void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action)
 {
 	check(Action);
-	check(CurrentPredictionTag.IsPredictable());
-	SideEffectDefs.Add(NewSideEffectDef, CurrentPredictionTag);
 
-	if (!GetOwner()->HasAuthority() && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
+	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
+	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
+	{
+		return;
+	}
+
+	SideEffectDefs.Add(NewSideEffectDef, CurrentPredictionTag);
+	if (!bIsOwnerActorAuthoritative && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
 	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
 		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
@@ -528,7 +565,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 {
-	ActionDef.ActionInstance = NewAction<UNexusAction>(ActionDef.ActionClass, ActionDef.Handle, AgentInfo);
+	ActionDef.ActionInstance = NewActionInstance(ActionDef, AgentInfo);
 	HandleTriggerableActionOnAdded(ActionDef);
 }
 
@@ -681,13 +718,11 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) c
 	return true;
 }
 
-void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 {
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
 	OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
-	ActionDef->ActionInstance->SetPrimaryPredictionTag(PredictionTag);
-	FNexusPredictionScope PredictionScope(*this, PredictionTag, false);
 	ActionDef->ActionInstance->OnTriggerAction();
 }
 
@@ -698,10 +733,6 @@ void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNex
 	check(ActionDef);
 	ActionDef->ActionInstance->OnEndAction();
 	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
-}
-
-void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
-{
 }
 
 void UNexusActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
@@ -717,7 +748,12 @@ void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(F
 
 void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
-	check(GetOwner()->HasAuthority());
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+
 	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
 	NewProperty->SetTag(Tag);
 	NewProperty->SetStaticValue(Value);
@@ -726,7 +762,12 @@ void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 
 void UNexusActionComponent::AuthRemoveProperty(FGameplayTag Tag)
 {
-	check(GetOwner()->HasAuthority());
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+
 	Properties.RemoveAll([Tag](UNexusProperty* Property)
 	{
 		return Property->GetTag() == Tag;
@@ -735,7 +776,12 @@ void UNexusActionComponent::AuthRemoveProperty(FGameplayTag Tag)
 
 void UNexusActionComponent::AuthRemoveAllProperties()
 {
-	check(GetOwner()->HasAuthority());
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+
 	Properties.Empty();
 }
 
@@ -826,12 +872,14 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	return PropertyPtr->GetDynamicValue();
 }
 
-void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated)
+void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
 {
 	check(ActionDefHandle.IsValid());
 	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
 	check(ActionDef)
 	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
+	FNexusPredictionScope PredictionScope(*this, PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
 	LocalTriggerAction(ActionDef);
 }
 
@@ -847,5 +895,14 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDe
 		unimplemented(); // FAIL DESYNC
 	}
 
-	LocalTriggerAction(ActionDef, PredictionTag);
+	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
+	if (!CanTriggerAction(*ActionDef))
+	{
+		ClientTriggerActionRequestFailed(ActionDefHandle, PredictionTag);
+		return;
+	}
+	
+	FNexusPredictionScope PredictionScope(*this, PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
+	LocalTriggerAction(ActionDef);
 }

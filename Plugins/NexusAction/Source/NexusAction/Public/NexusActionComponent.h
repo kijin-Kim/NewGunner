@@ -4,16 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NexusPrediction.h"
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
+#include "Components/ActorComponent.h"
 #include "Cue/NexusCue.h"
+#include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
-#include "NexusPrediction.h"
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectDef.h"
-#include "Components/ActorComponent.h"
-#include "Event/NexusEventManagerComponent.h"
-#include "NexusLog.h"
 #include "NexusActionComponent.generated.h"
 
 
@@ -32,17 +31,8 @@ class NEXUSACTION_API UNexusActionComponent : public UActorComponent
 public:
 	UNexusActionComponent();
 
-	template <typename T>
-	T* NewAction(const UClass* Class, FNexusActionDefHandle ActionDefHandle, TWeakPtr<FNexusAgentInfo> AgentInfo)
-	{
-		T* NewAction = NewObject<UNexusAction>(GetOwner(), Class);
-		NewAction->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
-		NewAction->InitializeAction(ActionDefHandle, AgentInfo);
-		NewAction->OnActionAdded();
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 생성 및 추가"), *NewAction->GetName());
-		return NewAction;
-	}
 
+	UNexusAction* NewActionInstance(const FNexusActionDef& ActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
@@ -52,11 +42,15 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
+	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle AuthAddAction(const FNexusActionDef& ActionDef);
 	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
 
+	UFUNCTION(BlueprintCallable)
+	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
+
+	UFUNCTION(BlueprintCallable)
 	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
 
@@ -64,17 +58,18 @@ public:
 	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag);
 	void CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
 
-	
+
 	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 
 	void IncreaseActionListLock();
 	void DecreaseActionListLock();
 
-	UFUNCTION(BlueprintCallable)
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
 
-	
+
 	UFUNCTION(BlueprintCallable)
 	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
@@ -110,6 +105,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
 
+	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
+
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
@@ -128,14 +125,13 @@ private:
 	void OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action);
 	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle);
 
+
 	bool CanTriggerAction(const FNexusActionDef& ActionDef) const;
-	void LocalTriggerAction(FNexusActionDef* ActionDef, FNexusPredictionTag PredictionTag = FNexusPredictionTag());
+	void LocalTriggerAction(FNexusActionDef* ActionDef);
 	UFUNCTION(Reliable, Server)
 	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated);
-	UFUNCTION(Reliable, Client)
-	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	void ClientTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 

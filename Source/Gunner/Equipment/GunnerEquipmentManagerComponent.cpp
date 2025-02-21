@@ -4,10 +4,10 @@
 #include "GunnerEquipmentManagerComponent.h"
 
 #include "GunnerEquipment.h"
+#include "GunnerEquipmentDef.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "Gunner/_Core/GunnerPickup.h"
+#include "Gunner/Gunner.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -22,23 +22,29 @@ UGunnerEquipmentManagerComponent::UGunnerEquipmentManagerComponent()
 	{
 		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
 	}
+
+	EquipmentSlots.SetNum(static_cast<uint8>(EEquipmentType::EquipmentTypeCount));
 }
 
-void UGunnerEquipmentManagerComponent::InitEquipmentManagerComponent()
+void UGunnerEquipmentManagerComponent::AuthInitEquipmentManagerComponent()
 {
-	check(InitialEquipmentClasses.Num() <= 3);
-	for (int i = 0; i < InitialEquipmentClasses.Num(); ++i)
+	if (!ensure(GetOwner()->HasAuthority()))
 	{
-		if (InitialEquipmentClasses[i])
+		return;
+	}
+
+	for (TObjectPtr<UGunnerEquipmentDef> EquipmentDef : InitialEquipmentDefs)
+	{
+		if (EquipmentDef)
 		{
-			AuthAddEquipmentToSlotByClass(InitialEquipmentClasses[i]);
+			AuthAddEquipmentByEquipmentDef(EquipmentDef);
 		}
 	}
 }
 
-void UGunnerEquipmentManagerComponent::RelaseEquipmentManagerComponent()
+void UGunnerEquipmentManagerComponent::AuthRelaseEquipmentManagerComponent()
 {
-	if (GetOwner()->HasAuthority())
+	if (ensure(GetOwner()->HasAuthority()))
 	{
 		AuthRemoveAllEquipments();
 	}
@@ -122,6 +128,43 @@ void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
 	}
 	EquipmentSlots.Empty();
 }
+
+void UGunnerEquipmentManagerComponent::AuthAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef)
+{
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		GR_LOG_SUB_FN(LogGunner, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+	check(EquipmentDef);
+	check(EquipmentDef->EquipmentClass);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+
+	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentDef->EquipmentClass, SpawnParams);
+	NewEquipment->SetEquipmentDef(EquipmentDef);
+	NewEquipment->OnAuthAcquired();
+
+	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([NewEquipment](const FEquipmentSlot& Slot)
+	{
+		return Slot.DesiredEquipmentType == NewEquipment->GetEquipmentType();
+	});
+
+	if (!SlotPtr)
+	{
+		return;
+	}
+
+	if (SlotPtr && SlotPtr->SlottedEquipment)
+	{
+		SlotPtr->SlottedEquipment->OnAuthLost();
+	}
+
+	SlotPtr->SlottedEquipment = NewEquipment;
+	SlotPtr->SlottedEquipment->SetMeshVisibility(false);
+}
+
 
 AGunnerEquipment* UGunnerEquipmentManagerComponent::DropCurrentEquipment()
 {

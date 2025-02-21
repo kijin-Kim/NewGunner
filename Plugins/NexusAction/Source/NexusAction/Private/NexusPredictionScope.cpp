@@ -1,17 +1,16 @@
 #include "NexusPredictionScope.h"
 
 
-FNexusPredictionScope::FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag, bool bInIsAlreadyReplicated)
+FNexusPredictionScope::FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag)
 	: ActionComponent(InActionComponent),
-	  PrevPredictionTag(ActionComponent.CurrentPredictionTag),
-	  bIsAlreadyReplicated(bInIsAlreadyReplicated)
+	  PrevPredictionTag(ActionComponent.CurrentPredictionTag)
 {
 	ActionComponent.CurrentPredictionTag = InPredictionTag;
 }
 
 FNexusPredictionScope::~FNexusPredictionScope()
 {
-	if (!bIsAlreadyReplicated && ActionComponent.IsNetSimulating() && ActionComponent.CurrentPredictionTag.IsPredictable())
+	if (!ActionComponent.IsNetSimulating() && ActionComponent.CurrentPredictionTag.IsValid())
 	{
 		ActionComponent.ReplicatedNetPredictionTag(ActionComponent.CurrentPredictionTag);
 	}

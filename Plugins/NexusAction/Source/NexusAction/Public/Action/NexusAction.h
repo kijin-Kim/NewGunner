@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NexusActionDef.h"
+#include "NexusActionDefHandle.h"
 #include "NexusAgentInfo.h"
 #include "NexusPrediction.h"
 #include "Event/NexusEventMessage.h"
@@ -35,7 +36,7 @@ class NEXUSACTION_API UNexusAction : public UObject
 public:
 	virtual UWorld* GetWorld() const override;
 
-	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
+	void InitializeAction(const FNexusActionDef& InActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
 	UFUNCTION(BlueprintNativeEvent)
 	void OnActionAdded();
@@ -78,15 +79,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
-	FNexusActionDefHandle GetActionDefHandle() const { return ActionDefHandle; }
+	FNexusActionDefHandle GetActionDefHandle() const { return ActionDef.Handle; }
+	UFUNCTION(BlueprintCallable)
+	UObject* GetSourceObject() const { return ActionDef.SourceObject; }
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
+	
+	
 public:
 	FOnNexusActionEndedSignature OnActionEndedDelegate;
 
 protected:
-	FNexusActionDefHandle ActionDefHandle;
-
+	FNexusActionDef ActionDef;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	ENexusActionNetMethod ActionNetMethod = ENexusActionNetMethod::LocalOnly;

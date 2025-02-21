@@ -3,12 +3,14 @@
 
 #include "GunnerEquipment.h"
 
+#include "GunnerEquipmentDef.h"
 #include "Action/NexusAction.h"
 #include "Engine/Canvas.h"
 #include "Gunner/_Core/Animation/GunnerAnimInstance.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "NexusActionComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -58,6 +60,12 @@ void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 	}
 }
 
+void AGunnerEquipment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(AGunnerEquipment, EquipmentDef, COND_InitialOnly);
+}
+
 void AGunnerEquipment::AttachEquipmentToOwner()
 {
 	AActor* ActorOwner = GetOwner();
@@ -88,7 +96,7 @@ void AGunnerEquipment::OnAuthAcquired()
 	check(ActorOwner);
 	if (ActorOwner->HasAuthority())
 	{
-		AuthAddDesiredActions(ActionsToAddOnAcquired, AddedActionHandlesOnAcquired);
+		AuthAddDesiredActions(EquipmentDef->ActionsToAddOnAcquired, AddedActionHandlesOnAcquired);
 	}
 	AttachEquipmentToOwner();
 }
@@ -110,7 +118,7 @@ void AGunnerEquipment::OnEquipped()
 	AActor* ActorOwner = GetOwner();
 	if (ActorOwner && ActorOwner->HasAuthority())
 	{
-		AuthAddDesiredActions(ActionsToAddOnEquip, AddedActionHandlesOnEquip);
+		AuthAddDesiredActions(EquipmentDef->ActionsToAddOnEquipped, AddedActionHandlesOnEquip);
 
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
@@ -303,4 +311,9 @@ void AGunnerEquipment::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId N
 			}
 		}
 	}
+}
+
+void AGunnerEquipment::SetEquipmentDef(UGunnerEquipmentDef* InEquipmentDef)
+{
+	EquipmentDef = InEquipmentDef;
 }

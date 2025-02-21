@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/CheatManager.h"
+#include "NexusCheatManager.h"
 #include "GunnerCheatManager.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerCheatManager : public UCheatManager
+class GUNNER_API UGunnerCheatManager : public UNexusCheatManager
 {
 	GENERATED_BODY()
 public:
@@ -19,6 +19,7 @@ public:
 
 	UFUNCTION(Exec)
 	void ToggleEveryoneHostile();
+	
 
 
 private:

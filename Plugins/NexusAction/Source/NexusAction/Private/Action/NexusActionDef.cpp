@@ -2,6 +2,8 @@
 
 
 #include "Action/NexusActionDef.h"
+
+#include "NexusLog.h"
 #include "Action/NexusAction.h"
 
 
@@ -17,12 +19,17 @@ FNexusActionDef::FNexusActionDef(UObject* InSourceObject, TSubclassOf<UNexusActi
 
 bool FNexusActionDef::operator==(const FNexusActionDef& Other) const
 {
-	return Handle == Other.Handle;
+	return Handle == Other.Handle && SourceObject == Other.SourceObject && ActionClass == Other.ActionClass;
 }
 
 bool FNexusActionDef::operator!=(const FNexusActionDef& Other) const
 {
 	return !(*this == Other);
+}
+
+FString FNexusActionDef::ToString() const
+{
+	return FString::Printf(TEXT("ActionClass: %s, Handle: %s, SourceObject: %s"), *ActionClass->GetName(), *Handle.ToString(), SourceObject ? *SourceObject->GetName() : TEXT(""));
 }
 
 void FNexusActionDef::PostReplicatedAdd(const FNexusActionDefContainer& InArraySerializer)
@@ -37,6 +44,11 @@ void FNexusActionDef::PreReplicatedRemove(const FNexusActionDefContainer& InArra
 
 void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 {
+	if (HasSameActionClassAndSourceObject(ActionDef))
+	{
+		UE_LOG(LogNexusAction, Warning, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject ? *ActionDef.SourceObject->GetName() : TEXT(""));
+		return;
+	}
 	int32 Index = Items.Add(ActionDef);
 	MarkItemDirty(Items[Index]);
 }
@@ -70,6 +82,23 @@ FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusAct
 		}
 	}
 	return nullptr;
+}
+
+bool FNexusActionDefContainer::HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const
+{
+	return FindActionDefHandle(ActionDef.ActionClass, ActionDef.SourceObject).IsValid();
+}
+
+FNexusActionDefHandle FNexusActionDefContainer::FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const
+{
+	for (const FNexusActionDef& Item : Items)
+	{
+		if (Item.ActionClass == ActionClass && Item.SourceObject == SourceObject)
+		{
+			return Item.Handle;
+		}
+	}
+	return FNexusActionDefHandle();
 }
 
 bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)

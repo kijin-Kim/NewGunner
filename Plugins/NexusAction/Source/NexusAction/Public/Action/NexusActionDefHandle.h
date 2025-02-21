@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "NexusActionDefHandle.generated.h"
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct NEXUSACTION_API FNexusActionDefHandle
 {
 	GENERATED_BODY()

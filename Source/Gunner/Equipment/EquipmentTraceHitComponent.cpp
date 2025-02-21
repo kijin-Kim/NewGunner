@@ -92,7 +92,7 @@ float UEquipmentTraceHitComponent::CalculateDamage_Implementation(const FHitResu
 
 void UEquipmentTraceHitComponent::ServerRequestHitScanConfirm_Implementation(const TArray<AActor*>& HitActors, float TimeStamp)
 {
-	TArray<ACharacter*> LagCompensationTargetCharacters; 
+	TArray<ACharacter*> LagCompensationTargetCharacters;
 	for (AActor* HitActor : HitActors)
 	{
 		ACharacter* Character = Cast<ACharacter>(HitActor);
@@ -155,6 +155,7 @@ void UEquipmentTraceHitComponent::AuthApplyDamage(AActor* HitActor, FName BoneNa
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FNexusEventMessage HitScanMessage;
+		HitScanMessage.EventTag = FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged"));
 		APawn* EquipmentPawnOwner = Cast<APawn>(EquipmentOwner->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();

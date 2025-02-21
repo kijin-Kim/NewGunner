@@ -64,6 +64,7 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FNexusEventMessage HitScanMessage;
+		HitScanMessage.EventTag = FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged"));
 		APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();

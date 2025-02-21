@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTags.h"
 #include "InputActionValue.h"
 #include "NexusEventMessage.generated.h"
-
 
 
 /**
@@ -17,22 +17,26 @@ struct NEXUSACTION_API FNexusEventMessage
 	GENERATED_BODY()
 
 	FNexusEventMessage()
-		: Instigator(nullptr)
-		  , TargetActor(nullptr)
-		  , InputActionValue()
-		  , EventDataObject(nullptr)
+		: EventTag(),
+		  Instigator(nullptr),
+		  TargetActor(nullptr),
+		  InputActionValue(),
+		  EventDataObject(nullptr)
 	{
 	}
 
-	FNexusEventMessage(AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
-		: Instigator(InInstigator)
-		  , TargetActor(InTargetActor)
-		  , InputActionValue(InInputActionValue)
-		  , EventDataObject(InEventDataObject)
+	FNexusEventMessage(FGameplayTag InEventTag, AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: EventTag(InEventTag),
+		  Instigator(InInstigator),
+		  TargetActor(InTargetActor),
+		  InputActionValue(InInputActionValue),
+		  EventDataObject(InEventDataObject)
 	{
 	}
 
 public:
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag EventTag;
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AController> Instigator;
 	UPROPERTY(BlueprintReadWrite)
@@ -41,7 +45,6 @@ public:
 	FInputActionValue InputActionValue;
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<UObject> EventDataObject;
-
 };
 
 USTRUCT()
@@ -69,35 +72,40 @@ struct NEXUSACTION_API FNexusEventMessageReplicated
 {
 	GENERATED_BODY()
 	FNexusEventMessageReplicated()
-		: Instigator(nullptr)
-		  , TargetActor(nullptr)
-		  , ReplicatedInputActionValue()
-		  , EventDataObject(nullptr)
+		: EventTag(),
+		  Instigator(nullptr),
+		  TargetActor(nullptr),
+		  ReplicatedInputActionValue(),
+		  EventDataObject(nullptr)
 	{
 	}
 
-	FNexusEventMessageReplicated(AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
-		: Instigator(InInstigator)
-		  , TargetActor(InTargetActor)
-		  , ReplicatedInputActionValue(InInputActionValue)
-		  , EventDataObject(InEventDataObject)
+	FNexusEventMessageReplicated(FGameplayTag InEventTag, AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+		: EventTag(InEventTag),
+		  Instigator(InInstigator),
+		  TargetActor(InTargetActor),
+		  ReplicatedInputActionValue(InInputActionValue),
+		  EventDataObject(InEventDataObject)
 	{
 	}
 
 	FNexusEventMessageReplicated(const FNexusEventMessage& EventMessage)
-		: Instigator(EventMessage.Instigator)
-		  , TargetActor(EventMessage.TargetActor)
-		  , ReplicatedInputActionValue(EventMessage.InputActionValue)
-		  , EventDataObject(EventMessage.EventDataObject)
+		: EventTag(EventMessage.EventTag),
+		  Instigator(EventMessage.Instigator),
+		  TargetActor(EventMessage.TargetActor),
+		  ReplicatedInputActionValue(EventMessage.InputActionValue),
+		  EventDataObject(EventMessage.EventDataObject)
 	{
 	}
 
 	FNexusEventMessage ToEventMessage() const
 	{
-		return FNexusEventMessage(Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
+		return FNexusEventMessage(EventTag, Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
 	}
 
 private:
+	UPROPERTY()
+	FGameplayTag EventTag;
 	UPROPERTY()
 	TObjectPtr<AController> Instigator;
 	UPROPERTY()
