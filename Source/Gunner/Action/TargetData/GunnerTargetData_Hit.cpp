@@ -5,16 +5,17 @@
 
 bool FGunnerTargetData_Hit::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
+	Ar << TimeStamp;
 	Ar << AgentActor;
-	uint8 HitResultCount = LocalHitResult.Num();
+	uint8 HitResultCount = HitResults.Num();
 	Ar << HitResultCount;
 
 	if (Ar.IsLoading())
 	{
-		LocalHitResult.SetNum(HitResultCount);
+		HitResults.SetNum(HitResultCount);
 	}
 
-	for (FHitResult& HitResult : LocalHitResult)
+	for (FHitResult& HitResult : HitResults)
 	{
 		HitResult.NetSerialize(Ar, Map, bOutSuccess);
 	}

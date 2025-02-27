@@ -6,6 +6,7 @@
 #include "Action/NexusAction.h"
 #include "GunnerActionEquipmentBase.generated.h"
 
+class AGunnerEquipment;
 class UGunnerEquipmentDef;
 class UGunnerEquipmentManagerComponent;
 /**
@@ -19,9 +20,11 @@ class GUNNER_API UGunnerActionEquipmentBase : public UNexusAction
 public:
 	virtual void OnActionAdded_Implementation() override;
 
-private:
-	UPROPERTY(BlueprintReadOnly, meta= (AllowPrivateAccess = "true"))
+protected:
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManager;
-	UPROPERTY(BlueprintReadOnly, meta= (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AGunnerEquipment> Equipment;
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UGunnerEquipmentDef> EquipmentDef;
 };

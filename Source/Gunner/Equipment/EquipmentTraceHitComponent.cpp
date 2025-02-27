@@ -64,6 +64,7 @@ void UEquipmentTraceHitComponent::TraceHit(TArray<FHitResult>& OutHitResults, co
 	                               CameraLocation + CameraForward * 10000.0f,
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 
+	
 	APawn* EquippedPawn = Cast<APawn>(EquippedActor);
 	check(EquippedPawn);
 
