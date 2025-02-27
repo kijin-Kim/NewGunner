@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NexusDataReplication.h"
 #include "NexusPrediction.h"
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
@@ -20,7 +21,7 @@ class UNexusActionComponent;
 class UNexusProperty;
 class UNexusSideEffect;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusRepDataSetSignature, FNexusTargetDataHandle /* RepDataHandle */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -55,8 +56,12 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag);
+	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag);
 	void CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSendTargetData(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle);
+	void CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
 
 
 	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
@@ -80,11 +85,11 @@ public:
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
-	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
-	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData);
+	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }
@@ -167,38 +172,59 @@ private:
 	TArray<TObjectPtr<UNexusProperty>> Properties;
 
 
-	struct FNetSyncPointDelegate
+	struct FNexusRepDataDelegate
 	{
-		typedef TPair<FNexusActionDefHandle, FNexusPredictionTag> SyncPointDelegateKeyType;
-
-		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FSimpleMulticastDelegate::FDelegate&& InDelegate)
-			: Key(InKey)
-		{
-			OnSyncDelegate.Add(InDelegate);
-		}
-
-		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey)
-			: Key(InKey)
+		FNexusRepDataDelegate(const FNexusPredictionTag& InPredictionTag)
+			: PredictionTag(InPredictionTag)
 		{
 		}
 
-		FNetSyncPointDelegate(const SyncPointDelegateKeyType& InKey, FNexusPredictionTag InNewPredictionTag)
-			: Key(InKey),
-			  NewPredictionTag(InNewPredictionTag)
+
+		FNexusPredictionTag PredictionTag;
+	};
+
+	struct FNexusNetSyncDelegate : public FNexusRepDataDelegate
+	{
+		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag)
+			: FNexusRepDataDelegate(InPredictionTag)
 		{
 		}
 
-		bool operator==(const FNetSyncPointDelegate& Other) const
+
+		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag, FSimpleMulticastDelegate::FDelegate&& InDelegate)
+			: FNexusRepDataDelegate(InPredictionTag)
 		{
-			return Key == Other.Key;
+			OnSyncDelegate.Add(MoveTemp(InDelegate));
 		}
 
-		SyncPointDelegateKeyType Key;
-		FNexusPredictionTag NewPredictionTag;
 		FSimpleMulticastDelegate OnSyncDelegate;
 	};
 
-	TArray<FNetSyncPointDelegate> NetSyncPointDelegates;
+
+	TMap<FNexusRepDataKey, FNexusNetSyncDelegate> NetSyncPointDelegates;
+
+
+	struct FNexusTargetDataDelegate : public FNexusRepDataDelegate
+	{
+		FNexusTargetDataDelegate(const FNexusPredictionTag& InPredictionTag, const FNexusTargetDataHandle& InTargetDataHandle)
+			: FNexusRepDataDelegate(InPredictionTag)
+			  , TargetDataHandle(InTargetDataHandle)
+		{
+		}
+
+		FNexusTargetDataDelegate(FOnNexusTargetDataSetSignature::FDelegate&& InDelegate)
+			: FNexusRepDataDelegate(FNexusPredictionTag()),
+			  TargetDataHandle()
+		{
+			OnSetDelegate.Add(MoveTemp(InDelegate));
+		}
+
+
+		FOnNexusTargetDataSetSignature OnSetDelegate;
+		FNexusTargetDataHandle TargetDataHandle;
+	};
+
+	TMap<FNexusRepDataKey, FNexusTargetDataDelegate> TargetDataDelegates;
 };
 
 struct FNexusActionListScopeLock

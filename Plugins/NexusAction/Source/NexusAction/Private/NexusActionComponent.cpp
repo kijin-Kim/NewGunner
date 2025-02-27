@@ -284,36 +284,71 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	}
 }
 
-void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag NewPredictionTag)
+void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag));
-	if (Index == INDEX_NONE)
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
+	if (!RepDataDelegate)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag), NewPredictionTag));
+		NetSyncPointDelegates.Add(Key, PredictionTag);
 		return;
 	}
 
-	if (NetSyncPointDelegates[Index].OnSyncDelegate.IsBound())
+	if (RepDataDelegate->OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, NewPredictionTag);
-		NetSyncPointDelegates[Index].OnSyncDelegate.Broadcast();
+		FNexusPredictionScope PredictionScope(*this, PredictionTag);
+		RepDataDelegate->OnSyncDelegate.Broadcast();
 	}
-	NetSyncPointDelegates.RemoveAt(Index);
+	NetSyncPointDelegates.Remove(Key);
 }
 
 
 void UNexusActionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
-	int32 Index = NetSyncPointDelegates.Find(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag));
-	if (Index == INDEX_NONE)
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
+	if (!RepDataDelegate)
 	{
-		NetSyncPointDelegates.Add(FNetSyncPointDelegate(FNetSyncPointDelegate::SyncPointDelegateKeyType(Handle, PrimaryPredictionTag), MoveTemp(Delegate)));
+		NetSyncPointDelegates.Add(Key, FNexusNetSyncDelegate{PrimaryPredictionTag, MoveTemp(Delegate)});
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, NetSyncPointDelegates[Index].NewPredictionTag);
+	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
 	Delegate.ExecuteIfBound();
-	NetSyncPointDelegates.RemoveAt(Index);
+	NetSyncPointDelegates.Remove(Key);
+}
+
+void UNexusActionComponent::ServerSendTargetData_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
+{
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
+	if (!RepDataDelegate)
+	{
+		TargetDataDelegates.Add(Key, {PredictionTag, TargetDataHandle});
+		return;
+	}
+
+	if (RepDataDelegate->OnSetDelegate.IsBound())
+	{
+		FNexusPredictionScope PredictionScope(*this, PredictionTag);
+		RepDataDelegate->OnSetDelegate.Broadcast(TargetDataHandle);
+	}
+	TargetDataDelegates.Remove(Key);
+}
+
+void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
+{
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
+	if (!RepDataDelegate)
+	{
+		TargetDataDelegates.Add(Key, MoveTemp(Delegate));
+		return;
+	}
+
+	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
+	Delegate.ExecuteIfBound(RepDataDelegate->TargetDataHandle);
+	TargetDataDelegates.Remove(Key);
 }
 
 void UNexusActionComponent::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
@@ -460,18 +495,18 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	}
 }
 
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
 	check(ActorOwner);
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
 	{
-		ActionComponent->TriggerCue(Action, CueClass, TargetData);
+		ActionComponent->TriggerCue(Action, CueClass, TargetDataHandle);
 	}
 }
 
-void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
+void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 
 {
 	if (!CueClass || !Action)
@@ -481,17 +516,17 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 
 	if (GetOwner()->HasAuthority())
 	{
-		NetMulticastTriggerCue(CueClass, TargetData);
+		NetMulticastTriggerCue(CueClass, TargetDataHandle);
 		return;
 	}
 
 	if (Action->GetActionNetMethod() != ENexusActionNetMethod::ServerAuthoritative)
 	{
-		InternalTriggerCue(CueClass, TargetData);
+		InternalTriggerCue(CueClass, TargetDataHandle);
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	// if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
 	// {
@@ -499,7 +534,7 @@ void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UN
 	// }
 }
 
-void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetData)
+void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	if (!CueClass)
 	{
@@ -510,7 +545,7 @@ void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, 
 	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
 	check(Sign);
 
-	Sign->SetCueRepData(TargetData);
+	Sign->SetCueRepData(TargetDataHandle);
 	Sign->OnTriggered();
 	Sign->SetCueRepData(FNexusTargetDataHandle());
 }
@@ -901,7 +936,7 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDe
 		ClientTriggerActionRequestFailed(ActionDefHandle, PredictionTag);
 		return;
 	}
-	
+
 	FNexusPredictionScope PredictionScope(*this, PredictionTag);
 	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
 	LocalTriggerAction(ActionDef);

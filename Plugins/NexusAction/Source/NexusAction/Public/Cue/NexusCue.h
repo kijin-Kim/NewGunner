@@ -39,6 +39,8 @@ public:
 		return *this;
 	}
 
+	bool IsValid() const { return Data.IsValid(); }
+
 	void SetData(TSharedPtr<FNexusTargetDataBase> InData) { Data = InData; }
 	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
 	TSharedPtr<FNexusTargetDataBase> GetData() const { return Data; }
