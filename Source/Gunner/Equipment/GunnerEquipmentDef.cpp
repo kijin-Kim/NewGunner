@@ -7,6 +7,10 @@
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
 
 
+
+
+
+
 #if WITH_EDITOR
 EDataValidationResult UGunnerEquipmentDef::IsDataValid(FDataValidationContext& Context) const
 {
@@ -20,7 +24,22 @@ EDataValidationResult UGunnerEquipmentDef::IsDataValid(FDataValidationContext& C
 #endif
 
 
+
 float UGunnerEquipmentDef::CalculateDamageByContext(const FDamageContext& DamageContext) const
 {
 	return DamageType ? DamageType->CalculateDamageByContext(DamageContext) : 0.0f;
+}
+
+
+
+UGunnerInstancedAnimSet* UGunnerEquipmentDef::FindInstancedAnimSetByClass(TSubclassOf<UGunnerInstancedAnimSet> AnimSetClass) const
+{
+	for (UGunnerInstancedAnimSet* InstancedAnimSet : InstancedAnimSets)
+	{
+		if (InstancedAnimSet->IsA(AnimSetClass))
+		{
+			return InstancedAnimSet;
+		}
+	}
+	return nullptr;
 }

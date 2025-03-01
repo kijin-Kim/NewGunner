@@ -61,6 +61,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float CalculateDamageByContext(const FDamageContext& DamageContext) const;
+	UFUNCTION(BlueprintCallable, meta = (DeterminesOutputType = "AnimSetClass"))
+	UGunnerInstancedAnimSet* FindInstancedAnimSetByClass(TSubclassOf<UGunnerInstancedAnimSet> AnimSetClass) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn Data")
 	TSubclassOf<AGunnerEquipment> EquipmentClass;
@@ -75,7 +77,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Damage")
 	TObjectPtr<const UGunnerDamageType> DamageType;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default")
 	float FirePerSec;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default", meta = (Units = "s"))
@@ -92,7 +94,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
 	TArray<TSubclassOf<UNexusAction>> ActionsToAddOnEquipped;
 	
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	TObjectPtr<UGunnerEquipmentAnimSet> AnimSet;
+	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;
+	
+	UPROPERTY(EditAnywhere, Instanced, Category = "Animation")
+	TArray<TObjectPtr<UGunnerInstancedAnimSet>> InstancedAnimSets;
 };

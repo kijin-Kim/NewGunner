@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "GunnerInstancedAnimSet.generated.h"
 
+
 UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced, CollapseCategories, Abstract)
 class GUNNER_API UGunnerInstancedAnimSet : public UObject
 {
 	GENERATED_BODY()
+	
 };
