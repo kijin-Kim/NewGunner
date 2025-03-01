@@ -238,10 +238,5 @@ void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots()
 		{
 			Slot.SlottedEquipment->SetMeshVisibility(false);
 		}
-
-		if (Slot.SlottedEquipment)
-		{
-			GR_LOG_SUB(LogGunner, Warning, TEXT("슬롯에 장착된 장비: %s"), *Slot.SlottedEquipment->GetName());
-		}
 	}
 }

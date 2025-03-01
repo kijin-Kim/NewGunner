@@ -171,7 +171,10 @@ void AGunnerEquipment::OnRep_Owner()
 {
 	Super::OnRep_Owner();
 	AttachEquipmentToOwner();
-	ServerAckClientAcquired();
+	if (GetNetConnection())
+	{
+		ServerAckClientAcquired();
+	}
 }
 
 void AGunnerEquipment::ServerAckClientAcquired_Implementation()

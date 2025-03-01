@@ -83,6 +83,7 @@ void UGunnerActionFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetC
 
 TArray<FHitResult> UGunnerActionFire::HitScanTrace()
 {
+	AGunnerEquipment* Equipment = GetEquipment();
 	AActor* EquipmentActorOwner = Equipment->GetOwner();
 	UWorld* World = EquipmentActorOwner->GetWorld();
 	UCameraComponent* CameraComponet = EquipmentActorOwner->GetComponentByClass<UCameraComponent>();
@@ -140,6 +141,7 @@ void UGunnerActionFire::HitScanTraceConfirm(FNexusTargetDataHandle HitTargetData
 		CollisionQueryParams.AddIgnoredComponent(Character->GetMesh());
 	}
 
+	AGunnerEquipment* Equipment = GetEquipment();
 	AActor* EquipmentActorOwner = Equipment->GetOwner();
 	TArray<AActor*> IgnoredActors = {Equipment, EquipmentActorOwner};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
@@ -166,6 +168,7 @@ void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName BoneName, FVecto
 	{
 		FNexusEventMessage HitScanMessage;
 		HitScanMessage.EventTag = FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged"));
+		AGunnerEquipment* Equipment = GetEquipment();
 		APawn* EquipmentPawnOwner = Cast<APawn>(Equipment->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
