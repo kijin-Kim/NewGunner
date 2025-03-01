@@ -38,14 +38,20 @@ public:
 
 	void InitializeAction(const FNexusActionDef& InActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
-	UFUNCTION(BlueprintNativeEvent)
-	void OnActionAdded();
-	UFUNCTION(BlueprintNativeEvent)
-	bool OnCanTriggerAction() const;
-	UFUNCTION(BlueprintNativeEvent)
-	void OnTriggerAction();
-	UFUNCTION(BlueprintNativeEvent)
-	void OnEndAction();
+
+	virtual void OnActionAdded();
+	virtual bool OnCanTriggerAction();
+	virtual void OnTriggerAction();
+	virtual void OnEndAction();
+	
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Action Added"))
+	void BP_OnActionAdded();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Can Trigger Action"))
+	bool BP_OnCanTriggerAction() const;
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Trigger Action"))
+	void BP_OnTriggerAction();
+	UFUNCTION(BlueprintImplementableEvent,	meta = (DisplayName = "On End Action"))
+	void BP_OnEndAction();
 
 	UFUNCTION(BlueprintCallable)
 	void EndAction();
@@ -84,7 +90,8 @@ public:
 	UObject* GetSourceObject() const { return ActionDef.SourceObject.Get(); }
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
-	
+private:
+	bool IsBlueprintFuctionImplemented(const FString& FunctionName) const;
 	
 public:
 	FOnNexusActionEndedSignature OnActionEndedDelegate;

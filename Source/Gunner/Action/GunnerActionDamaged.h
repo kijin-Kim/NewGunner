@@ -21,7 +21,7 @@ class GUNNER_API UGunnerActionDamaged : public UNexusAction
 
 public:
 	UGunnerActionDamaged();
-	virtual void OnTriggerAction_Implementation() override;
+	virtual void OnTriggerAction() override;
 
 	UFUNCTION(BlueprintCallable)
 	EGunnerHitDirectionType GetHitDirectionType() const;

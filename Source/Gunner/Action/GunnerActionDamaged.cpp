@@ -10,9 +10,9 @@ UGunnerActionDamaged::UGunnerActionDamaged()
 	LegBoneNames = {TEXT("L_Hip"),TEXT("L_Knee"),TEXT("L_Foot"),TEXT("R_Hip"),TEXT("R_Knee"),TEXT("R_Foot")};
 }
 
-void UGunnerActionDamaged::OnTriggerAction_Implementation()
+void UGunnerActionDamaged::OnTriggerAction()
 {
-	Super::OnTriggerAction_Implementation();
+	Super::OnTriggerAction();
 	HitMessageData = Cast<UGunnerHitMessageData>(EventMessage.EventDataObject);
 	check(HitMessageData.IsValid());
 }

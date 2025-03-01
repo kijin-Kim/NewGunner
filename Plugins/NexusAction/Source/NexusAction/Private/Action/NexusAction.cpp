@@ -27,16 +27,25 @@ void UNexusAction::SetActionCurrentEventMessage(const FNexusEventMessage& InEven
 	EventMessage = InEventMessage;
 }
 
-void UNexusAction::OnActionAdded_Implementation()
+void UNexusAction::OnActionAdded()
 {
+	BP_OnActionAdded();
 }
 
-bool UNexusAction::OnCanTriggerAction_Implementation() const
+bool UNexusAction::OnCanTriggerAction()
 {
-	return true;
+	UFunction* Function = FindFunction(FName(TEXT("BP_OnCanTriggerAction")));
+	
+	bool bResult = true;
+	if (Function && Function->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass()))
+	{
+		bResult &= BP_OnCanTriggerAction();	
+	}
+	
+	return bResult;
 }
 
-void UNexusAction::OnTriggerAction_Implementation()
+void UNexusAction::OnTriggerAction()
 {
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
@@ -48,9 +57,11 @@ void UNexusAction::OnTriggerAction_Implementation()
 	}
 
 	bIsTriggering = true;
+
+	BP_OnTriggerAction();
 }
 
-void UNexusAction::OnEndAction_Implementation()
+void UNexusAction::OnEndAction()
 {
 	if (!bIsTriggering)
 	{
@@ -58,7 +69,9 @@ void UNexusAction::OnEndAction_Implementation()
 	}
 	bIsTriggering = false;
 	OnActionEndedDelegate.Broadcast(ActionDef.Handle, this);
+	BP_OnEndAction();
 }
+
 
 void UNexusAction::EndAction()
 {
@@ -67,5 +80,3 @@ void UNexusAction::EndAction()
 		OnEndAction();
 	}
 }
-
-

@@ -18,7 +18,7 @@ class GUNNER_API UGunnerActionEquipmentBase : public UNexusAction
 	GENERATED_BODY()
 
 public:
-	virtual void OnActionAdded_Implementation() override;
+	virtual void OnActionAdded() override;
 	UFUNCTION(BlueprintCallable)
 	UGunnerEquipmentDef* GetEquipmentDef() const;
 	UFUNCTION(BlueprintCallable)
@@ -27,5 +27,4 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManager;
-	
 };
