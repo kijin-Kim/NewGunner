@@ -39,6 +39,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AttachEquipmentToOwner();
 
+
 	void OnAuthAcquired();
 	void OnAuthLost();
 	void OnEquipped();
@@ -46,6 +47,9 @@ public:
 	void SetMeshVisibility(bool bVisible);
 
 	virtual void OnRep_Owner() override;
+
+	UFUNCTION(Server, Reliable)
+	void ServerAckClientAcquired();
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -80,7 +84,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
-
 
 
 	TArray<FNexusActionDefHandle> AddedActionHandlesOnAcquired;

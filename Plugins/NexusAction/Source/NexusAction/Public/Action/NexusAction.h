@@ -81,7 +81,7 @@ public:
 
 	FNexusActionDefHandle GetActionDefHandle() const { return ActionDef.Handle; }
 	UFUNCTION(BlueprintCallable)
-	UObject* GetSourceObject() const { return ActionDef.SourceObject; }
+	UObject* GetSourceObject() const { return ActionDef.SourceObject.Get(); }
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
 	

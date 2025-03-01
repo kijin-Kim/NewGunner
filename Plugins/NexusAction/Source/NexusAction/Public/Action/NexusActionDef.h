@@ -41,12 +41,11 @@ struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 
 	// 액션의 바리에이션을 위한 데이터 오브젝트. 예를 들어 각 무기별 사격 행동에 대한 애니메이션
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<UObject> SourceObject;
+	TWeakObjectPtr<UObject> SourceObject;
 
 	UPROPERTY(BlueprintReadWrite)
 	TSubclassOf<UNexusAction> ActionClass;
-
-
+	
 	// 액션이 추가될 시 로컬에서 각 에이전트마다 생성되는 액션 인스턴스
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UNexusAction> ActionInstance;
@@ -65,7 +64,6 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	bool HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const;
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
 	
-
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	void OnAdded(FNexusActionDef& ActionDef) const;
 	void OnRemoved(FNexusActionDef& ActionDef) const;

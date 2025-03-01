@@ -41,14 +41,9 @@ public:
 	void AuthInitEquipmentManagerComponent();
 	void AuthRelaseEquipmentManagerComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	UFUNCTION(BlueprintCallable)
-	void AuthAddEquipmentToSlotByClass(TSubclassOf<AGunnerEquipment> EquipmentClass);
-	UFUNCTION(BlueprintCallable)
 	void AuthAddEquipment(AGunnerEquipment* NewEquipment);
 	void AuthRemoveAllEquipments();
-	
-	UFUNCTION(BlueprintCallable)
-    void AuthAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef);
+	void AuthSpawnAndAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef);
 
 
 	UFUNCTION(BlueprintCallable)

@@ -10,6 +10,7 @@
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "NexusActionComponent.h"
+#include "Gunner/Gunner.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -92,9 +93,9 @@ void AGunnerEquipment::AttachEquipmentToOwner()
 
 void AGunnerEquipment::OnAuthAcquired()
 {
-	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (ActorOwner->HasAuthority())
+	APawn* PawnOwner = GetOwner<APawn>();
+	check(PawnOwner);
+	if (PawnOwner->HasAuthority() && PawnOwner->IsLocallyControlled())
 	{
 		AuthAddDesiredActions(EquipmentDef->ActionsToAddOnAcquired, AddedActionHandlesOnAcquired);
 	}
@@ -166,13 +167,17 @@ void AGunnerEquipment::SetMeshVisibility(bool bVisible)
 	ThirdPersonMeshComponent->SetVisibility(bVisible, true);
 }
 
-
 void AGunnerEquipment::OnRep_Owner()
 {
 	Super::OnRep_Owner();
 	AttachEquipmentToOwner();
+	ServerAckClientAcquired();
 }
 
+void AGunnerEquipment::ServerAckClientAcquired_Implementation()
+{
+	AuthAddDesiredActions(EquipmentDef->ActionsToAddOnAcquired, AddedActionHandlesOnAcquired);
+}
 
 UNexusAnimMontagePlayerComponent* AGunnerEquipment::GetAnimMontagePlayer_Implementation()
 {
@@ -201,6 +206,7 @@ void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusActi
 	check(ActorOwner);
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
+
 	for (auto ActionClass : ActionsToAdd)
 	{
 		if (ActionClass)

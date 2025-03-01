@@ -18,6 +18,7 @@ class GUNNER_API UGunnerActionEquipmentBase : public UNexusAction
 	GENERATED_BODY()
 
 public:
+	
 	virtual void OnActionAdded_Implementation() override;
 
 protected:

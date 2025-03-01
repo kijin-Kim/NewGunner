@@ -37,7 +37,7 @@ void UGunnerEquipmentManagerComponent::AuthInitEquipmentManagerComponent()
 	{
 		if (EquipmentDef)
 		{
-			AuthAddEquipmentByEquipmentDef(EquipmentDef);
+			AuthSpawnAndAddEquipmentByEquipmentDef(EquipmentDef);
 		}
 	}
 }
@@ -57,93 +57,15 @@ void UGunnerEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifeti
 	DOREPLIFETIME_CONDITION_NOTIFY(UGunnerEquipmentManagerComponent, CurrentEquippedEquipment, COND_None, REPNOTIFY_Always);
 }
 
-
-void UGunnerEquipmentManagerComponent::AuthAddEquipmentToSlotByClass(TSubclassOf<AGunnerEquipment> EquipmentClass)
-{
-	if (!GetOwner()->HasAuthority())
-	{
-		return;
-	}
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = GetOwner();
-	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentClass, SpawnParams);
-	NewEquipment->OnAuthAcquired();
-
-	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([EquipmentClass](const FEquipmentSlot& Slot)
-	{
-		return Slot.DesiredEquipmentType == EquipmentClass.GetDefaultObject()->GetEquipmentType();
-	});
-
-	if (!SlotPtr)
-	{
-		return;
-	}
-
-	if (SlotPtr && SlotPtr->SlottedEquipment)
-	{
-		SlotPtr->SlottedEquipment->OnAuthLost();
-	}
-
-	SlotPtr->SlottedEquipment = NewEquipment;
-	SlotPtr->SlottedEquipment->SetMeshVisibility(false);
-}
-
 void UGunnerEquipmentManagerComponent::AuthAddEquipment(AGunnerEquipment* NewEquipment)
-{
-	if (!GetOwner()->HasAuthority())
-	{
-		return;
-	}
-	NewEquipment->SetOwner(GetOwner());
-	NewEquipment->OnAuthAcquired();
-
-	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([Equipment = NewEquipment](const FEquipmentSlot& Slot)
-	{
-		return Slot.DesiredEquipmentType == Equipment->GetEquipmentType();
-	});
-
-	if (!SlotPtr)
-	{
-		return;
-	}
-
-	if (SlotPtr && SlotPtr->SlottedEquipment)
-	{
-		return;
-		SlotPtr->SlottedEquipment->OnAuthLost();
-	}
-
-	SlotPtr->SlottedEquipment = NewEquipment;
-}
-
-void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
-{
-	for (FEquipmentSlot& Slot : EquipmentSlots)
-	{
-		if (Slot.SlottedEquipment)
-		{
-			Slot.SlottedEquipment->Destroy();
-		}
-	}
-	EquipmentSlots.Empty();
-}
-
-void UGunnerEquipmentManagerComponent::AuthAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef)
 {
 	if (!ensure(GetOwner()->HasAuthority()))
 	{
 		GR_LOG_SUB_FN(LogGunner, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
 		return;
 	}
-	check(EquipmentDef);
-	check(EquipmentDef->EquipmentClass);
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = GetOwner();
-
-	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentDef->EquipmentClass, SpawnParams);
-	NewEquipment->SetEquipmentDef(EquipmentDef);
+	NewEquipment->SetOwner(GetOwner());
 	NewEquipment->OnAuthAcquired();
 
 	FEquipmentSlot* SlotPtr = EquipmentSlots.FindByPredicate([NewEquipment](const FEquipmentSlot& Slot)
@@ -159,10 +81,41 @@ void UGunnerEquipmentManagerComponent::AuthAddEquipmentByEquipmentDef(UGunnerEqu
 	if (SlotPtr && SlotPtr->SlottedEquipment)
 	{
 		SlotPtr->SlottedEquipment->OnAuthLost();
+		return;
 	}
 
 	SlotPtr->SlottedEquipment = NewEquipment;
 	SlotPtr->SlottedEquipment->SetMeshVisibility(false);
+}
+
+void UGunnerEquipmentManagerComponent::AuthRemoveAllEquipments()
+{
+	for (FEquipmentSlot& Slot : EquipmentSlots)
+	{
+		if (Slot.SlottedEquipment)
+		{
+			Slot.SlottedEquipment->Destroy();
+		}
+	}
+	EquipmentSlots.Empty();
+}
+
+void UGunnerEquipmentManagerComponent::AuthSpawnAndAddEquipmentByEquipmentDef(UGunnerEquipmentDef* EquipmentDef)
+{
+	if (!ensure(GetOwner()->HasAuthority()))
+	{
+		GR_LOG_SUB_FN(LogGunner, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		return;
+	}
+	check(EquipmentDef);
+	check(EquipmentDef->EquipmentClass);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+	AGunnerEquipment* NewEquipment = GetWorld()->SpawnActor<AGunnerEquipment>(EquipmentDef->EquipmentClass, SpawnParams);
+	NewEquipment->SetEquipmentDef(EquipmentDef);
+
+	AuthAddEquipment(NewEquipment);
 }
 
 
@@ -284,6 +237,11 @@ void UGunnerEquipmentManagerComponent::OnRep_EquipmentSlots()
 		if (Slot.SlottedEquipment && (Slot.SlottedEquipment != CurrentEquippedEquipment))
 		{
 			Slot.SlottedEquipment->SetMeshVisibility(false);
+		}
+
+		if (Slot.SlottedEquipment)
+		{
+			GR_LOG_SUB(LogGunner, Warning, TEXT("슬롯에 장착된 장비: %s"), *Slot.SlottedEquipment->GetName());
 		}
 	}
 }

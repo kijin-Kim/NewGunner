@@ -29,7 +29,7 @@ bool FNexusActionDef::operator!=(const FNexusActionDef& Other) const
 
 FString FNexusActionDef::ToString() const
 {
-	return FString::Printf(TEXT("ActionClass: %s, Handle: %s, SourceObject: %s"), *ActionClass->GetName(), *Handle.ToString(), SourceObject ? *SourceObject->GetName() : TEXT(""));
+	return FString::Printf(TEXT("ActionClass: %s, Handle: %s, SourceObject: %s"), *ActionClass->GetName(), *Handle.ToString(), SourceObject.IsValid() ? *SourceObject->GetName() : TEXT(""));
 }
 
 void FNexusActionDef::PostReplicatedAdd(const FNexusActionDefContainer& InArraySerializer)
@@ -46,7 +46,7 @@ void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 {
 	if (HasSameActionClassAndSourceObject(ActionDef))
 	{
-		UE_LOG(LogNexusAction, Warning, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject ? *ActionDef.SourceObject->GetName() : TEXT(""));
+		UE_LOG(LogNexusAction, Warning, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject.IsValid() ? *ActionDef.SourceObject->GetName() : TEXT(""));
 		return;
 	}
 	int32 Index = Items.Add(ActionDef);
@@ -86,7 +86,7 @@ FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusAct
 
 bool FNexusActionDefContainer::HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const
 {
-	return FindActionDefHandle(ActionDef.ActionClass, ActionDef.SourceObject).IsValid();
+	return FindActionDefHandle(ActionDef.ActionClass, ActionDef.SourceObject.Get()).IsValid();
 }
 
 FNexusActionDefHandle FNexusActionDefContainer::FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const

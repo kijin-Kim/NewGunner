@@ -74,6 +74,7 @@ bool UNexusActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunc
 
 void UNexusActionComponent::InitActionComponent(AActor* InAgentActor)
 {
+	NX_LOG_SUB_FN(LogNexusAction, Verbose, TEXT("ActionComponent 초기화"));
 	check(InAgentActor);
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
