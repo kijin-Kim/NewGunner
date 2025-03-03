@@ -11,7 +11,7 @@
 UINTERFACE(MinimalAPI)
 class UNexusEventInterface : public UInterface
 {
-	GENERATED_UINTERFACE_BODY()
+	GENERATED_BODY()
 };
 
 /**
@@ -19,7 +19,7 @@ class UNexusEventInterface : public UInterface
  */
 class NEXUSACTION_API INexusEventInterface
 {
-	GENERATED_IINTERFACE_BODY()
+	GENERATED_BODY()
 
 protected:
 	void BindEvents();

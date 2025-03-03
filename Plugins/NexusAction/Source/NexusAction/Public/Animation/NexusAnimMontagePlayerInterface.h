@@ -11,7 +11,7 @@ class UNexusAnimMontagePlayerComponent;
 UINTERFACE(MinimalAPI)
 class UNexusAnimMontagePlayerInterface : public UInterface
 {
-	GENERATED_UINTERFACE_BODY()
+	GENERATED_BODY()
 };
 
 /**
@@ -19,7 +19,7 @@ class UNexusAnimMontagePlayerInterface : public UInterface
  */
 class NEXUSACTION_API INexusAnimMontagePlayerInterface
 {
-	GENERATED_IINTERFACE_BODY()
+	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:

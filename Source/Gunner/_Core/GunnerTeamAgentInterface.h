@@ -17,15 +17,15 @@ inline const FGenericTeamId DefenderTeam(1);
 /**
  * 
  */
-UINTERFACE(meta=(CannotImplementInterfaceInBlueprint))
+UINTERFACE(MinimalAPI)
 class UGunnerTeamAgentInterface : public UGenericTeamAgentInterface
 {
-	GENERATED_UINTERFACE_BODY()
+	GENERATED_BODY()
 };
 
 class GUNNER_API IGunnerTeamAgentInterface : public IGenericTeamAgentInterface
 {
-	GENERATED_IINTERFACE_BODY()
+	GENERATED_BODY()
 
 public:
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;

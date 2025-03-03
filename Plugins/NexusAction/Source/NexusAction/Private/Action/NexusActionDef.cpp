@@ -51,6 +51,7 @@ void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 	}
 	int32 Index = Items.Add(ActionDef);
 	MarkItemDirty(Items[Index]);
+	OnAdded(Items[Index]);
 }
 
 void FNexusActionDefContainer::AuthRemove(const FNexusActionDefHandle& Handle)
@@ -72,7 +73,7 @@ void FNexusActionDefContainer::AuthRemoveAll()
 	MarkArrayDirty();
 }
 
-FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusActionDefHandle& Handle)
+FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(FNexusActionDefHandle Handle)
 {
 	for (FNexusActionDef& Item : Items)
 	{

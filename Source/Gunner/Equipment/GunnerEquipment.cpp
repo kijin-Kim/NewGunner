@@ -325,4 +325,8 @@ void AGunnerEquipment::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId N
 void AGunnerEquipment::SetEquipmentDef(UGunnerEquipmentDef* InEquipmentDef)
 {
 	EquipmentDef = InEquipmentDef;
+	BulletCount = EquipmentDef->Magazine;
+	MaxBulletPerMagazineCount = EquipmentDef->Magazine;
+	MagazineBulletCount = EquipmentDef->Reserve;
+	
 }

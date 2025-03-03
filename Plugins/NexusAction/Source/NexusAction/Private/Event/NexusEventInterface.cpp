@@ -3,11 +3,6 @@
 
 #include "Event/NexusEventInterface.h"
 
-UNexusEventInterface::UNexusEventInterface(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
 
 void INexusEventInterface::BindEvents()
 {

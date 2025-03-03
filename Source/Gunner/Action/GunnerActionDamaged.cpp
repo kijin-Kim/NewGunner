@@ -13,17 +13,17 @@ UGunnerActionDamaged::UGunnerActionDamaged()
 void UGunnerActionDamaged::OnTriggerAction()
 {
 	Super::OnTriggerAction();
-	HitMessageData = Cast<UGunnerHitMessageData>(EventMessage.EventDataObject);
+	HitMessageData = Cast<UGunnerHitMessageData>(GetEventMessage().EventDataObject);
 	check(HitMessageData.IsValid());
 }
 
 EGunnerHitDirectionType UGunnerActionDamaged::GetHitDirectionType() const
 {
-	check(EventMessage.Instigator);
+	check(GetEventMessage().Instigator);
 	AActor* AgentActor = GetAgentActor();
 	check(AgentActor);
 
-	APawn* HitCauser = EventMessage.Instigator->GetPawn();
+	APawn* HitCauser = GetEventMessage().Instigator->GetPawn();
 	check(HitCauser);
 	const FVector HitCauserLocation = HitCauser->GetActorLocation();
 	const FVector AgentLocation = AgentActor->GetActorLocation();

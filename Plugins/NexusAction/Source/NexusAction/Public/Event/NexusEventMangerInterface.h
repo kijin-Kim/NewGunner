@@ -11,7 +11,7 @@ class UNexusEventManagerComponent;
 UINTERFACE(MinimalAPI)
 class UNexusEventManagerInterface : public UInterface
 {
-	GENERATED_UINTERFACE_BODY()
+	GENERATED_BODY()
 };
 
 /**
@@ -19,7 +19,7 @@ class UNexusEventManagerInterface : public UInterface
  */
 class NEXUSACTION_API INexusEventManagerInterface
 {
-	GENERATED_IINTERFACE_BODY()
+	GENERATED_BODY()
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual UNexusEventManagerComponent* GetEventManagerComponent() const = 0;

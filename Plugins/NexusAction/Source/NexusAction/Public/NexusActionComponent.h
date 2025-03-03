@@ -25,18 +25,19 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTarget
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusActionComponent : public UActorComponent
+class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
 public:
 	UNexusActionComponent();
 
-
-	UNexusAction* NewActionInstance(const FNexusActionDef& ActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo);
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
+	
 
 	void InitActionComponent(AActor* InAgentActor);
 	void ReleaseActionComponent();
@@ -111,6 +112,7 @@ public:
 	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
 
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
+	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
@@ -128,7 +130,7 @@ private:
 	void UnbindActionTriggerEvent(const FNexusActionDef& ActionDef);
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle);
 	void OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action);
-	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle);
+	
 
 
 	bool CanTriggerAction(const FNexusActionDef& ActionDef) const;
@@ -154,8 +156,6 @@ private:
 	TArray<FNexusActionDefHandle> ActionPendingRemoves;
 
 	TSharedPtr<FNexusAgentInfo> AgentInfo;
-
-	FGameplayTagContainer OwnedTags;
 
 	TMap<FNexusActionDefHandle, TArray<FNexusEventCallbackHandle>> BoundedActionEventHandles;
 

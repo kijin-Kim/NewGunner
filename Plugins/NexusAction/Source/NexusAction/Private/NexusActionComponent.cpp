@@ -35,21 +35,18 @@ UNexusActionComponent::UNexusActionComponent()
 	}
 }
 
-UNexusAction* UNexusActionComponent::NewActionInstance(const FNexusActionDef& ActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
-	// 하나의 액션 컴포넌트 내에서 액션 타입 하나당 하나의 인스턴스만 생성되도록 함
-	UNexusAction* NewAction = NewObject<UNexusAction>(GetOwner(), ActionDef.ActionClass);
-	NewAction->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
-	NewAction->InitializeAction(ActionDef, InAgentInfo);
-	NewAction->OnActionAdded();
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *NewAction->GetName());
-	return NewAction;
+	for (const FNexusActionDef& ActionDef : ActionDefs.Items)
+	{
+		TagContainer.AppendTags(ActionDef.OwnedTags);
+	}
 }
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	FNexusPredictionEvents::Clear();
+	ReleaseActionComponent();
 }
 
 void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -60,7 +57,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
 }
-
 
 bool UNexusActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
@@ -103,7 +99,6 @@ void UNexusActionComponent::ReleaseActionComponent()
 	{
 		AuthRemoveAllActions();
 		AuthRemoveAllProperties();
-		OwnedTags.Reset();
 	}
 }
 
@@ -135,14 +130,10 @@ FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef
 		return ActionDef.Handle;
 	}
 	ACTION_LIST_SCOPE_LOCK();
+	
+	ActionDefs.AuthAdd(ActionDef);
 
-	FNexusActionDef NewActionDef = ActionDef;
-	NewActionDef.ActionInstance = NewActionInstance(NewActionDef, AgentInfo);
-	ActionDefs.AuthAdd(NewActionDef);
-
-	HandleTriggerableActionOnAdded(NewActionDef);
-
-	return NewActionDef.Handle;
+	return ActionDef.Handle;
 }
 
 void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle)
@@ -580,6 +571,8 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	{
 		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
 		DisplayDebugManager.SetDrawColor(FColor::Orange);
+		FGameplayTagContainer OwnedTags;
+		GetOwnedGameplayTags(OwnedTags);
 		for (FGameplayTag Tag : OwnedTags)
 		{
 			DisplayDebugManager.DrawString(FString::Printf(TEXT("OwnedTags: %s"), *Tag.ToString()));
@@ -601,7 +594,12 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 {
-	ActionDef.ActionInstance = NewActionInstance(ActionDef, AgentInfo);
+	ActionDef.ActionInstance = NewObject<UNexusAction>(GetOwner(), ActionDef.ActionClass);
+	ActionDef.ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
+	ActionDef.ActionInstance->InitializeAction(ActionDef.Handle, AgentInfo);
+	ActionDef.ActionInstance->OnActionAdded();
+	
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *ActionDef.ActionInstance->GetName());
 	HandleTriggerableActionOnAdded(ActionDef);
 }
 
@@ -676,29 +674,19 @@ void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, con
 
 void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action)
 {
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 종료"), *Action->GetName());
-	OwnedTags.RemoveTags(Action->GetActionOwnedTags());
-}
-
-FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle)
-{
-	check(ActionDefHandle.IsValid());
-	if (FNexusActionDef* ActionDefPtr = ActionDefs.FindActionDefByHandle(ActionDefHandle))
+	if (FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle))
 	{
-		return ActionDefPtr;
+		ActionDef->OwnedTags.Reset();
 	}
-
-	// If not found in ActionDefs, try to find in ActionPendingAdds
-	return ActionPendingAdds.FindByPredicate([ActionDefHandle](const FNexusActionDef& ActionDef)
-	{
-		return ActionDef.Handle == ActionDefHandle;
-	});
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 종료"), *Action->GetName());
 }
 
 bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) const
 {
 	bool bIsNotTriggeringOrRetriggerable = ActionDef.ActionInstance->IsRetriggerable() || !ActionDef.ActionInstance->IsTriggering();
 	bool bMetTriggerCondition = ActionDef.ActionInstance->OnCanTriggerAction();
+	FGameplayTagContainer OwnedTags;
+	GetOwnedGameplayTags(OwnedTags);
 	bool bHasRequiredTags = OwnedTags.HasAll(ActionDef.ActionInstance->GetShouldHaveTags());
 	bool bDontHaveForbiddenTags = !OwnedTags.HasAny(ActionDef.ActionInstance->GetShouldNotHaveTags());
 
@@ -758,7 +746,7 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 {
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
-	OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
+	ActionDef->OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
 	ActionDef->ActionInstance->OnTriggerAction();
 }
 
@@ -906,6 +894,21 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	}
 
 	return PropertyPtr->GetDynamicValue();
+}
+
+FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle)
+{
+	check(ActionDefHandle.IsValid());
+	if (FNexusActionDef* ActionDefPtr = ActionDefs.FindActionDefByHandle(ActionDefHandle))
+	{
+		return ActionDefPtr;
+	}
+
+	// If not found in ActionDefs, try to find in ActionPendingAdds
+	return ActionPendingAdds.FindByPredicate([ActionDefHandle](const FNexusActionDef& ActionDef)
+	{
+		return ActionDef.Handle == ActionDefHandle;
+	});
 }
 
 void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)

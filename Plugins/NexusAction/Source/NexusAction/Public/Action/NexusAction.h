@@ -13,6 +13,7 @@
 #include "NexusAction.generated.h"
 
 
+class INexusActionDefInterface;
 class UNexusAction;
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNexusActionEndedSignature, FNexusActionDefHandle, UNexusAction*);
 
@@ -36,21 +37,21 @@ class NEXUSACTION_API UNexusAction : public UObject
 public:
 	virtual UWorld* GetWorld() const override;
 
-	void InitializeAction(const FNexusActionDef& InActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo);
+	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
 
 	virtual void OnActionAdded();
 	virtual bool OnCanTriggerAction();
 	virtual void OnTriggerAction();
 	virtual void OnEndAction();
-	
+
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Action Added"))
 	void BP_OnActionAdded();
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Can Trigger Action"))
 	bool BP_OnCanTriggerAction() const;
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Trigger Action"))
 	void BP_OnTriggerAction();
-	UFUNCTION(BlueprintImplementableEvent,	meta = (DisplayName = "On End Action"))
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On End Action"))
 	void BP_OnEndAction();
 
 	UFUNCTION(BlueprintCallable)
@@ -85,20 +86,20 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
 
-	FNexusActionDefHandle GetActionDefHandle() const { return ActionDef.Handle; }
-	UFUNCTION(BlueprintCallable)
-	UObject* GetSourceObject() const { return ActionDef.SourceObject.Get(); }
+	FNexusActionDefHandle GetActionDefHandle() const { return ActionDefHandle; }
+
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
+
+protected:
+	FNexusEventMessage GetEventMessage() const { return EventMessage; }
 
 private:
 	bool IsBlueprintFuctionImplemented(const FString& FunctionName) const;
-	
+
 public:
 	FOnNexusActionEndedSignature OnActionEndedDelegate;
 
 protected:
-	FNexusActionDef ActionDef;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	ENexusActionNetMethod ActionNetMethod = ENexusActionNetMethod::LocalOnly;
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
@@ -110,7 +111,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Action Trigger Config")
 	bool bShouldTriggerOnAdded = false;
 
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = "ActionTag")
 	FGameplayTagContainer ActionOwnedTags;
 
@@ -119,13 +120,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ActionTag|Requirement")
 	FGameplayTagContainer ShouldNotHaveTags;
 
-
-	TWeakPtr<FNexusAgentInfo> AgentInfo; // 에이전트에 대한 정보. 매 실행마다 바뀌지 않는다.
-
-	UPROPERTY(BlueprintReadOnly)
-	FNexusEventMessage EventMessage;
-
 private:
+	FNexusActionDefHandle ActionDefHandle;
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bIsTriggering = false;
 	FNexusPredictionTag PrimaryPredictionTag;
+	TWeakPtr<FNexusAgentInfo> AgentInfo; // 에이전트에 대한 정보. 매 실행마다 바뀌지 않는다.
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FNexusEventMessage EventMessage;
 };

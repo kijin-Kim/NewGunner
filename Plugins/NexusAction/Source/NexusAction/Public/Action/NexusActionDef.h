@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "NexusActionDefHandle.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "NexusActionDef.generated.h"
@@ -49,6 +50,10 @@ struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 	// 액션이 추가될 시 로컬에서 각 에이전트마다 생성되는 액션 인스턴스
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UNexusAction> ActionInstance;
+
+	// 액션 실행시 소유하는 태그들
+	FGameplayTagContainer OwnedTags;
+	
 };
 
 USTRUCT()
@@ -60,7 +65,7 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	void AuthAdd(const FNexusActionDef& ActionDef);
 	void AuthRemove(const FNexusActionDefHandle& Handle);
 	void AuthRemoveAll();
-	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
+	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
 	bool HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const;
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
 	

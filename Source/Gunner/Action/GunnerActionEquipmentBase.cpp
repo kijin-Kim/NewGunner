@@ -3,6 +3,7 @@
 
 #include "GunnerActionEquipmentBase.h"
 
+#include "NexusActionComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentDef.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 
@@ -21,5 +22,9 @@ UGunnerEquipmentDef* UGunnerActionEquipmentBase::GetEquipmentDef() const
 
 AGunnerEquipment* UGunnerActionEquipmentBase::GetEquipment() const
 {
-	return Cast<AGunnerEquipment>(GetSourceObject());
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
+	check(ActionComponent);
+	FNexusActionDef* ActionDef = ActionComponent->FindActionDefByHandle(GetActionDefHandle());
+	check(ActionDef && ActionDef->ActionInstance && ActionDef->ActionInstance == this);
+	return Cast<AGunnerEquipment>(ActionDef->SourceObject);
 }

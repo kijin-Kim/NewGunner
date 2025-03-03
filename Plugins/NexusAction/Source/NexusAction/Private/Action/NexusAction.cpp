@@ -2,7 +2,6 @@
 
 
 #include "Action/NexusAction.h"
-#include "Action/NexusActionDef.h"
 
 
 UWorld* UNexusAction::GetWorld() const
@@ -15,10 +14,10 @@ UWorld* UNexusAction::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UNexusAction::InitializeAction(const FNexusActionDef& InActionDef, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusAction::InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
 	check(InAgentInfo.IsValid());
-	ActionDef = InActionDef;
+	ActionDefHandle = InActionDefHandle;
 	AgentInfo = InAgentInfo;
 }
 
@@ -35,13 +34,13 @@ void UNexusAction::OnActionAdded()
 bool UNexusAction::OnCanTriggerAction()
 {
 	UFunction* Function = FindFunction(FName(TEXT("BP_OnCanTriggerAction")));
-	
+
 	bool bResult = true;
 	if (Function && Function->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass()))
 	{
-		bResult &= BP_OnCanTriggerAction();	
+		bResult &= BP_OnCanTriggerAction();
 	}
-	
+
 	return bResult;
 }
 
@@ -68,7 +67,7 @@ void UNexusAction::OnEndAction()
 		return;
 	}
 	bIsTriggering = false;
-	OnActionEndedDelegate.Broadcast(ActionDef.Handle, this);
+	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
 	BP_OnEndAction();
 }
 

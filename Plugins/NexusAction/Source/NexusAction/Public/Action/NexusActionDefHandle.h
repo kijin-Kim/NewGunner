@@ -27,4 +27,3 @@ private:
 	UPROPERTY()
 	int32 Handle;
 };
-

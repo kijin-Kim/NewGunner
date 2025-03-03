@@ -59,7 +59,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
 	EEquipmentType GetEquipmentType() const { return EquipmentType; }
-	FName GetEquipmentName() const { return EquipmentName; }
 
 	void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
@@ -73,8 +72,7 @@ private:
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	EEquipmentType EquipmentType;
-
-
+	
 	UPROPERTY()
 	TObjectPtr<USceneComponent> DefaultSceneRootComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
@@ -84,23 +82,19 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
-
-
+	
 	TArray<FNexusActionDefHandle> AddedActionHandlesOnAcquired;
 	TArray<FNexusActionDefHandle> AddedActionHandlesOnEquip;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	float BulletCount;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	float MagazineBulletCount;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	float MaxBulletPerMagazineCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FName EquipmentName;
 
 public:
 	void SetEquipmentDef(UGunnerEquipmentDef* InEquipmentDef);

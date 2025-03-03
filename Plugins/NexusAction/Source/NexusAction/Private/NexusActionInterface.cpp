@@ -3,7 +3,3 @@
 
 #include "NexusActionInterface.h"
 
-UNexusActionInterface::UNexusActionInterface(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}

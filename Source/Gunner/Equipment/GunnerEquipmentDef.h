@@ -82,6 +82,8 @@ public:
 	float FirePerSec;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default", meta = (Units = "s"))
 	float EquipSpeed;
+	
+	// 총기 장전 시간. 장전 애니메이션 시작 후 실제 (ReloadSpeed / 2.0f)후 총알이 장전된다.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default", meta = (Units = "s"))
 	float ReloadSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default")

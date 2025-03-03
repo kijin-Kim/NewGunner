@@ -3,10 +3,6 @@
 
 #include "GunnerTeamAgentInterface.h"
 
-UGunnerTeamAgentInterface::UGunnerTeamAgentInterface(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
 
 ETeamAttitude::Type IGunnerTeamAgentInterface::GetTeamAttitudeTowards(const AActor& Other) const
 {
