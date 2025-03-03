@@ -5,6 +5,7 @@
 
 #include "Gunner/_Core/Animation/GunnerInstancedAnimSet.h"
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
+#include "Misc/DataValidation.h"
 
 
 #if WITH_EDITOR
@@ -16,6 +17,8 @@ EDataValidationResult UGunnerEquipmentDef::IsDataValid(FDataValidationContext& C
 	if (ReloadSpeed > 0.0f && (ReloadSpeed / 2.0f >= EquipSpeed))
 	{
 		Result = CombineDataValidationResults(Result, EDataValidationResult::NotValidated);
+		FString Message = FString::Printf(TEXT(" 장비 [%s]의 장전 속도가 장비 장착 속도의 절반 이상입니다."), *GetName());
+		Context.AddError(FText::FromString(Message));
 		return Result;
 	}
 
@@ -32,7 +35,6 @@ float UGunnerEquipmentDef::CalculateDamageByContext(const FDamageContext& Damage
 {
 	return DamageType ? DamageType->CalculateDamageByContext(DamageContext) : 0.0f;
 }
-
 
 UGunnerInstancedAnimSet* UGunnerEquipmentDef::FindInstancedAnimSetByClass(TSubclassOf<UGunnerInstancedAnimSet> AnimSetClass) const
 {
