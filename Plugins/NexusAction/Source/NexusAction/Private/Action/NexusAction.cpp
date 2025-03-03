@@ -26,16 +26,17 @@ void UNexusAction::SetActionCurrentEventMessage(const FNexusEventMessage& InEven
 	EventMessage = InEventMessage;
 }
 
-void UNexusAction::OnActionAdded()
+void UNexusAction::CallOnActionAdded()
 {
+	OnActionAdded();
 	BP_OnActionAdded();
 }
 
-bool UNexusAction::OnCanTriggerAction()
+bool UNexusAction::CallOnCanTriggerAction() const
 {
-	UFunction* Function = FindFunction(FName(TEXT("BP_OnCanTriggerAction")));
+	bool bResult = OnCanTriggerAction();
 
-	bool bResult = true;
+	UFunction* Function = FindFunction(FName(TEXT("BP_OnCanTriggerAction")));
 	if (Function && Function->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass()))
 	{
 		bResult &= BP_OnCanTriggerAction();
@@ -44,20 +45,39 @@ bool UNexusAction::OnCanTriggerAction()
 	return bResult;
 }
 
+void UNexusAction::CallOnTriggerAction()
+{
+	OnTriggerAction();
+	BP_OnTriggerAction();
+}
+
+void UNexusAction::CallOnEndAction()
+{
+	OnEndAction();
+	BP_OnEndAction();
+}
+
+
+void UNexusAction::OnActionAdded()
+{
+}
+
+bool UNexusAction::OnCanTriggerAction() const
+{
+	return bIsRetriggerable ? true : !bIsTriggering;
+}
+
 void UNexusAction::OnTriggerAction()
 {
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
-
-
+	
 	if (bIsTriggering && bIsRetriggerable)
 	{
-		EndAction();
+		CallOnEndAction();
 	}
 
 	bIsTriggering = true;
-
-	BP_OnTriggerAction();
 }
 
 void UNexusAction::OnEndAction()
@@ -68,14 +88,4 @@ void UNexusAction::OnEndAction()
 	}
 	bIsTriggering = false;
 	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
-	BP_OnEndAction();
-}
-
-
-void UNexusAction::EndAction()
-{
-	if (bIsTriggering)
-	{
-		OnEndAction();
-	}
 }

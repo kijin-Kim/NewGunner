@@ -4,6 +4,7 @@
 #include "KnifeHitboxComponent.h"
 
 #include "GenericTeamAgentInterface.h"
+#include "GunnerNativeGameplayTags.h"
 #include "Camera/CameraComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
@@ -64,7 +65,7 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FNexusEventMessage HitScanMessage;
-		HitScanMessage.EventTag = FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged"));
+		HitScanMessage.EventTag = TAG_GameEvent_Damaged;
 		APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
 		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
@@ -99,6 +100,6 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 		HitMessageData->DamageAmount = 1.0f;
 		HitScanMessage.EventDataObject = HitMessageData;
 
-		EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
+		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, HitScanMessage, HitActor);
 	}
 }

@@ -21,7 +21,7 @@ class GUNNER_API UGunnerActionDamaged : public UNexusAction
 
 public:
 	UGunnerActionDamaged();
-	virtual void OnTriggerAction() override;
+
 
 	UFUNCTION(BlueprintCallable)
 	EGunnerHitDirectionType GetHitDirectionType() const;
@@ -35,7 +35,10 @@ public:
 	UAnimMontage* GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const;
 
 	UFUNCTION(BlueprintCallable)
-	UGunnerHitMessageData* GetHitMessageData() const { return HitMessageData.Get(); }
+	UGunnerHitMessageData* GetHitMessageData() const { return HitMessageData; }
+	
+protected:
+	virtual void OnTriggerAction() override;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -47,7 +50,7 @@ private:
 	TArray<FName> LegBoneNames;
 
 	UPROPERTY()
-	TWeakObjectPtr<UGunnerHitMessageData> HitMessageData;
+	TObjectPtr<UGunnerHitMessageData> HitMessageData;
 
 	mutable int32 MontageSetIndex = 0;
 };

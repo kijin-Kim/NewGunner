@@ -18,11 +18,13 @@ class GUNNER_API UGunnerActionEquipmentBase : public UNexusAction
 	GENERATED_BODY()
 
 public:
-	virtual void OnActionAdded() override;
 	UFUNCTION(BlueprintCallable)
 	UGunnerEquipmentDef* GetEquipmentDef() const;
 	UFUNCTION(BlueprintCallable)
 	AGunnerEquipment* GetEquipment() const;
+
+protected:
+	virtual void OnActionAdded() override;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)

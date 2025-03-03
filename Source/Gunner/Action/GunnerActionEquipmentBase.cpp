@@ -7,12 +7,6 @@
 #include "Gunner/Equipment/GunnerEquipmentDef.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 
-void UGunnerActionEquipmentBase::OnActionAdded()
-{
-	Super::OnActionAdded();
-	EquipmentManager = GetAgentActor()->GetComponentByClass<UGunnerEquipmentManagerComponent>();
-	check(EquipmentManager);
-}
 
 UGunnerEquipmentDef* UGunnerActionEquipmentBase::GetEquipmentDef() const
 {
@@ -27,4 +21,11 @@ AGunnerEquipment* UGunnerActionEquipmentBase::GetEquipment() const
 	FNexusActionDef* ActionDef = ActionComponent->FindActionDefByHandle(GetActionDefHandle());
 	check(ActionDef && ActionDef->ActionInstance && ActionDef->ActionInstance == this);
 	return Cast<AGunnerEquipment>(ActionDef->SourceObject);
+}
+
+void UGunnerActionEquipmentBase::OnActionAdded()
+{
+	Super::OnActionAdded();
+	EquipmentManager = GetAgentActor()->GetComponentByClass<UGunnerEquipmentManagerComponent>();
+	check(EquipmentManager);
 }

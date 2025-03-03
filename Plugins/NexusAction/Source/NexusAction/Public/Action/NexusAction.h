@@ -40,22 +40,14 @@ public:
 	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
 
-	virtual void OnActionAdded();
-	virtual bool OnCanTriggerAction();
-	virtual void OnTriggerAction();
-	virtual void OnEndAction();
+	void CallOnActionAdded();
+	bool CallOnCanTriggerAction() const;
+	void CallOnTriggerAction();
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "End Action"))
+	void CallOnEndAction();
 
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Action Added"))
-	void BP_OnActionAdded();
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Can Trigger Action"))
-	bool BP_OnCanTriggerAction() const;
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Trigger Action"))
-	void BP_OnTriggerAction();
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On End Action"))
-	void BP_OnEndAction();
 
-	UFUNCTION(BlueprintCallable)
-	void EndAction();
+	
 
 	ENexusActionNetMethod GetActionNetMethod() const { return ActionNetMethod; }
 	const FGameplayTagContainer& GetActionTriggerEventTags() const { return ActionTriggerEventTags; }
@@ -92,9 +84,21 @@ public:
 
 protected:
 	FNexusEventMessage GetEventMessage() const { return EventMessage; }
+	
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Action Added"))
+	void BP_OnActionAdded();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Can Trigger Action"))
+	bool BP_OnCanTriggerAction() const;
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Trigger Action"))
+	void BP_OnTriggerAction();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On End Action"))
+	void BP_OnEndAction();
 
-private:
-	bool IsBlueprintFuctionImplemented(const FString& FunctionName) const;
+	virtual void OnActionAdded();
+	virtual bool OnCanTriggerAction() const;
+	virtual void OnTriggerAction();
+	virtual void OnEndAction();
+
 
 public:
 	FOnNexusActionEndedSignature OnActionEndedDelegate;

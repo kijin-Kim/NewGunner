@@ -30,5 +30,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable)
-	void HitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle);
+	void AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle);
 };

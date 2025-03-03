@@ -157,7 +157,7 @@ void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& Action
 		return;
 	}
 
-	ActionDef->ActionInstance->EndAction();
+	ActionDef->ActionInstance->CallOnEndAction();
 	HandleTriggerableActionOnRemoved(*ActionDef);
 
 	ACTION_LIST_SCOPE_LOCK();
@@ -175,7 +175,7 @@ void UNexusActionComponent::AuthRemoveAllActions()
 	ACTION_LIST_SCOPE_LOCK();
 	for (const auto& ActionDef : ActionDefs.Items)
 	{
-		ActionDef.ActionInstance->EndAction();
+		ActionDef.ActionInstance->CallOnEndAction();
 		HandleTriggerableActionOnRemoved(ActionDef);
 		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef.ActionInstance->GetName());
 	}
@@ -597,7 +597,7 @@ void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 	ActionDef.ActionInstance = NewObject<UNexusAction>(GetOwner(), ActionDef.ActionClass);
 	ActionDef.ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
 	ActionDef.ActionInstance->InitializeAction(ActionDef.Handle, AgentInfo);
-	ActionDef.ActionInstance->OnActionAdded();
+	ActionDef.ActionInstance->CallOnActionAdded();
 	
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *ActionDef.ActionInstance->GetName());
 	HandleTriggerableActionOnAdded(ActionDef);
@@ -605,7 +605,7 @@ void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 
 void UNexusActionComponent::OnActionDefRemoved(FNexusActionDef& ActionDef)
 {
-	ActionDef.ActionInstance->EndAction();
+	ActionDef.ActionInstance->CallOnEndAction();
 	HandleTriggerableActionOnRemoved(ActionDef);
 }
 
@@ -684,7 +684,7 @@ void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle,
 bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) const
 {
 	bool bIsNotTriggeringOrRetriggerable = ActionDef.ActionInstance->IsRetriggerable() || !ActionDef.ActionInstance->IsTriggering();
-	bool bMetTriggerCondition = ActionDef.ActionInstance->OnCanTriggerAction();
+	bool bMetTriggerCondition = ActionDef.ActionInstance->CallOnCanTriggerAction();
 	FGameplayTagContainer OwnedTags;
 	GetOwnedGameplayTags(OwnedTags);
 	bool bHasRequiredTags = OwnedTags.HasAll(ActionDef.ActionInstance->GetShouldHaveTags());
@@ -747,7 +747,7 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
 	ActionDef->OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
-	ActionDef->ActionInstance->OnTriggerAction();
+	ActionDef->ActionInstance->CallOnTriggerAction();
 }
 
 
@@ -755,7 +755,7 @@ void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNex
 {
 	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
 	check(ActionDef);
-	ActionDef->ActionInstance->OnEndAction();
+	ActionDef->ActionInstance->CallOnEndAction();
 	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
 }
 

@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Equipment/TraceHitMessageData.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/LagCompensationComponent.h"
 #include "TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/GameplayStatics.h"
@@ -105,7 +106,7 @@ TArray<FHitResult> UGunnerActionFire::HitScanTrace()
 	return HitResults;
 }
 
-void UGunnerActionFire::HitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle)
+void UGunnerActionFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle)
 {
 	if (HitTargetDataHandle.IsValid() && HitTargetDataHandle.GetData()->GetStructType() != FGunnerTargetData_Hit::StaticStruct())
 	{
@@ -167,7 +168,7 @@ void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName BoneName, FVecto
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FNexusEventMessage HitScanMessage;
-		HitScanMessage.EventTag = FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged"));
+		HitScanMessage.EventTag = TAG_GameEvent_Damaged;
 		AGunnerEquipment* Equipment = GetEquipment();
 		APawn* EquipmentPawnOwner = Cast<APawn>(Equipment->GetOwner());
 		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
@@ -178,6 +179,6 @@ void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName BoneName, FVecto
 		HitMessageData->DamageAmount = DamageAmount;
 		HitScanMessage.EventDataObject = HitMessageData;
 
-		EventManagerComponent->SendEventToActor(FGameplayTag::RequestGameplayTag(FName("GameEvent.Damaged")), HitScanMessage, HitActor);
+		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, HitScanMessage, HitActor);
 	}
 }

@@ -4,6 +4,7 @@
 #include "GunnerOverlayWidgetController.h"
 #include "NexusActionComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
 
 void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerState)
@@ -11,13 +12,13 @@ void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerSt
 	check(PlayerState);
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
 	check(ActionComponent);
-
-	UNexusProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.Bullet"));
+	
+	UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
 	check(BulletProperty);
 	BulletProperty->OnChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
 	OnBulletValueChanged(BulletProperty->GetStaticValue(), BulletProperty->GetDynamicValue());
 
-	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag("Property.Weapon.MagazineBullet"));
+	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
 	check(MagazineBulletProperty);
 	MagazineBulletProperty->OnChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
 	OnMagazineBulletValueChanged(MagazineBulletProperty->GetStaticValue(), MagazineBulletProperty->GetDynamicValue());

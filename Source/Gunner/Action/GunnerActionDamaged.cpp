@@ -14,7 +14,7 @@ void UGunnerActionDamaged::OnTriggerAction()
 {
 	Super::OnTriggerAction();
 	HitMessageData = Cast<UGunnerHitMessageData>(GetEventMessage().EventDataObject);
-	check(HitMessageData.IsValid());
+	check(HitMessageData);
 }
 
 EGunnerHitDirectionType UGunnerActionDamaged::GetHitDirectionType() const
