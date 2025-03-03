@@ -51,7 +51,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-	LagCompensationComponent = CreateDefaultSubobject<ULagCompensationComponent>(TEXT("LagCompensationComponent"));
+	LagCompensationComponent = CreateDefaultSubobject<UGunnerLagCompensationComponent>(TEXT("LagCompensationComponent"));
 	ActionSetupComponent = CreateDefaultSubobject<UGunnerActionSetupComponent>(TEXT("ActionSetupComponent"));
 }
 
@@ -75,7 +75,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 			ActionSetupComponent->AuthSetupActionSets();
 			EquipmentManagerComponent->AuthInitEquipmentManagerComponent();
 		}
-		
+
 		CameraControllerComponent->InitCameraController();
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
 
@@ -145,6 +145,23 @@ FOnGunnerTeamSetSignature* AGunnerCharacter::GetOnTeamSetDelegate()
 		return PS->GetOnTeamSetDelegate();
 	}
 	return nullptr;
+}
+
+EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const
+{
+	const static TArray<FName> HeadBoneNames = {TEXT("Head"), TEXT("Neck")};
+	const static TArray<FName> LegBoneNames = {TEXT("L_Hip"),TEXT("L_Knee"),TEXT("L_Foot"),TEXT("R_Hip"),TEXT("R_Knee"),TEXT("R_Foot")};
+	if (HeadBoneNames.Contains(HitBoneName))
+	{
+		return EGunnerHitBoxType::Head;
+	}
+
+	if (LegBoneNames.Contains(HitBoneName))
+	{
+		return EGunnerHitBoxType::Leg;
+	}
+
+	return EGunnerHitBoxType::Body;
 }
 
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)

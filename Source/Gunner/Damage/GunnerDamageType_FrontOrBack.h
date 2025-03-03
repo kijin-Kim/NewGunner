@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	virtual float CalculateDamageByContext(const FDamageContext& DamageContext) const override;
+	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const override;
 
 public:
 	UPROPERTY(EditAnywhere)

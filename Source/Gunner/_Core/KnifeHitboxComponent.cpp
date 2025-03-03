@@ -6,10 +6,12 @@
 #include "GenericTeamAgentInterface.h"
 #include "GunnerNativeGameplayTags.h"
 #include "Camera/CameraComponent.h"
+#include "Damage/GunnerDamageType.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
-#include "Gunner/Equipment/TraceHitMessageData.h"
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Event/NexusEventMessage.h"
+#include "Gunner/Equipment/GunnerEquipmentDef.h"
 
 
 void UKnifeHitboxComponent::BeginPlay()
@@ -64,11 +66,11 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 {
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
-		FNexusEventMessage HitScanMessage;
-		HitScanMessage.EventTag = TAG_GameEvent_Damaged;
+		FNexusEventMessage DamageEventMessage;
+		DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
 		APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
-		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
-		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
+		DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
+
 
 		AActor* EquippedActor = GetOwner()->GetOwner();
 		UWorld* World = EquippedActor->GetWorld();
@@ -94,12 +96,17 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 			HitNormal = HitResultPtr->ImpactNormal;
 		}
 
-		HitMessageData->HitBoneName = HitBoneName;
-		HitMessageData->HitNormal = HitNormal;
-		HitMessageData->HitEquipment = Cast<AGunnerEquipment>(GetOwner());
-		HitMessageData->DamageAmount = 1.0f;
-		HitScanMessage.EventDataObject = HitMessageData;
+		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
+		AGunnerEquipment* EquipmentOwner = GetOwner<AGunnerEquipment>();
+		DamageContext->Instigator = EquipmentPawnOwner->GetController();
+		DamageContext->Causer = EquipmentOwner;
+		DamageContext->Target = HitActor;
+		DamageContext->HitNormal = HitNormal;
+		DamageContext->HitBoneName = HitBoneName;
 
-		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, HitScanMessage, HitActor);
+		DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+		DamageEventMessage.EventDataObject = DamageContext;
+		
+		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 	}
 }

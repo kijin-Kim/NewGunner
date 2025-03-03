@@ -6,11 +6,12 @@
 #include "Engine/DataAsset.h"
 #include "GunnerEquipmentDef.generated.h"
 
+class UGunnerDamageContext;
 class UNexusAction;
 class AGunnerEquipment;
 class UGunnerInstancedAnimSet;
 class UGunnerDamageType;
-struct FDamageContext;
+struct FGunnerDamageContext;
 class UGunnerLocomotionAnimSet;
 
 USTRUCT(BlueprintType)
@@ -60,7 +61,7 @@ public:
 #endif
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float CalculateDamageByContext(const FDamageContext& DamageContext) const;
+	float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const;
 	UFUNCTION(BlueprintCallable, meta = (DeterminesOutputType = "AnimSetClass"))
 	UGunnerInstancedAnimSet* FindInstancedAnimSetByClass(TSubclassOf<UGunnerInstancedAnimSet> AnimSetClass) const;
 

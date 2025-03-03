@@ -2,6 +2,9 @@
 
 
 #include "GunnerDamageType_BodyPartAndDistance.h"
+
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
+#include "Gunner/_Core/GunnerHitBoxInterface.h"
 #include "Misc/DataValidation.h"
 
 #if WITH_EDITOR
@@ -24,22 +27,22 @@ EDataValidationResult UGunnerDamageType_BodyPartAndDistance::IsDataValid(FDataVa
 }
 #endif
 
-float UGunnerDamageType_BodyPartAndDistance::CalculateDamageByContext(const FDamageContext& DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
 {
-	check(DamageContext.IsValid());
+	check(DamageContext);
 	return Super::CalculateDamageByContext(DamageContext) * GetBodyPartMultiplier(DamageContext) * GetDistanceFallOffMultiplier(DamageContext);
 }
 
-float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(const FDamageContext& DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(UGunnerDamageContext* DamageContext) const
 {
-	check(DamageContext.IsValid());
+	check(DamageContext);
 	if (DistanceDamageFallOffs.IsEmpty())
 	{
 		return 1.0f;
 	}
 
-	const FVector InstigatorLocation = DamageContext.Instigator->GetPawn()->GetActorLocation();
-	const FVector TargetLocation = DamageContext.Target->GetActorLocation();
+	const FVector InstigatorLocation = DamageContext->Instigator->GetPawn()->GetActorLocation();
+	const FVector TargetLocation = DamageContext->Target->GetActorLocation();
 	const float Distance = FVector::Dist(TargetLocation, InstigatorLocation);
 
 	float LastMultiplier = 1.0f;
@@ -54,9 +57,19 @@ float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(const 
 	return LastMultiplier;
 }
 
-float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(const FDamageContext& DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamageContext* DamageContext) const
 {
-	// TODO: Instigator->GetBodyType() == Humonoid
-	check(DamageContext.IsValid());
-	return 0.0f;
+	check(DamageContext);
+
+	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
+	switch (HitBoxType)
+	{
+	case EGunnerHitBoxType::Head:
+		return HeadDamageMultiplier;
+	case EGunnerHitBoxType::Leg:
+		return LegDamageMultiplier;
+	default:
+		return 1.0f;
+	}
+
 }

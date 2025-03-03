@@ -7,9 +7,11 @@
 #include "Event/NexusEventManagerComponent.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
-#include "Gunner/Equipment/TraceHitMessageData.h"
+#include "Gunner/Equipment/GunnerEquipmentDef.h"
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
-#include "Gunner/_Core/LagCompensationComponent.h"
+#include "Gunner/_Core/GunnerLagCompensationComponent.h"
+#include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -66,7 +68,7 @@ void UGunnerActionFire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTarge
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
-		ULagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompensationComponent>();
+		UGunnerLagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<UGunnerLagCompensationComponent>();
 		check(LagCompensationComponent);
 		LagCompensationComponent->AuthBeginRewind(TimeStamp);
 	}
@@ -76,7 +78,7 @@ void UGunnerActionFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetC
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
-		ULagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<ULagCompensationComponent>();
+		UGunnerLagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<UGunnerLagCompensationComponent>();
 		check(LagCompensationComponent);
 		LagCompensationComponent->AuthEndRewind();
 	}
@@ -122,7 +124,7 @@ void UGunnerActionFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTarget
 	for (AActor* HitActor : HitActors)
 	{
 		ACharacter* Character = Cast<ACharacter>(HitActor);
-		if (Character && Character->GetComponentByClass<ULagCompensationComponent>())
+		if (Character && Character->GetComponentByClass<UGunnerLagCompensationComponent>())
 		{
 			LagCompensationTargetCharacters.AddUnique(Character);
 		}
@@ -159,26 +161,32 @@ void UGunnerActionFire::AuthApplyDamageByHitResults(const TArray<FHitResult>& Hi
 {
 	for (const FHitResult& HitResult : FilterDuplicateHitResultsByActor(HitResults))
 	{
-		AuthApplyDamage(HitResult.GetActor(), HitResult.BoneName, HitResult.ImpactNormal, 1.0f);
+		AuthApplyDamage(HitResult.GetActor(), HitResult.BoneName, HitResult.ImpactNormal);
 	}
 }
 
-void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal, float DamageAmount)
+void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal)
 {
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
-		FNexusEventMessage HitScanMessage;
-		HitScanMessage.EventTag = TAG_GameEvent_Damaged;
-		AGunnerEquipment* Equipment = GetEquipment();
-		APawn* EquipmentPawnOwner = Cast<APawn>(Equipment->GetOwner());
-		HitScanMessage.Instigator = EquipmentPawnOwner->GetController();
-		UGunnerHitMessageData* HitMessageData = NewObject<UGunnerHitMessageData>();
-		HitMessageData->HitBoneName = BoneName;
-		HitMessageData->HitNormal = HitNormal;
-		HitMessageData->HitEquipment = Equipment;
-		HitMessageData->DamageAmount = DamageAmount;
-		HitScanMessage.EventDataObject = HitMessageData;
+		FNexusEventMessage DamageEventMessage;
+		DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
+		AGunnerEquipment* EquipmentOwner = GetEquipment();
+		APawn* EquipmentPawnOwner = Cast<APawn>(EquipmentOwner->GetOwner());
+		DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
 
-		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, HitScanMessage, HitActor);
+
+		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
+
+		DamageContext->Instigator = EquipmentPawnOwner->GetController();
+		DamageContext->Causer = EquipmentOwner;
+		DamageContext->Target = HitActor;
+		DamageContext->HitNormal = HitNormal;
+		DamageContext->HitBoneName = HitBoneName;
+
+		DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+		DamageEventMessage.EventDataObject = DamageContext;
+
+		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 	}
 }

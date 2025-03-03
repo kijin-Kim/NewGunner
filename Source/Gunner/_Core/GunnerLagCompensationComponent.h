@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Containers/RingBuffer.h"
-#include "LagCompensationComponent.generated.h"
+#include "GunnerLagCompensationComponent.generated.h"
 
 
 class URewoundSnapshotAnimInstance;
@@ -27,12 +27,12 @@ struct FMyPoseSnapshot
 
 
 UCLASS(Config=Game, DefaultConfig, meta=(BlueprintSpawnableComponent))
-class GUNNER_API ULagCompensationComponent : public UActorComponent
+class GUNNER_API UGunnerLagCompensationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	ULagCompensationComponent();
+	UGunnerLagCompensationComponent();
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void AuthBeginRewind(float TimeStamp);

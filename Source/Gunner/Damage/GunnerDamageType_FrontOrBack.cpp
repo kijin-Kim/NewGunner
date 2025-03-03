@@ -3,9 +3,11 @@
 
 #include "GunnerDamageType_FrontOrBack.h"
 
-float UGunnerDamageType_FrontOrBack::CalculateDamageByContext(const FDamageContext& DamageContext) const
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
+
+float UGunnerDamageType_FrontOrBack::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
 {
-	check(DamageContext.IsValid());
+	check(DamageContext);
 	const float Damage = Super::CalculateDamageByContext(DamageContext);
-	return DamageContext.HitNormal.Z > 0.0f ? Damage : Damage * BackDamageMultiplier;
+	return DamageContext->HitNormal.Z > 0.0f ? Damage : Damage * BackDamageMultiplier;
 }

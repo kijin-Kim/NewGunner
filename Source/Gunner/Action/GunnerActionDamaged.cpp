@@ -2,19 +2,15 @@
 
 
 #include "GunnerActionDamaged.h"
-#include "Gunner/Equipment/TraceHitMessageData.h"
-
-UGunnerActionDamaged::UGunnerActionDamaged()
-{
-	HeadBoneNames = {TEXT("Head"), TEXT("Neck")};
-	LegBoneNames = {TEXT("L_Hip"),TEXT("L_Knee"),TEXT("L_Foot"),TEXT("R_Hip"),TEXT("R_Knee"),TEXT("R_Foot")};
-}
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
+#include "Gunner/_Core/GunnerHitBoxInterface.h"
 
 void UGunnerActionDamaged::OnTriggerAction()
 {
 	Super::OnTriggerAction();
-	HitMessageData = Cast<UGunnerHitMessageData>(GetEventMessage().EventDataObject);
-	check(HitMessageData);
+	DamageContext = Cast<UGunnerDamageContext>(GetEventMessage().EventDataObject);
+
+	check(DamageContext);
 }
 
 EGunnerHitDirectionType UGunnerActionDamaged::GetHitDirectionType() const
@@ -41,44 +37,15 @@ EGunnerHitDirectionType UGunnerActionDamaged::GetHitDirectionType() const
 	return CrossZ > 0.0f ? EGunnerHitDirectionType::Right : EGunnerHitDirectionType::Left;
 }
 
-EGunnerHitBoneType UGunnerActionDamaged::GetHitBoneType(FName HitBoneName) const
-{
-	if (HeadBoneNames.Contains(HitBoneName))
-	{
-		return EGunnerHitBoneType::Head;
-	}
-
-	if (LegBoneNames.Contains(HitBoneName))
-	{
-		return EGunnerHitBoneType::Leg;
-	}
-
-	return EGunnerHitBoneType::Body;
-}
-
-FString UGunnerActionDamaged::GetHitBoneTypeAsString(FName HitBoneName) const
-{
-	EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
-	switch (HitBoneType)
-	{
-	case EGunnerHitBoneType::Head:
-		return TEXT("Head");
-	case EGunnerHitBoneType::Body:
-		return TEXT("Body");
-	case EGunnerHitBoneType::Leg:
-		return TEXT("Leg");
-	default:
-		return TEXT("None");
-	}
-	checkNoEntry();
-}
 
 UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) const
 {
-	const EGunnerHitDirectionType HitDirectionType = GetHitDirectionType();
-	const EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
-
-	const FGunnerDirectionalMontageSet* HitMontageSet = HitMontages.Find(HitBoneType);
+	const EGunnerHitDirectionType HitDirectionType = IGunnerHitBoxInterface::GetHitDirectionType(
+		DamageContext->Causer->GetActorLocation(),
+		DamageContext->Target->GetActorLocation(),
+		GetAgentActor()->GetActorForwardVector());
+	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
+	const FGunnerDirectionalMontageSet* HitMontageSet = HitMontages.Find(HitBoxType);
 	if (!HitMontageSet)
 	{
 		return nullptr;
@@ -106,9 +73,9 @@ UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) cons
 
 UAnimMontage* UGunnerActionDamaged::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
 {
-	const EGunnerHitBoneType HitBoneType = GetHitBoneType(HitBoneName);
+	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
 
-	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoneType);
+	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoxType);
 	if (!DeathMontageSet)
 	{
 		return nullptr;

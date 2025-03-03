@@ -38,7 +38,7 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AttachEquipmentToOwner();
-
+	
 
 	void OnAuthAcquired();
 	void OnAuthLost();

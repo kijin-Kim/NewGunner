@@ -5,26 +5,6 @@
 #include "CoreMinimal.h"
 #include "GunnerHitTypes.generated.h"
 
-/**
- * 
- */
-UENUM(BlueprintType)
-enum class EGunnerHitDirectionType : uint8
-{
-	Front,
-	Back,
-	Left,
-	Right,
-};
-
-UENUM(BlueprintType)
-enum class EGunnerHitBoneType : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Head UMETA(DisplayName = "Head"),
-	Body UMETA(DisplayName = "Body"),
-	Leg UMETA(DisplayName = "Leg"),
-};
 
 USTRUCT(BlueprintType)
 struct FGunnerDirectionalMontage

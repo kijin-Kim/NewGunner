@@ -34,7 +34,6 @@ AGunnerEquipment::AGunnerEquipment()
 void AGunnerEquipment::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-
 	ThirdPersonMeshComponent = DuplicateObject(FirstPersonMeshComponent, this);
 	ThirdPersonMeshComponent->Rename(TEXT("ThirdPersonMeshComponent"), this);
 	ThirdPersonMeshComponent->bOnlyOwnerSee = false;
@@ -328,5 +327,6 @@ void AGunnerEquipment::SetEquipmentDef(UGunnerEquipmentDef* InEquipmentDef)
 	BulletCount = EquipmentDef->Magazine;
 	MaxBulletPerMagazineCount = EquipmentDef->Magazine;
 	MagazineBulletCount = EquipmentDef->Reserve;
-	
+	Tags.Empty();
+	Tags.Add(EquipmentDef->EquipmentName);
 }

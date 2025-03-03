@@ -1,25 +1,25 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "LagCompensationComponent.h"
+#include "GunnerLagCompensationComponent.h"
 
 #include "GameFramework/Character.h"
 #include "RewoundSnapshotAnimInstance.h"
 
 
-ULagCompensationComponent::ULagCompensationComponent()
+UGunnerLagCompensationComponent::UGunnerLagCompensationComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void ULagCompensationComponent::BeginPlay()
+void UGunnerLagCompensationComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	CharacterOwner = Cast<ACharacter>(GetOwner());
 	check(CharacterOwner);
 }
 
-void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UGunnerLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (CharacterOwner->HasAuthority())
@@ -41,7 +41,7 @@ void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	}
 }
 
-void ULagCompensationComponent::AuthBeginRewind(float TimeStamp)
+void UGunnerLagCompensationComponent::AuthBeginRewind(float TimeStamp)
 {
 	if (CharacterOwner->HasAuthority())
 	{
@@ -67,7 +67,7 @@ void ULagCompensationComponent::AuthBeginRewind(float TimeStamp)
 	}
 }
 
-void ULagCompensationComponent::AuthEndRewind()
+void UGunnerLagCompensationComponent::AuthEndRewind()
 {
 	if (DummyMeshComponent)
 	{
@@ -75,7 +75,7 @@ void ULagCompensationComponent::AuthEndRewind()
 	}
 }
 
-void ULagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& NearestFutureSnapshot, const FMyPoseSnapshot& NearestPastSnapshot, float TargetTime)
+void UGunnerLagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& NearestFutureSnapshot, const FMyPoseSnapshot& NearestPastSnapshot, float TargetTime)
 {
 	if (CharacterOwner->HasAuthority())
 	{

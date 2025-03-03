@@ -6,40 +6,7 @@
 #include "UObject/Object.h"
 #include "GunnerDamageType.generated.h"
 
-
-USTRUCT(BlueprintType)
-struct GUNNER_API FDamageContext
-{
-	GENERATED_BODY()
-
-public:
-	FDamageContext()
-		: Instigator(nullptr),
-		  Target(nullptr),
-		  HitNormal(FVector::ZeroVector),
-		  HitBone(NAME_None),
-		  Distance(0.0f),
-		  bIsAlt(false)
-	{
-	}
-
-	bool IsValid() const
-	{
-		return Instigator && Target;
-	}
-
-public:
-	UPROPERTY()
-	TObjectPtr<AController> Instigator;
-	UPROPERTY()
-	TObjectPtr<AActor> Target;
-	FVector HitNormal;
-	FName HitBone;
-	float Distance;
-	bool bIsAlt;
-};
-
-
+class UGunnerDamageContext;
 /**
  * 
  */
@@ -55,7 +22,7 @@ public:
 	{
 	}
 
-	virtual float CalculateDamageByContext(const FDamageContext& DamageContext) const;
+	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const;
 
 public:
 	UPROPERTY(EditAnywhere, meta = (DisplayPriority = 0))

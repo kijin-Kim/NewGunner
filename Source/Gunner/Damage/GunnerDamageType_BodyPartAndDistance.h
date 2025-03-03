@@ -44,11 +44,11 @@ public:
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
 
-	virtual float CalculateDamageByContext(const FDamageContext& DamageContext) const override;
+	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const override;
 
 private:
-	float GetDistanceFallOffMultiplier(const FDamageContext& DamageContext) const;
-	float GetBodyPartMultiplier(const FDamageContext& DamageContext) const;
+	float GetDistanceFallOffMultiplier(UGunnerDamageContext* DamageContext) const;
+	float GetBodyPartMultiplier(UGunnerDamageContext* DamageContext) const;
 
 public:
 	// 머리 부위 피해 배율. BaseDamage를 몸통 부위에 맞았을 때의 피해로 간주합니다.

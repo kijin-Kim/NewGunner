@@ -4,24 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "TraceHitMessageData.generated.h"
+#include "GunnerDamageContext.generated.h"
 
 class AGunnerEquipment;
 /**
  * 
  */
 UCLASS(BlueprintType)
-class GUNNER_API UGunnerHitMessageData : public UObject
+class GUNNER_API UGunnerDamageContext : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-	AGunnerEquipment* HitEquipment;
+	float DamageAmount = 0.0f;
+	
 	UPROPERTY(BlueprintReadOnly)
-	FName HitBoneName;
+	TObjectPtr<AController> Instigator;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AActor> Causer;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AActor> Target;
 	UPROPERTY(BlueprintReadOnly)
 	FVector HitNormal;
 	UPROPERTY(BlueprintReadOnly)
-	float DamageAmount = 0.0f;
+	FName HitBoneName;
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsAlt = false;
 };

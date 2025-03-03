@@ -7,8 +7,9 @@
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Event/NexusEventMangerInterface.h"
 #include "GameFramework/Character.h"
+#include "Gunner/_Core/GunnerHitBoxInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
-#include "Gunner/_Core/LagCompensationComponent.h"
+#include "Gunner/_Core/GunnerLagCompensationComponent.h"
 #include "GunnerCharacter.generated.h"
 
 class UGunnerActionSetupComponent;
@@ -22,7 +23,13 @@ class UWeaponManagerComponent;
 
 
 UCLASS()
-class GUNNER_API AGunnerCharacter : public ACharacter, public INexusAnimMontagePlayerInterface, public INexusActionInterface, public INexusEventManagerInterface, public IGunnerTeamAgentInterface
+class GUNNER_API AGunnerCharacter
+	: public ACharacter,
+	  public INexusAnimMontagePlayerInterface,
+	  public INexusActionInterface,
+	  public INexusEventManagerInterface,
+	  public IGunnerTeamAgentInterface,
+	  public IGunnerHitBoxInterface
 {
 	GENERATED_BODY()
 
@@ -54,20 +61,22 @@ public:
 	virtual UNexusEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
 
-	
+
 	//~ Begin IGenericTeamAgentInterface Interface.
 	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override;
 	//~ End IGenericTeamAgentInterface Interface.
-	
+
+	//~ Begin IGunnerHitBoxInterface Interface.
+	virtual EGunnerHitBoxType GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const override;
+	//~ End IGunnerHitBoxInterface Interface.
+
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
 
-
 private:
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
 
@@ -83,11 +92,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerEquipmentManagerComponent> EquipmentManagerComponent;
-	
 
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<ULagCompensationComponent> LagCompensationComponent;
+	TObjectPtr<UGunnerLagCompensationComponent> LagCompensationComponent;
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGunnerActionSetupComponent> ActionSetupComponent;

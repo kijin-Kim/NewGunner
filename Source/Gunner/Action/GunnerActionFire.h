@@ -23,7 +23,7 @@ private:
 	void AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
 	
 	void AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults);
-	void AuthApplyDamage(AActor* HitActor, FName BoneName, FVector HitNormal, float DamageAmount);
+	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal);
 	
 	
 public:

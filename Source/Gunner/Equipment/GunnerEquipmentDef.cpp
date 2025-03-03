@@ -31,7 +31,7 @@ EDataValidationResult UGunnerEquipmentDef::IsDataValid(FDataValidationContext& C
 #endif
 
 
-float UGunnerEquipmentDef::CalculateDamageByContext(const FDamageContext& DamageContext) const
+float UGunnerEquipmentDef::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
 {
 	return DamageType ? DamageType->CalculateDamageByContext(DamageContext) : 0.0f;
 }

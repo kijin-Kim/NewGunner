@@ -3,9 +3,11 @@
 
 #include "GunnerDamageType.h"
 
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
 
-float UGunnerDamageType::CalculateDamageByContext(const FDamageContext& DamageContext) const
+
+float UGunnerDamageType::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
 {
-	check(DamageContext.IsValid());
-	return DamageContext.bIsAlt ? BaseDamage * AltDamageMultiplier : BaseDamage;
+	check(DamageContext)
+	return DamageContext->bIsAlt ? BaseDamage * AltDamageMultiplier : BaseDamage;
 }
