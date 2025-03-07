@@ -75,21 +75,23 @@ void UNexusActionComponent::InitActionComponent(AActor* InAgentActor)
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
 	SideEffectDefs.Init(GetOwner());
+
+	if (!ActionDefs.OnActionDefAddedDelegate.IsBound())
+	{
+		if (OldAgentInfo != *AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
+		{
+			for (auto& ActionDef : ActionDefs.Items)
+			{
+				OnActionDefAdded(ActionDef);
+			}
+		}
+	}
 	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
 	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
-
 
 	if (GetOwner()->HasAuthority())
 	{
 		AuthRemoveAllActions();
-	}
-
-	if (OldAgentInfo != *AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
-	{
-		for (auto& ActionDef : ActionDefs.Items)
-		{
-			OnActionDefAdded(ActionDef);
-		}
 	}
 }
 
@@ -130,7 +132,7 @@ FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef
 		return ActionDef.Handle;
 	}
 	ACTION_LIST_SCOPE_LOCK();
-	
+
 	ActionDefs.AuthAdd(ActionDef);
 
 	return ActionDef.Handle;
@@ -499,47 +501,39 @@ void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNex
 }
 
 void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
-
 {
 	if (!CueClass || !Action)
 	{
 		return;
 	}
 
-	if (GetOwner()->HasAuthority())
+	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
+	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
 	{
-		NetMulticastTriggerCue(CueClass, TargetDataHandle);
 		return;
 	}
+	
+	NetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
+}
 
-	if (Action->GetActionNetMethod() != ENexusActionNetMethod::ServerAuthoritative)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+{
+	if (GetOwner()->HasAuthority() || !PredictionTag.IsPredictable())
 	{
 		InternalTriggerCue(CueClass, TargetDataHandle);
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
-{
-	// if (!AgentInfo->IsLocallyControlled() || GetOwner()->HasAuthority() || (AgentInfo->IsLocallyControlled() && !PredictionTag.IsValid()))
-	// {
-	// 	InternalTriggerCue(CueClass, TargetData);
-	// }
-}
-
 void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
-	if (!CueClass)
-	{
-		return;
-	}
+	check(CueClass);
+
 
 	UNexusCue* Sign = CueClass.GetDefaultObject();
 	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
 	check(Sign);
 
-	Sign->SetCueRepData(TargetDataHandle);
-	Sign->OnTriggered();
-	Sign->SetCueRepData(FNexusTargetDataHandle());
+	Sign->CallOnTriggered(TargetDataHandle);
 }
 
 
@@ -598,7 +592,7 @@ void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 	ActionDef.ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
 	ActionDef.ActionInstance->InitializeAction(ActionDef.Handle, AgentInfo);
 	ActionDef.ActionInstance->CallOnActionAdded();
-	
+
 	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *ActionDef.ActionInstance->GetName());
 	HandleTriggerableActionOnAdded(ActionDef);
 }

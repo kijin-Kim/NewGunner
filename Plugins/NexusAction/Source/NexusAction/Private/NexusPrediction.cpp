@@ -12,6 +12,31 @@ void FNexusPredictionTag::GenerateNewHandle(bool bIsServer)
 	bIsServerCreated = bIsServer;
 }
 
+
+bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
+{
+	bool bSerializingOwningConnection = false;
+	if (Ar.IsSaving())
+	{
+		bSerializingOwningConnection = Handle != INDEX_NONE ? ConnectionIdentifier == nullptr || Map == ConnectionIdentifier || bIsServerCreated : false;
+	}
+	
+	Ar << bSerializingOwningConnection;
+	Ar << bIsServerCreated;
+	
+	if (bSerializingOwningConnection)
+	{
+		Ar << Handle;
+	}
+	
+	if (!bIsServerCreated)
+	{
+		ConnectionIdentifier = Map;
+	}
+
+	return true;
+}
+
 void FNexusPredictionTag::PostReplicatedAdd(const FNexusPredictionTagContainer& InArray)
 {
 	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 추가"), Handle);
@@ -63,7 +88,7 @@ void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTa
 	{
 		return;
 	}
-	
+
 	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
 	{
 		Event->OnPredictionEnded.Broadcast();

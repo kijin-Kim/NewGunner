@@ -24,9 +24,15 @@ struct FNexusTargetDataHandle
 
 public:
 	FNexusTargetDataHandle() = default;
-	FNexusTargetDataHandle(const FNexusTargetDataHandle& Other) : Data(Other.Data) {}
-	FNexusTargetDataHandle(FNexusTargetDataHandle&& Other) : Data(MoveTemp(Other.Data)) {}
-	
+
+	FNexusTargetDataHandle(const FNexusTargetDataHandle& Other) : Data(Other.Data)
+	{
+	}
+
+	FNexusTargetDataHandle(FNexusTargetDataHandle&& Other) : Data(MoveTemp(Other.Data))
+	{
+	}
+
 	FNexusTargetDataHandle& operator=(FNexusTargetDataHandle&& Other)
 	{
 		Data = MoveTemp(Other.Data);
@@ -70,10 +76,13 @@ class NEXUSACTION_API UNexusCue : public UObject
 
 public:
 	virtual UWorld* GetWorld() const override;
-	UFUNCTION(BlueprintNativeEvent)
-	void OnTriggered();
-	void SetCueRepData(const FNexusTargetDataHandle& InTargetDataHandle) { TargetDataHandle = InTargetDataHandle; }
-	
+	void CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
+
+protected:
+	virtual void OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnTriggered"))
+	void BP_OnTriggered();
+
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	FNexusTargetDataHandle TargetDataHandle;

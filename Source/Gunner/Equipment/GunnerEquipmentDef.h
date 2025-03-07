@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GunnerEquipmentDef.generated.h"
-
 class UGunnerDamageContext;
 class UNexusAction;
 class AGunnerEquipment;

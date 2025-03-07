@@ -89,7 +89,7 @@ public:
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag);
 	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }

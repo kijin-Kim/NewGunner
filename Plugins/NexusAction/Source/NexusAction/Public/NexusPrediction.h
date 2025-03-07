@@ -20,12 +20,7 @@ struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
-	FNexusPredictionTag()
-		: Handle(INDEX_NONE),
-		  bIsServerCreated(false)
-	{
-	}
-	
+	bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
 
 	auto operator<=>(const FNexusPredictionTag& Other) const
 	{
@@ -55,10 +50,24 @@ struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 
 private:
 	UPROPERTY()
-	int32 Handle;
+	int32 Handle = INDEX_NONE;
 	UPROPERTY()
 	bool bIsServerCreated = false;
+
+	// 서버에서 각 커넥션에 대한 UPackage
+	UPackageMap* ConnectionIdentifier = nullptr;
 };
+
+template <>
+struct TStructOpsTypeTraits<FNexusPredictionTag> : public TStructOpsTypeTraitsBase2<FNexusPredictionTag>
+{
+	enum
+	{
+		WithNetSerializer = true,
+		WithIdenticalViaEquality = true
+	};
+};
+ 
 
 
 USTRUCT()

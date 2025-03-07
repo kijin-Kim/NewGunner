@@ -13,12 +13,6 @@ struct FNexusCueTargetDataDeleter
 	}
 };
 
-
-void UNexusCue::OnTriggered_Implementation()
-{
-}
-
-
 bool FNexusTargetDataHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
 	if (Ar.IsSaving() && Data)
@@ -53,4 +47,16 @@ UWorld* UNexusCue::GetWorld() const
 		return nullptr;
 	}
 	return GetOuter()->GetWorld();
+}
+
+void UNexusCue::CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
+{
+	TargetDataHandle = InTargetDataHandle;
+	OnTriggered(InTargetDataHandle);
+	BP_OnTriggered();
+	TargetDataHandle = FNexusTargetDataHandle();
+}
+
+void UNexusCue::OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
+{
 }

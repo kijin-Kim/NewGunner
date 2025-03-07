@@ -40,24 +40,12 @@ void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
 
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
-	if (!HasAuthority())
-	{
-		if (NewPawn)
-		{
-			ActionComponent->InitActionComponent(NewPawn);
-		}
-		return;
-	}
+	ActionComponent->ReleaseActionComponent();
+	EventManagerComponent->UnbindAllEventCallbacks();
 
-	if (NewPawn && NewPawn != OldPawn)
+	if(NewPawn)
 	{
-		ActionComponent->ReleaseActionComponent();
 		ActionComponent->InitActionComponent(NewPawn);
-	}
-	else if (!NewPawn)
-	{
-		ActionComponent->ReleaseActionComponent();
-		EventManagerComponent->UnbindAllEventCallbacks();
 	}
 }
 
