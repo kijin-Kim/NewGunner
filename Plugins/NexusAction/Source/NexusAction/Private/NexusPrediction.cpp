@@ -18,22 +18,26 @@ bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
 	bool bSerializingOwningConnection = false;
 	if (Ar.IsSaving())
 	{
+		// 서버 생성 예측 태그는 모든 클라이언트에서 유효합니다.
+		// 클라이언트 생성 예측 태그는 해당 클라이언트와 서버에서만 유효합니다.
+		// 주: 유효하다는 것은 Handle이 INDEX_NONE이 아니라는 것을 의미합니다.
 		bSerializingOwningConnection = Handle != INDEX_NONE ? ConnectionIdentifier == nullptr || Map == ConnectionIdentifier || bIsServerCreated : false;
 	}
-	
+
 	Ar << bSerializingOwningConnection;
 	Ar << bIsServerCreated;
-	
+
 	if (bSerializingOwningConnection)
 	{
 		Ar << Handle;
 	}
-	
-	if (!bIsServerCreated)
+
+	if (Ar.IsLoading() && !bIsServerCreated)
 	{
 		ConnectionIdentifier = Map;
 	}
-
+	
+	bOutSuccess = true;
 	return true;
 }
 
