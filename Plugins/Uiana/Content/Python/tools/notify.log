@@ -1,6 +1,0 @@
-
-******** /Game/Environment/Juliett/Asset/Props/Skybox/0/JuliettSceneCaptureHDRI_Tex.uasset:  TextureCube4'JuliettSceneCaptureHDRI_Tex' ********
-
-ERROR: SDL2.dll was not found, terminating...
-SDL.Init <- VisualizerLoop <- Main: umodel_build=(unversioned)
-

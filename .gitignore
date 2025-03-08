@@ -19,3 +19,7 @@ Windows
 *.xcworkspace
 
 Plugins/BlueprintAssist
+Plugins/Uiana
+Plugins/UnrealPSKPSA
+Plugins/Developer
+Plugins/FreeBoneSnapper
