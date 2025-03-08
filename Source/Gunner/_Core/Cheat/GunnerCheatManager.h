@@ -15,8 +15,6 @@ class GUNNER_API UGunnerCheatManager : public UNexusCheatManager
 	GENERATED_BODY()
 public:
 	virtual void InitCheatManager() override;
-	
-
 	UFUNCTION(Exec)
 	void ToggleEveryoneHostile();
 	

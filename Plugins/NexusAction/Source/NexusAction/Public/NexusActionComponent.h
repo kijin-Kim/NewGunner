@@ -147,6 +147,7 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
+
 public:
 	FNexusPredictionTag CurrentPredictionTag;
 

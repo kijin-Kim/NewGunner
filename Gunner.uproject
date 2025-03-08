@@ -42,6 +42,10 @@
 		{
 			"Name": "NexusAction",
 			"Enabled": true
+		},
+		{
+			"Name": "GitSourceControl",
+			"Enabled": true
 		}
 	]
 }

@@ -512,7 +512,8 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 	{
 		return;
 	}
-	
+
+	InternalTriggerCue(CueClass, TargetDataHandle);
 	NetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
 }
 
