@@ -18,12 +18,41 @@
 #define NX_LOG_FN(LogCat, Verbosity, Format, ...) UE_LOG(LogCat, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
 #define NX_LOG_SUB_FN(LogCat, Verbosity, Format, ...) UE_LOG(LogCat, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO_SUB, LOG_LOCALROLEINFO_SUB, LOG_REMOTEROLEINFO_SUB, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
 
+
 #define NX_LOG(LogCat, Verbosity, Format, ...) UE_LOG(LogCat, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, *FString::Printf(Format, ##__VA_ARGS__))
 #define NX_LOG_SUB(LogCat, Verbosity, Format, ...) UE_LOG(LogCat, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO_SUB, LOG_LOCALROLEINFO_SUB, LOG_REMOTEROLEINFO_SUB, *FString::Printf(Format, ##__VA_ARGS__))
 
 
+#define NX_VLOG_FN(LogOwner, LogCat, Verbosity, Format, ...) \
+{\
+	UE_VLOG(LogOwner, LogCat, Verbosity, TEXT("%s %s"), LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__));\
+	NX_LOG_FN(LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+}
+#define NX_VLOG_SUB_FN(LogOwner, LogCat, Verbosity, Format, ...) \
+{\
+	UE_VLOG(LogOwner, LogCat, Verbosity, TEXT("%s %s"), LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__));\
+	NX_LOG_SUB_FN(LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+}
+#define NX_VLOG(LogOwner, LogCat, Verbosity, Format, ...) \
+{\
+	UE_VLOG(LogOwner, LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+	NX_LOG(LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+}
+#define NX_VLOG_SUB(LogOwner, LogCat, Verbosity, Format, ...) \
+{\
+	UE_VLOG(LogOwner, LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+	NX_LOG_SUB(LogCat, Verbosity, TEXT("%s"), *FString::Printf(Format, ##__VA_ARGS__));\
+}
+
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNexus, Log, All);
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNexusAction, Log, All);
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNexusProperty, Log, All)
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNexusSideEffect, Log, All);
+
 DECLARE_LOG_CATEGORY_EXTERN(LogNexusCue, Log, All);
+
+DECLARE_LOG_CATEGORY_EXTERN(LogNexusPredictionTag, Log, All);

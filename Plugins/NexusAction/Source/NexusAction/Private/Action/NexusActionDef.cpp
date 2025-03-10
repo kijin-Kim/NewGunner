@@ -46,7 +46,7 @@ void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 {
 	if (HasSameActionClassAndSourceObject(ActionDef))
 	{
-		UE_LOG(LogNexusAction, Warning, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject.IsValid() ? *ActionDef.SourceObject->GetName() : TEXT(""));
+		UE_LOG(LogNexusAction, Verbose, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject.IsValid() ? *ActionDef.SourceObject->GetName() : TEXT(""));
 		return;
 	}
 	int32 Index = Items.Add(ActionDef);

@@ -3,6 +3,8 @@
 
 #include "Cue/NexusCue.h"
 
+#include "NexusLog.h"
+
 
 UWorld* UNexusCue::GetWorld() const
 {
@@ -22,6 +24,29 @@ void UNexusCue::CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle
 	TargetDataHandle = FNexusTargetDataHandle();
 }
 
+void UNexusCue::CallOnBecomeRelevant()
+{
+	OnBecomeRelevant();
+	BP_OnBecomeRelevant();
+}
+
+void UNexusCue::CallOnCeaseRelevant()
+{
+	OnCeaseRelevant();
+	BP_OnCeaseRelevant();
+}
+
 void UNexusCue::OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
 {
+	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] UNexusCue::OnTriggered" ), static_cast<int32>(GPlayInEditorID));
+}
+
+void UNexusCue::OnBecomeRelevant()
+{
+	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] UNexusCue::OnBecomeRelevant" ), static_cast<int32>(GPlayInEditorID));
+}
+
+void UNexusCue::OnCeaseRelevant()
+{
+	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] UNexusCue::OnCeaseRelevant" ), static_cast<int32>(GPlayInEditorID));
 }

@@ -70,7 +70,6 @@ bool UNexusActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunc
 
 void UNexusActionComponent::InitActionComponent(AActor* InAgentActor)
 {
-	NX_LOG_SUB_FN(LogNexusAction, Verbose, TEXT("ActionComponent 초기화"));
 	check(InAgentActor);
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
@@ -151,7 +150,7 @@ void UNexusActionComponent::AuthRemoveAction(const FNexusActionDefHandle& Action
 	{
 		return;
 	}
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef->ActionInstance->GetName());
+	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 제거"), *ActionDef->ActionInstance->GetName());
 
 	if (ActionScopeLockCount > 0)
 	{
@@ -179,7 +178,7 @@ void UNexusActionComponent::AuthRemoveAllActions()
 	{
 		ActionDef.ActionInstance->CallOnEndAction();
 		HandleTriggerableActionOnRemoved(ActionDef);
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 제거"), *ActionDef.ActionInstance->GetName());
+		NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 제거"), *ActionDef.ActionInstance->GetName());
 	}
 	ActionDefs.AuthRemoveAll();
 }
@@ -199,7 +198,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 
 	ensureMsgf(ActionDef, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
 	ensureMsgf(AgentInfo->AgentActor->GetLocalRole() != ROLE_SimulatedProxy,
-	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 Action [%s]을(를) 실행할 수 없습니다"), *AgentInfo->AgentActor->GetName(),
+	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 액션 [%s]을(를) 실행할 수 없습니다"), *AgentInfo->AgentActor->GetName(),
 	           *ActionDef->ActionInstance->GetName());
 
 	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessage);
@@ -345,9 +344,10 @@ void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Ha
 	TargetDataDelegates.Remove(Key);
 }
 
-void UNexusActionComponent::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
+void UNexusActionComponent::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
-	NetPredictionTags.ReplicatedNetPredictionTag(PredictionTag);
+	NX_VLOG_SUB(GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 태그 [%s] 리플리케이트"), *PredictionTag.ToString());
+	NetPredictionTags.ReplicateNetPredictionTag(PredictionTag);
 }
 
 void UNexusActionComponent::IncreaseActionListLock()
@@ -468,6 +468,7 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
 	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
 	{
+		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));
 		return;
 	}
 
@@ -477,18 +478,27 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
 		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
-			NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 삭제 (예측 종료)"), *SideEffectDefHandle.ToString());
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *SideEffectDefHandle.ToString());
 			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 
 		PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
-			NX_LOG_SUB(LogNexusSideEffect, Error, TEXT("SideEffect [%s] 삭제 (예측 실패)"), *SideEffectDefHandle.ToString());
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *SideEffectDefHandle.ToString());
 			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 	}
 }
 
+INexusCueNetworkProxyInterface* UNexusActionComponent::GetCueNetworkProxyInterface()
+{
+	if (GetOwner()->bAlwaysRelevant)
+	{
+		return Cast<INexusCueNetworkProxyInterface>(GetAgentInfo().Pin()->AgentActor);
+	}
+
+	return this;
+}
 
 
 void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
@@ -516,7 +526,11 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusC
 	}
 
 	InternalTriggerCue(CueClass, TargetDataHandle);
-	NetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
+
+	if (GetCueNetworkProxyInterface())
+	{
+		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
+	}
 }
 
 void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
@@ -531,12 +545,11 @@ void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, 
 {
 	check(CueClass);
 
+	UNexusCue* Cue = CueClass.GetDefaultObject();
+	NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("큐 [%s] 실행"), *Cue->GetName());
+	check(Cue);
 
-	UNexusCue* Sign = CueClass.GetDefaultObject();
-	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("Sign [%s] 실행"), *Sign->GetName());
-	check(Sign);
-
-	Sign->CallOnTriggered(TargetDataHandle);
+	Cue->CallOnTriggered(TargetDataHandle);
 }
 
 
@@ -596,7 +609,7 @@ void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
 	ActionDef.ActionInstance->InitializeAction(ActionDef.Handle, AgentInfo);
 	ActionDef.ActionInstance->CallOnActionAdded();
 
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 추가"), *ActionDef.ActionInstance->GetName());
+	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 추가"), *ActionDef.ActionInstance->GetName());
 	HandleTriggerableActionOnAdded(ActionDef);
 }
 
@@ -675,7 +688,7 @@ void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle,
 	{
 		ActionDef->OwnedTags.Reset();
 	}
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 종료"), *Action->GetName());
+	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 종료"), *Action->GetName());
 }
 
 bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) const
@@ -694,19 +707,19 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) c
 
 	if (!bIsNotTriggeringOrRetriggerable)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (실행 중)"), *ActionDef.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("액션 [%s] 거부 (실행 중)"), *ActionDef.ActionInstance->GetName());
 		return false;
 	}
 
 	if (!bMetTriggerCondition)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (조건 미충족)"), *ActionDef.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("액션 [%s] 거부 (조건 미충족)"), *ActionDef.ActionInstance->GetName());
 		return false;
 	}
 
 	if (!bHasRequiredTags)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (필수 태그 미보유)"), *ActionDef.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("액션 [%s] 거부 (필수 태그 미보유)"), *ActionDef.ActionInstance->GetName());
 		const FGameplayTagContainer& ShouldHaveTags = ActionDef.ActionInstance->GetShouldHaveTags();
 		FGameplayTagContainer NotOwnedTags;
 		for (FGameplayTag Tag : ShouldHaveTags)
@@ -716,13 +729,13 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) c
 				NotOwnedTags.AddTag(Tag);
 			}
 		}
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("미보유 태그: %s"), *NotOwnedTags.ToStringSimple(true));
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("미보유 태그: %s"), *NotOwnedTags.ToStringSimple(true));
 		return false;
 	}
 
 	if (!bDontHaveForbiddenTags)
 	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("Action [%s] 거부 (금지 태그 보유)"), *ActionDef.ActionInstance->GetName());
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("액션 [%s] 거부 (금지 태그 보유)"), *ActionDef.ActionInstance->GetName());
 		const FGameplayTagContainer& ShouldNotHaveTags = ActionDef.ActionInstance->GetShouldNotHaveTags();
 		FGameplayTagContainer OwnedForbiddenTags;
 		for (FGameplayTag Tag : ShouldNotHaveTags)
@@ -732,7 +745,7 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) c
 				OwnedForbiddenTags.AddTag(Tag);
 			}
 		}
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("보유 금지 태그: %s"), *OwnedForbiddenTags.ToStringSimple(true));
+		NX_LOG_SUB(LogNexusAction, Log, TEXT("보유 금지 태그: %s"), *OwnedForbiddenTags.ToStringSimple(true));
 		return false;
 	}
 
@@ -741,7 +754,7 @@ bool UNexusActionComponent::CanTriggerAction(const FNexusActionDef& ActionDef) c
 
 void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 {
-	NX_LOG_SUB(LogNexusAction, Verbose, TEXT( "Action [%s] 실행" ), *ActionDef->ActionInstance->GetName());
+	NX_LOG_SUB(LogNexusAction, Log, TEXT( "액션 [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
 	ActionDef->OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
 	ActionDef->ActionInstance->CallOnTriggerAction();

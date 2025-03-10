@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "NexusActionInterface.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
+#include "Cue/NexusCueNetworkProxyInterface.h"
 #include "Event/NexusEventMangerInterface.h"
 #include "GameFramework/Character.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
@@ -29,7 +30,8 @@ class GUNNER_API AGunnerCharacter
 	  public INexusActionInterface,
 	  public INexusEventManagerInterface,
 	  public IGunnerTeamAgentInterface,
-	  public IGunnerHitBoxInterface
+	  public IGunnerHitBoxInterface,
+	  public INexusCueNetworkProxyInterface
 {
 	GENERATED_BODY()
 
@@ -72,6 +74,11 @@ public:
 	//~ Begin IGunnerHitBoxInterface Interface.
 	virtual EGunnerHitBoxType GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const override;
 	//~ End IGunnerHitBoxInterface Interface.
+
+	//~ Begin INexusCueNetworkProxyInterface Interface.
+	UFUNCTION(NetMulticast, Unreliable)
+	virtual void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
+	//~ End INexusCueNetworkProxyInterface Interface.
 
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);

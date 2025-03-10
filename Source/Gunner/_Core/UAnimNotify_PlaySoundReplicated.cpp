@@ -9,12 +9,12 @@
 void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	APawn* PawnOwner = Cast<APawn>(MeshComp->GetOwner());
-	if(!PawnOwner)
+	if (!PawnOwner)
 	{
 		Super::Notify(MeshComp, Animation, EventReference);
 		return;
 	}
-	
+
 	if (!bPlaySoundOnNonLocallyControlled && !PawnOwner->IsLocallyControlled())
 	{
 		return;
@@ -28,7 +28,7 @@ void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, 
 	{
 		if (!Sound->IsOneShot())
 		{
-			UE_LOG(LogAudio, Warning, TEXT("PlaySound notify: Anim %s tried to play a sound asset which is not a one-shot: '%s'. Spawning suppressed."), *GetNameSafe(Animation), *GetNameSafe(Sound));
+			UE_LOG(LogGunner, Verbose, TEXT("사운드 [%s]은 일회성이 아닙니다"), *Sound->GetName());
 			return;
 		}
 
@@ -46,7 +46,7 @@ void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, 
 				UGameplayStatics::PlaySound2D(World, Sound, VolumeMultiplier, PitchMultiplier);
 				return;
 			}
-			
+
 			if (bFollow)
 			{
 				UGameplayStatics::SpawnSoundAttached(Sound, MeshComp, AttachName, FVector(ForceInit), EAttachLocation::SnapToTarget, false, VolumeMultiplier, PitchMultiplier);

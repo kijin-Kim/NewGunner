@@ -177,18 +177,6 @@ void AGunnerLobbyGameState::OnRep_LobbyName()
 
 void AGunnerLobbyGameState::OnRep_TeamBoxSlots()
 {
-	for (int i = 0; i < TeamBoxSlots.Num(); i++)
-	{
-		FTeamBoxSlot& Slot = TeamBoxSlots[i];
-		if (Slot.IsValid())
-		{
-			UE_LOG(LogGunner, Verbose, TEXT("Slot %d: %s"), i, *Slot.NickName);
-		}
-		else
-		{
-			UE_LOG(LogGunner, Verbose, TEXT("Slot %d: Empty"), i);
-		}
-	}
 	OnTeamBoxSlotsDirty.Broadcast();
 }
 

@@ -10,6 +10,7 @@
 #include "Action/NexusAgentInfo.h"
 #include "Components/ActorComponent.h"
 #include "Cue/NexusCue.h"
+#include "Cue/NexusCueNetworkProxyInterface.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "SideEffect/NexusSideEffect.h"
@@ -25,7 +26,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTarget
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface
+class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface, public INexusCueNetworkProxyInterface
 {
 	GENERATED_BODY()
 
@@ -65,7 +66,7 @@ public:
 	void CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
 
 
-	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
+	void ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 
 	void IncreaseActionListLock();
@@ -74,8 +75,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
-
-
+	
 	UFUNCTION(BlueprintCallable)
 	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
@@ -86,11 +86,13 @@ public:
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
 	
 
+	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
+	
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag);
+	virtual void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
 	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
@@ -114,6 +116,7 @@ public:
 
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
 	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
+
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);

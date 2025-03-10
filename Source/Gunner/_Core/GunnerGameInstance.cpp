@@ -17,7 +17,6 @@ void UGunnerGameInstance::Init()
 
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)
 {
-	UE_LOG(LogGunner, Log, TEXT("Seamless travel start to %s"), *MapName);
 	PlayLoadingScreen();
 }
 

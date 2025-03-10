@@ -45,7 +45,7 @@ struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 	bool IsServerCreated() const { return bIsServerCreated; }
 
 
-	FString ToString() const { return FString::Printf(TEXT("PredictionTag(%d, %s)"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
+	FString ToString() const { return FString::Printf(TEXT("핸들: %d, 생성 호스트: %s"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
 	friend uint32 GetTypeHash(const FNexusPredictionTag& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
 
 private:
@@ -81,7 +81,7 @@ struct NEXUSACTION_API FNexusPredictionTagContainer : public FFastArraySerialize
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	//~ End FFastArraySerializer Interface.
 
-	void ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag);
+	void ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 
 	UPROPERTY()
 	TArray<FNexusPredictionTag> Items;

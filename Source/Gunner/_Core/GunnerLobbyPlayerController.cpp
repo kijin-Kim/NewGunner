@@ -25,7 +25,6 @@ void AGunnerLobbyPlayerController::ChangeTeamBoxSlot()
 void AGunnerLobbyPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	GR_LOG(LogGunner, Verbose, TEXT("PlayerState: %s"), *PlayerState->GetPlayerName());
 	SetupTeamBoxSlotEvent();
 }
 

@@ -36,7 +36,6 @@ void AGunnerGameState::HandleMatchHasEnded()
 
 void AGunnerGameState::NetMulticastBroadcastKill_Implementation(const FGunnerKillLog& KillLog)
 {
-	GR_LOG_FN(LogGunner, Verbose, TEXT("[%s]"), *KillLog.ToString());
 	OnNewKillConfirmedDelegate.Broadcast(KillLog);
 }
 

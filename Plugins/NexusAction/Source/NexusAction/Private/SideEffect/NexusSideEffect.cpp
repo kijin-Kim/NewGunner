@@ -9,7 +9,7 @@
 
 void UNexusSideEffect::OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
-	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 적용"), *GetName());
+	NX_VLOG_SUB(Cast<AActor>(GetOuter()), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 적용"), *GetName());
 	RemainingDuration = Duration;
 	ApplyAllModifiers(PredictionTag, bHasAuthority);
 }
@@ -48,8 +48,9 @@ void UNexusSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 
 void UNexusSideEffect::OnRemoved()
 {
-	NX_LOG_SUB(LogNexusSideEffect, Verbose, TEXT("SideEffect [%s] 삭제"), *GetName());
+	
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
+	NX_VLOG_SUB(ActorOwner, LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제"), *GetName());
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 	check(ActionComponent);
 	for (FNexusPropertyMod& Modifier : Modifiers)

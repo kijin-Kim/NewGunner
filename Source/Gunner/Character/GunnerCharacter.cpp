@@ -164,6 +164,15 @@ EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FN
 	return EGunnerHitBoxType::Body;
 }
 
+void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+{
+	UNexusActionComponent* ActionComponent = GetActionComponent();
+	if (ActionComponent->GetOwner()->HasAuthority() || !PredictionTag.IsPredictable())
+	{
+		ActionComponent->InternalTriggerCue(CueClass, TargetDataHandle);
+	}
+}
+
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
 {
 	if (!IsLocallyControlled())

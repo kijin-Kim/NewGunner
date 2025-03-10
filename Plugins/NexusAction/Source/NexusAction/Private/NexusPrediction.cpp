@@ -43,19 +43,19 @@ bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
 
 void FNexusPredictionTag::PostReplicatedAdd(const FNexusPredictionTagContainer& InArray)
 {
-	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 추가"), Handle);
+	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 추가"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer& InArray)
 {
-	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 제거"), Handle);
+	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 제거"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
-	UE_LOG(LogNexus, Verbose, TEXT("PredictionTag(%d) 변경"), Handle);
+	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 변경"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
@@ -73,7 +73,7 @@ bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& Del
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusPredictionTag, FNexusPredictionTagContainer>(Items, DeltaParms, *this);
 }
 
-void FNexusPredictionTagContainer::ReplicatedNetPredictionTag(const FNexusPredictionTag& PredictionTag)
+void FNexusPredictionTagContainer::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)
 {
 	check(PredictionTag.IsValid())
 	Items[StartIndex] = PredictionTag;

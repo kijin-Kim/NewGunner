@@ -81,7 +81,7 @@ void UNexusProperty::Evaluate()
 	bIsDirty = false;
 	if (OldValue != DynamicValue)
 	{
-		NX_LOG_SUB(LogNexusProperty, Verbose, TEXT("Property [%s] 값 변경 %f -> %f"), *Tag.ToString(), OldValue, DynamicValue);
+		NX_VLOG_SUB(Cast<AActor>(GetOuter()), LogNexusProperty, Log, TEXT("프로퍼티 [%s] 값 변경 %f -> %f"), *Tag.ToString(), OldValue, DynamicValue);
 		OnChangedDelegate.Broadcast(OldValue, DynamicValue);
 	}
 }
