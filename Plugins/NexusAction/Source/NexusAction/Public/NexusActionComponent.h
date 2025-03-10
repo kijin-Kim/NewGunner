@@ -84,6 +84,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
+	
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);

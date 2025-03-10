@@ -11,7 +11,7 @@
 class UNexusAction;
 class UNexusEventManagerComponent;
 /**
- * 
+ * 로컬에서 이벤트를 기다립니다. 네트워킹 이벤트를 원하면 SendOrWaitEvent/WaitForSync를 사용하세요.
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusEventReceivedSignature, FGameplayTag, EventTag);
 

@@ -115,3 +115,11 @@ void FNexusSideEffectDefContainer::Tick(float DeltaTime)
 		}
 	}
 }
+
+FNexusSideEffectDef* FNexusSideEffectDefContainer::FindSideEffectDefByHandle(FNexusSideEffectDefHandle Handle)
+{
+	return Items.FindByPredicate([Handle](const FNexusSideEffectDef& SideEffectDefItem)
+	{
+		return SideEffectDefItem.Handle == Handle;
+	});
+}

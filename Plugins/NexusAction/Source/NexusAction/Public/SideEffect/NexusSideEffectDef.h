@@ -59,6 +59,7 @@ struct FNexusSideEffectDefContainer : public FFastArraySerializer
 	void OnRemoved(const FNexusSideEffectDef& SideEffectDef) const;
 
 	void Tick(float DeltaTime);
+	FNexusSideEffectDef* FindSideEffectDefByHandle(FNexusSideEffectDefHandle Handle);
 
 
 	UPROPERTY()

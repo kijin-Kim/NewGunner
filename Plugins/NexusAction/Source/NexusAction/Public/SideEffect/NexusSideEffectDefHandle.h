@@ -8,7 +8,7 @@
 /**
  * 
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FNexusSideEffectDefHandle
 {
 	GENERATED_BODY()
