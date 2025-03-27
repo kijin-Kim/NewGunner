@@ -7,6 +7,27 @@ void UAnimNotifyState_HideMagazine::NotifyBegin(USkeletalMeshComponent* MeshComp
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
+	if (UStaticMeshComponent* Magazine = GetMagazineMeshComponent(MeshComp))
+	{
+		Magazine->SetVisibility(false);
+	}
+}
+
+void UAnimNotifyState_HideMagazine::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+
+	if (UStaticMeshComponent* Magazine = GetMagazineMeshComponent(MeshComp))
+	{
+		if (MeshComp->GetVisibleFlag())
+		{
+			Magazine->SetVisibility(true);
+		}
+	}
+}
+
+UStaticMeshComponent* UAnimNotifyState_HideMagazine::GetMagazineMeshComponent(USkeletalMeshComponent* MeshComp) const
+{
 	TArray<USceneComponent*> AttachedComponents = MeshComp->GetAttachChildren();
 	for (USceneComponent* Component : AttachedComponents)
 	{
@@ -14,20 +35,8 @@ void UAnimNotifyState_HideMagazine::NotifyBegin(USkeletalMeshComponent* MeshComp
 		{
 			continue;
 		}
-
-		Magazine = Cast<UStaticMeshComponent>(Component);
-		if (Magazine)
-		{
-			Magazine->SetVisibility(false);
-		}
+		return Cast<UStaticMeshComponent>(Component);
 	}
-}
-
-void UAnimNotifyState_HideMagazine::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
-{
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-	if(Magazine)
-	{
-		Magazine->SetVisibility(true);
-	}
+	checkNoEntry();
+	return nullptr;
 }

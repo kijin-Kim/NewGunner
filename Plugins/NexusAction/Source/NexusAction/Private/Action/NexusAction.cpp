@@ -53,10 +53,18 @@ void UNexusAction::CallOnTriggerAction()
 
 void UNexusAction::CallOnEndAction()
 {
-	OnEndAction();
-	BP_OnEndAction();
+	if (bIsTriggering)
+	{
+		OnEndAction();
+		BP_OnEndAction();
+	}
 }
 
+void UNexusAction::CallOnActionRemoved()
+{
+	OnActionRemoved();
+	BP_OnActionRemoved();
+}
 
 void UNexusAction::OnActionAdded()
 {
@@ -71,7 +79,7 @@ void UNexusAction::OnTriggerAction()
 {
 	check(AgentInfo.IsValid());
 	check(bIsRetriggerable || !bIsTriggering);
-	
+
 	if (bIsTriggering && bIsRetriggerable)
 	{
 		CallOnEndAction();
@@ -82,10 +90,10 @@ void UNexusAction::OnTriggerAction()
 
 void UNexusAction::OnEndAction()
 {
-	if (!bIsTriggering)
-	{
-		return;
-	}
 	bIsTriggering = false;
 	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
+}
+
+void UNexusAction::OnActionRemoved()
+{
 }

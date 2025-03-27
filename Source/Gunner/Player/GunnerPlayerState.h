@@ -8,7 +8,8 @@
 #include "GunnerPlayerState.generated.h"
 
 
-class UGunnerActionSetupComponent;
+class UGunnerActionComponent;
+class UGunnerSlotManagerComponent;
 class UNexusEventManagerComponent;
 class UNexusActionComponent;
 /**
@@ -21,7 +22,7 @@ class GUNNER_API AGunnerPlayerState : public APlayerState, public IGunnerTeamAge
 
 public:
 	AGunnerPlayerState();
-	
+
 	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
@@ -36,9 +37,12 @@ private:
 
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UNexusActionComponent> ActionComponent;
+	TObjectPtr<UGunnerActionComponent> ActionComponent;
 	UPROPERTY()
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID = 0;
 

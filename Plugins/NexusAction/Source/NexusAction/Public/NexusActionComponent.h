@@ -23,6 +23,8 @@ class UNexusProperty;
 class UNexusSideEffect;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
+DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
+DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -37,11 +39,13 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-
 	
 
-	void InitActionComponent(AActor* InAgentActor);
-	void ReleaseActionComponent();
+
+	void SetupActionComponent(AActor* InAgentActor);
+	void TeardownActionComponent();
+
+	virtual void OnSetupActionComponent() {};
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -52,6 +56,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
+
 
 	UFUNCTION(BlueprintCallable)
 	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
@@ -75,7 +80,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
-	
+
 	UFUNCTION(BlueprintCallable)
 	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
@@ -83,11 +88,11 @@ public:
 	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
-	void TriggerSideEffectByDef(const FNexusSideEffectDef& SideEffectDef, UNexusAction* Action);
-	
+	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, const FNexusPredictionEvents::FPredictionEvent& InPredictionEvent = {});
+
 
 	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
-	
+
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
@@ -96,7 +101,12 @@ public:
 	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
+	bool IsAgentLocallyControlled() const;
+	bool IsAgentLocallyPlayerControlled() const;
+	bool IsOwnerActorAuthoritative() const;
+	
 	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }
+	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
 
 
 	void AuthAddProperty(FGameplayTag Tag, float Value);
@@ -117,10 +127,16 @@ public:
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
 	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
 
+	bool CanTriggerAction(FNexusActionDef* ActionDef, const FNexusEventMessage& EventMessage);
+
+	void CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
+	void AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
 
 private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+
+	void InternalSetupActionComponent(AActor* InAgentActor);
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
 
@@ -134,10 +150,9 @@ private:
 	void UnbindActionTriggerEvent(const FNexusActionDef& ActionDef);
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle);
 	void OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action);
-	
 
 
-	bool CanTriggerAction(const FNexusActionDef& ActionDef) const;
+	bool InternalCanTriggerAction(const FNexusActionDef& ActionDef) const;
 	void LocalTriggerAction(FNexusActionDef* ActionDef);
 	UFUNCTION(Reliable, Server)
 	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
@@ -151,14 +166,43 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
+	
 
 public:
 	FNexusPredictionTag CurrentPredictionTag;
 
+	
+
 private:
+	UPROPERTY()
+	TWeakObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
+	
+	
+	bool bSetupCompleted = false;
+	FOnNexusActionComponentSetupCompletedSignature OnActionComponentSetupCompletedDelegate;
+	FOnNexusActionComponentTeardownCompletedSignature OnActionComponentTeardownCompletedDelegate;
+	
+	
 	int32 ActionScopeLockCount = 0;
-	TArray<FNexusActionDef> ActionPendingAdds;
+
+	struct FNexusPendingAddActionInfo
+	{
+		FNexusActionDef ActionDef;
+		bool bIsPendingTrigger = false;
+		FNexusEventMessage PendingEventMessage;
+	};
+
+	TArray<FNexusPendingAddActionInfo> ActionPendingAdds;
 	TArray<FNexusActionDefHandle> ActionPendingRemoves;
+
+	struct FNexusPendingActionTriggerRequest
+	{
+		FNexusActionDefHandle ActionDefHandle;
+		FNexusEventMessage EventMessage;
+	};
+
+	TArray<FNexusPendingActionTriggerRequest> ClientPendingActionTriggerRequests;
+
 
 	TSharedPtr<FNexusAgentInfo> AgentInfo;
 

@@ -14,15 +14,12 @@ void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, 
 		Super::Notify(MeshComp, Animation, EventReference);
 		return;
 	}
-
+	
 	if (!bPlaySoundOnNonLocallyControlled && !PawnOwner->IsLocallyControlled())
 	{
 		return;
 	}
 
-	PRAGMA_DISABLE_DEPRECATION_WARNINGS
-	Super::Notify(MeshComp, Animation);
-	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 	// Don't call super to avoid call back in to blueprints
 	if (Sound && MeshComp)
 	{
@@ -58,3 +55,4 @@ void UUAnimNotify_PlaySoundReplicated::Notify(USkeletalMeshComponent* MeshComp, 
 		}
 	}
 }
+

@@ -16,13 +16,11 @@ class GUNNER_API UAnimNotifyState_HideMagazine : public UAnimNotifyState
 public:
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+	
+private:
+	UStaticMeshComponent* GetMagazineMeshComponent(USkeletalMeshComponent* MeshComp) const;
 
 public:
 	UPROPERTY(EditAnywhere)
 	FName MagazineSocketName = TEXT("Magazine");
-
-private:
-	UPROPERTY()
-	TObjectPtr<UStaticMeshComponent> Magazine;
-	
 };

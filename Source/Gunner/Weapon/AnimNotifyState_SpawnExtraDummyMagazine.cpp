@@ -8,19 +8,16 @@
 void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-
-	if (ExtraDummyMagazine)
-	{
-		ExtraDummyMagazine->Destroy();
-	}
-
+	
 	ExtraDummyMagazine = MeshComp->GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FTransform::Identity);
+	ExtraDummyMagazine->GetStaticMeshComponent()->bOnlyOwnerSee = MeshComp->bOnlyOwnerSee;
+	ExtraDummyMagazine->GetStaticMeshComponent()->bOwnerNoSee = MeshComp->bOwnerNoSee;
+	ExtraDummyMagazine->GetStaticMeshComponent()->CastShadow = 0;
+	ExtraDummyMagazine->SetOwner(MeshComp->GetOwner());
 	ExtraDummyMagazine->SetMobility(EComponentMobility::Type::Movable);
 	ExtraDummyMagazine->AttachToComponent(MeshComp, FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
-	ExtraDummyMagazine->SetOwner(MeshComp->GetOwner());
 	ExtraDummyMagazine->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	ExtraDummyMagazine->GetStaticMeshComponent()->SetOnlyOwnerSee(MeshComp->bOnlyOwnerSee);
-	ExtraDummyMagazine->GetStaticMeshComponent()->SetOwnerNoSee(MeshComp->bOwnerNoSee);
+	
 	ExtraDummyMagazine->SetLifeSpan(Animation->GetPlayLength());
 
 	TArray<USceneComponent*> AttachedComponents;
@@ -46,13 +43,4 @@ void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponen
 		}
 	}
 	ExtraDummyMagazine->FinishSpawning(FTransform::Identity, true);
-}
-
-void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
-{
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-	if (ExtraDummyMagazine)
-	{
-		ExtraDummyMagazine->Destroy();
-	}
 }

@@ -11,6 +11,7 @@
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "NexusActionComponent.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -123,15 +124,15 @@ void AGunnerEquipment::OnEquipped()
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
 		BulletProperty->SetStaticValue(BulletCount);
 
 
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletProperty->SetStaticValue(MagazineBulletCount);
 
 
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineProperty->SetStaticValue(MaxBulletPerMagazineCount);
 	}
 }
@@ -149,13 +150,13 @@ void AGunnerEquipment::OnUnequipped()
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.Bullet")));
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
 		BulletCount = BulletProperty->GetStaticValue();
 
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MagazineBullet")));
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletCount = MagazineBulletProperty->GetStaticValue();
 
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(FGameplayTag::RequestGameplayTag(FName("Property.Weapon.MaxBulletPerMagazine")));
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->GetStaticValue();
 	}
 }
@@ -169,11 +170,11 @@ void AGunnerEquipment::SetMeshVisibility(bool bVisible)
 void AGunnerEquipment::OnRep_Owner()
 {
 	Super::OnRep_Owner();
-	AttachEquipmentToOwner();
-	if (GetNetConnection())
-	{
-		ServerAckClientAcquired();
-	}
+	// AttachEquipmentToOwner();
+	// if (GetNetConnection())
+	// {
+	// 	ServerAckClientAcquired();
+	// }
 }
 
 void AGunnerEquipment::ServerAckClientAcquired_Implementation()

@@ -48,7 +48,6 @@ void UNexusSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 
 void UNexusSideEffect::OnRemoved()
 {
-	
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
 	NX_VLOG_SUB(ActorOwner, LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제"), *GetName());
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);

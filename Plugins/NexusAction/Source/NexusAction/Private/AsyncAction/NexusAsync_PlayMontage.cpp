@@ -6,7 +6,7 @@
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 
-UNexusAsync_PlayMontage* UNexusAsync_PlayMontage::PlayMontage(UNexusAction* InAction, AActor* InMontageActor, UAnimMontage* InMontageToPlay, bool InbIsThirdPerson, float InPlayRate, FName InStartSectionName)
+UNexusAsync_PlayMontage* UNexusAsync_PlayMontage::PlayMontage(UNexusAction* InAction, AActor* InMontageActor, UAnimMontage* InMontageToPlay, bool InbIsThirdPerson, float InPlayRate, FName InStartSectionName, bool InbStopWhenActionEnds)
 {
 	UNexusAsync_PlayMontage* SelfObject = NewNexusAsync<UNexusAsync_PlayMontage>(InAction);
 	if (!InMontageActor || !InMontageToPlay)
@@ -20,6 +20,7 @@ UNexusAsync_PlayMontage* UNexusAsync_PlayMontage::PlayMontage(UNexusAction* InAc
 
 	SelfObject->PlayRate = InPlayRate;
 	SelfObject->StartSectionName = InStartSectionName;
+	SelfObject->bStopWhenActionEnds = InbStopWhenActionEnds;
 	SelfObject->RegisterWithGameInstance(SelfObject->MontageActor->GetWorld());
 
 	return SelfObject;
@@ -27,7 +28,7 @@ UNexusAsync_PlayMontage* UNexusAsync_PlayMontage::PlayMontage(UNexusAction* InAc
 
 bool UNexusAsync_PlayMontage::ShouldBroadcastDelegates() const
 {
-	return MontageActor.IsValid() &&  Super::ShouldBroadcastDelegates();
+	return MontageActor.IsValid() && Super::ShouldBroadcastDelegates();
 }
 
 void UNexusAsync_PlayMontage::Activate()
@@ -43,6 +44,17 @@ void UNexusAsync_PlayMontage::Activate()
 
 	UNexusAnimMontagePlayerComponent* MontagePlayerComponent = INexusAnimMontagePlayerInterface::Execute_GetAnimMontagePlayer(MontageActor.Get());
 	MontagePlayerComponent->PlayMontage(MontageToPlay.Get(), bIsThirdPerson, PlayRate, StartSectionName);
+
+	if (bStopWhenActionEnds)
+	{
+		Action->OnActionEndedDelegate.AddWeakLambda(this, [this, MontagePlayerComponent](FNexusActionDefHandle, UNexusAction*)
+		{
+			MontagePlayerComponent->StopMontage(MontageToPlay.Get(), bIsThirdPerson);
+			Cancel();
+		});
+	}
+
+
 	if (OnCompletedDelegate.IsBound() || OnInterruptedDelegate.IsBound() || OnBlendOutDelegate.IsBound())
 	{
 		FOnMontageEnded* MontageEnded = MontagePlayerComponent->GetMontageEndedDelegate(MontageToPlay.Get(), bIsThirdPerson);
@@ -77,5 +89,14 @@ void UNexusAsync_PlayMontage::Activate()
 				}
 			}
 		});
+	}
+}
+
+void UNexusAsync_PlayMontage::SetReadyToDestroy()
+{
+	Super::SetReadyToDestroy();
+	if (Action.IsValid())
+	{
+		Action->OnActionEndedDelegate.RemoveAll(this);
 	}
 }

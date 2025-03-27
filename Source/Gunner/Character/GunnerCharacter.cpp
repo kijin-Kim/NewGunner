@@ -11,9 +11,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/Action/GunnerActionSetupComponent.h"
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
+#include "Gunner/Slot/GunnerSlotManagerComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -42,7 +42,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMeshComponent, TEXT("Socket_Camera"));
 	FirstPersonCameraComponent->SetFieldOfView(71.0f);
-	
+
 	CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("CameraController"));
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	EquipmentManagerComponent = CreateDefaultSubobject<UGunnerEquipmentManagerComponent>(TEXT("EquipmentManager"));
@@ -52,7 +52,6 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	LagCompensationComponent = CreateDefaultSubobject<UGunnerLagCompensationComponent>(TEXT("LagCompensationComponent"));
-	ActionSetupComponent = CreateDefaultSubobject<UGunnerActionSetupComponent>(TEXT("ActionSetupComponent"));
 }
 
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -70,22 +69,20 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 	if (NewPlayerState)
 	{
-		if (HasAuthority())
+		if (IsLocallyControlled() && IsPlayerControlled())
 		{
-			ActionSetupComponent->AuthSetupActionSets();
-			EquipmentManagerComponent->AuthInitEquipmentManagerComponent();
+			CameraControllerComponent->InitCameraController();
 		}
 
-		CameraControllerComponent->InitCameraController();
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
 
-		// TODO: Callon match start
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-		{
-			GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
-			OnTeamSetEvent(GetGenericTeamId(), GetGenericTeamId());
-		}, 1.0f, false);
+		// // TODO: Callon match start
+		// FTimerHandle TimerHandle;
+		// GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		// {
+		// 	GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
+		// 	OnTeamSetEvent(GetGenericTeamId(), GetGenericTeamId());
+		// }, 1.0f, false);
 	}
 }
 
@@ -110,6 +107,12 @@ UNexusEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
 	return PS ? PS->FindComponentByClass<UNexusEventManagerComponent>() : FindComponentByClass<UNexusEventManagerComponent>();
+}
+
+UGunnerSlotManagerComponent* AGunnerCharacter::GetSlotManagerComponent() const
+{
+	const APlayerState* PS = GetPlayerState<APlayerState>();
+	return PS ? PS->FindComponentByClass<UGunnerSlotManagerComponent>() : FindComponentByClass<UGunnerSlotManagerComponent>();
 }
 
 void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)

@@ -83,6 +83,7 @@ public:
 	float RemainingDuration = 0.0f;
 	float ElapsedTime = 0.0f;
 
+private:
 	TMap<FGameplayTag, float> InjectedValues;
 
 	TArray<FNexusPropertyOperationHandle> OperationHandles;

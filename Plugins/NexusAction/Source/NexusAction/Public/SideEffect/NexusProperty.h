@@ -87,14 +87,14 @@ class NEXUSACTION_API UNexusProperty : public UObject
 	GENERATED_BODY()
 
 public:
+	
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool operator==(const UNexusProperty* Other) const { return Tag == Other->Tag; }
 	bool operator!=(const UNexusProperty* Other) const { return !(*this == Other); }
 
 	void Tick();
-
-
+	
 	void SetStaticValue(float NewValue);
 	void SetDynamicValue(float NewValue);
 	void SetTag(FGameplayTag InTag);

@@ -45,6 +45,7 @@ public:
 	void CallOnTriggerAction();
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "End Action"))
 	void CallOnEndAction();
+	void CallOnActionRemoved();
 
 
 	
@@ -93,11 +94,16 @@ protected:
 	void BP_OnTriggerAction();
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On End Action"))
 	void BP_OnEndAction();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Action Removed"))
+	void BP_OnActionRemoved();
+
 
 	virtual void OnActionAdded();
 	virtual bool OnCanTriggerAction() const;
 	virtual void OnTriggerAction();
 	virtual void OnEndAction();
+	virtual void OnActionRemoved();
+	
 
 
 public:

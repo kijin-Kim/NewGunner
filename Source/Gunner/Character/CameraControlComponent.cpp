@@ -4,6 +4,7 @@
 #include "CameraControlComponent.h"
 
 #include "Event/NexusEventMessage.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -17,7 +18,7 @@ TArray<FNexusEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Look"))), this, &ThisClass::Look)
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Look, this, &ThisClass::Look)
 		};
 	}
 	return {};

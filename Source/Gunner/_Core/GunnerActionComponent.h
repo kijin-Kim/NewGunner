@@ -3,20 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "GunnerActionSetupComponent.generated.h"
+#include "NexusActionComponent.h"
+#include "GunnerActionComponent.generated.h"
 
 
 class UGunnerActionSet;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UGunnerActionSetupComponent : public UActorComponent
+class GUNNER_API UGunnerActionComponent : public UNexusActionComponent
 {
 	GENERATED_BODY()
 
 public:
-	UGunnerActionSetupComponent();
-	void AuthSetupActionSets();
+	virtual void OnSetupActionComponent() override;
 
 private:
 	UPROPERTY(EditAnywhere)

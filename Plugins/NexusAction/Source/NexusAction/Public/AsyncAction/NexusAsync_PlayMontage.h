@@ -19,10 +19,11 @@ class NEXUSACTION_API UNexusAsync_PlayMontage : public UNexusAsync
 	
 public:
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
-	static UNexusAsync_PlayMontage* PlayMontage(UNexusAction* InAction, AActor* MontageActor, UAnimMontage* MontageToPlay, bool bIsThirdPerson = false, float PlayRate = 1.0f, FName StartSectionName = NAME_None);
+	static UNexusAsync_PlayMontage* PlayMontage(UNexusAction* InAction, AActor* MontageActor, UAnimMontage* MontageToPlay, bool bIsThirdPerson = false, float PlayRate = 1.0f, FName StartSectionName = NAME_None, bool bStopWhenActionEnds = false);
 	//~ Begin UCancellableAsyncAction Interface.
 	virtual bool ShouldBroadcastDelegates() const override;
 	virtual void Activate() override;
+	virtual void SetReadyToDestroy() override;
 	//~ End UCancellableAsyncAction Interface.
 	
 public:
@@ -39,4 +40,5 @@ private:
 	bool bIsThirdPerson;
 	float PlayRate;
 	FName StartSectionName;
+	bool bStopWhenActionEnds;
 };

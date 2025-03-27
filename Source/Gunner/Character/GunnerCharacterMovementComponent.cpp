@@ -7,6 +7,7 @@
 #include "Event/NexusEventMessage.h"
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
 
 UGunnerCharacterMovementComponent::UGunnerCharacterMovementComponent()
@@ -39,10 +40,10 @@ TArray<FNexusEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Move"))), this, &ThisClass::Move),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Jump"))), this, &ThisClass::Jump),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Crouch"))), this, &ThisClass::CharacterCrouch),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(FGameplayTag::RequestGameplayTag(FName(TEXT("Input.Uncrouch"))), this, &ThisClass::CharacterUncrouch)
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Move, this, &ThisClass::Move),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Jump, this, &ThisClass::Jump),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Crouch, this, &ThisClass::CharacterCrouch),
+			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Uncrouch, this, &ThisClass::CharacterUncrouch)
 		};
 	}
 	return {};

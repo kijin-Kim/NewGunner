@@ -8,12 +8,12 @@
 #include "Cue/NexusCueNetworkProxyInterface.h"
 #include "Event/NexusEventMangerInterface.h"
 #include "GameFramework/Character.h"
+#include "Gunner/Slot/GunnerSlotManagerInterface.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
 #include "GunnerCharacter.generated.h"
 
-class UGunnerActionSetupComponent;
 class UCameraComponent;
 class UCameraControllerComponent;
 class UNexusAction;
@@ -31,7 +31,8 @@ class GUNNER_API AGunnerCharacter
 	  public INexusEventManagerInterface,
 	  public IGunnerTeamAgentInterface,
 	  public IGunnerHitBoxInterface,
-	  public INexusCueNetworkProxyInterface
+	  public INexusCueNetworkProxyInterface,
+	  public IGunnerSlotManagerInterface
 {
 	GENERATED_BODY()
 
@@ -62,6 +63,10 @@ public:
 	//~ Begin IGunnerEventManagerInterface Interface.
 	virtual UNexusEventManagerComponent* GetEventManagerComponent() const override;
 	//~ End IGunnerEventManagerInterface Interface.
+
+	//~ Begin IGunnerSlotManagerInterface Interface.
+	virtual UGunnerSlotManagerComponent* GetSlotManagerComponent() const override;
+	//~ End IGunnerSlotManagerInterface Interface.
 
 
 	//~ Begin IGenericTeamAgentInterface Interface.
@@ -103,7 +108,5 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerLagCompensationComponent> LagCompensationComponent;
-
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UGunnerActionSetupComponent> ActionSetupComponent;
+	
 };

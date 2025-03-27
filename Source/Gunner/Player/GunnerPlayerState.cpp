@@ -5,16 +5,19 @@
 
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
+#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/_Core/GunnerActionComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
 AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
-	ActionComponent = CreateDefaultSubobject<UNexusActionComponent>(TEXT("ActionComponent"));
+	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UNexusEventManagerComponent>(TEXT("EventManagerComponent"));
-	
+	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
 }
+
 void AGunnerPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -40,12 +43,11 @@ void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
 
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
-	ActionComponent->ReleaseActionComponent();
-	EventManagerComponent->UnbindAllEventCallbacks();
+	ActionComponent->TeardownActionComponent();
 
-	if(NewPawn)
+	if (NewPawn)
 	{
-		ActionComponent->InitActionComponent(NewPawn);
+		ActionComponent->SetupActionComponent(NewPawn);
 	}
 }
 

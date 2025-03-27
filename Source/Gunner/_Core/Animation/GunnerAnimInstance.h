@@ -16,7 +16,9 @@ class GUNNER_API UGunnerAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	void SetLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
+	UFUNCTION(BlueprintCallable)
 	void ClearLocomotionAnimSet();
 	UGunnerLocomotionAnimSet* GetLocomotionAnimSet() const { return LocomotionAnimSet; }
 	

@@ -3,15 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GunnerActionEquipmentBase.h"
-#include "GunnerActionFire.generated.h"
+#include "GunnerActionGunBase.h"
+#include "GunnerActionGunFire.generated.h"
 
+class UGunnerDamageType;
 struct FNexusTargetDataHandle;
 /**
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerActionFire : public UGunnerActionEquipmentBase
+class GUNNER_API UGunnerActionGunFire : public UGunnerActionGunBase
 {
 	GENERATED_BODY()
 
@@ -21,14 +22,18 @@ private:
 	TArray<AActor*> GetIgnoredActorsByTeam(AActor* EquipmentActorOwner);
 	void AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
 	void AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
-	
+
 	void AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults);
 	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal);
-	
-	
+
 public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable)
 	void AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle);
+
+
+private:
+	UPROPERTY(EditAnywhere, Instanced, Category = "Damage")
+	TObjectPtr<const UGunnerDamageType> DamageType;
 };

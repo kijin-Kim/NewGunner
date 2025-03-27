@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GunnerActionFire.h"
+#include "GunnerActionGunFire.h"
 
 #include "Camera/CameraComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
-#include "Gunner/Equipment/GunnerEquipmentDef.h"
+#include "Gunner/Slot/GunnerGun.h"
 #include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
@@ -16,7 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 
 
-TArray<FHitResult> UGunnerActionFire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
+TArray<FHitResult> UGunnerActionGunFire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
 {
 	TArray<AActor*> HitActors;
 	TArray<FHitResult> FilteredHitResults;
@@ -31,7 +31,7 @@ TArray<FHitResult> UGunnerActionFire::FilterDuplicateHitResultsByActor(const TAr
 	return FilteredHitResults;
 }
 
-TArray<AActor*> UGunnerActionFire::GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults)
+TArray<AActor*> UGunnerActionGunFire::GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults)
 {
 	FilterDuplicateHitResultsByActor(HitResults);
 	TArray<AActor*> HitActors;
@@ -42,7 +42,7 @@ TArray<AActor*> UGunnerActionFire::GetUniqueActorsFromHitResults(const TArray<FH
 	return HitActors;
 }
 
-TArray<AActor*> UGunnerActionFire::GetIgnoredActorsByTeam(AActor* EquipmentActorOwner)
+TArray<AActor*> UGunnerActionGunFire::GetIgnoredActorsByTeam(AActor* EquipmentActorOwner)
 {
 	TArray<AActor*> IgnoredActors;
 	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(EquipmentActorOwner);
@@ -64,7 +64,7 @@ TArray<AActor*> UGunnerActionFire::GetIgnoredActorsByTeam(AActor* EquipmentActor
 	return IgnoredActors;
 }
 
-void UGunnerActionFire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp)
+void UGunnerActionGunFire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp)
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
@@ -74,7 +74,7 @@ void UGunnerActionFire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTarge
 	}
 }
 
-void UGunnerActionFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters)
+void UGunnerActionGunFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters)
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
@@ -84,17 +84,17 @@ void UGunnerActionFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetC
 	}
 }
 
-TArray<FHitResult> UGunnerActionFire::HitScanTrace()
+TArray<FHitResult> UGunnerActionGunFire::HitScanTrace()
 {
-	AGunnerEquipment* Equipment = GetEquipment();
-	AActor* EquipmentActorOwner = Equipment->GetOwner();
+	AGunnerGun* Gun = GetGun();
+	AActor* EquipmentActorOwner = Gun->GetOwner();
 	UWorld* World = EquipmentActorOwner->GetWorld();
 	UCameraComponent* CameraComponet = EquipmentActorOwner->GetComponentByClass<UCameraComponent>();
 	FVector CameraLocation = CameraComponet->GetComponentLocation();
 	FVector CameraForward = CameraComponet->GetForwardVector();
 
 	FCollisionQueryParams CollisionQueryParams;
-	TArray<AActor*> IgnoredActors = {Equipment, EquipmentActorOwner};
+	TArray<AActor*> IgnoredActors = {Gun, EquipmentActorOwner};
 
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentActorOwner));
@@ -108,7 +108,7 @@ TArray<FHitResult> UGunnerActionFire::HitScanTrace()
 	return HitResults;
 }
 
-void UGunnerActionFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle)
+void UGunnerActionGunFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle)
 {
 	if (HitTargetDataHandle.IsValid() && HitTargetDataHandle.GetData()->GetStructType() != FGunnerTargetData_Hit::StaticStruct())
 	{
@@ -144,9 +144,9 @@ void UGunnerActionFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTarget
 		CollisionQueryParams.AddIgnoredComponent(Character->GetMesh());
 	}
 
-	AGunnerEquipment* Equipment = GetEquipment();
-	AActor* EquipmentActorOwner = Equipment->GetOwner();
-	TArray<AActor*> IgnoredActors = {Equipment, EquipmentActorOwner};
+	AGunnerGun* Gun = GetGun();
+	AActor* EquipmentActorOwner = Gun->GetOwner();
+	TArray<AActor*> IgnoredActors = {Gun, EquipmentActorOwner};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentActorOwner));
 
@@ -157,7 +157,7 @@ void UGunnerActionFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTarget
 	AuthApplyDamageByHitResults(HitResults);
 }
 
-void UGunnerActionFire::AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults)
+void UGunnerActionGunFire::AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults)
 {
 	for (const FHitResult& HitResult : FilterDuplicateHitResultsByActor(HitResults))
 	{
@@ -165,26 +165,26 @@ void UGunnerActionFire::AuthApplyDamageByHitResults(const TArray<FHitResult>& Hi
 	}
 }
 
-void UGunnerActionFire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal)
+void UGunnerActionGunFire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal)
 {
 	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
 	{
 		FNexusEventMessage DamageEventMessage;
 		DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
-		AGunnerEquipment* EquipmentOwner = GetEquipment();
-		APawn* EquipmentPawnOwner = Cast<APawn>(EquipmentOwner->GetOwner());
+		AGunnerGun* Gun = GetGun();
+		APawn* EquipmentPawnOwner = Cast<APawn>(Gun->GetOwner());
 		DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
 
 
 		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
 
 		DamageContext->Instigator = EquipmentPawnOwner->GetController();
-		DamageContext->Causer = EquipmentOwner;
+		DamageContext->Causer = Gun;
 		DamageContext->Target = HitActor;
 		DamageContext->HitNormal = HitNormal;
 		DamageContext->HitBoneName = HitBoneName;
 
-		DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+		DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
 		DamageEventMessage.EventDataObject = DamageContext;
 
 		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);

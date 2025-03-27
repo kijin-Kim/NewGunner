@@ -18,7 +18,7 @@ enum class ENexusCueDurationType : uint8
 /**
  * 
  */
-UCLASS(Blueprintable, meta = (ShowWorldContextPin))
+UCLASS(Blueprintable)
 class NEXUSACTION_API UNexusCue : public UObject
 {
 	GENERATED_BODY()

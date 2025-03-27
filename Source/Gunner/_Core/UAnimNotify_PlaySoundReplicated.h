@@ -13,9 +13,14 @@ UCLASS(meta=(DisplayName="Play Sound Replicated"))
 class GUNNER_API UUAnimNotify_PlaySoundReplicated : public UAnimNotify_PlaySound
 {
 	GENERATED_BODY()
+
 public:
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
-	
+
+private:
+	// true면 몽타주가 끝날 때 사운드를 멈춥니다. 팔로우 사운드인 경우에만 작동합니다. 
+	UPROPERTY(EditAnywhere)
+	bool bStopWhenMontageEnds = false;
 	UPROPERTY(EditAnywhere)
 	bool bPlaySoundOnNonLocallyControlled = true;
 	UPROPERTY(EditAnywhere)
