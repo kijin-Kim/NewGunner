@@ -10,14 +10,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Crouch, "Input.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Uncrouch, "Input.Uncrouch");
 
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Primary, "Input.Equip.Primary");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Secondary, "Input.Equip.Secondary");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Melee, "Input.Equip.Melee");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Spike, "Input.Equip.Spike");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_BasicFirst, "Input.Equip.BasicFirst");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_BasicSecond, "Input.Equip.BasicSecond");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Signature, "Input.Equip.Signature");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Equip_Ultimate, "Input.Equip.Ultimate");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Primary, "Input.ActivateSlot.Primary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Secondary, "Input.ActivateSlot.Secondary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Melee, "Input.ActivateSlot.Melee");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Spike, "Input.ActivateSlot.Spike");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_BasicFirst, "Input.ActivateSlot.BasicFirst");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_BasicSecond, "Input.ActivateSlot.BasicSecond");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Signature, "Input.ActivateSlot.Signature");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Ultimate, "Input.ActivateSlot.Ultimate");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Damaged, "GameEvent.Damaged");
 

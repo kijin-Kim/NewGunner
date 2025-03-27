@@ -14,13 +14,13 @@ void UGunnerActionEquipmentEquip::OnActionAdded()
 	switch (Equipment->GetEquipmentType())
 	{
 	case EEquipmentType::Primary:
-		ActionTriggerEventTags.AddTag(TAG_Input_Equip_Primary);
+		ActionTriggerEventTags.AddTag(TAG_Input_ActivateSlot_Primary);
 		break;
 	case EEquipmentType::Secondary:
-		ActionTriggerEventTags.AddTag(TAG_Input_Equip_Secondary);
+		ActionTriggerEventTags.AddTag(TAG_Input_ActivateSlot_Secondary);
 		break;
 	case EEquipmentType::Melee:
-		ActionTriggerEventTags.AddTag(TAG_Input_Equip_Melee);
+		ActionTriggerEventTags.AddTag(TAG_Input_ActivateSlot_Melee);
 		break;
 	case EEquipmentType::CSkill:
 	case EEquipmentType::QSkill:
