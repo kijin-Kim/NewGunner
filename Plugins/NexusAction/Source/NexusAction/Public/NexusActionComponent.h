@@ -130,6 +130,8 @@ public:
 	bool CanTriggerAction(FNexusActionDef* ActionDef, const FNexusEventMessage& EventMessage);
 
 	void CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
+	void RemoveSetupCompletedDelegate(const void* Object);
+	
 	void AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
 
 private:

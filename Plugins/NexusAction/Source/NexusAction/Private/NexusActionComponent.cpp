@@ -224,6 +224,11 @@ void UNexusActionComponent::CallOrAddSetupCompletedDelegate(FOnNexusActionCompon
 	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
+void UNexusActionComponent::RemoveSetupCompletedDelegate(const void* Object)
+{
+	OnActionComponentSetupCompletedDelegate.RemoveAll(Object);
+}
+
 void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate)
 {
 	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));

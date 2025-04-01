@@ -76,14 +76,36 @@ void AGunnerEquippable::OnAcquired()
 	Super::OnAcquired();
 	AttachToOwner();
 	SetMeshVisibility(false);
+
+
+	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetOwner());
+	TeamAgentInterface->GetOnTeamSetDelegate()->AddWeakLambda(this, [this](FGenericTeamId OldTeamId, FGenericTeamId NewTeamId)
+	{
+		SetCustomDepthStencilValue(NewTeamId + 1);
+	});
+
+	SetCustomDepthStencilValue(TeamAgentInterface->GetGenericTeamId() + 1);
 }
+
+void AGunnerEquippable::OnRemoved()
+{
+	Super::OnRemoved();
+	SetMeshVisibility(false);
+
+	if (IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetOwner()))
+	{
+		TeamAgentInterface->GetOnTeamSetDelegate()->RemoveAll(this);
+	}
+}
+
+
 
 void AGunnerEquippable::OnActivated()
 {
 	Super::OnActivated();
 	SetMeshVisibility(true);
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
-	ActivateWallPenetration(true);
+	SetRenderCustomDepth(true);
 }
 
 void AGunnerEquippable::OnDeactivated()
@@ -91,7 +113,7 @@ void AGunnerEquippable::OnDeactivated()
 	Super::OnDeactivated();
 	SetMeshVisibility(false);
 	SetOwnerLocomotionAnimSet(nullptr);
-	ActivateWallPenetration(false);
+	SetRenderCustomDepth(false);
 }
 
 void AGunnerEquippable::AttachToOwner() const
@@ -148,48 +170,31 @@ void AGunnerEquippable::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLo
 	}
 }
 
-void AGunnerEquippable::ActivateWallPenetration(bool bActive) const
+void AGunnerEquippable::SetRenderCustomDepth(bool bSetRenderCustomDepth)
 {
-	if (!bActive)
+	ThirdPersonMeshComponent->SetRenderCustomDepth(bSetRenderCustomDepth);
+	TArray<USceneComponent*> TPChildren;
+	ThirdPersonMeshComponent->GetChildrenComponents(bSetRenderCustomDepth, TPChildren);
+	for (USceneComponent* Child : TPChildren)
 	{
-		FirstPersonMeshComponent->SetRenderCustomDepth(false);
-		ThirdPersonMeshComponent->SetRenderCustomDepth(false);
-		return;
-	}
-	
-	ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	APlayerController* PlayerController = LocalPlayer->PlayerController;
-	IGunnerTeamAgentInterface* TeamAgentInterface = PlayerController->GetPlayerState<IGunnerTeamAgentInterface>();
-	ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*GetOwner());
-	
-
-	if (Attitude == ETeamAttitude::Friendly)
-	{
-		ThirdPersonMeshComponent->SetRenderCustomDepth(true);
-		ThirdPersonMeshComponent->SetCustomDepthStencilValue(1);
-
-		TArray<USceneComponent*> TPChildren;
-		ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
-		for (USceneComponent* Child : TPChildren)
+		if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
 		{
-			if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
-			{
-				MeshComponent->SetRenderCustomDepth(true);
-				MeshComponent->SetCustomDepthStencilValue(1);
-			}
+			MeshComponent->SetRenderCustomDepth(bSetRenderCustomDepth);
 		}
 	}
-	else
+}
+
+void AGunnerEquippable::SetCustomDepthStencilValue(int32 StencilValue) const
+{
+	ThirdPersonMeshComponent->SetCustomDepthStencilValue(StencilValue);
+
+	TArray<USceneComponent*> TPChildren;
+	ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
+	for (USceneComponent* Child : TPChildren)
 	{
-		ThirdPersonMeshComponent->SetRenderCustomDepth(false);
-		TArray<USceneComponent*> TPChildren;
-		ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
-		for (USceneComponent* Child : TPChildren)
+		if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
 		{
-			if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
-			{
-				MeshComponent->SetRenderCustomDepth(false);
-			}
+			ThirdPersonMeshComponent->SetCustomDepthStencilValue(StencilValue);
 		}
 	}
 }

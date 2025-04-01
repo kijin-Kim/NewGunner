@@ -42,6 +42,7 @@ private:
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+	
 
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID = 0;

@@ -89,8 +89,7 @@ public:
 
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
-	void SetIsEnemy(bool bIsEnemy);
-	void OnAddPlayerState(APlayerState* InPlayerState);
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;

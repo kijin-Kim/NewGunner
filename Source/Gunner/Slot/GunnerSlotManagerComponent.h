@@ -105,6 +105,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void AuthAddItemToSlot(AGunnerSlotItem* Item);
 	void AuthRemoveItemFromSlot(AGunnerSlotItem* Item, bool bDestroyItem = true);

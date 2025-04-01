@@ -40,6 +40,7 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMeshComponent->CastShadow = false;
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
 	GetMesh()->SetOwnerNoSee(true);
+	GetMesh()->SetRenderCustomDepth(true);
 
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -179,67 +180,11 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusC
 
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
 {
-	if (IsLocallyControlled() && IsPlayerControlled())
-	{
-		TArray<AActor*> PlayerStates;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerState::StaticClass(), PlayerStates);
-		for (AActor* Actor : PlayerStates)
-		{
-			APlayerState* PS = Cast<APlayerState>(Actor);
-			if (PS == GetPlayerState())
-			{
-				continue;
-			}
-
-			IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(PS);
-			if (FOnGunnerTeamSetSignature* TeamSetDelegate = TeamAgentInterface->GetOnTeamSetDelegate())
-			{
-				if (TeamSetDelegate->IsBound())
-				{
-					TeamSetDelegate->Broadcast(TeamAgentInterface->GetGenericTeamId(), TeamAgentInterface->GetGenericTeamId());
-				}
-			}
-		}
-	}
-
-	ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (LocalPlayer == nullptr)
-	{
-		return;
-	};
-
-	APawn* ControlledPawn = LocalPlayer->PlayerController->GetPawn();
-	if (!ControlledPawn)
-	{
-		return;
-	}
-
-	IGunnerTeamAgentInterface* TeamAgentInterface = ControlledPawn->GetPlayerState<IGunnerTeamAgentInterface>();
-	if (!TeamAgentInterface)
-	{
-		return;
-	}
-
-
-	ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*this);
-	if (Attitude == ETeamAttitude::Friendly)
-	{
-		GetMesh()->SetRenderCustomDepth(true);
-		GetMesh()->SetCustomDepthStencilValue(1);
-		SetIsEnemy(false);
-	}
-	else
-	{
-		GetMesh()->SetRenderCustomDepth(false);
-		SetIsEnemy(true);
-	}
-}
-
-void AGunnerCharacter::SetIsEnemy(bool bIsEnemy)
-{
+	GetMesh()->SetCustomDepthStencilValue(NewTeamID + 1);
 	for (int i = 0; i < ThirdPersonMaterialInstances.Num(); ++i)
 	{
-		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("IsEnemy"), bIsEnemy ? 1.0f : 0.0f);
+		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("MyTeamId"), NewTeamID);
 		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("UseFresnel"), 1.0f);
 	}
+
 }

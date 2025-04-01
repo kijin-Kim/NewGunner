@@ -54,7 +54,7 @@ void AGunnerSlotItem::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusActio
 {
 	check(HasAuthority());
 	UNexusActionComponent* ActionComponent = GetActionComponent();
-	if(ActionComponent)
+	if (ActionComponent)
 	{
 		for (auto ActionClass : ActionsToAdd)
 		{
@@ -205,6 +205,15 @@ void UGunnerSlotManagerComponent::BeginPlay()
 	}));
 }
 
+void UGunnerSlotManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner()))
+	{
+		ActionComponent->RemoveSetupCompletedDelegate(this);
+	}
+}
+
 void UGunnerSlotManagerComponent::AuthAddItemToSlot(AGunnerSlotItem* Item)
 {
 	check(Item);
@@ -248,7 +257,7 @@ void UGunnerSlotManagerComponent::OnSlotIndexChanged(float OldValue, float NewVa
 			DeactivateSlot(OldItemToDeactivate);
 		}
 	}
-	
+
 	if (AGunnerSlotItem* NewItem = NewActiveSlot == EGunnerSlotType::Num ? nullptr : SlotItems[static_cast<int>(NewActiveSlot)])
 	{
 		ActivateSlot(NewItem);

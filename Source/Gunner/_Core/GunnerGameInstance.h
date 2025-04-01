@@ -7,8 +7,6 @@
 #include "GunnerGameInstance.generated.h"
 
 
-
-
 /**
  * 
  */
@@ -16,16 +14,16 @@ UCLASS()
 class GUNNER_API UGunnerGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
+
 public:
-	
 	virtual void Init() override;
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
 	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
 	void PlayLoadingScreen();
 	void StopLoadingScreen();
-	
-	
-	virtual void Shutdown() override; 
+
+
+	virtual void Shutdown() override;
 	UCurveTable* GetDamageCurveTable() const;
 	UDataTable* GetWeaponDataTable() const;
 
@@ -34,10 +32,10 @@ public:
 	TObjectPtr<UCurveTable> DamageCurveTable;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> WeaponDataTable;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
 
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
-	
-	
 };

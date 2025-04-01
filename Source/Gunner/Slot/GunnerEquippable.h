@@ -27,9 +27,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
 	//~ End INexusAnimMontagePlayerInterface
-
-
+	
 	virtual void OnAcquired() override;
+	virtual void OnRemoved() override;
+	
 	virtual void OnActivated() override;
 	virtual void OnDeactivated() override;
 
@@ -38,8 +39,9 @@ private:
 	void AttachToOwner() const;
 	void SetMeshVisibility(bool bVisible) const;
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const;
+	void SetRenderCustomDepth(bool bSetRenderCustomDepth);
+	void SetCustomDepthStencilValue(int32 StencilValue) const;
 
-	void ActivateWallPenetration(bool bActive) const;
 
 private:
 	UPROPERTY()
