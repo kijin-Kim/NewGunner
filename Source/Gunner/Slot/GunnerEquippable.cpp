@@ -5,6 +5,7 @@
 
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
+#include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/Animation/GunnerAnimInstance.h"
 
 
@@ -52,7 +53,6 @@ void AGunnerEquippable::OnConstruction(const FTransform& Transform)
 			NewChild->RegisterComponent();
 		}
 	}
-
 }
 
 UNexusAnimMontagePlayerComponent* AGunnerEquippable::GetAnimMontagePlayer_Implementation()
@@ -83,6 +83,7 @@ void AGunnerEquippable::OnActivated()
 	Super::OnActivated();
 	SetMeshVisibility(true);
 	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
+	ActivateWallPenetration(true);
 }
 
 void AGunnerEquippable::OnDeactivated()
@@ -90,6 +91,7 @@ void AGunnerEquippable::OnDeactivated()
 	Super::OnDeactivated();
 	SetMeshVisibility(false);
 	SetOwnerLocomotionAnimSet(nullptr);
+	ActivateWallPenetration(false);
 }
 
 void AGunnerEquippable::AttachToOwner() const
@@ -142,6 +144,52 @@ void AGunnerEquippable::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLo
 		else if (AnimInstance->GetLocomotionAnimSet() == LocomotionAnimSet)
 		{
 			AnimInstance->ClearLocomotionAnimSet();
+		}
+	}
+}
+
+void AGunnerEquippable::ActivateWallPenetration(bool bActive) const
+{
+	if (!bActive)
+	{
+		FirstPersonMeshComponent->SetRenderCustomDepth(false);
+		ThirdPersonMeshComponent->SetRenderCustomDepth(false);
+		return;
+	}
+	
+	ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	APlayerController* PlayerController = LocalPlayer->PlayerController;
+	IGunnerTeamAgentInterface* TeamAgentInterface = PlayerController->GetPlayerState<IGunnerTeamAgentInterface>();
+	ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*GetOwner());
+	
+
+	if (Attitude == ETeamAttitude::Friendly)
+	{
+		ThirdPersonMeshComponent->SetRenderCustomDepth(true);
+		ThirdPersonMeshComponent->SetCustomDepthStencilValue(1);
+
+		TArray<USceneComponent*> TPChildren;
+		ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
+		for (USceneComponent* Child : TPChildren)
+		{
+			if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
+			{
+				MeshComponent->SetRenderCustomDepth(true);
+				MeshComponent->SetCustomDepthStencilValue(1);
+			}
+		}
+	}
+	else
+	{
+		ThirdPersonMeshComponent->SetRenderCustomDepth(false);
+		TArray<USceneComponent*> TPChildren;
+		ThirdPersonMeshComponent->GetChildrenComponents(true, TPChildren);
+		for (USceneComponent* Child : TPChildren)
+		{
+			if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Child))
+			{
+				MeshComponent->SetRenderCustomDepth(false);
+			}
 		}
 	}
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GunnerSlotManagerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "GunnerEquippable.generated.h"
@@ -32,10 +33,13 @@ public:
 	virtual void OnActivated() override;
 	virtual void OnDeactivated() override;
 
+
 private:
 	void AttachToOwner() const;
 	void SetMeshVisibility(bool bVisible) const;
 	void SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const;
+
+	void ActivateWallPenetration(bool bActive) const;
 
 private:
 	UPROPERTY()
