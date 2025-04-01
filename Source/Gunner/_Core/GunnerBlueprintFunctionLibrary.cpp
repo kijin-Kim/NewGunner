@@ -22,16 +22,32 @@ void UGunnerBlueprintFunctionLibrary::ServerTravelBySoftObjectPtr(const UObject*
 
 ETeamAttitude::Type UGunnerBlueprintFunctionLibrary::GetTeamAttitude(APlayerState* PlayerState, APlayerState* OtherPlayerState)
 {
-	if (PlayerState == nullptr || OtherPlayerState == nullptr)
+	if (!PlayerState || !OtherPlayerState)
 	{
 		return ETeamAttitude::Neutral;
 	}
 
 	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(PlayerState);
-	if (TeamAgentInterface == nullptr)
+	if (!TeamAgentInterface)
 	{
 		return ETeamAttitude::Neutral;
 	}
-	
+
 	return TeamAgentInterface->GetTeamAttitudeTowards(*OtherPlayerState);
+}
+
+FGenericTeamId UGunnerBlueprintFunctionLibrary::GetTeamId(APlayerState* PlayerState)
+{
+	if (!PlayerState)
+	{
+		return FGenericTeamId();
+	}
+
+	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(PlayerState);
+	if (!TeamAgentInterface)
+	{
+		return FGenericTeamId();
+	}
+
+	return TeamAgentInterface->GetGenericTeamId();
 }

@@ -13,7 +13,10 @@
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
+#include "GameFramework/GameStateBase.h"
+#include "Gunner/Player/GunnerPlayerState.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -54,12 +57,27 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	LagCompensationComponent = CreateDefaultSubobject<UGunnerLagCompensationComponent>(TEXT("LagCompensationComponent"));
 }
 
+void AGunnerCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	for (int i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+	{
+		UMaterialInterface* MaterialInterface = GetMesh()->GetMaterial(i);
+		check(MaterialInterface);
+		UMaterialInstanceDynamic* MaterialInstance = UMaterialInstanceDynamic::Create(MaterialInterface, this);
+		GetMesh()->SetMaterial(i, MaterialInstance);
+		ThirdPersonMaterialInstances.Add(MaterialInstance);
+	}
+}
+
+
 void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (EquipmentManagerComponent && HasAuthority())
 	{
 		EquipmentManagerComponent->AuthRelaseEquipmentManagerComponent();
 	}
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -75,14 +93,9 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		}
 
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
-
-		// // TODO: Callon match start
-		// FTimerHandle TimerHandle;
-		// GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-		// {
-		// 	GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
-		// 	OnTeamSetEvent(GetGenericTeamId(), GetGenericTeamId());
-		// }, 1.0f, false);
+		IGunnerTeamAgentInterface* TeamAgentInterface = GetPlayerState<IGunnerTeamAgentInterface>();
+		TeamAgentInterface->GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
+		OnTeamSetEvent(TeamAgentInterface->GetGenericTeamId(), TeamAgentInterface->GetGenericTeamId());
 	}
 }
 
@@ -117,37 +130,25 @@ UGunnerSlotManagerComponent* AGunnerCharacter::GetSlotManagerComponent() const
 
 void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)
 {
-	if (IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
-	{
-		PS->SetGenericTeamId(TeamID);
-	}
+	IGunnerTeamAgentInterface::SetGenericTeamId(TeamID);
 }
 
 FGenericTeamId AGunnerCharacter::GetGenericTeamId() const
 {
-	if (const IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
-	{
-		return PS->GetGenericTeamId();
-	}
-	return FGenericTeamId::NoTeam;
+	IGunnerTeamAgentInterface* TeamAgentInterface = GetPlayerState<IGunnerTeamAgentInterface>();
+	return TeamAgentInterface ? TeamAgentInterface->GetGenericTeamId() : FGenericTeamId::NoTeam;
 }
 
 ETeamAttitude::Type AGunnerCharacter::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	if (const IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
-	{
-		return PS->GetTeamAttitudeTowards(Other);
-	}
-	return ETeamAttitude::Neutral;
+	IGunnerTeamAgentInterface* TeamAgentInterface = GetPlayerState<IGunnerTeamAgentInterface>();
+	return TeamAgentInterface ? TeamAgentInterface->GetTeamAttitudeTowards(Other) : ETeamAttitude::Neutral;
 }
 
 FOnGunnerTeamSetSignature* AGunnerCharacter::GetOnTeamSetDelegate()
 {
-	if (IGunnerTeamAgentInterface* PS = GetPlayerState<IGunnerTeamAgentInterface>())
-	{
-		return PS->GetOnTeamSetDelegate();
-	}
-	return nullptr;
+	IGunnerTeamAgentInterface* TeamAgentInterface = GetPlayerState<IGunnerTeamAgentInterface>();
+	return TeamAgentInterface ? TeamAgentInterface->GetOnTeamSetDelegate() : nullptr;
 }
 
 EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const
@@ -178,25 +179,67 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusC
 
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
 {
-	if (!IsLocallyControlled())
+	if (IsLocallyControlled() && IsPlayerControlled())
 	{
-		for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		TArray<AActor*> PlayerStates;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerState::StaticClass(), PlayerStates);
+		for (AActor* Actor : PlayerStates)
 		{
-			APlayerController* PlayerController = Iterator->Get();
-			if (PlayerController && PlayerController->IsLocalPlayerController())
+			APlayerState* PS = Cast<APlayerState>(Actor);
+			if (PS == GetPlayerState())
 			{
-				IGunnerTeamAgentInterface* TeamAgentInterface = PlayerController->GetPlayerState<IGunnerTeamAgentInterface>();
-				ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*this);
-				if (Attitude == ETeamAttitude::Friendly)
+				continue;
+			}
+
+			IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(PS);
+			if (FOnGunnerTeamSetSignature* TeamSetDelegate = TeamAgentInterface->GetOnTeamSetDelegate())
+			{
+				if (TeamSetDelegate->IsBound())
 				{
-					GetMesh()->SetRenderCustomDepth(true);
-					GetMesh()->SetCustomDepthStencilValue(1);
-				}
-				else
-				{
-					GetMesh()->SetRenderCustomDepth(false);
+					TeamSetDelegate->Broadcast(TeamAgentInterface->GetGenericTeamId(), TeamAgentInterface->GetGenericTeamId());
 				}
 			}
 		}
+	}
+
+	ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	if (LocalPlayer == nullptr)
+	{
+		return;
+	};
+
+	APawn* ControlledPawn = LocalPlayer->PlayerController->GetPawn();
+	if (!ControlledPawn)
+	{
+		return;
+	}
+
+	IGunnerTeamAgentInterface* TeamAgentInterface = ControlledPawn->GetPlayerState<IGunnerTeamAgentInterface>();
+	if (!TeamAgentInterface)
+	{
+		return;
+	}
+
+
+	ETeamAttitude::Type Attitude = TeamAgentInterface->GetTeamAttitudeTowards(*this);
+	if (Attitude == ETeamAttitude::Friendly)
+	{
+		GetMesh()->SetRenderCustomDepth(true);
+		GetMesh()->SetCustomDepthStencilValue(1);
+		SetIsEnemy(false);
+	}
+	else
+	{
+		GetMesh()->SetRenderCustomDepth(false);
+		SetIsEnemy(true);
+	}
+}
+
+void AGunnerCharacter::SetIsEnemy(bool bIsEnemy)
+{
+	for (int i = 0; i < ThirdPersonMaterialInstances.Num(); ++i)
+	{
+		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("IsEnemy"), bIsEnemy ? 1.0f : 0.0f);
+		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("UseFresnel"), 1.0f);
 	}
 }

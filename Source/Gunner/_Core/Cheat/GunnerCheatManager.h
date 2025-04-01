@@ -3,8 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "NexusCheatManager.h"
 #include "GunnerCheatManager.generated.h"
+
+
+UENUM()
+enum class ECheatTeamMode
+{
+	None,
+	EveryoneHostile,
+	EveryoneFriendly,
+	PingPong,
+};
 
 /**
  * 
@@ -13,17 +24,20 @@ UCLASS()
 class GUNNER_API UGunnerCheatManager : public UNexusCheatManager
 {
 	GENERATED_BODY()
+
 public:
 	virtual void InitCheatManager() override;
 	UFUNCTION(Exec)
-	void ToggleEveryoneHostile();
-	
+	void SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode);
 
 
 private:
 	void OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController);
-	void SetTeamNoTeam(APlayerController* PC);
+	void SetAllControllersTeam(FGenericTeamId TeamId);
+	void SetAllControllersTeamPingPong();
+	void SetTeam(APlayerController* PC, FGenericTeamId TeamId);
 
 private:
-	bool bEveryoneHostile = false;
+	UPROPERTY()
+	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
 };

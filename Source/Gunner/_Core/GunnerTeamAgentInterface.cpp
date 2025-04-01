@@ -7,7 +7,7 @@
 ETeamAttitude::Type IGunnerTeamAgentInterface::GetTeamAttitudeTowards(const AActor& Other) const
 {
 	const IGunnerTeamAgentInterface* OtherTeamAgent = Cast<IGunnerTeamAgentInterface>(&Other);
-	if (OtherTeamAgent == nullptr)
+	if (!OtherTeamAgent)
 	{
 		return ETeamAttitude::Neutral;
 	}

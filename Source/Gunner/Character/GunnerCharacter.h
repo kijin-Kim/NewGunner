@@ -41,6 +41,8 @@ class GUNNER_API AGunnerCharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	//~ Begin APawn Interface.
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	//~ End APawn Interface.
@@ -87,7 +89,8 @@ public:
 
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
-
+	void SetIsEnemy(bool bIsEnemy);
+	void OnAddPlayerState(APlayerState* InPlayerState);
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMeshComponent;
@@ -108,5 +111,9 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerLagCompensationComponent> LagCompensationComponent;
-	
+
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
+
+	FDelegateHandle OnAddPlayerStateDelegateHandle;
 };

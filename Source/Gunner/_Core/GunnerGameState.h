@@ -44,6 +44,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerMatchEndedSignature, const 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerNewKillConfirmedSignature, const FGunnerKillLog&, KillLog);
 
 
+
+
 /**
  * 
  */
@@ -67,6 +69,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastBroadcastKill(const FGunnerKillLog& KillLog);
 
+
+
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerMatchEndedSignature OnMatchEndedDelegate;
@@ -80,4 +84,5 @@ protected:
 private:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	double MatchTimeLimit = 40.0f;
+	
 };

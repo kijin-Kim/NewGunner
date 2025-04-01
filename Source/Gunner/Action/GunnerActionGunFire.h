@@ -19,7 +19,7 @@ class GUNNER_API UGunnerActionGunFire : public UGunnerActionSlotItemBase
 private:
 	TArray<FHitResult> FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults);
-	TArray<AActor*> GetIgnoredActorsByTeam(AActor* EquipmentActorOwner);
+	TArray<AActor*> GetIgnoredActorsByTeam(APlayerState* PlayerState);
 	void AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
 	void AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
 

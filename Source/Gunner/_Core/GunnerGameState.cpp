@@ -61,7 +61,7 @@ void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim
 	KillLog.VictimPlayerState = Victim->PlayerState;
 	KillLog.KillCauserName = KillCauserName;
 	NetMulticastBroadcastKill(KillLog);
-	
+
 	if (FGunnerKillInfo* KillerInfo = GetKillerInfo(Killer))
 	{
 		KillerInfo->Kills++;
@@ -72,6 +72,4 @@ void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim
 	NewInfo.KillerPlayerId = Killer->PlayerState->GetPlayerId();
 	NewInfo.Kills = 1;
 	KillInfos.Add(NewInfo);
-
-	
 }

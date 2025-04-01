@@ -77,4 +77,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
 	static ETeamAttitude::Type GetTeamAttitude(APlayerState* PlayerState, APlayerState* OtherPlayerState);
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
+	static FGenericTeamId GetTeamId(APlayerState* PlayerState);
+
+	
 };

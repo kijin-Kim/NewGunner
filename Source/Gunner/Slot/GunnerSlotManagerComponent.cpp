@@ -47,24 +47,23 @@ void AGunnerSlotItem::AuthRemoveTransientActivationActions()
 UNexusActionComponent* AGunnerSlotItem::GetActionComponent() const
 {
 	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
-	check(ActionComponent);
-	return ActionComponent;
+	return ActorOwner ? UNexusActionComponent::GetActionComponentFromActor(ActorOwner) : nullptr;
 }
 
 void AGunnerSlotItem::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles)
 {
 	check(HasAuthority());
 	UNexusActionComponent* ActionComponent = GetActionComponent();
-	check(ActionComponent);
-	for (auto ActionClass : ActionsToAdd)
+	if(ActionComponent)
 	{
-		if (ActionClass)
+		for (auto ActionClass : ActionsToAdd)
 		{
-			FNexusActionDef ActionDef(this, ActionClass);
-			FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionDef);
-			AddedActionHandles.Add(AddedHandle);
+			if (ActionClass)
+			{
+				FNexusActionDef ActionDef(this, ActionClass);
+				FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionDef);
+				AddedActionHandles.Add(AddedHandle);
+			}
 		}
 	}
 }

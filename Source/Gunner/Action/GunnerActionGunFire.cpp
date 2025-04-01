@@ -14,6 +14,7 @@
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerState.h"
 
 
 TArray<FHitResult> UGunnerActionGunFire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
@@ -42,10 +43,10 @@ TArray<AActor*> UGunnerActionGunFire::GetUniqueActorsFromHitResults(const TArray
 	return HitActors;
 }
 
-TArray<AActor*> UGunnerActionGunFire::GetIgnoredActorsByTeam(AActor* EquipmentActorOwner)
+TArray<AActor*> UGunnerActionGunFire::GetIgnoredActorsByTeam(APlayerState* PlayerState)
 {
 	TArray<AActor*> IgnoredActors;
-	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(EquipmentActorOwner);
+	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(PlayerState);
 	if (!ensure(TeamAgentInterface))
 	{
 		return {};
@@ -87,17 +88,17 @@ void UGunnerActionGunFire::AuthEndRewind(TArray<ACharacter*> LagCompensationTarg
 TArray<FHitResult> UGunnerActionGunFire::HitScanTrace()
 {
 	AGunnerGun* Gun = Cast<AGunnerGun>(GetSlotItem());
-	AActor* EquipmentActorOwner = Gun->GetOwner();
-	UWorld* World = EquipmentActorOwner->GetWorld();
-	UCameraComponent* CameraComponet = EquipmentActorOwner->GetComponentByClass<UCameraComponent>();
+	APawn* EquipmentPawnOwner = Gun->GetOwner<APawn>();
+	UWorld* World = EquipmentPawnOwner->GetWorld();
+	UCameraComponent* CameraComponet = EquipmentPawnOwner->GetComponentByClass<UCameraComponent>();
 	FVector CameraLocation = CameraComponet->GetComponentLocation();
 	FVector CameraForward = CameraComponet->GetForwardVector();
 
 	FCollisionQueryParams CollisionQueryParams;
-	TArray<AActor*> IgnoredActors = {Gun, EquipmentActorOwner};
+	TArray<AActor*> IgnoredActors = {Gun, EquipmentPawnOwner};
 
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
-	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentActorOwner));
+	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentPawnOwner->GetPlayerState()));
 
 	TArray<FHitResult> HitResults;
 	World->LineTraceMultiByChannel(HitResults,
@@ -145,10 +146,10 @@ void UGunnerActionGunFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTar
 	}
 
 	AGunnerGun* Gun = Cast<AGunnerGun>(GetSlotItem());
-	AActor* EquipmentActorOwner = Gun->GetOwner();
-	TArray<AActor*> IgnoredActors = {Gun, EquipmentActorOwner};
+	APawn* EquipmentPawnOwner = Gun->GetOwner<APawn>();
+	TArray<AActor*> IgnoredActors = {Gun, EquipmentPawnOwner};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
-	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentActorOwner));
+	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(EquipmentPawnOwner->GetPlayerState()));
 
 	TArray<FHitResult> HitResults = HitScanTrace();
 

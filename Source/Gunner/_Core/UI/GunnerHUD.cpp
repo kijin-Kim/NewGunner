@@ -28,7 +28,7 @@ void AGunnerHUD::GetDebugActorList(TArray<AActor*>& InOutList)
 	Super::GetDebugActorList(InOutList);
 	InOutList.RemoveAll([this](AActor* Actor)
 	{
-		return UNexusActionComponent::GetActionComponentFromActor(Actor) == nullptr;
+		return !UNexusActionComponent::GetActionComponentFromActor(Actor);
 	});
 	UWorld* World = GetWorld();
 	check(World);
