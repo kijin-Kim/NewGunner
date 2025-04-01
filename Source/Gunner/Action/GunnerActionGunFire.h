@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GunnerActionGunBase.h"
+#include "GunnerActionSlotItemBase.h"
 #include "GunnerActionGunFire.generated.h"
 
 class UGunnerDamageType;
@@ -12,7 +12,7 @@ struct FNexusTargetDataHandle;
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerActionGunFire : public UGunnerActionGunBase
+class GUNNER_API UGunnerActionGunFire : public UGunnerActionSlotItemBase
 {
 	GENERATED_BODY()
 

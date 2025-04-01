@@ -6,6 +6,7 @@
 #include "Action/NexusAction.h"
 #include "Action/NexusActionDefHandle.h"
 #include "Components/ActorComponent.h"
+#include "Gunner/Action/GunnerActionSlotItemBase.h"
 #include "GunnerSlotManagerComponent.generated.h"
 
 struct FNexusEventMessage;
@@ -135,15 +136,11 @@ private:
 };
 
 UCLASS()
-class UGunnerActionSlotActivation : public UNexusAction
+class UGunnerActionSlotActivation : public UGunnerActionSlotItemBase
 {
 	GENERATED_BODY()
 	
 protected:
-	
-	UFUNCTION(BlueprintCallable)
-	AGunnerSlotItem* GetSlotItem() const;
-
 	virtual bool OnCanTriggerAction() const override;
 	virtual void OnTriggerAction() override;
 

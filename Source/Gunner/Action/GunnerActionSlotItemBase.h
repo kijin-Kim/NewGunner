@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Action/NexusAction.h"
-#include "GunnerActionGunBase.generated.h"
+#include "GunnerActionSlotItemBase.generated.h"
 
-class AGunnerGun;
+class AGunnerSlotItem;
 /**
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerActionGunBase : public UNexusAction
+class GUNNER_API UGunnerActionSlotItemBase : public UNexusAction
 {
 	GENERATED_BODY()
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	AGunnerGun* GetGun() const;
+	AGunnerSlotItem* GetSlotItem() const;
 };
