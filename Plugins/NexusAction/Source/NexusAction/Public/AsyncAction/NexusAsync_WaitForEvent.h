@@ -23,7 +23,7 @@ class NEXUSACTION_API UNexusAsync_WaitForEvent : public UNexusAsync, public INex
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
-	static UNexusAsync_WaitForEvent* WaitForEvent(UNexusAction* InAction, AActor* EventTargetActor, FGameplayTag EventTag, UScriptStruct* EventMessageType);
+	static UNexusAsync_WaitForEvent* WaitForEvent(UNexusAction* InAction, AActor* EventTargetActor, FGameplayTag EventTag, UScriptStruct* EventMessageType, bool bInAutoCancel = true);
 	
 	virtual void Activate() override;
 	virtual void SetReadyToDestroy() override;
@@ -44,4 +44,5 @@ private:
 	TWeakObjectPtr<UNexusEventManagerComponent> TargetEventManagerComponent;
 	TWeakObjectPtr<UScriptStruct> EventMesageType;
 	FGameplayTag EventTag;
+	bool bAutoCancel = true;
 };

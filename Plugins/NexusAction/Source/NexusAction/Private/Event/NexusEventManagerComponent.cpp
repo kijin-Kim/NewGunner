@@ -50,6 +50,7 @@ void UNexusEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void*
 		FNexusEventCallbackListScopeLock CallbackListScopeLock(EventCallbacks[EventTag]);
 		for (const auto& Callback : EventCallbacks[EventTag].Callbacks)
 		{
+			NX_VLOG_SUB(GetOwner(), LogNexus, Verbose, TEXT("이벤트 [%s] 발생"), *EventTag.ToString());
 			Callback(EventTag, Message, MessageType);
 		}
 	}

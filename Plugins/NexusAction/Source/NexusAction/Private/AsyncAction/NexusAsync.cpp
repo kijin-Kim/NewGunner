@@ -12,10 +12,3 @@ bool UNexusAsync::ShouldBroadcastDelegates() const
 	return Super::ShouldBroadcastDelegates();
 }
 
-void UNexusAsync::Cancel()
-{
-	if (RegisteredWithGameInstance.IsValid())
-	{
-		SetReadyToDestroy();
-	}
-}

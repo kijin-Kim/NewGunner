@@ -5,7 +5,7 @@
 
 #include "Event/NexusEventManagerComponent.h"
 
-UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType)
+UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType, bool bInAutoCancel)
 {
 	UNexusAsync_WaitForEvent* SelfObject = NewNexusAsync<UNexusAsync_WaitForEvent>(InAction);
 	if (!EventTargetActor || !InEventTag.IsValid() || !InEventMessageType)
@@ -21,10 +21,8 @@ UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* I
 
 	SelfObject->EventTag = InEventTag;
 	SelfObject->EventMesageType = InEventMessageType;
+	SelfObject->bAutoCancel = bInAutoCancel;
 	SelfObject->RegisterWithGameInstance(EventTargetActor->GetWorld());
-
-	
-	
 
 	return SelfObject;
 }
@@ -32,7 +30,6 @@ UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* I
 void UNexusAsync_WaitForEvent::Activate()
 {
 	Super::Activate();
-
 	UnbindEvents(TargetEventManagerComponent.Get());
 	BindEvents();
 }
@@ -48,14 +45,17 @@ TArray<FNexusEventCallbackHandle> UNexusAsync_WaitForEvent::SetupEvents()
 {
 	TWeakObjectPtr<UNexusAsync_WaitForEvent> Weak = this;
 	return {
-		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak, this](FGameplayTag Tag, const void* MessagePtr)
+		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak](FGameplayTag Tag, const void* MessagePtr)
 		{
 			UNexusAsync_WaitForEvent* Strong = Weak.Get();
 			if (Strong && Strong->ShouldBroadcastDelegates())
 			{
 				Strong->MessagePtr = MessagePtr;
 				Strong->OnEventReceivedDelegate.Broadcast(Tag);
-				Strong->Cancel();
+				if (Strong->bAutoCancel)
+				{
+					Strong->Cancel();
+				}
 			}
 		}, EventMesageType.Get())
 	};

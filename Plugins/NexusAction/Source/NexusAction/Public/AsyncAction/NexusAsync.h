@@ -35,7 +35,7 @@ public:
 	}
 
 	virtual bool ShouldBroadcastDelegates() const override;
-	virtual void Cancel() override;
+
 
 protected:
 	TWeakObjectPtr<UNexusAction> Action;
