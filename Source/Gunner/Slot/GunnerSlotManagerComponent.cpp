@@ -311,6 +311,13 @@ void UGunnerSlotManagerComponent::DeactivateSlot(AGunnerSlotItem* Item)
 
 void UGunnerSlotManagerComponent::OnRep_SlotItems(const TArray<AGunnerSlotItem*>& OldItems)
 {
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	check(ActionComponent);
+	if (!ActionComponent->IsSetupCompleted())
+	{
+		return;
+	}
+
 	for (int i = 0; i < static_cast<int>(EGunnerSlotType::Num); ++i)
 	{
 		if (bool bSlotItemNotChanged = SlotItems[i] == OldItems[i])
