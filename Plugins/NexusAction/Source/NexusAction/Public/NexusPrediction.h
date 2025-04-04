@@ -113,7 +113,7 @@ public:
 	static void BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag);
 	static void BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionTag);
 	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionTag) { return PredictionEvents.FindOrAdd(PredictionTag); }
-	static void Clear();
+
 
 private:
 	inline static TMap<FNexusPredictionTag, FPredictionEvent> PredictionEvents;

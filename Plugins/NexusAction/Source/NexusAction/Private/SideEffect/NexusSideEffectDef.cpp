@@ -35,6 +35,11 @@ void FNexusSideEffectDef::PreReplicatedRemove(const FNexusSideEffectDefContainer
 	InArraySerializer.OnRemoved(*this);
 }
 
+void FNexusSideEffectDef::PostReplicatedChange(const FNexusSideEffectDefContainer& InArraySerializer)
+{
+	checkNoEntry();
+}
+
 void FNexusSideEffectDefContainer::Init(AActor* InOwnerActor)
 {
 	check(InOwnerActor);
@@ -51,10 +56,9 @@ void FNexusSideEffectDefContainer::Add(const FNexusSideEffectDef& SideEffectDef,
 	NewItem.PredictionTag = PredictionTag;
 	NewItem.SideEffectInstance->OnApplied(PredictionTag, bHasAuthority);
 
-	int Index = Items.Add(NewItem);
 	if (bHasAuthority && NewItem.SideEffectInstance->DurationType != ESideEffectDurationType::Instant)
 	{
-		MarkItemDirty(Items[Index]);
+		MarkItemDirty(Items.Add_GetRef(NewItem));
 	}
 }
 
@@ -70,7 +74,10 @@ void FNexusSideEffectDefContainer::Remove(const FNexusSideEffectDefHandle& SideE
 		return false;
 	});
 	check(Removed != 0);
-	MarkArrayDirty();
+	if (bHasAuthority)
+	{
+		MarkArrayDirty();
+	}
 }
 
 bool FNexusSideEffectDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)

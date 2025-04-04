@@ -13,8 +13,6 @@ struct FNexusSideEffectDef;
 class UNexusSideEffect;
 
 
-DECLARE_DELEGATE_TwoParams(FOnSideEffectDefAddedSignature, const FNexusSideEffectDef& /*SideEffectDef*/, FNexusPredictionTag /*PredictionTag*/);
-DECLARE_DELEGATE_OneParam(FOnSideEffectDefRemovedSignature, FNexusSideEffectDefHandle /*SideEffectDefHandle*/);
 
 
 /**
@@ -32,6 +30,7 @@ struct FNexusSideEffectDef : public FFastArraySerializerItem
 
 	void PostReplicatedAdd(const struct FNexusSideEffectDefContainer& InArraySerializer);
 	void PreReplicatedRemove(const struct FNexusSideEffectDefContainer& InArraySerializer);
+	void PostReplicatedChange(const struct FNexusSideEffectDefContainer& InArraySerializer);
 
 	
 	FNexusSideEffectDefHandle Handle;

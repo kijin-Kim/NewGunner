@@ -94,11 +94,11 @@ public:
 	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
-	void TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	void TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	UFUNCTION(NetMulticast, Unreliable)
-	virtual void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
-	void InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
+	void InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	bool IsAgentLocallyControlled() const;
@@ -139,6 +139,8 @@ private:
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
+	void OnCueAdded(const FNexusLoopingCue& NexusLoopingCue);
+	void OnCueRemoved(TSubclassOf<ANexusCue> CueClass);
 	void InternalSetupActionComponent(AActor* InAgentActor);
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
@@ -277,6 +279,10 @@ private:
 	};
 
 	TMap<FNexusRepDataKey, FNexusTargetDataDelegate> TargetDataDelegates;
+
+	UPROPERTY(Replicated)
+	FNexusLoopingCueContainer LoopingCues;
+	TMap<TSubclassOf<ANexusCue>, int32> LocalCueCountMap;
 };
 
 struct FNexusActionListScopeLock

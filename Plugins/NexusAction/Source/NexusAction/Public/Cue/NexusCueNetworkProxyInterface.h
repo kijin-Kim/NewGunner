@@ -8,7 +8,7 @@
 #include "UObject/Interface.h"
 #include "NexusCueNetworkProxyInterface.generated.h"
 
-class UNexusCue;
+class ANexusCue;
 class UNexusAction;
 // This class does not need to be modified.
 UINTERFACE()
@@ -26,6 +26,6 @@ class NEXUSACTION_API INexusCueNetworkProxyInterface
 
 public:
 	
-	void CallNetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag);
-	virtual void NetMulticastTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) = 0;
+	void CallNetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag);
+	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) = 0;
 };

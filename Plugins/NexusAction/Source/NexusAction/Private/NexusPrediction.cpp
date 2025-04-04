@@ -55,6 +55,7 @@ void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
+	checkNoEntry();
 	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 변경"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
@@ -62,10 +63,6 @@ void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContaine
 FNexusPredictionTagContainer::FNexusPredictionTagContainer()
 {
 	Items.SetNum(MaximumPredictionTags);
-	for (FNexusPredictionTag& Item : Items)
-	{
-		MarkItemDirty(Item);
-	}
 }
 
 bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -123,7 +120,3 @@ void FNexusPredictionEvents::BroadcastOnPredictionFailed(const FNexusPredictionT
 	PredictionEvents.Remove(PredictionTag);
 }
 
-void FNexusPredictionEvents::Clear()
-{
-	PredictionEvents.Empty();
-}

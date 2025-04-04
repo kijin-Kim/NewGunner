@@ -55,6 +55,7 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, NetPredictionTags, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
+	DOREPLIFETIME(UNexusActionComponent, LoopingCues);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
 }
 
@@ -89,6 +90,9 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	}
 	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
 	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
+
+	LoopingCues.OnCueAddedDelegate.BindUObject(this, &UNexusActionComponent::OnCueAdded);
+	LoopingCues.OnCueRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnCueRemoved);
 
 	if (GetOwner()->HasAuthority())
 	{
@@ -551,13 +555,13 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
 		PredictionEvent = InPredictionEvent;
-		PredictionEvent.OnPredictionEnded.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
 			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *SideEffectDefHandle.ToString());
 			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 
-		PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefHandle = NewSideEffectDef.Handle]()
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle]()
 		{
 			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *SideEffectDefHandle.ToString());
 			SideEffectDefs.Remove(SideEffectDefHandle);
@@ -576,7 +580,7 @@ INexusCueNetworkProxyInterface* UNexusActionComponent::GetCueNetworkProxyInterfa
 }
 
 
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
@@ -587,44 +591,91 @@ void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<UNex
 	}
 }
 
-void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	if (!CueClass || !Action)
 	{
 		return;
 	}
 
-	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
-	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
+	if (!IsOwnerActorAuthoritative())
 	{
-		return;
+		InternalTriggerCue(CueClass, TargetDataHandle);
 	}
-
-	InternalTriggerCue(CueClass, TargetDataHandle);
-
-	if (GetCueNetworkProxyInterface())
+	else if (GetCueNetworkProxyInterface())
 	{
 		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
 {
-	if (GetOwner()->HasAuthority() || !PredictionTag.IsPredictable())
+	if (IsOwnerActorAuthoritative() || !PredictionTag.IsPredictable())
 	{
 		InternalTriggerCue(CueClass, TargetDataHandle);
 	}
 }
 
-void UNexusActionComponent::InternalTriggerCue(TSubclassOf<UNexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	check(CueClass);
+	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
+	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
+	{
+		NX_VLOG_SUB(GetOwner(), LogNexusCue, Verbose, TEXT("예측 불가능한 예측 태그에서 큐를 실행할 수 없습니다"));
+		return;
+	}
 
-	UNexusCue* Cue = CueClass.GetDefaultObject();
-	NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("큐 [%s] 실행"), *Cue->GetName());
-	check(Cue);
 
-	Cue->CallOnTriggered(TargetDataHandle);
+	ANexusCue* CueActor = CueClass.GetDefaultObject();
+	ENexusCueType CueType = CueActor->GetCueType();
+	if (CueType == ENexusCueType::Looping) // Looping일 경우에만 인스턴스를 만들고 컨테이너로 관리합니다. (State가 필요하고, 예측 및 롤백 로직이 필요하기 때문)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetAgentActor();
+		CueActor = GetWorld()->SpawnActor<ANexusCue>(CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+		// TODO: AgentActor의 Children을 검사하여 재활용
+	}
+	check(CueActor);
+	CueActor->CallOnTriggered(TargetDataHandle);
+	// TODO: 재활용시 이벤트 호출후 Remove
+
+
+	if (CueType != ENexusCueType::Looping)
+	{
+		return;
+	}
+
+
+	FNexusLoopingCue NewLoopingCue;
+	NewLoopingCue.CueClass = CueClass;
+	NewLoopingCue.TargetDataHandle = TargetDataHandle;
+	LoopingCues.AddLoopingCue(NewLoopingCue, bIsOwnerActorAuthoritative);
+	if (!bIsOwnerActorAuthoritative && CurrentPredictionTag.IsPredictable())
+	{
+		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
+		{
+			int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+			Count--;
+			if (Count <= 0)
+			{
+				LocalCueCountMap.Remove(CueClass);
+				LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+			}
+		});
+
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
+		{
+			int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+			Count--;
+			if (Count <= 0)
+			{
+				LocalCueCountMap.Remove(CueClass);
+				LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+			}
+		});
+	}
 }
 
 bool UNexusActionComponent::IsAgentLocallyControlled() const
@@ -690,6 +741,78 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 			DisplayDebugManager.DrawString(FString::Printf(TEXT("사이드 이펙트: %s"), *Item.SideEffectClass->GetName()));
 		}
 	}
+}
+
+void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
+{
+	LocalCueCountMap.FindOrAdd(NexusLoopingCue.CueClass)++;
+	ANexusCue* CueActor = nullptr;
+	for (AActor* Child : GetAgentActor()->Children)
+	{
+		if (!Child)
+		{
+			continue;
+		}
+
+		if (!Child->IsA(NexusLoopingCue.CueClass))
+		{
+			continue;
+		}
+
+		if (ANexusCue* ChildCue = Cast<ANexusCue>(Child))
+		{
+			check(ChildCue->GetCueType() == ENexusCueType::Looping);
+			CueActor = ChildCue;
+			break;
+		}
+	}
+
+	if (!CueActor)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetAgentActor();
+		CueActor = GetWorld()->SpawnActor<ANexusCue>(NexusLoopingCue.CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+		check(CueActor);
+	}
+
+
+	CueActor->CallOnBecomeRelevant();
+	if (IsOwnerActorAuthoritative())
+	{
+		CueActor->OnDurationExpiredDelegate.BindWeakLambda(this, [this, NexusLoopingCue]()
+		{
+			if (NexusLoopingCue.CueClass)
+			{
+				LoopingCues.RemoveLoopingCue(NexusLoopingCue.CueClass, IsOwnerActorAuthoritative());
+			}
+		});
+	}
+}
+
+
+void UNexusActionComponent::OnCueRemoved(TSubclassOf<ANexusCue> CueClass)
+{
+	for (AActor* Child : GetAgentActor()->Children)
+	{
+		if (!Child)
+		{
+			continue;
+		}
+
+		if (!Child->IsA(CueClass))
+		{
+			continue;
+		}
+
+		if (ANexusCue* ChildCue = Cast<ANexusCue>(Child))
+		{
+			check(ChildCue->GetCueType() == ENexusCueType::Looping);
+			ChildCue->CallOnCeaseRelevant();
+			ChildCue->Destroy();
+			return;
+		}
+	}
+	checkNoEntry();
 }
 
 void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
