@@ -75,6 +75,7 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
 	SideEffectDefs.Init(GetOwner());
+	NetPredictionTags.Init(IsOwnerActorAuthoritative());
 	EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner());
 	check(EventManagerComponent.IsValid());
 

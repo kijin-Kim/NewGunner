@@ -67,7 +67,6 @@ struct TStructOpsTypeTraits<FNexusPredictionTag> : public TStructOpsTypeTraitsBa
 		WithIdenticalViaEquality = true
 	};
 };
- 
 
 
 USTRUCT()
@@ -75,7 +74,18 @@ struct NEXUSACTION_API FNexusPredictionTagContainer : public FFastArraySerialize
 {
 	GENERATED_USTRUCT_BODY()
 
-	FNexusPredictionTagContainer();
+	void Init(bool bInHasAuthority)
+	{
+		bHasAuthority = bInHasAuthority;
+		if (bHasAuthority)
+		{
+			Items.SetNum(MaximumPredictionTags);
+			for (int32 i = 0; i < MaximumPredictionTags; ++i)
+			{
+				MarkItemDirty(Items[i]);
+			}
+		}
+	}
 
 	//~ Begin FFastArraySerializer Interface.
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
@@ -88,6 +98,8 @@ struct NEXUSACTION_API FNexusPredictionTagContainer : public FFastArraySerialize
 
 	int32 StartIndex = 0;
 	static constexpr int32 MaximumPredictionTags = 16;
+
+	bool bHasAuthority = false;
 };
 
 template <>
@@ -113,7 +125,6 @@ public:
 	static void BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag);
 	static void BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionTag);
 	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionTag) { return PredictionEvents.FindOrAdd(PredictionTag); }
-
 
 private:
 	inline static TMap<FNexusPredictionTag, FPredictionEvent> PredictionEvents;

@@ -36,7 +36,7 @@ bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
 	{
 		ConnectionIdentifier = Map;
 	}
-	
+
 	bOutSuccess = true;
 	return true;
 }
@@ -60,10 +60,6 @@ void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContaine
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
-FNexusPredictionTagContainer::FNexusPredictionTagContainer()
-{
-	Items.SetNum(MaximumPredictionTags);
-}
 
 bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
@@ -119,4 +115,3 @@ void FNexusPredictionEvents::BroadcastOnPredictionFailed(const FNexusPredictionT
 	}
 	PredictionEvents.Remove(PredictionTag);
 }
-
