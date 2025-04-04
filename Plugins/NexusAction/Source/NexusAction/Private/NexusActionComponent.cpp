@@ -598,61 +598,10 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 		return;
 	}
 
-	if (!IsOwnerActorAuthoritative())
+
+	if (!IsOwnerActorAuthoritative() && CurrentPredictionTag.IsPredictable())
 	{
 		InternalTriggerCue(CueClass, TargetDataHandle);
-	}
-	else if (GetCueNetworkProxyInterface())
-	{
-		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
-	}
-}
-
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
-{
-	if (IsOwnerActorAuthoritative() || !PredictionTag.IsPredictable())
-	{
-		InternalTriggerCue(CueClass, TargetDataHandle);
-	}
-}
-
-void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
-{
-	check(CueClass);
-	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
-	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
-	{
-		NX_VLOG_SUB(GetOwner(), LogNexusCue, Verbose, TEXT("예측 불가능한 예측 태그에서 큐를 실행할 수 없습니다"));
-		return;
-	}
-
-
-	ANexusCue* CueActor = CueClass.GetDefaultObject();
-	ENexusCueType CueType = CueActor->GetCueType();
-	if (CueType == ENexusCueType::Looping) // Looping일 경우에만 인스턴스를 만들고 컨테이너로 관리합니다. (State가 필요하고, 예측 및 롤백 로직이 필요하기 때문)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = GetAgentActor();
-		CueActor = GetWorld()->SpawnActor<ANexusCue>(CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
-		// TODO: AgentActor의 Children을 검사하여 재활용
-	}
-	check(CueActor);
-	CueActor->CallOnTriggered(TargetDataHandle);
-	// TODO: 재활용시 이벤트 호출후 Remove
-
-
-	if (CueType != ENexusCueType::Looping)
-	{
-		return;
-	}
-
-
-	FNexusLoopingCue NewLoopingCue;
-	NewLoopingCue.CueClass = CueClass;
-	NewLoopingCue.TargetDataHandle = TargetDataHandle;
-	LoopingCues.AddLoopingCue(NewLoopingCue, bIsOwnerActorAuthoritative);
-	if (!bIsOwnerActorAuthoritative && CurrentPredictionTag.IsPredictable())
-	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
 		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
 		{
@@ -675,6 +624,43 @@ void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, 
 				LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
 			}
 		});
+	}
+	else if (GetCueNetworkProxyInterface())
+	{
+		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
+	}
+}
+
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+{
+	if (IsOwnerActorAuthoritative() || !PredictionTag.IsPredictable())
+	{
+		InternalTriggerCue(CueClass, TargetDataHandle);
+	}
+}
+
+void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+{
+	check(CueClass);
+	
+	ANexusCue* CueActor = CueClass.GetDefaultObject();
+	ENexusCueType CueType = CueActor->GetCueType();
+	if (CueType == ENexusCueType::Looping) // Looping일 경우에만 인스턴스를 만들고 컨테이너로 관리합니다. (State가 필요하고, 예측 및 롤백 로직이 필요하기 때문)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetAgentActor();
+		CueActor = GetWorld()->SpawnActor<ANexusCue>(CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+		// TODO: AgentActor의 Children을 검사하여 재활용
+	}
+	check(CueActor);
+	CueActor->CallOnTriggered(TargetDataHandle);
+
+	if (CueType == ENexusCueType::Looping)
+	{
+		FNexusLoopingCue NewLoopingCue;
+		NewLoopingCue.CueClass = CueClass;
+		NewLoopingCue.TargetDataHandle = TargetDataHandle;
+		LoopingCues.AddLoopingCue(NewLoopingCue, AgentInfo->IsOwnerActorAuthoritative());
 	}
 }
 

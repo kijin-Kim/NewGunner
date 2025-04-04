@@ -84,8 +84,6 @@ void ANexusCue::CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle
 	TargetDataHandle = InTargetDataHandle;
 	OnTriggered(InTargetDataHandle);
 	BP_OnTriggered();
-
-
 	TargetDataHandle = FNexusTargetDataHandle();
 }
 
@@ -94,7 +92,7 @@ void ANexusCue::CallOnBecomeRelevant()
 	OnBecomeRelevant();
 	BP_OnBecomeRelevant();
 
-	if (CueType == ENexusCueType::Looping)
+	if (CueType == ENexusCueType::Looping && HasAuthority())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(DurationExpiredTimerHandle);
 		GetWorld()->GetTimerManager().SetTimer(DurationExpiredTimerHandle, this, &ANexusCue::OnDurationExpired, Duration, false);

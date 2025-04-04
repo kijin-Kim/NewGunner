@@ -14,6 +14,7 @@
 #include "NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "GameFramework/GameStateBase.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/Player/GunnerPlayerState.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -174,6 +175,7 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusC
 	UNexusActionComponent* ActionComponent = GetActionComponent();
 	if (HasAuthority() || !PredictionTag.IsPredictable())
 	{
+		GR_VLOG_FN(this, LogGunner, Log, TEXT("[%s]"), *GetNameSafe(CueClass));
 		ActionComponent->InternalTriggerCue(CueClass, TargetDataHandle);
 	}
 }
@@ -186,5 +188,4 @@ void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId N
 		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("MyTeamId"), NewTeamID);
 		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("UseFresnel"), 1.0f);
 	}
-
 }
