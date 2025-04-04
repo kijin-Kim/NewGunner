@@ -43,6 +43,7 @@ public:
 
 
 	void SetupActionComponent(AActor* InAgentActor);
+	void AuthRemoveAllCues();
 	void TeardownActionComponent();
 
 	virtual void OnSetupActionComponent() {};

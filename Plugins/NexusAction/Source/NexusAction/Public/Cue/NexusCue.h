@@ -49,6 +49,7 @@ struct FNexusLoopingCueContainer : public FFastArraySerializer
 
 	void AddLoopingCue(const FNexusLoopingCue& InLoopingCue, bool bHasAuthority);
 	void RemoveLoopingCue(TSubclassOf<ANexusCue> InCueClass, bool bHasAuthority);
+	void RemoveAllLoopingCues();
 
 	void OnAdded(const FNexusLoopingCue& LoopingCue) const;
 	void OnRemoved(TSubclassOf<ANexusCue> CueClass) const;
@@ -98,8 +99,9 @@ protected:
 	virtual void OnBecomeRelevant();
 	virtual void OnCeaseRelevant();
 
+	void EndCue() const;
+
 private:
-	void OnDurationExpired() const;
 
 public:
 	FOnNexusCueDurationExpiredSignature OnDurationExpiredDelegate;
@@ -107,10 +109,9 @@ public:
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	ENexusCueType CueType = ENexusCueType::Burst;
+	// 루핑 타입의 큐의 지속시간. 0보다 작을 경우 무한 지속으로 간주
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true, EditCondition = "DurationType == ENexusCueDurationType::Duration"))
 	float Duration = 0.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true, EditCondition = "DurationType == ENexusCueDurationType::Duration"))
-	bool bIsInfiniteDuration = false;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	FNexusTargetDataHandle TargetDataHandle;

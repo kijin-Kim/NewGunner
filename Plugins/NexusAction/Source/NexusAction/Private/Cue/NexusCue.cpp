@@ -58,6 +58,16 @@ void FNexusLoopingCueContainer::RemoveLoopingCue(TSubclassOf<ANexusCue> InCueCla
 	}
 }
 
+void FNexusLoopingCueContainer::RemoveAllLoopingCues()
+{
+	for (const FNexusLoopingCue& LoopingCue : Items)
+	{
+		OnRemoved(LoopingCue.CueClass);
+	}
+	Items.Empty();
+	MarkArrayDirty();
+}
+
 void FNexusLoopingCueContainer::OnAdded(const FNexusLoopingCue& LoopingCue) const
 {
 	if (OnCueAddedDelegate.IsBound())
@@ -92,10 +102,10 @@ void ANexusCue::CallOnBecomeRelevant()
 	OnBecomeRelevant();
 	BP_OnBecomeRelevant();
 
-	if (CueType == ENexusCueType::Looping && HasAuthority())
+	if (HasAuthority() && CueType == ENexusCueType::Looping && Duration > 0.0f)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(DurationExpiredTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(DurationExpiredTimerHandle, this, &ANexusCue::OnDurationExpired, Duration, false);
+		GetWorld()->GetTimerManager().SetTimer(DurationExpiredTimerHandle, this, &ANexusCue::EndCue, Duration, false);
 	}
 }
 
@@ -120,7 +130,7 @@ void ANexusCue::OnCeaseRelevant()
 	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 비활성화"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
 }
 
-void ANexusCue::OnDurationExpired() const
+void ANexusCue::EndCue() const
 {
 	check(HasAuthority());
 	OnDurationExpiredDelegate.ExecuteIfBound();

@@ -45,8 +45,8 @@ void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagConta
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
 	TeardownActionComponent();
+	Super::EndPlay(EndPlayReason);
 }
 
 void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -95,6 +95,11 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	LoopingCues.OnCueAddedDelegate.BindUObject(this, &UNexusActionComponent::OnCueAdded);
 	LoopingCues.OnCueRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnCueRemoved);
 
+	for (const FNexusLoopingCue& LoopingCue : LoopingCues.Items)
+	{
+		LoopingCues.OnAdded(LoopingCue);
+	}
+
 	if (GetOwner()->HasAuthority())
 	{
 		AuthRemoveAllActions();
@@ -112,7 +117,6 @@ void UNexusActionComponent::SetupActionComponent(AActor* InAgentActor)
 	}
 }
 
-
 void UNexusActionComponent::TeardownActionComponent()
 {
 	bSetupCompleted = false;
@@ -120,6 +124,7 @@ void UNexusActionComponent::TeardownActionComponent()
 	{
 		AuthRemoveAllActions();
 		AuthRemoveAllProperties();
+		LoopingCues.RemoveAllLoopingCues();
 	}
 
 	if (OnActionComponentTeardownCompletedDelegate.IsBound())
@@ -594,8 +599,11 @@ void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANex
 
 void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
-	if (!CueClass || !Action)
+	check(Action);
+
+	if (!CueClass)
 	{
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("CueClass가 유효하지 않습니다"));
 		return;
 	}
 
@@ -628,8 +636,6 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 				}
 			});
 		}
-		
-		
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
@@ -737,8 +743,16 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 {
+	if (!GetAgentActor())
+	{
+		NX_LOG_SUB_FN(LogNexusCue, Verbose, TEXT("AgentActor가 유효하지 않습니다"));
+		return;
+	}
+
 	LocalCueCountMap.FindOrAdd(NexusLoopingCue.CueClass)++;
 	ANexusCue* CueActor = nullptr;
+
+
 	for (AActor* Child : GetAgentActor()->Children)
 	{
 		if (!Child)
@@ -784,6 +798,12 @@ void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 
 void UNexusActionComponent::OnCueRemoved(TSubclassOf<ANexusCue> CueClass)
 {
+	if (!GetAgentActor())
+	{
+		NX_LOG_SUB_FN(LogNexusCue, Verbose, TEXT("AgentActor가 유효하지 않습니다"));
+		return;
+	}
+	
 	for (AActor* Child : GetAgentActor()->Children)
 	{
 		if (!Child)

@@ -61,6 +61,7 @@ void FNexusActionDefContainer::AuthRemove(const FNexusActionDefHandle& Handle)
 		if (Items[i].Handle == Handle)
 		{
 			Items.RemoveAt(i);
+			OnRemoved(Items[i]);
 			break;
 		}
 	}
@@ -69,6 +70,10 @@ void FNexusActionDefContainer::AuthRemove(const FNexusActionDefHandle& Handle)
 
 void FNexusActionDefContainer::AuthRemoveAll()
 {
+	for (int32 i = 0; i < Items.Num(); i++)
+	{
+		OnRemoved(Items[i]);
+	}
 	Items.Empty();
 	MarkArrayDirty();
 }
