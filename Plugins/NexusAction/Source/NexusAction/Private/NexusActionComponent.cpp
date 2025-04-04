@@ -602,28 +602,33 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 	if (!IsOwnerActorAuthoritative() && CurrentPredictionTag.IsPredictable())
 	{
 		InternalTriggerCue(CueClass, TargetDataHandle);
-		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
-		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
+		if (CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping)
 		{
-			int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-			Count--;
-			if (Count <= 0)
+			FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+			PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
 			{
-				LocalCueCountMap.Remove(CueClass);
-				LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-			}
-		});
+				int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+				Count--;
+				if (Count <= 0)
+				{
+					LocalCueCountMap.Remove(CueClass);
+					LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+				}
+			});
 
-		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
-		{
-			int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-			Count--;
-			if (Count <= 0)
+			PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
 			{
-				LocalCueCountMap.Remove(CueClass);
-				LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-			}
-		});
+				int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+				Count--;
+				if (Count <= 0)
+				{
+					LocalCueCountMap.Remove(CueClass);
+					LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+				}
+			});
+		}
+		
+		
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
@@ -642,7 +647,7 @@ void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<AN
 void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
 {
 	check(CueClass);
-	
+
 	ANexusCue* CueActor = CueClass.GetDefaultObject();
 	ENexusCueType CueType = CueActor->GetCueType();
 	if (CueType == ENexusCueType::Looping) // Looping일 경우에만 인스턴스를 만들고 컨테이너로 관리합니다. (State가 필요하고, 예측 및 롤백 로직이 필요하기 때문)

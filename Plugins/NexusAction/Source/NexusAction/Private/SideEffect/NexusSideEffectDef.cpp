@@ -56,9 +56,10 @@ void FNexusSideEffectDefContainer::Add(const FNexusSideEffectDef& SideEffectDef,
 	NewItem.PredictionTag = PredictionTag;
 	NewItem.SideEffectInstance->OnApplied(PredictionTag, bHasAuthority);
 
+	int32 Index = Items.Add(NewItem);
 	if (bHasAuthority && NewItem.SideEffectInstance->DurationType != ESideEffectDurationType::Instant)
 	{
-		MarkItemDirty(Items.Add_GetRef(NewItem));
+		MarkItemDirty(Items[Index]);
 	}
 }
 
