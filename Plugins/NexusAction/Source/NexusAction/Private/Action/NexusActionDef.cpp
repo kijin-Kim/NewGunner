@@ -60,8 +60,8 @@ void FNexusActionDefContainer::AuthRemove(const FNexusActionDefHandle& Handle)
 	{
 		if (Items[i].Handle == Handle)
 		{
-			Items.RemoveAt(i);
 			OnRemoved(Items[i]);
+			Items.RemoveAt(i);
 			break;
 		}
 	}

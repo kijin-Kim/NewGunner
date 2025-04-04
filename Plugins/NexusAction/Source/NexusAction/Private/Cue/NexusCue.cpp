@@ -38,10 +38,6 @@ void FNexusLoopingCueContainer::AddLoopingCue(const FNexusLoopingCue& InLoopingC
 	{
 		MarkItemDirty(Items[Index]);
 	}
-	// else
-	// {
-	// 	MarkArrayDirty();
-	// }
 }
 
 void FNexusLoopingCueContainer::RemoveLoopingCue(TSubclassOf<ANexusCue> InCueClass, bool bHasAuthority)

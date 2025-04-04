@@ -608,34 +608,38 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 	}
 
 
-	if (!IsOwnerActorAuthoritative() && CurrentPredictionTag.IsPredictable())
+	if (!IsOwnerActorAuthoritative())
 	{
-		InternalTriggerCue(CueClass, TargetDataHandle);
-		if (CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping)
+		if(CurrentPredictionTag.IsPredictable())
 		{
-			FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
-			PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
+			InternalTriggerCue(CueClass, TargetDataHandle);
+			if (CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping)
 			{
-				int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-				Count--;
-				if (Count <= 0)
+				FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+				PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
 				{
-					LocalCueCountMap.Remove(CueClass);
-					LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-				}
-			});
+					int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+					Count--;
+					if (Count <= 0)
+					{
+						LocalCueCountMap.Remove(CueClass);
+						LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+					}
+				});
 
-			PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
-			{
-				int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-				Count--;
-				if (Count <= 0)
+				PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
 				{
-					LocalCueCountMap.Remove(CueClass);
-					LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-				}
-			});
+					int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
+					Count--;
+					if (Count <= 0)
+					{
+						LocalCueCountMap.Remove(CueClass);
+						LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
+					}
+				});
+			}
 		}
+	
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
