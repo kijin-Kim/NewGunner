@@ -14,3 +14,4 @@ void UGunnerAnimInstance::ClearLocomotionAnimSet()
 {
 	LocomotionAnimSet = DefaultLocomotionAnimSet;
 }
+
