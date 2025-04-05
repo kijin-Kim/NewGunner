@@ -101,6 +101,10 @@ public:
 	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
 	void InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
+	static void BP_AuthEndCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass);
+	void AuthEndCue(TSubclassOf<ANexusCue> CueClass);
+
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	bool IsAgentLocallyControlled() const;
 	bool IsAgentLocallyPlayerControlled() const;
@@ -172,7 +176,7 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 
-	
+	ANexusCue* GetLoopingCueActor(TSubclassOf<ANexusCue> CueClass) const;
 
 public:
 	FNexusPredictionTag CurrentPredictionTag;

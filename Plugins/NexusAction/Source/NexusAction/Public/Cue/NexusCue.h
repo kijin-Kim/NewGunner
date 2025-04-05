@@ -84,6 +84,9 @@ public:
 	void CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
 	void CallOnBecomeRelevant();
 	void CallOnCeaseRelevant();
+	
+	UFUNCTION(BlueprintCallable)
+	void EndCue() const;
 
 	ENexusCueType GetCueType() const { return CueType; }
 
@@ -99,7 +102,7 @@ protected:
 	virtual void OnBecomeRelevant();
 	virtual void OnCeaseRelevant();
 
-	void EndCue() const;
+	
 
 private:
 

@@ -610,7 +610,7 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 
 	if (!IsOwnerActorAuthoritative())
 	{
-		if(CurrentPredictionTag.IsPredictable())
+		if (CurrentPredictionTag.IsPredictable())
 		{
 			InternalTriggerCue(CueClass, TargetDataHandle);
 			if (CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping)
@@ -639,7 +639,6 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 				});
 			}
 		}
-	
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
@@ -678,6 +677,28 @@ void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, 
 		NewLoopingCue.TargetDataHandle = TargetDataHandle;
 		LoopingCues.AddLoopingCue(NewLoopingCue, AgentInfo->IsOwnerActorAuthoritative());
 	}
+}
+
+void UNexusActionComponent::BP_AuthEndCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass)
+{
+	check(Action);
+	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
+	check(ActorOwner);
+	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
+	{
+		ActionComponent->AuthEndCue(CueClass);
+	}
+}
+
+void UNexusActionComponent::AuthEndCue(TSubclassOf<ANexusCue> CueClass)
+{
+	check(CueClass);
+	check(CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping);
+	check(GetOwner()->HasAuthority());
+	
+	ANexusCue* CueActor = GetLoopingCueActor(CueClass);
+	check(CueActor);
+	CueActor->EndCue();
 }
 
 bool UNexusActionComponent::IsAgentLocallyControlled() const
@@ -754,28 +775,7 @@ void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 	}
 
 	LocalCueCountMap.FindOrAdd(NexusLoopingCue.CueClass)++;
-	ANexusCue* CueActor = nullptr;
-
-
-	for (AActor* Child : GetAgentActor()->Children)
-	{
-		if (!Child)
-		{
-			continue;
-		}
-
-		if (!Child->IsA(NexusLoopingCue.CueClass))
-		{
-			continue;
-		}
-
-		if (ANexusCue* ChildCue = Cast<ANexusCue>(Child))
-		{
-			check(ChildCue->GetCueType() == ENexusCueType::Looping);
-			CueActor = ChildCue;
-			break;
-		}
-	}
+	ANexusCue* CueActor = GetLoopingCueActor(NexusLoopingCue.CueClass);
 
 	if (!CueActor)
 	{
@@ -802,33 +802,11 @@ void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 
 void UNexusActionComponent::OnCueRemoved(TSubclassOf<ANexusCue> CueClass)
 {
-	if (!GetAgentActor())
+	if (ANexusCue* CueActor = GetLoopingCueActor(CueClass))
 	{
-		NX_LOG_SUB_FN(LogNexusCue, Verbose, TEXT("AgentActor가 유효하지 않습니다"));
-		return;
+		CueActor->CallOnCeaseRelevant();
+		CueActor->Destroy();
 	}
-	
-	for (AActor* Child : GetAgentActor()->Children)
-	{
-		if (!Child)
-		{
-			continue;
-		}
-
-		if (!Child->IsA(CueClass))
-		{
-			continue;
-		}
-
-		if (ANexusCue* ChildCue = Cast<ANexusCue>(Child))
-		{
-			check(ChildCue->GetCueType() == ENexusCueType::Looping);
-			ChildCue->CallOnCeaseRelevant();
-			ChildCue->Destroy();
-			return;
-		}
-	}
-	checkNoEntry();
 }
 
 void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
@@ -986,6 +964,34 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 	check(ActionDef->ActionInstance);
 	ActionDef->OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
 	ActionDef->ActionInstance->CallOnTriggerAction();
+}
+
+ANexusCue* UNexusActionComponent::GetLoopingCueActor(TSubclassOf<ANexusCue> CueClass) const
+{
+	if (!GetAgentActor())
+	{
+		return nullptr;
+	}
+
+	for (AActor* Child : GetAgentActor()->Children)
+	{
+		if (!Child)
+		{
+			continue;
+		}
+
+		if (!Child->IsA(CueClass))
+		{
+			continue;
+		}
+
+		if (ANexusCue* ChildCue = Cast<ANexusCue>(Child))
+		{
+			check(ChildCue->GetCueType() == ENexusCueType::Looping);
+			return ChildCue;
+		}
+	}
+	return nullptr;
 }
 
 

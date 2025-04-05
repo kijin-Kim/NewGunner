@@ -111,6 +111,12 @@ void ANexusCue::CallOnCeaseRelevant()
 	BP_OnCeaseRelevant();
 }
 
+void ANexusCue::EndCue() const
+{
+	check(HasAuthority());
+	OnDurationExpiredDelegate.ExecuteIfBound();
+}
+
 void ANexusCue::OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
 {
 	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 트리거"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
@@ -124,10 +130,4 @@ void ANexusCue::OnBecomeRelevant()
 void ANexusCue::OnCeaseRelevant()
 {
 	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 비활성화"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
-}
-
-void ANexusCue::EndCue() const
-{
-	check(HasAuthority());
-	OnDurationExpiredDelegate.ExecuteIfBound();
 }
