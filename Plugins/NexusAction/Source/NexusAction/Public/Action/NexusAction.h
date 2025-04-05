@@ -55,6 +55,7 @@ public:
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
+	
 	void SetPrimaryPredictionTag(FNexusPredictionTag InPredictionTag) { PrimaryPredictionTag = InPredictionTag; }
 	FNexusPredictionTag GetPrimaryPredictionTag() const { return PrimaryPredictionTag; }
 	bool ShouldTriggerOnAdded() const { return bShouldTriggerOnAdded; }
