@@ -82,7 +82,7 @@ class NEXUSACTION_API ANexusCue : public AActor
 public:
 	ANexusCue();
 	void CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
-	void CallOnBecomeRelevant();
+	void CallOnBecomeRelevant(const FNexusTargetDataHandle& InTargetDataHandle);
 	void CallOnCeaseRelevant();
 	
 	UFUNCTION(BlueprintCallable)

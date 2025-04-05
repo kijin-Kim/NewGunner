@@ -695,10 +695,12 @@ void UNexusActionComponent::AuthEndCue(TSubclassOf<ANexusCue> CueClass)
 	check(CueClass);
 	check(CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping);
 	check(GetOwner()->HasAuthority());
-	
+
 	ANexusCue* CueActor = GetLoopingCueActor(CueClass);
-	check(CueActor);
-	CueActor->EndCue();
+	if (CueActor)
+	{
+		CueActor->EndCue();
+	}
 }
 
 bool UNexusActionComponent::IsAgentLocallyControlled() const
@@ -786,7 +788,7 @@ void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 	}
 
 
-	CueActor->CallOnBecomeRelevant();
+	CueActor->CallOnBecomeRelevant(NexusLoopingCue.TargetDataHandle);
 	if (IsOwnerActorAuthoritative())
 	{
 		CueActor->OnDurationExpiredDelegate.BindWeakLambda(this, [this, NexusLoopingCue]()

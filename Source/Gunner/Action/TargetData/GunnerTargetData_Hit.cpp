@@ -19,6 +19,8 @@ bool FGunnerTargetData_Hit::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& b
 	{
 		HitResult.NetSerialize(Ar, Map, bOutSuccess);
 	}
-
+	
 	return !bOutSuccess || Ar.IsError();
+
+
 }

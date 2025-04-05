@@ -7,6 +7,7 @@
 #include "Cue/NexusCue.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
+#include "Gunner/Action/TargetData/GunnerTargetData_SoundBase.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GunnerBlueprintFunctionLibrary.generated.h"
 
@@ -58,6 +59,26 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	static FNexusTargetDataHandle MakeSoundBaseTargetData(USoundBase* Sound, USceneComponent* ContextComponent, FName ContextBoneName = NAME_None)
+	{
+		if (!Sound || !ContextComponent)
+		{
+			return FNexusTargetDataHandle();
+		}
+
+		TSharedPtr<FGunnerTargetData_SoundBase> SoundData = MakeShared<FGunnerTargetData_SoundBase>();
+		SoundData->SoundBase = Sound;
+		SoundData->ContextComponent = ContextComponent;
+		SoundData->ContextBoneName = ContextBoneName;
+
+		FNexusTargetDataHandle Handle;
+		Handle.SetData(SoundData);
+
+		return Handle;
+	}
+
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
 	static FGunnerTargetData_Actor GetAsActorTargetData(FNexusTargetDataHandle Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Actor::StaticStruct())
@@ -67,6 +88,18 @@ public:
 
 		return FGunnerTargetData_Actor();
 	}
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	static FGunnerTargetData_SoundBase GetAsSoundBaseTargetData(FNexusTargetDataHandle Handle)
+	{
+		if (Handle.GetData()->GetStructType() == FGunnerTargetData_SoundBase::StaticStruct())
+		{
+			return *StaticCastSharedPtr<FGunnerTargetData_SoundBase>(Handle.GetData());
+		}
+
+		return FGunnerTargetData_SoundBase();
+	}
+
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Lobby")
 	static bool IsTeamBoxSlotValid(const FTeamBoxSlot& Slot);
@@ -80,6 +113,4 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
 	static FGenericTeamId GetTeamId(APlayerState* PlayerState);
-
-	
 };
