@@ -13,7 +13,7 @@ AGunnerSpawnPointActor::AGunnerSpawnPointActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-#ifdef WITH_EDITORONLY_DATA
+#ifdef WITH_EDITOR
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetupAttachment(RootComponent);
 	SphereComponent->SetSphereRadius(SpawnRadius);
@@ -22,7 +22,7 @@ AGunnerSpawnPointActor::AGunnerSpawnPointActor()
 #endif
 }
 
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 void AGunnerSpawnPointActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);

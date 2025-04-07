@@ -48,6 +48,18 @@ struct FNexusPropertyMod
 	FGameplayTag InjectedValueTag;
 };
 
+USTRUCT()
+struct FNexusGameplayTagMod
+{
+	GENERATED_BODY()
+	
+
+	UPROPERTY(EditAnywhere, Category = "Tag Operation")
+	FGameplayTagContainer TagsToGrant;
+	UPROPERTY(EditAnywhere, Category = "Tag Operation")
+	FGameplayTagContainer TagsToRevoke;
+};
+
 /**
  * 
  */
@@ -57,6 +69,9 @@ class NEXUSACTION_API UNexusSideEffect : public UObject
 	GENERATED_BODY()
 
 public:
+#ifdef WITH_EDITOR
+	
+#endif
 	void OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority);
 	void OnTick(float DeltaTime, bool bHasAuthority);
 	void OnRemoved();
@@ -64,8 +79,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetInjectedValue(FGameplayTag Tag, float Value);
 
+	const TMap<FGameplayTag, float>& GetInjectedValues() const { return InjectedValues; }
+	float GetRemainingDuration() const { return RemainingDuration; }
+	float GetElapsedTime() const { return ElapsedTime; }
+	int32 GetAppliedCount() const { return AppliedCount; }
+
 private:
-	void ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
+	void ApplyPropertyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
+	void ApplyTagModifier(const FNexusGameplayTagMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
 	void ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority);
 
 public:
@@ -77,14 +98,18 @@ public:
 	float Interval;
 
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Property")
 	TArray<FNexusPropertyMod> Modifiers;
 
-	float RemainingDuration = 0.0f;
-	float ElapsedTime = 0.0f;
+	UPROPERTY(EditAnywhere, Category = "GameplayTag")
+	TArray<FNexusGameplayTagMod> TagModifiers;
+
 
 private:
 	TMap<FGameplayTag, float> InjectedValues;
-
 	TArray<FNexusPropertyOperationHandle> OperationHandles;
+	
+	float RemainingDuration = 0.0f;
+	float ElapsedTime = 0.0f;
+	int32 AppliedCount;
 };

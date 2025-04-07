@@ -86,10 +86,6 @@ UGunnerSlotManagerComponent::UGunnerSlotManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	SlotItems.SetNum(static_cast<int>(EGunnerSlotType::Num));
-	if (HasAnyFlags(RF_ClassDefaultObject))
-	{
-		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
-	}
 }
 
 #if WITH_EDITOR

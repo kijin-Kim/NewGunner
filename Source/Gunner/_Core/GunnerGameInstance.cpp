@@ -6,13 +6,16 @@
 #include "MoviePlayer.h"
 #include "NexusPrediction.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/Slot/GunnerSlotManagerComponent.h"
 
 void UGunnerGameInstance::Init()
 {
 	Super::Init();
 	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
 	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
+	AHUD::OnShowDebugInfo.AddStatic(&UGunnerSlotManagerComponent::OnShowDebugInfo);
 }
 
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)

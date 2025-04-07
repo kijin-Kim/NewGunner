@@ -18,10 +18,10 @@ UGunnerEquipmentManagerComponent::UGunnerEquipmentManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 
-	if (HasAnyFlags(RF_ClassDefaultObject))
-	{
-		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
-	}
+	// if (HasAnyFlags(RF_ClassDefaultObject))
+	// {
+	// 	AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
+	// }
 
 	EquipmentSlots.SetNum(static_cast<uint8>(EEquipmentType::EquipmentTypeCount));
 }

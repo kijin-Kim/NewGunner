@@ -20,15 +20,17 @@ public:
 	void SetLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet);
 	UFUNCTION(BlueprintCallable)
 	void ClearLocomotionAnimSet();
-	UGunnerLocomotionAnimSet* GetLocomotionAnimSet() const { return LocomotionAnimSet; }
+	UGunnerLocomotionAnimSet* GetLocomotionAnimSet() const;
 
-	
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
 private:
-	// 게임 스레드 변수. 워커 스레드에서 직접 접근하면 안됨.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerLocomotionAnimSet> DefaultLocomotionAnimSet;
 	// 게임 스레드 변수. 워커 스레드에서 직접 접근하면 안됨.
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess	= "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGunnerLocomotionAnimSet> GameThreadLocomotionAnimSet;
+	// 워커 스레드 변수. 게임 스레드에서 직접 쓰면 안됨.
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerLocomotionAnimSet> LocomotionAnimSet;
-	
 };

@@ -107,6 +107,19 @@ FNexusActionDefHandle FNexusActionDefContainer::FindActionDefHandle(TSubclassOf<
 	return FNexusActionDefHandle();
 }
 
+TArray<FNexusActionDef> FNexusActionDefContainer::GetAllTriggeringActionDefs() const
+{
+	TArray<FNexusActionDef> TriggeringActionDefs;
+	for (const FNexusActionDef& Item : Items)
+	{
+		if (Item.ActionInstance && Item.ActionInstance->IsTriggering())
+		{
+			TriggeringActionDefs.Add(Item);
+		}
+	}
+	return TriggeringActionDefs;
+}
+
 bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusActionDef, FNexusActionDefContainer>(Items, DeltaParms, *this);

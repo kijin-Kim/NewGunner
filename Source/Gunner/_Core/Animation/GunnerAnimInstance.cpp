@@ -3,15 +3,24 @@
 
 #include "GunnerAnimInstance.h"
 
-#include "GunnerLocomotionAnimSet.h"
-
 void UGunnerAnimInstance::SetLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet)
 {
-	LocomotionAnimSet = InLocomotionAnimSet;
+	GameThreadLocomotionAnimSet = InLocomotionAnimSet;
 }
 
 void UGunnerAnimInstance::ClearLocomotionAnimSet()
 {
-	LocomotionAnimSet = DefaultLocomotionAnimSet;
+	GameThreadLocomotionAnimSet = DefaultLocomotionAnimSet;
 }
 
+UGunnerLocomotionAnimSet* UGunnerAnimInstance::GetLocomotionAnimSet() const
+{
+	return GameThreadLocomotionAnimSet;
+}
+
+void UGunnerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	LocomotionAnimSet = GameThreadLocomotionAnimSet;
+	LocomotionAnimSet = LocomotionAnimSet ? LocomotionAnimSet : DefaultLocomotionAnimSet;
+}

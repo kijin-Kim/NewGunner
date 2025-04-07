@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "NexusAnimMontagePlayerComponent.generated.h"
 
+// TODO: NetSerialize구현을 통한 Atomic Replication
 USTRUCT()
 struct NEXUSACTION_API FNexusAnimMontageRepData
 {

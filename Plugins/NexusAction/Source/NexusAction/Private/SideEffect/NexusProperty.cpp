@@ -18,7 +18,7 @@ void UNexusProperty::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UNexusProperty, Tag);
-	DOREPLIFETIME(UNexusProperty, StaticValue);
+	DOREPLIFETIME(UNexusProperty, StaticValue); // TODO: OwnerOnly
 	DOREPLIFETIME_CONDITION(UNexusProperty, DynamicValue, COND_SimulatedOnly);
 }
 
@@ -81,7 +81,7 @@ void UNexusProperty::Evaluate()
 	bIsDirty = false;
 	if (OldValue != DynamicValue)
 	{
-		NX_VLOG_SUB(Cast<AActor>(GetOuter()), LogNexusProperty, Log, TEXT("프로퍼티 [%s] 값 변경 %f -> %f"), *Tag.ToString(), OldValue, DynamicValue);
+		NX_VLOG_SUB(Cast<AActor>(GetOuter()), LogNexusProperty, Log, TEXT("프로퍼티 [%s] 값 변경 %.2f -> %.2f"), *Tag.ToString(), OldValue, DynamicValue);
 		OnChangedDelegate.Broadcast(OldValue, DynamicValue);
 	}
 }

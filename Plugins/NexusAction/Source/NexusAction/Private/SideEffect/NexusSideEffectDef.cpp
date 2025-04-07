@@ -117,7 +117,7 @@ void FNexusSideEffectDefContainer::Tick(float DeltaTime)
 		{
 			ESideEffectDurationType DurationType = SideEffectDef.SideEffectInstance->DurationType;
 			if ((DurationType == ESideEffectDurationType::Instant && bHasAuthority)
-				|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDef.SideEffectInstance->RemainingDuration <= 0.0f)))
+				|| ((DurationType == ESideEffectDurationType::Duration) && (SideEffectDef.SideEffectInstance->GetRemainingDuration() <= 0.0f)))
 			{
 				SideEffectDef.SideEffectInstance->OnRemoved();
 				return true;

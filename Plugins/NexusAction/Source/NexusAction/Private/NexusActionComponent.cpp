@@ -29,17 +29,31 @@ UNexusActionComponent::UNexusActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
 	AgentInfo = MakeShared<FNexusAgentInfo>();
-	if (HasAnyFlags(RF_ClassDefaultObject))
+}
+
+void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+{
+	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
+	if (!DebugTarget)
 	{
-		AHUD::OnShowDebugInfo.AddStatic(&ThisClass::OnShowDebugInfo);
+		return;
+	}
+
+	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(DebugTarget))
+	{
+		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
 	}
 }
 
 void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
-	for (const FNexusActionDef& ActionDef : ActionDefs.Items)
+	TagContainer.Reset();
+	for (const auto& [Tag,Count] : DynamicTagCountMap)
 	{
-		TagContainer.AppendTags(ActionDef.OwnedTags);
+		if (Count > 0)
+		{
+			TagContainer.AddTag(Tag);
+		}
 	}
 }
 
@@ -57,6 +71,7 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
 	DOREPLIFETIME(UNexusActionComponent, LoopingCues);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
+	DOREPLIFETIME_CONDITION_NOTIFY(UNexusActionComponent, TagCountMap, COND_None, REPNOTIFY_Always);
 }
 
 bool UNexusActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -144,7 +159,23 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		}
 	}
 	SideEffectDefs.Tick(DeltaTime);
+
+	if (bIsTagCountMapDirty)
+	{
+		bIsTagCountMapDirty = false;
+		DynamicTagCountMap.Empty();
+		for (const FNexusGameplayTagCount& TagCount : TagCountMap)
+		{
+			DynamicTagCountMap.Add(TagCount.Tag) = TagCount.Count;
+		}
+
+		for (const auto& [Tag, Count] : TagCountDeltas)
+		{
+			DynamicTagCountMap.FindOrAdd(Tag) += Count;
+		}
+	}
 }
+
 
 FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef& ActionDef)
 {
@@ -719,20 +750,6 @@ bool UNexusActionComponent::IsOwnerActorAuthoritative() const
 }
 
 
-void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
-{
-	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
-	if (!DebugTarget)
-	{
-		return;
-	}
-
-	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(DebugTarget))
-	{
-		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
-	}
-}
-
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
 	if (!AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
@@ -746,25 +763,79 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	if (HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
 	{
 		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
-		DisplayDebugManager.SetDrawColor(FColor::Orange);
+		DisplayDebugManager.SetDrawColor(FColor::White);
 		FGameplayTagContainer OwnedTags;
-		GetOwnedGameplayTags(OwnedTags);
-		for (FGameplayTag Tag : OwnedTags)
+
+		TMap<FGameplayTag, FString> PropertyLogs;
+
+		for (const FNexusSideEffectDef& Item : SideEffectDefs.Items)
 		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 중인 태그: %s"), *Tag.ToString()));
+			if (Item.SideEffectInstance->DurationType == ESideEffectDurationType::Instant)
+			{
+				continue;
+			}
+
+			for (const FNexusPropertyMod& Mod : Item.SideEffectInstance->Modifiers)
+			{
+				float Value = 0.0f;
+				switch (Mod.CalculationType)
+				{
+				case ENexusPropertyCalculationType::Direct:
+					Value = Mod.DirectValue;
+					break;
+				case ENexusPropertyCalculationType::FromOutside:
+					{
+						const float* ValuePtr = Item.SideEffectInstance->GetInjectedValues().Find(Mod.InjectedValueTag);
+						Value = ValuePtr ? *ValuePtr : 0.0f;
+						break;
+					}
+
+				case ENexusPropertyCalculationType::PropertyBased:
+					{
+						UNexusProperty* Property = GetProperty(Mod.PropertyTag);
+						Value = Property ? Property->GetDynamicValue() : 0.0f;
+						break;
+					}
+				default:
+					continue;
+				}
+				FString& LogString = PropertyLogs.FindOrAdd(Mod.PropertyTag);
+				UEnum* StaticOperatorEnum = StaticEnum<ENexusPropertyOperator>();
+				check(StaticOperatorEnum);
+				FString EffectNameString = FString::Printf(TEXT("%s (%s) - "), *Item.SideEffectInstance->GetName(), *Item.Handle.ToString());
+				FString ModString = FString::Printf(TEXT("%s %.2f "), *StaticOperatorEnum->GetNameStringByValue(static_cast<int64>(Mod.Operator)), Value);
+				FString TimeString = FString::Printf(TEXT("[%.2f"), Item.SideEffectInstance->GetElapsedTime());
+				FString DurationString = Item.SideEffectInstance->DurationType == ESideEffectDurationType::Infinite
+					                         ? TEXT("/INF]")
+					                         : FString::Printf(TEXT("/%.2f]"), Item.SideEffectInstance->Duration);
+				FString IntervalString = Item.SideEffectInstance->Interval <= 0.0f
+					                         ? TEXT("")
+					                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), Item.SideEffectInstance->Interval, Item.SideEffectInstance->GetAppliedCount());
+				LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString + TEXT("\n");
+			}
 		}
 
 
 		for (UNexusProperty* Property : Properties)
 		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: 정적 값: %f, 동적 값: %f"), *Property->GetTag().ToString(), Property->GetStaticValue(), Property->GetDynamicValue()));
+			DisplayDebugManager.SetDrawColor(FColor::White);
+			FString TagString = Property->GetTag().ToString();
+			check(TagString.RemoveFromStart(TEXT("Property.")));
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (정적 값: %.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()));
+			DisplayDebugManager.SetDrawColor(FColor::Orange);
+			if (PropertyLogs.Contains(Property->GetTag()))
+			{
+				DisplayDebugManager.DrawString(PropertyLogs[Property->GetTag()], 4.0f);
+			}
 		}
 
-
-		for (const FNexusSideEffectDef& Item : SideEffectDefs.Items)
+		FString TagString;
+		for (const auto& [Tag, Count] : DynamicTagCountMap)
 		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("사이드 이펙트: %s"), *Item.SideEffectClass->GetName()));
+			DisplayDebugManager.SetDrawColor(FColor::White);
+			TagString += FString::Printf(TEXT("%s(%d) "), *Tag.ToString(), Count);
 		}
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
 	}
 }
 
@@ -892,10 +963,16 @@ void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, con
 
 void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action)
 {
-	if (FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle))
+	if (IsOwnerActorAuthoritative())
 	{
-		ActionDef->OwnedTags.Reset();
+		if (FNexusSideEffectDefHandle* TagSideEffectHandle = TagSideEffectMap.Find(ActionDefHandle))
+		{
+			SideEffectDefs.Remove(*TagSideEffectHandle);
+			TagSideEffectMap.Remove(ActionDefHandle);
+		}
 	}
+
+
 	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 종료"), *Action->GetName());
 }
 
@@ -905,8 +982,8 @@ bool UNexusActionComponent::InternalCanTriggerAction(const FNexusActionDef& Acti
 	bool bMetTriggerCondition = ActionDef.ActionInstance->CallOnCanTriggerAction();
 	FGameplayTagContainer OwnedTags;
 	GetOwnedGameplayTags(OwnedTags);
-	bool bHasRequiredTags = OwnedTags.HasAll(ActionDef.ActionInstance->GetShouldHaveTags());
-	bool bDontHaveForbiddenTags = !OwnedTags.HasAny(ActionDef.ActionInstance->GetShouldNotHaveTags());
+	bool bHasRequiredTags = OwnedTags.HasAllExact(ActionDef.ActionInstance->GetShouldHaveTags());
+	bool bDontHaveForbiddenTags = !OwnedTags.HasAnyExact(ActionDef.ActionInstance->GetShouldNotHaveTags());
 
 	if (!bShowActionFailedReason)
 	{
@@ -964,9 +1041,27 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 {
 	NX_LOG_SUB(LogNexusAction, Log, TEXT( "액션 [%s] 실행" ), *ActionDef->ActionInstance->GetName());
 	check(ActionDef->ActionInstance);
-	ActionDef->OwnedTags.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
 	ActionDef->ActionInstance->CallOnTriggerAction();
+	if (IsOwnerActorAuthoritative())
+	{
+		LocalOnTriggerActionConfirmed(ActionDef->Handle, ActionDef->ActionInstance->GetPrimaryPredictionTag());
+	}
+
+	if (!ActionDef->ActionInstance->GetActionOwnedTags().IsEmpty())
+	{
+		FNexusSideEffectDef TagSideEffectDef = MakeSideEffectDef(ActionDef->ActionInstance, UNexusSideEffect::StaticClass());
+		TagSideEffectDef.SideEffectInstance->DurationType = ESideEffectDurationType::Infinite;
+		FNexusGameplayTagMod TagMod;
+		TagMod.TagsToGrant.AppendTags(ActionDef->ActionInstance->GetActionOwnedTags());
+		TagSideEffectDef.SideEffectInstance->TagModifiers.Add(TagMod);
+		TriggerSideEffectByDef(TagSideEffectDef, ActionDef->ActionInstance);
+		if (IsOwnerActorAuthoritative())
+		{
+			TagSideEffectMap.Add({ActionDef->Handle, TagSideEffectDef.Handle});
+		}
+	}
 }
+
 
 ANexusCue* UNexusActionComponent::GetLoopingCueActor(TSubclassOf<ANexusCue> CueClass) const
 {
@@ -996,6 +1091,97 @@ ANexusCue* UNexusActionComponent::GetLoopingCueActor(TSubclassOf<ANexusCue> CueC
 	return nullptr;
 }
 
+void UNexusActionComponent::OnRep_TagCountMap()
+{
+	bIsTagCountMapDirty = true;
+}
+
+void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
+{
+	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 승인 완료"), *ActionDefHandle.ToString());
+	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
+	check(ActionDef);
+	const FGameplayTagContainer& CancelTags = ActionDef->ActionInstance->GetActionCancelTags();
+	if (!CancelTags.IsEmpty())
+	{
+		TArray<FNexusActionDef> TriggeringActionDefs = ActionDefs.GetAllTriggeringActionDefs();
+		for (FNexusActionDef& TriggeringActionDef : TriggeringActionDefs)
+		{
+			if (TriggeringActionDef.ActionInstance->GetActionOwnedTags().HasAnyExact(CancelTags))
+			{
+				TriggeringActionDef.ActionInstance->CallOnEndAction();
+			}
+		}
+	}
+}
+
+void UNexusActionComponent::PushDynamicTag(const FGameplayTag& Tag)
+{
+	check(Tag.IsValid());
+	bIsTagCountMapDirty = true;
+
+	if (IsOwnerActorAuthoritative())
+	{
+		int32 Index = TagCountMap.Find(Tag);
+		if (Index == INDEX_NONE)
+		{
+			TagCountMap.Add({Tag, 1});
+			return;
+		}
+		if (++TagCountMap[Index].Count == 0)
+		{
+			TagCountMap.Remove(Tag);
+		}
+	}
+	else
+	{
+		if (!TagCountDeltas.Contains(Tag))
+		{
+			TagCountDeltas.Add(Tag, 1);
+			return;
+		}
+		if (++TagCountDeltas[Tag] == 0)
+		{
+			TagCountDeltas.Remove(Tag);
+		}
+	}
+}
+
+void UNexusActionComponent::PopDynamicTag(const FGameplayTag& Tag)
+{
+	check(Tag.IsValid());
+	bIsTagCountMapDirty = true;
+	if (IsOwnerActorAuthoritative())
+	{
+		int32 Index = TagCountMap.Find(Tag);
+		if (Index == INDEX_NONE)
+		{
+			TagCountMap.Add({Tag, -1});
+			return;
+		}
+		if (--TagCountMap[Index].Count == 0)
+		{
+			TagCountMap.Remove(Tag);
+		}
+	}
+	else
+	{
+		if (!TagCountDeltas.Contains(Tag))
+		{
+			TagCountDeltas.Add(Tag, -1);
+			return;
+		}
+		if (--TagCountDeltas[Tag] == 0)
+		{
+			TagCountDeltas.Remove(Tag);
+		}
+	}
+}
+
+void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
+{
+	LocalOnTriggerActionConfirmed(ActionDefHandle, PredictionTag);
+}
 
 void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
@@ -1181,6 +1367,7 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDe
 		return;
 	}
 
+	ClientTriggerActionRequestSucceeded(ActionDefHandle, PredictionTag);
 	FNexusPredictionScope PredictionScope(*this, PredictionTag);
 	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
 	LocalTriggerAction(ActionDef);

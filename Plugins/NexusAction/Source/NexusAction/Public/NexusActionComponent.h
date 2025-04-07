@@ -25,6 +25,42 @@ class UNexusSideEffect;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag& /* Tag */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag& /* Tag */);
+
+USTRUCT()
+struct FNexusGameplayTagCount
+{
+	GENERATED_BODY()
+
+	FNexusGameplayTagCount() = default;
+
+	FNexusGameplayTagCount(const FGameplayTag& InTag)
+		: Tag(InTag)
+	{
+	}
+
+	FNexusGameplayTagCount(const FGameplayTag& InTag, int32 InCount)
+		: Tag(InTag)
+		  , Count(InCount)
+	{
+	}
+
+	bool operator==(const FNexusGameplayTagCount& Other) const
+	{
+		return Tag == Other.Tag;
+	}
+
+	bool operator!=(const FNexusGameplayTagCount& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	UPROPERTY()
+	FGameplayTag Tag;
+	UPROPERTY()
+	int32 Count = 0;
+};
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -34,6 +70,8 @@ class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGa
 
 public:
 	UNexusActionComponent();
+
+	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -45,7 +83,9 @@ public:
 	void AuthRemoveAllCues();
 	void TeardownActionComponent();
 
-	virtual void OnSetupActionComponent() {};
+	virtual void OnSetupActionComponent()
+	{
+	};
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -108,9 +148,10 @@ public:
 	bool IsAgentLocallyControlled() const;
 	bool IsAgentLocallyPlayerControlled() const;
 	bool IsOwnerActorAuthoritative() const;
-	
+
 	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }
 	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
+	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->OwnerActor.Get() : nullptr; }
 
 
 	void AuthAddProperty(FGameplayTag Tag, float Value);
@@ -135,12 +176,12 @@ public:
 
 	void CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
 	void RemoveSetupCompletedDelegate(const void* Object);
-	
+
 	void AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
+
 private:
-	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 	void OnCueAdded(const FNexusLoopingCue& NexusLoopingCue);
@@ -168,7 +209,10 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
+	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	UFUNCTION(Reliable, Client)
 	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	
 
 	UFUNCTION(Reliable, Server)
 	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
@@ -180,18 +224,16 @@ private:
 public:
 	FNexusPredictionTag CurrentPredictionTag;
 
-	
-
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
-	
-	
+
+
 	bool bSetupCompleted = false;
 	FOnNexusActionComponentSetupCompletedSignature OnActionComponentSetupCompletedDelegate;
 	FOnNexusActionComponentTeardownCompletedSignature OnActionComponentTeardownCompletedDelegate;
-	
-	
+
+
 	int32 ActionScopeLockCount = 0;
 
 	struct FNexusPendingAddActionInfo
@@ -287,6 +329,28 @@ private:
 	UPROPERTY(Replicated)
 	FNexusLoopingCueContainer LoopingCues;
 	TMap<TSubclassOf<ANexusCue>, int32> LocalCueCountMap;
+
+
+	UFUNCTION()
+	void OnRep_TagCountMap();
+
+	UPROPERTY(ReplicatedUsing = OnRep_TagCountMap)
+	TArray<FNexusGameplayTagCount> TagCountMap;
+	TMap<FGameplayTag, int32> TagCountDeltas; // 곱셈, 나눗셈 연산이 없기 때문에 단순히 카운트로 관리
+
+	TMap<FGameplayTag, int32> DynamicTagCountMap;
+
+
+	TMap<FNexusActionDefHandle, FNexusSideEffectDefHandle> TagSideEffectMap;
+
+	bool bIsTagCountMapDirty = false;
+
+	void LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	
+
+public:
+	void PushDynamicTag(const FGameplayTag& Tag);
+	void PopDynamicTag(const FGameplayTag& Tag);
 };
 
 struct FNexusActionListScopeLock

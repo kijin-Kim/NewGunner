@@ -42,6 +42,7 @@ struct FNexusSideEffectDef : public FFastArraySerializerItem
 
 	UPROPERTY()
 	FNexusPredictionTag PredictionTag;
+	
 };
 
 USTRUCT()

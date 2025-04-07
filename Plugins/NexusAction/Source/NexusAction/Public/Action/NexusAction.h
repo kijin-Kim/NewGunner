@@ -53,6 +53,7 @@ public:
 	ENexusActionNetMethod GetActionNetMethod() const { return ActionNetMethod; }
 	const FGameplayTagContainer& GetActionTriggerEventTags() const { return ActionTriggerEventTags; }
 	const FGameplayTagContainer& GetActionOwnedTags() const { return ActionOwnedTags; }
+	const FGameplayTagContainer& GetActionCancelTags() const { return ActionCancelTags; }
 	const FGameplayTagContainer& GetShouldHaveTags() const { return ShouldHaveTags; }
 	const FGameplayTagContainer& GetShouldNotHaveTags() const { return ShouldNotHaveTags; }
 	
@@ -123,12 +124,15 @@ protected:
 	bool bShouldTriggerOnAdded = false;
 
 	
-	UPROPERTY(EditDefaultsOnly, Category = "ActionTag")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionTag")
 	FGameplayTagContainer ActionOwnedTags;
+	// 이 태그를 소유한 액션은 이 액션이 실행될 때 취소됩니다
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionTag")
+	FGameplayTagContainer ActionCancelTags;
 
-	UPROPERTY(EditDefaultsOnly, Category = "ActionTag|Requirement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionTag|Requirement")
 	FGameplayTagContainer ShouldHaveTags;
-	UPROPERTY(EditDefaultsOnly, Category = "ActionTag|Requirement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionTag|Requirement")
 	FGameplayTagContainer ShouldNotHaveTags;
 
 private:

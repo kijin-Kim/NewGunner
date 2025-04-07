@@ -50,9 +50,6 @@ struct NEXUSACTION_API FNexusActionDef : public FFastArraySerializerItem
 	// 액션이 추가될 시 로컬에서 각 에이전트마다 생성되는 액션 인스턴스
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UNexusAction> ActionInstance;
-
-	// 액션 실행시 소유하는 태그들
-	FGameplayTagContainer OwnedTags;
 	
 };
 
@@ -68,6 +65,7 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
 	bool HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const;
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
+	TArray<FNexusActionDef> GetAllTriggeringActionDefs() const;
 	
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	void OnAdded(FNexusActionDef& ActionDef) const;

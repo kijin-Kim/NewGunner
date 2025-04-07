@@ -18,13 +18,13 @@ enum class ENexusPropertyOperator : uint8
 	Subtract,
 	Multiply,
 	Divide,
-	Override
+	Override,
 };
 
 UENUM(BlueprintType)
 enum class ENexusPropertyCalculationType : uint8
 {
-	None,
+	None, 
 	Direct,
 	FromOutside,
 	PropertyBased,

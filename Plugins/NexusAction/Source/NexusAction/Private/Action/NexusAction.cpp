@@ -55,6 +55,7 @@ void UNexusAction::CallOnEndAction()
 {
 	if (bIsTriggering)
 	{
+		bIsTriggering = false;
 		OnEndAction();
 		BP_OnEndAction();
 	}
@@ -86,11 +87,11 @@ void UNexusAction::OnTriggerAction()
 	}
 
 	bIsTriggering = true;
+	
 }
 
 void UNexusAction::OnEndAction()
 {
-	bIsTriggering = false;
 	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
 }
 

@@ -21,23 +21,15 @@ void UNexusSideEffect::OnTick(float DeltaTime, bool bHasAuthority)
 		RemainingDuration -= DeltaTime;
 	}
 
-	if (Interval <= 0.0f)
-	{
-		return;
-	}
-
-	float TimePaseedBeforeDuration = DeltaTime;
+	float TimePassedBeforDuration = DeltaTime;
 	if (RemainingDuration < 0.0f)
 	{
-		TimePaseedBeforeDuration += RemainingDuration;
+		TimePassedBeforDuration += RemainingDuration;
 	}
 
-	ElapsedTime += TimePaseedBeforeDuration;
-	if (ElapsedTime < Interval)
-	{
-		return;
-	}
-	int32 ApplyCount = ElapsedTime / Interval;
+	ElapsedTime += TimePassedBeforDuration;
+	int32 ApplyCount = Interval > 0.0f ? ElapsedTime / Interval : 0;
+	AppliedCount += ApplyCount;
 	ElapsedTime -= ApplyCount * Interval;
 
 	for (int32 i = 0; i < ApplyCount; ++i)
@@ -59,6 +51,21 @@ void UNexusSideEffect::OnRemoved()
 			ActionComponent->RemoveOperationByHandle(Modifier.PropertyTag, OperationHandle);
 		}
 	}
+
+	if (DurationType != ESideEffectDurationType::Instant || !ActionComponent->IsOwnerActorAuthoritative())
+	{
+		for (FNexusGameplayTagMod& TagMod : TagModifiers)
+		{
+			for (const FGameplayTag& Tag : TagMod.TagsToGrant)
+			{
+				ActionComponent->PopDynamicTag(Tag);
+			}
+			for (const FGameplayTag& Tag : TagMod.TagsToRevoke)
+			{
+				ActionComponent->PushDynamicTag(Tag);
+			}
+		}
+	}
 }
 
 void UNexusSideEffect::SetInjectedValue(FGameplayTag Tag, float Value)
@@ -66,7 +73,7 @@ void UNexusSideEffect::SetInjectedValue(FGameplayTag Tag, float Value)
 	InjectedValues.FindOrAdd(Tag, Value);
 }
 
-void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority)
+void UNexusSideEffect::ApplyPropertyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
 	AActor* ActorOwner = Cast<AActor>(GetOuter());
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);;
@@ -109,7 +116,7 @@ void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPr
 
 
 	if ((DurationType != ESideEffectDurationType::Instant && Interval <= 0.0f)
-		|| (PredictionTag.IsValid() && !ActorOwner->HasAuthority()))
+		|| (PredictionTag.IsPredictable() && !ActorOwner->HasAuthority()))
 	{
 		FNexusPropertyOperation NewOperation{DesiredValue, Modifier.Operator};
 		OperationHandles.Add(NewOperation.Handle);
@@ -123,10 +130,36 @@ void UNexusSideEffect::ApplyModifier(const FNexusPropertyMod& Modifier, FNexusPr
 	}
 }
 
+void UNexusSideEffect::ApplyTagModifier(const FNexusGameplayTagMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority)
+{
+	AActor* ActorOwner = Cast<AActor>(GetOuter());
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
+	check(ActionComponent);
+
+	if (!bHasAuthority && !PredictionTag.IsPredictable())
+	{
+		return;
+	}
+
+	for (const FGameplayTag& Tag : Modifier.TagsToGrant)
+	{
+		ActionComponent->PushDynamicTag(Tag);
+	}
+	for (const FGameplayTag& Tag : Modifier.TagsToRevoke)
+	{
+		ActionComponent->PopDynamicTag(Tag);
+	}
+}
+
 void UNexusSideEffect::ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority)
 {
 	for (const FNexusPropertyMod& Modifier : Modifiers)
 	{
-		ApplyModifier(Modifier, PredictionTag, bHasAuthority);
+		ApplyPropertyModifier(Modifier, PredictionTag, bHasAuthority);
+	}
+
+	for (const FNexusGameplayTagMod& TagMod : TagModifiers)
+	{
+		ApplyTagModifier(TagMod, PredictionTag, bHasAuthority);
 	}
 }
