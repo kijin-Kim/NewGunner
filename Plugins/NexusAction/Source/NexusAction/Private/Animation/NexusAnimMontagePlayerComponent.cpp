@@ -61,7 +61,6 @@ void UNexusAnimMontagePlayerComponent::StopMontage(UAnimMontage* AnimMontage, bo
 	}
 }
 
-
 FOnMontageEnded* UNexusAnimMontagePlayerComponent::GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson)
 {
 	UAnimInstance* AnimInstance = GetDesiredAnimInstance(bIsThirdPerson);

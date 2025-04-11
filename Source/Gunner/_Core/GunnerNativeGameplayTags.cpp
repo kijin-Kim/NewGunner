@@ -21,9 +21,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Ultimate, "Input.ActivateSlot.Ulti
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Damaged, "GameEvent.Damaged");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Property_SlotIndex, "Property.SlotIndex");
 UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_SlotIndex, "OperationValue.SlotIndex");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_Bullet, "Property.Weapon.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MagazineBullet, "Property.Weapon.MagazineBullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MaxBulletPerMagazine, "Property.Weapon.MaxBulletPerMagazine");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Property_SlotIndex, "Property.SlotIndex");

@@ -24,8 +24,8 @@ protected:
 	virtual TArray<FNexusEventCallbackHandle> SetupEvents() override;
 
 private:
-
 	void Look(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage);
+
 
 private:
 	UPROPERTY(EditDefaultsOnly)

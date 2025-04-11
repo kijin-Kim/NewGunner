@@ -54,6 +54,7 @@ public:
 	float PlayMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
 	UFUNCTION(BlueprintCallable)
 	void StopMontage(UAnimMontage* AnimMontage, bool bIsThirdPerson);
+	
 	FOnMontageEnded* GetMontageEndedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson);
 	FOnMontageBlendingOutStarted* GetMontageBlendingOutStartedDelegate(UAnimMontage* AnimMontage, bool bIsThirdPerson);
 	

@@ -163,6 +163,7 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	if (bIsTagCountMapDirty)
 	{
 		bIsTagCountMapDirty = false;
+		TMap<FGameplayTag, int32> OldDynamicTagCountMap = DynamicTagCountMap;
 		DynamicTagCountMap.Empty();
 		for (const FNexusGameplayTagCount& TagCount : TagCountMap)
 		{
@@ -172,6 +173,22 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		for (const auto& [Tag, Count] : TagCountDeltas)
 		{
 			DynamicTagCountMap.FindOrAdd(Tag) += Count;
+		}
+
+		for (const auto& [OldTag, OldCount] : OldDynamicTagCountMap)
+		{
+			if (!DynamicTagCountMap.Contains(OldTag))
+			{
+				OnGameplayTagRemovedDelegate.Broadcast(OldTag);
+			}
+		}
+
+		for (const auto& [NewTag, NewCount] : DynamicTagCountMap)
+		{
+			if (!OldDynamicTagCountMap.Contains(NewTag))
+			{
+				OnGameplayTagAddedDelegate.Broadcast(NewTag);
+			}
 		}
 	}
 }
@@ -398,12 +415,13 @@ void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDe
 		return;
 	}
 
-	if (RepDataDelegate->OnSyncDelegate.IsBound())
+	FNexusNetSyncDelegate CopiedDelegate = *RepDataDelegate;
+	NetSyncPointDelegates.Remove(Key);
+	if (CopiedDelegate.OnSyncDelegate.IsBound())
 	{
 		FNexusPredictionScope PredictionScope(*this, PredictionTag);
-		RepDataDelegate->OnSyncDelegate.Broadcast();
+		CopiedDelegate.OnSyncDelegate.Broadcast();
 	}
-	NetSyncPointDelegates.Remove(Key);
 }
 
 
@@ -418,8 +436,8 @@ void UNexusActionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle 
 	}
 
 	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
-	Delegate.ExecuteIfBound();
 	NetSyncPointDelegates.Remove(Key);
+	Delegate.ExecuteIfBound();
 }
 
 void UNexusActionComponent::ServerSendTargetData_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
@@ -432,12 +450,13 @@ void UNexusActionComponent::ServerSendTargetData_Implementation(FNexusActionDefH
 		return;
 	}
 
-	if (RepDataDelegate->OnSetDelegate.IsBound())
+	FNexusTargetDataDelegate CopiedDelegate = *RepDataDelegate;
+	TargetDataDelegates.Remove(Key);
+	if (CopiedDelegate.OnSetDelegate.IsBound())
 	{
 		FNexusPredictionScope PredictionScope(*this, PredictionTag);
-		RepDataDelegate->OnSetDelegate.Broadcast(TargetDataHandle);
+		CopiedDelegate.OnSetDelegate.Broadcast(TargetDataHandle);
 	}
-	TargetDataDelegates.Remove(Key);
 }
 
 void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
@@ -451,8 +470,8 @@ void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Ha
 	}
 
 	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
-	Delegate.ExecuteIfBound(RepDataDelegate->TargetDataHandle);
 	TargetDataDelegates.Remove(Key);
+	Delegate.ExecuteIfBound(RepDataDelegate->TargetDataHandle);
 }
 
 void UNexusActionComponent::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)

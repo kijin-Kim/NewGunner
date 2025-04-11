@@ -45,4 +45,5 @@ private:
 	TWeakObjectPtr<UScriptStruct> EventMesageType;
 	FGameplayTag EventTag;
 	bool bAutoCancel = true;
+
 };

@@ -25,8 +25,8 @@ class UNexusSideEffect;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag& /* Tag */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag& /* Tag */);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag&, Tag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag&, Tag);
 
 USTRUCT()
 struct FNexusGameplayTagCount
@@ -212,7 +212,7 @@ private:
 	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
 	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
-	
+
 
 	UFUNCTION(Reliable, Server)
 	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
@@ -345,12 +345,17 @@ private:
 
 	bool bIsTagCountMapDirty = false;
 
+
 	void LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
-	
 
 public:
 	void PushDynamicTag(const FGameplayTag& Tag);
 	void PopDynamicTag(const FGameplayTag& Tag);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnNexusGameplayTagAddedSignature OnGameplayTagAddedDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnNexusGameplayTagRemovedSignature OnGameplayTagRemovedDelegate;
 };
 
 struct FNexusActionListScopeLock

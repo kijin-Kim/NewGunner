@@ -61,6 +61,7 @@ TArray<FNexusEventCallbackHandle> UNexusAsync_WaitForEvent::SetupEvents()
 	};
 }
 
+
 DEFINE_FUNCTION(UNexusAsync_WaitForEvent::execGetMessage)
 {
 	Stack.MostRecentPropertyAddress = nullptr;
