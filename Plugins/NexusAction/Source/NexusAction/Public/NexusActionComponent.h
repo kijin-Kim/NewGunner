@@ -128,7 +128,8 @@ public:
 	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
-	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, const FNexusPredictionEvents::FPredictionEvent& InPredictionEvent = {});
+	void TriggerSideEffectByDef_Internal(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionEnded, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionFailed);
+	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {});
 
 
 	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();

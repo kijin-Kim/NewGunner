@@ -596,7 +596,7 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Actio
 	}
 }
 
-void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, const FNexusPredictionEvents::FPredictionEvent& InPredictionEvent)
+void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed)
 {
 	check(Action);
 
@@ -611,16 +611,24 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	if (!bIsOwnerActorAuthoritative && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
 	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
-		PredictionEvent = InPredictionEvent;
-		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle]()
+		if (OnPredictionEnded.IsBound())
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *SideEffectDefHandle.ToString());
+			PredictionEvent.OnPredictionEnded.Add(MoveTemp(OnPredictionEnded));
+		}
+		if (OnPredictionFailed.IsBound())
+		{
+			PredictionEvent.OnPredictionFailed.Add(MoveTemp(OnPredictionFailed));
+		}
+
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
+		{
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *NewSideEffectDef.SideEffectClass->GetName());
 			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 
-		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle]()
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *SideEffectDefHandle.ToString());
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *NewSideEffectDef.SideEffectClass->GetName());
 			SideEffectDefs.Remove(SideEffectDefHandle);
 		});
 	}

@@ -378,17 +378,14 @@ void UGunnerActionSlotActivation::OnTriggerAction()
 
 	SideEffectDef.SideEffectInstance->Modifiers.Add(Mod);
 
-	FNexusPredictionEvents::FPredictionEvent PredictionEvent;
-	PredictionEvent.OnPredictionFailed.AddLambda([this, SideEffectDefHandle = SideEffectDef.Handle]()
-	{
-		GR_VLOG_SUB(GetOwnerActor(), LogGunner, Error, TEXT("슬롯 인덱스 변경 예측 실패"), *SideEffectDefHandle.ToString());
-	});
-
 	AGunnerSlotItem* SlotItem = GetSlotItem();
 	check(SlotItem);
 	SideEffectDef.SideEffectInstance->SetInjectedValue(Mod.InjectedValueTag, static_cast<float>(SlotItem->GetSlotType()));
 
-	ActionComponent->TriggerSideEffectByDef(SideEffectDef, this, PredictionEvent);
+	ActionComponent->TriggerSideEffectByDef(SideEffectDef, this, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this, SideEffectDefHandle = SideEffectDef.Handle]()
+	{
+		GR_VLOG_SUB(GetOwnerActor(), LogGunner, Error, TEXT("슬롯 인덱스 변경 예측 실패"), *SideEffectDefHandle.ToString());
+	}));
 }
 
 EGunnerSlotType UGunnerActionSlotActivation::GetCurrentSlotType() const
