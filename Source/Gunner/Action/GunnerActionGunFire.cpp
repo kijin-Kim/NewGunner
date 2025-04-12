@@ -109,13 +109,8 @@ TArray<FHitResult> UGunnerActionGunFire::HitScanTrace()
 	return HitResults;
 }
 
-void UGunnerActionGunFire::AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle)
+void UGunnerActionGunFire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle)
 {
-	if (HitTargetDataHandle.IsValid() && HitTargetDataHandle.GetData()->GetStructType() != FGunnerTargetData_Hit::StaticStruct())
-	{
-		return;
-	}
-
 	TSharedPtr<FGunnerTargetData_Hit> HitTargetData = StaticCastSharedPtr<FGunnerTargetData_Hit>(HitTargetDataHandle.GetData());
 	check(HitTargetData.IsValid());
 

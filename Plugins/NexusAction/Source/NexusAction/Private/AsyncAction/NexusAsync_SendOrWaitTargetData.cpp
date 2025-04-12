@@ -5,7 +5,7 @@
 #include "NexusPredictionScope.h"
 
 
-UNexusAsync_SendOrWaitTargetData* UNexusAsync_SendOrWaitTargetData::SendOrWaitTargetData(UNexusAction* InAction, FNexusTargetDataHandle InTargetDataHandle)
+UNexusAsync_SendOrWaitTargetData* UNexusAsync_SendOrWaitTargetData::SendOrWaitTargetData(UNexusAction* InAction, const FNexusTargetDataHandle& InTargetDataHandle)
 {
 	UNexusAsync_SendOrWaitTargetData* SelfObject = NewNexusAsync<UNexusAsync_SendOrWaitTargetData>(InAction);
 	SelfObject->RegisterWithGameInstance(InAction);
@@ -43,7 +43,7 @@ void UNexusAsync_SendOrWaitTargetData::Activate()
 
 void UNexusAsync_SendOrWaitTargetData::OnArrived(FNexusTargetDataHandle InTargetDataHandle)
 {
-	check(TargetDataHandle.IsValid());
+	check(InTargetDataHandle.IsValid());
 	if (ShouldBroadcastDelegates() && OnArrivedDelegate.IsBound())
 	{
 		OnArrivedDelegate.Broadcast(InTargetDataHandle);

@@ -31,9 +31,16 @@ public:
 	{
 	}
 
-	FNexusTargetDataHandle(FNexusTargetDataHandle&& Other) : Data(MoveTemp(Other.Data))
+	FNexusTargetDataHandle& operator=(const FNexusTargetDataHandle& Other)
 	{
+		Data = Other.Data;
+		return *this;
 	}
+	
+	FNexusTargetDataHandle(FNexusTargetDataHandle&& Other)
+	{
+		Data = MoveTemp(Other.Data);
+	};
 
 	FNexusTargetDataHandle& operator=(FNexusTargetDataHandle&& Other)
 	{
@@ -41,14 +48,8 @@ public:
 		return *this;
 	}
 
-	FNexusTargetDataHandle& operator=(const FNexusTargetDataHandle& Other)
-	{
-		Data = Other.Data;
-		return *this;
-	}
-
+	void Reset() { Data.Reset(); }
 	bool IsValid() const { return Data.IsValid(); }
-
 	void SetData(TSharedPtr<FNexusTargetDataBase> InData) { Data = InData; }
 	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
 	TSharedPtr<FNexusTargetDataBase> GetData() const { return Data; }

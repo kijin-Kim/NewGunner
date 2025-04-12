@@ -470,8 +470,9 @@ void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Ha
 	}
 
 	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
+	FNexusTargetDataHandle CopiedHandle = RepDataDelegate->TargetDataHandle;
 	TargetDataDelegates.Remove(Key);
-	Delegate.ExecuteIfBound(RepDataDelegate->TargetDataHandle);
+	Delegate.ExecuteIfBound(CopiedHandle);
 }
 
 void UNexusActionComponent::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)
@@ -636,7 +637,7 @@ INexusCueNetworkProxyInterface* UNexusActionComponent::GetCueNetworkProxyInterfa
 }
 
 
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());

@@ -37,5 +37,12 @@ bool FNexusTargetDataHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& 
 		}
 	}
 
+	if (Ar.IsError())
+	{
+		Data.Reset();
+		bOutSuccess = false;
+		return false;
+	}
+
 	return bOutSuccess;
 }

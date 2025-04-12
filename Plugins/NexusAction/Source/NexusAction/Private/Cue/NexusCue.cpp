@@ -90,7 +90,7 @@ void ANexusCue::CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle
 	TargetDataHandle = InTargetDataHandle;
 	OnTriggered(InTargetDataHandle);
 	BP_OnTriggered();
-	TargetDataHandle = FNexusTargetDataHandle();
+	TargetDataHandle.Reset();
 }
 
 void ANexusCue::CallOnBecomeRelevant(const FNexusTargetDataHandle& InTargetDataHandle)
@@ -110,7 +110,7 @@ void ANexusCue::CallOnCeaseRelevant()
 {
 	OnCeaseRelevant();
 	BP_OnCeaseRelevant();
-	TargetDataHandle = FNexusTargetDataHandle();
+	TargetDataHandle.Reset();
 }
 
 void ANexusCue::EndCue() const

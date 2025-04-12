@@ -29,16 +29,16 @@ USTRUCT()
 struct FNexusLoopingCue : public FFastArraySerializerItem
 {
 	GENERATED_USTRUCT_BODY()
-
 	void PreReplicatedRemove(const struct FNexusLoopingCueContainer& InArraySerializer);
 	void PostReplicatedAdd(const struct FNexusLoopingCueContainer& InArraySerializer);
 	void PostReplicatedChange(const struct FNexusLoopingCueContainer& InArraySerializer);
-
+	
 	UPROPERTY()
 	TSubclassOf<ANexusCue> CueClass;
 	UPROPERTY()
 	FNexusTargetDataHandle TargetDataHandle;
 };
+
 
 USTRUCT()
 struct FNexusLoopingCueContainer : public FFastArraySerializer

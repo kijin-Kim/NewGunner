@@ -24,7 +24,7 @@ class NEXUSACTION_API UNexusAsync_SendOrWaitTargetData : public UNexusAsync
 public:
 	
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "InAction", DefaultToSelf = "InAction", BlueprintInternalUseOnly = "true"))
-	static UNexusAsync_SendOrWaitTargetData* SendOrWaitTargetData(UNexusAction* InAction, FNexusTargetDataHandle InTargetDataHandle);
+	static UNexusAsync_SendOrWaitTargetData* SendOrWaitTargetData(UNexusAction* InAction, const FNexusTargetDataHandle& InTargetDataHandle);
 	
 	//~ Begin UCancellableAsyncAction Interface.
 	virtual void Activate() override;

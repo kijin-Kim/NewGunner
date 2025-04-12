@@ -30,7 +30,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable)
-	void AuthHitScanTraceConfirm(FNexusTargetDataHandle HitTargetDataHandle);
+	void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
 
 
 private:

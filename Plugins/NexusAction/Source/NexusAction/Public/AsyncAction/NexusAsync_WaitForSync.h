@@ -26,8 +26,7 @@ public:
 
 	//~ Begin UCancellableAsyncAction Interface.
 	virtual void Activate() override;
-	//~ End UCancellableAsyncAction Interface.
-
+	//~ End UCancellableAsyncAction Interface
 	void OnSync();
 
 public:

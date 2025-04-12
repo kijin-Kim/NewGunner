@@ -17,7 +17,7 @@
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusActionComponent.generated.h"
 
-
+ 
 class UNexusActionComponent;
 class UNexusProperty;
 class UNexusSideEffect;
@@ -134,7 +134,7 @@ public:
 	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
 	UFUNCTION(NetMulticast, Unreliable)
 	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;

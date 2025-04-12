@@ -34,18 +34,7 @@ public:
 
 		return Handle;
 	}
-
-	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Hit GetAsHitTargetData(FNexusTargetDataHandle Handle)
-	{
-		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Hit::StaticStruct())
-		{
-			return *StaticCastSharedPtr<FGunnerTargetData_Hit>(Handle.GetData());
-		}
-
-		return FGunnerTargetData_Hit();
-	}
-
+	
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
 	static FNexusTargetDataHandle MakeActorTargetData(AActor* Actor)
 	{
@@ -77,9 +66,20 @@ public:
 		return Handle;
 	}
 
+	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	static FGunnerTargetData_Hit GetAsHitTargetData(const FNexusTargetDataHandle& Handle)
+	{
+		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Hit::StaticStruct())
+		{
+			return *StaticCastSharedPtr<FGunnerTargetData_Hit>(Handle.GetData());
+		}
+
+		return FGunnerTargetData_Hit();
+	}
+
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_Actor GetAsActorTargetData(FNexusTargetDataHandle Handle)
+	static FGunnerTargetData_Actor GetAsActorTargetData(const FNexusTargetDataHandle& Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_Actor::StaticStruct())
 		{
@@ -90,7 +90,7 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
-	static FGunnerTargetData_SoundBase GetAsSoundBaseTargetData(FNexusTargetDataHandle Handle)
+	static FGunnerTargetData_SoundBase GetAsSoundBaseTargetData(const FNexusTargetDataHandle& Handle)
 	{
 		if (Handle.GetData()->GetStructType() == FGunnerTargetData_SoundBase::StaticStruct())
 		{
