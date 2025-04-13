@@ -12,6 +12,7 @@
 UNexusSideEffectComponent::UNexusSideEffectComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 }
 
 void UNexusSideEffectComponent::Init(AActor* Actor)

@@ -13,6 +13,7 @@
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusLog.h"
+#include "NexusPropertyComponent.h"
 #include "NexusSideEffectComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
@@ -69,19 +70,9 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
-	DOREPLIFETIME(UNexusActionComponent, Properties);
 	DOREPLIFETIME_CONDITION_NOTIFY(UNexusActionComponent, TagCountMap, COND_None, REPNOTIFY_Always);
 }
 
-bool UNexusActionComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-	for (UNexusProperty* Property : Properties)
-	{
-		bWroteSomething |= Channel->ReplicateSubobject(Property, *Bunch, *RepFlags);
-	}
-	return bWroteSomething;
-}
 
 void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 {
@@ -130,7 +121,7 @@ void UNexusActionComponent::TeardownActionComponent()
 	if (GetOwner()->HasAuthority())
 	{
 		AuthRemoveAllActions();
-		AuthRemoveAllProperties();
+		GetPropertyComponent()->AuthRemoveAllProperties();
 		GetCueComponent()->RemoveAllLoopingCues();
 	}
 
@@ -148,13 +139,6 @@ void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParam
 void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	for (UNexusProperty* Property : Properties)
-	{
-		if (Property)
-		{
-			Property->Tick();
-		}
-	}
 
 	if (bIsTagCountMapDirty)
 	{
@@ -631,7 +615,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		}
 
 
-		for (UNexusProperty* Property : Properties)
+		for (UNexusProperty* Property : GetPropertyComponent()->GetProperties())
 		{
 			DisplayDebugManager.SetDrawColor(FColor::White);
 			FString TagString = Property->GetTag().ToString();
@@ -845,6 +829,11 @@ UNexusSideEffectComponent* UNexusActionComponent::GetSideEffectComponent() const
 	return Cast<UNexusSideEffectComponent>(GetOwner()->GetComponentByClass(UNexusSideEffectComponent::StaticClass()));
 }
 
+UNexusPropertyComponent* UNexusActionComponent::GetPropertyComponent() const
+{
+	return Cast<UNexusPropertyComponent>(GetOwner()->GetComponentByClass(UNexusPropertyComponent::StaticClass()));
+}
+
 UNexusCueComponent* UNexusActionComponent::GetCueComponent() const
 {
 	return Cast<UNexusCueComponent>(GetOwner()->GetComponentByClass(UNexusCueComponent::StaticClass()));
@@ -965,92 +954,24 @@ void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(F
 	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
-{
-	if (!ensure(GetOwner()->HasAuthority()))
-	{
-		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
-		return;
-	}
-
-	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
-	NewProperty->SetTag(Tag);
-	NewProperty->SetStaticValue(Value);
-	Properties.Add(NewProperty);
-}
-
-void UNexusActionComponent::AuthRemoveProperty(FGameplayTag Tag)
-{
-	if (!ensure(GetOwner()->HasAuthority()))
-	{
-		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
-		return;
-	}
-
-	Properties.RemoveAll([Tag](UNexusProperty* Property)
-	{
-		return Property->GetTag() == Tag;
-	});
-}
-
-void UNexusActionComponent::AuthRemoveAllProperties()
-{
-	if (!ensure(GetOwner()->HasAuthority()))
-	{
-		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
-		return;
-	}
-
-	Properties.Empty();
-}
-
-
 UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 {
-	TObjectPtr<UNexusProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UNexusProperty* Property)
-	{
-		return Property->GetTag() == Tag;
-	});
-	return PropertyPtr ? *PropertyPtr : nullptr;
+	return GetPropertyComponent()->GetProperty(Tag);
 }
 
 void UNexusActionComponent::AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation)
 {
-	TObjectPtr<UNexusProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UNexusProperty* Property)
-	{
-		return Property->GetTag() == Tag;
-	});
-
-	if (PropertyPtr)
-	{
-		(*PropertyPtr)->AddStaticOperation(Operation);
-	}
+	GetPropertyComponent()->AddStaticOperation(Tag, Operation);
 }
 
 void UNexusActionComponent::AddDynamicOperation(FGameplayTag Tag, FNexusPropertyOperation Operation)
 {
-	TObjectPtr<UNexusProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UNexusProperty* Property)
-	{
-		return Property->GetTag() == Tag;
-	});
-
-	if (PropertyPtr)
-	{
-		(*PropertyPtr)->AddDynamicOperation(Operation);
-	}
+	GetPropertyComponent()->AddDynamicOperation(Tag, Operation);
 }
 
 void UNexusActionComponent::RemoveOperationByHandle(FGameplayTag Tag, const FNexusPropertyOperationHandle& OperationHandle)
 {
-	TObjectPtr<UNexusProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UNexusProperty* Property)
-	{
-		return Property->GetTag() == Tag;
-	});
-
-	if (PropertyPtr)
-	{
-		(*PropertyPtr)->RemoveOperationByHandle(OperationHandle);
-	}
+	GetPropertyComponent()->RemoveOperationByHandle(Tag, OperationHandle);
 }
 
 UNexusProperty* UNexusActionComponent::GetPropertyFromActor(AActor* Actor, FGameplayTag Tag)

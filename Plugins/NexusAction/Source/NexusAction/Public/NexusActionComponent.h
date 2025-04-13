@@ -16,6 +16,7 @@
 #include "NexusActionComponent.generated.h"
 
 
+class UNexusPropertyComponent;
 class UNexusSideEffectComponent;
 struct FNexusTriggerCueParams;
 class UNexusCueComponent;
@@ -77,7 +78,6 @@ public:
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 
 	void SetupActionComponent(AActor* InAgentActor);
@@ -136,10 +136,7 @@ public:
 	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
 	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->OwnerActor.Get() : nullptr; }
 
-
-	void AuthAddProperty(FGameplayTag Tag, float Value);
-	void AuthRemoveProperty(FGameplayTag Tag);
-	void AuthRemoveAllProperties();
+	
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
 
@@ -203,10 +200,11 @@ private:
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
-private:
+protected:
 	UNexusCueComponent* GetCueComponent() const;
 	UNexusPredictionComponent* GetPredictionComponent() const;
 	UNexusSideEffectComponent* GetSideEffectComponent() const;
+	UNexusPropertyComponent* GetPropertyComponent() const;
 
 
 private:
@@ -250,8 +248,7 @@ private:
 
 	
 
-	UPROPERTY(Replicated)
-	TArray<TObjectPtr<UNexusProperty>> Properties;
+	
 	
 	
 
