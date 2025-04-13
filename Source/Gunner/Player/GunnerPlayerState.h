@@ -8,6 +8,7 @@
 #include "GunnerPlayerState.generated.h"
 
 
+class UNexusPredictionComponent;
 class UGunnerActionComponent;
 class UGunnerSlotManagerComponent;
 class UNexusEventManagerComponent;
@@ -38,6 +39,8 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UNexusPredictionComponent> PredictionComponent;
 	UPROPERTY()
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

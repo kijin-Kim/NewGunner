@@ -2,28 +2,28 @@
 #include "NexusLog.h"
 
 
-FNexusPredictionScope::FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag)
-	: ActionComponent(InActionComponent),
-	  PrevPredictionTag(ActionComponent.CurrentPredictionTag)
+FNexusPredictionScope::FNexusPredictionScope(UNexusPredictionComponent& InPredictionComponent, FNexusPredictionTag InPredictionTag)
+	: PredictionComponent(InPredictionComponent),
+	  PrevPredictionTag(PredictionComponent.GetCurrentPredictionTag())
 {
-	ActionComponent.CurrentPredictionTag = InPredictionTag;
-	NX_VLOG_SUB(ActionComponent.GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 구간 [%s] 시작"), *ActionComponent.CurrentPredictionTag.ToString());
+	PredictionComponent.SetCurrentPredictionTag(InPredictionTag);
+	NX_VLOG_SUB(PredictionComponent.GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 구간 [%s] 시작"), *PredictionComponent.GetCurrentPredictionTag().ToString());
 }
 
 FNexusPredictionScope::~FNexusPredictionScope()
 {
-	NX_VLOG_SUB(ActionComponent.GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 구간 [%s] 종료"), *ActionComponent.CurrentPredictionTag.ToString());
-	if (!ActionComponent.IsNetSimulating() && ActionComponent.CurrentPredictionTag.IsValid())
+	NX_VLOG_SUB(PredictionComponent.GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 구간 [%s] 종료"), *PredictionComponent.GetCurrentPredictionTag().ToString());
+	if (!PredictionComponent.IsNetSimulating() && PredictionComponent.GetCurrentPredictionTag().IsValid())
 	{
-		ActionComponent.ReplicateNetPredictionTag(ActionComponent.CurrentPredictionTag);
+		PredictionComponent.ReplicateNetPredictionTag(PredictionComponent.GetCurrentPredictionTag());
 	}
 
-	if (PrevPredictionTag != ActionComponent.CurrentPredictionTag)
+	if (PrevPredictionTag != PredictionComponent.GetCurrentPredictionTag())
 	{
-		ActionComponent.CurrentPredictionTag = PrevPredictionTag;
+		PredictionComponent.SetCurrentPredictionTag(PrevPredictionTag);
 	}
 	else
 	{
-		ActionComponent.CurrentPredictionTag = FNexusPredictionTag();
+		PredictionComponent.SetCurrentPredictionTag(FNexusPredictionTag());
 	}
 }

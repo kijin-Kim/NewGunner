@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "NexusDataReplication.h"
 #include "NexusPrediction.h"
+#include "NexusPredictionComponent.h"
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
 #include "Components/ActorComponent.h"
@@ -22,7 +23,7 @@ class UNexusActionComponent;
 class UNexusProperty;
 class UNexusSideEffect;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
+
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag&, Tag);
@@ -100,18 +101,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
-
-
-	UFUNCTION(Server, Reliable)
-	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag);
-	void CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
-
-	UFUNCTION(Server, Reliable)
-	void ServerSendTargetData(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle);
-	void CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
-
-
-	void ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag);
+	
+	
 
 
 	void IncreaseActionListLock();
@@ -150,7 +141,6 @@ public:
 	bool IsAgentLocallyPlayerControlled() const;
 	bool IsOwnerActorAuthoritative() const;
 
-	FNexusPredictionTagContainer& GetNetPredictionTags() { return NetPredictionTags; }
 	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
 	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->OwnerActor.Get() : nullptr; }
 
@@ -222,8 +212,8 @@ private:
 
 	ANexusCue* GetLoopingCueActor(TSubclassOf<ANexusCue> CueClass) const;
 
-public:
-	FNexusPredictionTag CurrentPredictionTag;
+	UNexusPredictionComponent* GetPredictionComponent() const;
+
 
 private:
 	UPROPERTY()
@@ -262,9 +252,7 @@ private:
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
-
-	UPROPERTY(Replicated)
-	FNexusPredictionTagContainer NetPredictionTags;
+	
 
 	UPROPERTY(Replicated)
 	FNexusSideEffectDefContainer SideEffectDefs;

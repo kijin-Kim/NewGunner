@@ -20,7 +20,9 @@ void UNexusAsync_SendOrWaitTargetData::Activate()
 	bool bIsOwnerActorAuthoritative = Action->IsOwnerActorAuthoritative();
 	FNexusPredictionTag PredictionTag;
 	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
-	FNexusPredictionScope PredictionScope(*ActionComponent, PredictionTag);
+	UNexusPredictionComponent* PredictionComponent = Action->GetOwnerActor()->GetComponentByClass<UNexusPredictionComponent>();
+	check(PredictionComponent);
+	FNexusPredictionScope PredictionScope(*PredictionComponent, PredictionTag);
 
 
 	if (Action->GetActionNetMethod() != ENexusActionNetMethod::LocalPredicted
@@ -32,12 +34,12 @@ void UNexusAsync_SendOrWaitTargetData::Activate()
 
 	if (bIsOwnerActorAuthoritative && !Action->IsLocallyControlled())
 	{
-		ActionComponent->CallOrAddTargetDataDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FOnNexusTargetDataSetSignature::FDelegate::CreateUObject(this, &UNexusAsync_SendOrWaitTargetData::OnArrived));
+		PredictionComponent->CallOrAddTargetDataDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FOnNexusTargetDataSetSignature::FDelegate::CreateUObject(this, &UNexusAsync_SendOrWaitTargetData::OnArrived));
 		return;
 	}
 
 	check(TargetDataHandle.IsValid());
-	ActionComponent->ServerSendTargetData(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), ActionComponent->CurrentPredictionTag, TargetDataHandle);
+	PredictionComponent->ServerSendTargetData(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), PredictionComponent->GetCurrentPredictionTag(), TargetDataHandle);
 	OnArrived(TargetDataHandle);
 }
 

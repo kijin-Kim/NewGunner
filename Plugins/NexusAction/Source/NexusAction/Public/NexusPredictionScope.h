@@ -5,17 +5,17 @@
 struct FNexusPredictionScope
 {
 public:
-	FNexusPredictionScope(UNexusActionComponent& InActionComponent, FNexusPredictionTag InPredictionTag);
+	FNexusPredictionScope(UNexusPredictionComponent& InPredictionComponent, FNexusPredictionTag InPredictionTag);
 	~FNexusPredictionScope();
 
 private:
 	// 로깅을 위한 함수
 	UObject* GetOuter() const
 	{
-		return ActionComponent.GetOwner();
+		return PredictionComponent.GetOwner();
 	}
 
 public:
-	UNexusActionComponent& ActionComponent;
+	UNexusPredictionComponent& PredictionComponent;
 	FNexusPredictionTag PrevPredictionTag;
 };

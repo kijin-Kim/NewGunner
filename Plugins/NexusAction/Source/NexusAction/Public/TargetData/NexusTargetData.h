@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "NexusTargetData.generated.h"
 
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNexusTargetDataSetSignature, FNexusTargetDataHandle /* TargetDataHandle */);
+
+
 /**
  * 
  */

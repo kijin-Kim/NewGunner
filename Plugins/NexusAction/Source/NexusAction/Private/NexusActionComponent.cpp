@@ -67,7 +67,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UNexusActionComponent, NetPredictionTags, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
 	DOREPLIFETIME(UNexusActionComponent, LoopingCues);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
@@ -90,7 +89,7 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
 	SideEffectDefs.Init(GetOwner());
-	NetPredictionTags.Init(IsOwnerActorAuthoritative());
+	GetPredictionComponent()->Init();
 	EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner());
 	check(EventManagerComponent.IsValid());
 
@@ -339,8 +338,8 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
 	FNexusPredictionTag PredictionTag;
 	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
-	FNexusPredictionScope PredictionScope(*this, PredictionTag);
-	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 
 
 	if (AgentInfo->OwnerActor->GetNetMode() == NM_Standalone)
@@ -366,7 +365,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 		if (ActionNetMethod == ENexusActionNetMethod::ServerAuthoritative)
 		{
 			LocalTriggerAction(ActionDef);
-			ClientTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
+			ClientTriggerAction(ActionDefHandle, EventMessage, GetPredictionComponent()->GetCurrentPredictionTag());
 			return;
 		}
 
@@ -391,7 +390,7 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 		if (ActionNetMethod == ENexusActionNetMethod::LocalPredicted)
 		{
 			LocalTriggerAction(ActionDef);
-			ServerTryTriggerAction(ActionDefHandle, EventMessage, CurrentPredictionTag);
+			ServerTryTriggerAction(ActionDefHandle, EventMessage, GetPredictionComponent()->GetCurrentPredictionTag());
 			return;
 		}
 
@@ -405,81 +404,6 @@ void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHand
 	}
 }
 
-void UNexusActionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		NetSyncPointDelegates.Add(Key, PredictionTag);
-		return;
-	}
-
-	FNexusNetSyncDelegate CopiedDelegate = *RepDataDelegate;
-	NetSyncPointDelegates.Remove(Key);
-	if (CopiedDelegate.OnSyncDelegate.IsBound())
-	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag);
-		CopiedDelegate.OnSyncDelegate.Broadcast();
-	}
-}
-
-
-void UNexusActionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		NetSyncPointDelegates.Add(Key, FNexusNetSyncDelegate{PrimaryPredictionTag, MoveTemp(Delegate)});
-		return;
-	}
-
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
-	NetSyncPointDelegates.Remove(Key);
-	Delegate.ExecuteIfBound();
-}
-
-void UNexusActionComponent::ServerSendTargetData_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		TargetDataDelegates.Add(Key, {PredictionTag, TargetDataHandle});
-		return;
-	}
-
-	FNexusTargetDataDelegate CopiedDelegate = *RepDataDelegate;
-	TargetDataDelegates.Remove(Key);
-	if (CopiedDelegate.OnSetDelegate.IsBound())
-	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag);
-		CopiedDelegate.OnSetDelegate.Broadcast(TargetDataHandle);
-	}
-}
-
-void UNexusActionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		TargetDataDelegates.Add(Key, MoveTemp(Delegate));
-		return;
-	}
-
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
-	FNexusTargetDataHandle CopiedHandle = RepDataDelegate->TargetDataHandle;
-	TargetDataDelegates.Remove(Key);
-	Delegate.ExecuteIfBound(CopiedHandle);
-}
-
-void UNexusActionComponent::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)
-{
-	NX_VLOG_SUB(GetOwner(), LogNexusPredictionTag, Log, TEXT("예측 태그 [%s] 리플리케이트"), *PredictionTag.ToString());
-	NetPredictionTags.ReplicateNetPredictionTag(PredictionTag);
-}
 
 void UNexusActionComponent::IncreaseActionListLock()
 {
@@ -601,16 +525,16 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	check(Action);
 
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
-	if (!bIsOwnerActorAuthoritative && !CurrentPredictionTag.IsPredictable())
+	if (!bIsOwnerActorAuthoritative && !GetPredictionComponent()->GetCurrentPredictionTag().IsPredictable())
 	{
 		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));
 		return;
 	}
 
-	SideEffectDefs.Add(NewSideEffectDef, CurrentPredictionTag);
+	SideEffectDefs.Add(NewSideEffectDef, GetPredictionComponent()->GetCurrentPredictionTag());
 	if (!bIsOwnerActorAuthoritative && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
 	{
-		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(GetPredictionComponent()->GetCurrentPredictionTag());
 		if (OnPredictionEnded.IsBound())
 		{
 			PredictionEvent.OnPredictionEnded.Add(MoveTemp(OnPredictionEnded));
@@ -687,13 +611,13 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 
 	if (!IsOwnerActorAuthoritative())
 	{
-		if (CurrentPredictionTag.IsPredictable())
+		if (GetPredictionComponent()->GetCurrentPredictionTag().IsPredictable())
 		{
 			if (Default->GetCueType() == ENexusCueType::Looping)
 			{
-				if (!IsOwnerActorAuthoritative() && CurrentPredictionTag.IsPredictable())
+				if (!IsOwnerActorAuthoritative() && GetPredictionComponent()->GetCurrentPredictionTag().IsPredictable())
 				{
-					FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+					FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(GetPredictionComponent()->GetCurrentPredictionTag());
 					PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, Handle]()
 					{
 						LoopingCues.RemoveLoopingCue(Handle, IsOwnerActorAuthoritative());
@@ -709,7 +633,7 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
-		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag, Handle);
+		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, GetPredictionComponent()->GetCurrentPredictionTag(), Handle);
 	}
 }
 
@@ -1116,6 +1040,11 @@ ANexusCue* UNexusActionComponent::GetLoopingCueActor(TSubclassOf<ANexusCue> CueC
 	return nullptr;
 }
 
+UNexusPredictionComponent* UNexusActionComponent::GetPredictionComponent() const
+{
+	return Cast<UNexusPredictionComponent>(GetOwner()->GetComponentByClass(UNexusPredictionComponent::StaticClass()));
+}
+
 void UNexusActionComponent::OnRep_TagCountMap()
 {
 	bIsTagCountMapDirty = true;
@@ -1369,8 +1298,8 @@ void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHa
 	FNexusActionDef* ActionDef = FindActionDefByHandle(ActionDefHandle);
 	check(ActionDef);
 	ActionDef->ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
-	FNexusPredictionScope PredictionScope(*this, PredictionTag);
-	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 	LocalTriggerAction(ActionDef);
 }
 
@@ -1393,7 +1322,7 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDe
 	}
 
 	ClientTriggerActionRequestSucceeded(ActionDefHandle, PredictionTag);
-	FNexusPredictionScope PredictionScope(*this, PredictionTag);
-	ActionDef->ActionInstance->SetPrimaryPredictionTag(CurrentPredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	ActionDef->ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 	LocalTriggerAction(ActionDef);
 }

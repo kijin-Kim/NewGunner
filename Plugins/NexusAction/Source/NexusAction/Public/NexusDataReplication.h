@@ -48,3 +48,5 @@ struct NEXUSACTION_API FNexusRepDataKey
 	UPROPERTY()
 	FNexusPredictionTag PrimaryPredictionTag;
 };
+
+
