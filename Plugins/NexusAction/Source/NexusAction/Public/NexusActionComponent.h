@@ -9,6 +9,7 @@
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
 #include "Components/ActorComponent.h"
+#include "Cue/NexusCue.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "SideEffect/NexusSideEffect.h"
@@ -16,6 +17,7 @@
 #include "NexusActionComponent.generated.h"
 
 
+class UNexusGameplayTagComponent;
 class UNexusPropertyComponent;
 class UNexusSideEffectComponent;
 struct FNexusTriggerCueParams;
@@ -27,42 +29,9 @@ class UNexusSideEffect;
 
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag&, Tag);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag&, Tag);
 
-USTRUCT()
-struct FNexusGameplayTagCount
-{
-	GENERATED_BODY()
 
-	FNexusGameplayTagCount() = default;
 
-	FNexusGameplayTagCount(const FGameplayTag& InTag)
-		: Tag(InTag)
-	{
-	}
-
-	FNexusGameplayTagCount(const FGameplayTag& InTag, int32 InCount)
-		: Tag(InTag)
-		  , Count(InCount)
-	{
-	}
-
-	bool operator==(const FNexusGameplayTagCount& Other) const
-	{
-		return Tag == Other.Tag;
-	}
-
-	bool operator!=(const FNexusGameplayTagCount& Other) const
-	{
-		return !(*this == Other);
-	}
-
-	UPROPERTY()
-	FGameplayTag Tag;
-	UPROPERTY()
-	int32 Count = 0;
-};
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -75,6 +44,7 @@ public:
 
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
+	
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -205,6 +175,7 @@ protected:
 	UNexusPredictionComponent* GetPredictionComponent() const;
 	UNexusSideEffectComponent* GetSideEffectComponent() const;
 	UNexusPropertyComponent* GetPropertyComponent() const;
+	UNexusGameplayTagComponent* GetGameplayTagComponent() const;
 
 
 private:
@@ -245,39 +216,15 @@ private:
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
 	
-
 	
-
-	
-	
-	
-
-
-	UFUNCTION()
-	void OnRep_TagCountMap();
-
-	UPROPERTY(ReplicatedUsing = OnRep_TagCountMap)
-	TArray<FNexusGameplayTagCount> TagCountMap;
-	TMap<FGameplayTag, int32> TagCountDeltas; // 곱셈, 나눗셈 연산이 없기 때문에 단순히 카운트로 관리
-
-	TMap<FGameplayTag, int32> DynamicTagCountMap;
-
-
 	TMap<FNexusActionDefHandle, FNexusSideEffectDefHandle> TagSideEffectMap;
 
-	bool bIsTagCountMapDirty = false;
-
-
+	
 	void LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 
 public:
 	void PushDynamicTag(const FGameplayTag& Tag);
 	void PopDynamicTag(const FGameplayTag& Tag);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnNexusGameplayTagAddedSignature OnGameplayTagAddedDelegate;
-	UPROPERTY(BlueprintAssignable)
-	FOnNexusGameplayTagRemovedSignature OnGameplayTagRemovedDelegate;
 };
 
 struct FNexusActionListScopeLock

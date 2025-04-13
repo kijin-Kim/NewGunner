@@ -4,6 +4,7 @@
 #include "NexusActionComponent.h"
 #include "NexusActionInterface.h"
 #include "NexusCueComponent.h"
+#include "NexusGameplayTagComponent.h"
 #include "NexusPredictionScope.h"
 #include "Action/NexusAction.h"
 #include "Cue/NexusCue.h"
@@ -50,14 +51,7 @@ void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FD
 
 void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
-	TagContainer.Reset();
-	for (const auto& [Tag,Count] : DynamicTagCountMap)
-	{
-		if (Count > 0)
-		{
-			TagContainer.AddTag(Tag);
-		}
-	}
+	return GetGameplayTagComponent()->GetOwnedGameplayTags(TagContainer);
 }
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -70,7 +64,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION_NOTIFY(UNexusActionComponent, TagCountMap, COND_None, REPNOTIFY_Always);
 }
 
 
@@ -139,38 +132,6 @@ void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParam
 void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (bIsTagCountMapDirty)
-	{
-		bIsTagCountMapDirty = false;
-		TMap<FGameplayTag, int32> OldDynamicTagCountMap = DynamicTagCountMap;
-		DynamicTagCountMap.Empty();
-		for (const FNexusGameplayTagCount& TagCount : TagCountMap)
-		{
-			DynamicTagCountMap.Add(TagCount.Tag) = TagCount.Count;
-		}
-
-		for (const auto& [Tag, Count] : TagCountDeltas)
-		{
-			DynamicTagCountMap.FindOrAdd(Tag) += Count;
-		}
-
-		for (const auto& [OldTag, OldCount] : OldDynamicTagCountMap)
-		{
-			if (!DynamicTagCountMap.Contains(OldTag))
-			{
-				OnGameplayTagRemovedDelegate.Broadcast(OldTag);
-			}
-		}
-
-		for (const auto& [NewTag, NewCount] : DynamicTagCountMap)
-		{
-			if (!OldDynamicTagCountMap.Contains(NewTag))
-			{
-				OnGameplayTagAddedDelegate.Broadcast(NewTag);
-			}
-		}
-	}
 }
 
 
@@ -629,7 +590,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		}
 
 		FString TagString;
-		for (const auto& [Tag, Count] : DynamicTagCountMap)
+		for (const auto& [Tag, Count] : GetGameplayTagComponent()->GetDynamicTagCountMap())
 		{
 			DisplayDebugManager.SetDrawColor(FColor::White);
 			TagString += FString::Printf(TEXT("%s(%d) "), *Tag.ToString(), Count);
@@ -834,6 +795,11 @@ UNexusPropertyComponent* UNexusActionComponent::GetPropertyComponent() const
 	return Cast<UNexusPropertyComponent>(GetOwner()->GetComponentByClass(UNexusPropertyComponent::StaticClass()));
 }
 
+UNexusGameplayTagComponent* UNexusActionComponent::GetGameplayTagComponent() const
+{
+	return Cast<UNexusGameplayTagComponent>(GetOwner()->GetComponentByClass(UNexusGameplayTagComponent::StaticClass()));
+}
+
 UNexusCueComponent* UNexusActionComponent::GetCueComponent() const
 {
 	return Cast<UNexusCueComponent>(GetOwner()->GetComponentByClass(UNexusCueComponent::StaticClass()));
@@ -844,10 +810,6 @@ FNexusPredictionTag UNexusActionComponent::GetCurrentPredictionTag() const
 	return GetPredictionComponent()->GetCurrentPredictionTag();
 }
 
-void UNexusActionComponent::OnRep_TagCountMap()
-{
-	bIsTagCountMapDirty = true;
-}
 
 void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
@@ -870,65 +832,12 @@ void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle 
 
 void UNexusActionComponent::PushDynamicTag(const FGameplayTag& Tag)
 {
-	check(Tag.IsValid());
-	bIsTagCountMapDirty = true;
-
-	if (IsOwnerActorAuthoritative())
-	{
-		int32 Index = TagCountMap.Find(Tag);
-		if (Index == INDEX_NONE)
-		{
-			TagCountMap.Add({Tag, 1});
-			return;
-		}
-		if (++TagCountMap[Index].Count == 0)
-		{
-			TagCountMap.Remove(Tag);
-		}
-	}
-	else
-	{
-		if (!TagCountDeltas.Contains(Tag))
-		{
-			TagCountDeltas.Add(Tag, 1);
-			return;
-		}
-		if (++TagCountDeltas[Tag] == 0)
-		{
-			TagCountDeltas.Remove(Tag);
-		}
-	}
+	GetGameplayTagComponent()->PushDynamicTag(Tag);
 }
 
 void UNexusActionComponent::PopDynamicTag(const FGameplayTag& Tag)
 {
-	check(Tag.IsValid());
-	bIsTagCountMapDirty = true;
-	if (IsOwnerActorAuthoritative())
-	{
-		int32 Index = TagCountMap.Find(Tag);
-		if (Index == INDEX_NONE)
-		{
-			TagCountMap.Add({Tag, -1});
-			return;
-		}
-		if (--TagCountMap[Index].Count == 0)
-		{
-			TagCountMap.Remove(Tag);
-		}
-	}
-	else
-	{
-		if (!TagCountDeltas.Contains(Tag))
-		{
-			TagCountDeltas.Add(Tag, -1);
-			return;
-		}
-		if (--TagCountDeltas[Tag] == 0)
-		{
-			TagCountDeltas.Remove(Tag);
-		}
-	}
+	GetGameplayTagComponent()->PopDynamicTag(Tag);
 }
 
 void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
