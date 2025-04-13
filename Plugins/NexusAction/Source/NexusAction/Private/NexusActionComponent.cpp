@@ -13,6 +13,7 @@
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusLog.h"
+#include "NexusSideEffectComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "Net/UnrealNetwork.h"
@@ -68,7 +69,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(UNexusActionComponent, SideEffectDefs, COND_OwnerOnly);
 	DOREPLIFETIME(UNexusActionComponent, Properties);
 	DOREPLIFETIME_CONDITION_NOTIFY(UNexusActionComponent, TagCountMap, COND_None, REPNOTIFY_Always);
 }
@@ -88,7 +88,7 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	check(InAgentActor);
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
-	SideEffectDefs.Init(GetOwner());
+	GetSideEffectComponent()->Init(GetOwner());
 	GetPredictionComponent()->Init();
 	GetCueComponent()->Init(AgentInfo);
 	EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner());
@@ -155,7 +155,6 @@ void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 			Property->Tick();
 		}
 	}
-	SideEffectDefs.Tick(DeltaTime);
 
 	if (bIsTagCountMapDirty)
 	{
@@ -518,42 +517,9 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Actio
 	}
 }
 
-void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed)
+void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed) const
 {
-	check(Action);
-
-	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
-	if (!bIsOwnerActorAuthoritative && !GetPredictionComponent()->GetCurrentPredictionTag().IsPredictable())
-	{
-		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));
-		return;
-	}
-
-	SideEffectDefs.Add(NewSideEffectDef, GetPredictionComponent()->GetCurrentPredictionTag());
-	if (!bIsOwnerActorAuthoritative && Action->GetActionNetMethod() == ENexusActionNetMethod::LocalPredicted)
-	{
-		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(GetPredictionComponent()->GetCurrentPredictionTag());
-		if (OnPredictionEnded.IsBound())
-		{
-			PredictionEvent.OnPredictionEnded.Add(MoveTemp(OnPredictionEnded));
-		}
-		if (OnPredictionFailed.IsBound())
-		{
-			PredictionEvent.OnPredictionFailed.Add(MoveTemp(OnPredictionFailed));
-		}
-
-		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
-		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *NewSideEffectDef.SideEffectClass->GetName());
-			SideEffectDefs.Remove(SideEffectDefHandle);
-		});
-
-		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
-		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *NewSideEffectDef.SideEffectClass->GetName());
-			SideEffectDefs.Remove(SideEffectDefHandle);
-		});
-	}
+	GetSideEffectComponent()->TriggerSideEffectByDef(NewSideEffectDef, GetCurrentPredictionTag(), MoveTemp(OnPredictionEnded), MoveTemp(OnPredictionFailed));
 }
 
 
@@ -617,7 +583,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 		TMap<FGameplayTag, FString> PropertyLogs;
 
-		for (const FNexusSideEffectDef& Item : SideEffectDefs.Items)
+		for (const FNexusSideEffectDef& Item : GetSideEffectComponent()->GetSideEffectDefs().Items)
 		{
 			if (Item.SideEffectInstance->DurationType == ESideEffectDurationType::Instant)
 			{
@@ -687,7 +653,6 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
 	}
 }
-
 
 
 void UNexusActionComponent::OnActionDefAdded(FNexusActionDef& ActionDef)
@@ -775,7 +740,7 @@ void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle,
 	{
 		if (FNexusSideEffectDefHandle* TagSideEffectHandle = TagSideEffectMap.Find(ActionDefHandle))
 		{
-			SideEffectDefs.Remove(*TagSideEffectHandle);
+			GetSideEffectComponent()->RemoveSideEffect(*TagSideEffectHandle);
 			TagSideEffectMap.Remove(ActionDefHandle);
 		}
 	}
@@ -873,6 +838,11 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 UNexusPredictionComponent* UNexusActionComponent::GetPredictionComponent() const
 {
 	return Cast<UNexusPredictionComponent>(GetOwner()->GetComponentByClass(UNexusPredictionComponent::StaticClass()));
+}
+
+UNexusSideEffectComponent* UNexusActionComponent::GetSideEffectComponent() const
+{
+	return Cast<UNexusSideEffectComponent>(GetOwner()->GetComponentByClass(UNexusSideEffectComponent::StaticClass()));
 }
 
 UNexusCueComponent* UNexusActionComponent::GetCueComponent() const

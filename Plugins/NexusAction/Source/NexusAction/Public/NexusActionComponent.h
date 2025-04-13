@@ -16,6 +16,7 @@
 #include "NexusActionComponent.generated.h"
 
 
+class UNexusSideEffectComponent;
 struct FNexusTriggerCueParams;
 class UNexusCueComponent;
 class UNexusActionComponent;
@@ -119,8 +120,7 @@ public:
 	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
-	void TriggerSideEffectByDef_Internal(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionEnded, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionFailed);
-	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {});
+	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
 	
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
@@ -206,6 +206,7 @@ private:
 private:
 	UNexusCueComponent* GetCueComponent() const;
 	UNexusPredictionComponent* GetPredictionComponent() const;
+	UNexusSideEffectComponent* GetSideEffectComponent() const;
 
 
 private:
@@ -247,8 +248,7 @@ private:
 	FNexusActionDefContainer ActionDefs;
 	
 
-	UPROPERTY(Replicated)
-	FNexusSideEffectDefContainer SideEffectDefs;
+	
 
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UNexusProperty>> Properties;
