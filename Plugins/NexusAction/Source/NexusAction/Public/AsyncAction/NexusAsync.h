@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/CancellableAsyncAction.h"
 #include "Action/NexusAction.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "NexusAsync.generated.h"
 
 class UNexusActionComponent;

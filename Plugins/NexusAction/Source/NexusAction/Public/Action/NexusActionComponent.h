@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "NexusPrediction.h"
-#include "NexusPredictionComponent.h"
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
+#include "Action/SubComponent/NexusPredictionComponent.h"
 #include "Components/ActorComponent.h"
 #include "Cue/NexusCue.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
+#include "Prediction/NexusPrediction.h"
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusActionComponent.generated.h"
@@ -31,9 +31,6 @@ DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
 
 
-
-
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface
 {
@@ -41,10 +38,11 @@ class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGa
 
 public:
 	UNexusActionComponent();
+	virtual void InitializeComponent() override;
 
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
-	
+
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -59,12 +57,12 @@ public:
 
 	void SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle);
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle AuthAddAction(const FNexusActionDef& ActionDef);
 	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
+
+	void AuthAddProperty(FGameplayTag Tag, float Value);
 
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
@@ -72,9 +70,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
-	
-	
-
 
 	void IncreaseActionListLock();
 	void DecreaseActionListLock();
@@ -91,7 +86,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
-	
+
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
@@ -106,7 +101,7 @@ public:
 	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
 	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->OwnerActor.Get() : nullptr; }
 
-	
+
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
 
@@ -131,11 +126,35 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
-
-
 private:
+	template <typename T>
+	void EnsureSubComponent()
+	{
+		if (T* Existing = GetOwner()->FindComponentByClass<T>())
+		{
+			SubComponents.Add(Existing);
+		}
+		else
+		{
+			T* Comp = NewObject<T>(GetOwner());
+			Comp->RegisterComponent();
+			SubComponents.Add(Comp);
+		}
+	}
+
+	template <typename T>
+	T* GetCachedComponent(TObjectPtr<T>& Cache) const
+	{
+		if (!Cache)
+		{
+			Cache = Cast<T>(GetOwner()->GetComponentByClass(T::StaticClass()));
+		}
+		return Cache;
+	}
+
+
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-	
+
 	void InternalSetupActionComponent(AActor* InAgentActor);
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
@@ -177,7 +196,6 @@ protected:
 	UNexusPropertyComponent* GetPropertyComponent() const;
 	UNexusGameplayTagComponent* GetGameplayTagComponent() const;
 
-
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
@@ -215,16 +233,30 @@ private:
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
-	
-	
+
+
 	TMap<FNexusActionDefHandle, FNexusSideEffectDefHandle> TagSideEffectMap;
 
-	
+
 	void LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
 
 public:
 	void PushDynamicTag(const FGameplayTag& Tag);
 	void PopDynamicTag(const FGameplayTag& Tag);
+
+private:
+	UPROPERTY()
+	mutable TObjectPtr<UNexusPredictionComponent> PredictionComponentCached;
+	UPROPERTY()
+	mutable TObjectPtr<UNexusSideEffectComponent> SideEffectComponentCached;
+	UPROPERTY()
+	mutable TObjectPtr<UNexusPropertyComponent> PropertyComponentCached;
+	UPROPERTY()
+	mutable TObjectPtr<UNexusGameplayTagComponent> GameplayTagComponentCached;
+	UPROPERTY()
+	mutable TObjectPtr<UNexusCueComponent> CueComponentCached;
+	UPROPERTY()
+	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
 };
 
 struct FNexusActionListScopeLock

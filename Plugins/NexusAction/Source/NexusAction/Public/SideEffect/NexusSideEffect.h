@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "NexusPrediction.h"
+#include "Prediction/NexusPrediction.h"
 #include "NexusProperty.h"
 #include "UObject/Object.h"
 #include "NexusSideEffect.generated.h"

@@ -6,7 +6,7 @@
 #include "EngineUtils.h"
 #include "GunnerUserWidget.h"
 #include "Gunner/_Core/GunnerOverlayWidget.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/_Core/UI/GunnerOverlayWidgetController.h"
 
 

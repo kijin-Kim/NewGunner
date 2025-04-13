@@ -4,7 +4,7 @@
 #include "GunnerSlotManagerComponent.h"
 
 #include "GunnerSlotManagerInterface.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Action/NexusAction.h"
 #include "Action/NexusActionDef.h"
 #include "Engine/Canvas.h"

@@ -4,7 +4,7 @@
 #include "GunnerGameInstance.h"
 
 #include "MoviePlayer.h"
-#include "NexusPrediction.h"
+#include "Prediction/NexusPrediction.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"

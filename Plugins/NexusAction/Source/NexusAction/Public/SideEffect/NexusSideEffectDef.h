@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NexusSideEffectDefHandle.h"
-#include "NexusPrediction.h"
+#include "Prediction/NexusPrediction.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "NexusSideEffectDef.generated.h"
 

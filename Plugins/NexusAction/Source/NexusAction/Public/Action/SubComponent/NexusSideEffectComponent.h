@@ -3,19 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusSideEffectComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusSideEffectComponent : public UActorComponent
+class NEXUSACTION_API UNexusSideEffectComponent : public UNexusAgentBoundComponent
 {
 	GENERATED_BODY()
 
 public:
 	UNexusSideEffectComponent();
-	void Init(AActor* Actor);
+	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Action/NexusActionDefHandle.h"
-#include "NexusPrediction.h"
+#include "Prediction/NexusPrediction.h"
 #include "NexusDataReplication.generated.h"
 
 

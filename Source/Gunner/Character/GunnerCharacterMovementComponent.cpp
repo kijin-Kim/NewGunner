@@ -5,7 +5,7 @@
 
 #include "GunnerCharacter.h"
 #include "Event/NexusEventMessage.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 

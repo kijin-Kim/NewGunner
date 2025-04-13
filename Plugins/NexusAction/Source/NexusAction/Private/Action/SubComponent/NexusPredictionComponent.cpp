@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusPredictionComponent.h"
+#include "Action/SubComponent/NexusPredictionComponent.h"
 
-#include "NexusPredictionScope.h"
+#include "Prediction/NexusPredictionScope.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -14,15 +14,16 @@ UNexusPredictionComponent::UNexusPredictionComponent()
 	SetIsReplicatedByDefault(true);
 }
 
+void UNexusPredictionComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
+{
+	Super::Setup(InAgentInfo);
+	NetPredictionTags.Init(GetOwner()->HasAuthority());
+}
+
 void UNexusPredictionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusPredictionComponent, NetPredictionTags, COND_OwnerOnly);
-}
-
-void UNexusPredictionComponent::Init()
-{
-	NetPredictionTags.Init(GetOwner()->HasAuthority());
 }
 
 void UNexusPredictionComponent::ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag)

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
 #include "SideEffect/NexusProperty.h"
 #include "NexusPropertyComponent.generated.h"
@@ -12,7 +13,7 @@
 class UNexusProperty;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusPropertyComponent : public UActorComponent
+class NEXUSACTION_API UNexusPropertyComponent : public UNexusAgentBoundComponent
 {
 	GENERATED_BODY()
 	

@@ -2,8 +2,8 @@
 
 #include "NexusActionModule.h"
 
-#include "NexusActionComponent.h"
-#include "NexusPrediction.h"
+#include "Action/NexusActionComponent.h"
+#include "Prediction/NexusPrediction.h"
 #include "GameFramework/HUD.h"
 
 #define LOCTEXT_NAMESPACE "FNexusActionModule"

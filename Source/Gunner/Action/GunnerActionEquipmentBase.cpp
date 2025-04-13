@@ -3,7 +3,7 @@
 
 #include "GunnerActionEquipmentBase.h"
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentDef.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 

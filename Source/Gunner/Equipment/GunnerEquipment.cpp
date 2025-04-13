@@ -9,7 +9,7 @@
 #include "Gunner/_Core/Animation/GunnerAnimInstance.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Net/UnrealNetwork.h"

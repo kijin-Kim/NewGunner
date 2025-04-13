@@ -1,5 +1,5 @@
 #pragma once
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "NexusPrediction.h"
 
 struct FNexusPredictionScope
@@ -10,10 +10,7 @@ public:
 
 private:
 	// 로깅을 위한 함수
-	UObject* GetOuter() const
-	{
-		return PredictionComponent.GetOwner();
-	}
+	UObject* GetOuter() const;
 
 public:
 	UNexusPredictionComponent& PredictionComponent;

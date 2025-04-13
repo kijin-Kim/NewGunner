@@ -3,7 +3,6 @@
 
 #include "GunnerActionComponent.h"
 
-#include "NexusPropertyComponent.h"
 #include "Action/NexusAction.h"
 #include "Gunner/Action/GunnerActionSet.h"
 
@@ -20,7 +19,7 @@ void UGunnerActionComponent::OnSetupActionComponent()
 	{
 		for (const auto& [Tag, Value] : ActionSet->InitialProperties)
 		{
-			GetPropertyComponent()->AuthAddProperty(Tag, Value);
+			AuthAddProperty(Tag, Value);
 		}
 		for (TSubclassOf<UNexusAction> ActionClass : ActionSet->InitialActionClasses)
 		{

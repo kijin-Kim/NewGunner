@@ -2,7 +2,7 @@
 
 
 #include "AsyncAction/NexusAsync_SendOrWaitTargetData.h"
-#include "NexusPredictionScope.h"
+#include "Prediction/NexusPredictionScope.h"
 
 
 UNexusAsync_SendOrWaitTargetData* UNexusAsync_SendOrWaitTargetData::SendOrWaitTargetData(UNexusAction* InAction, const FNexusTargetDataHandle& InTargetDataHandle)

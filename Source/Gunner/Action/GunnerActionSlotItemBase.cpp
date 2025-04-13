@@ -3,7 +3,7 @@
 
 #include "GunnerActionSlotItemBase.h"
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/Slot/GunnerGun.h"
 
 AGunnerSlotItem* UGunnerActionSlotItemBase::GetSlotItem() const

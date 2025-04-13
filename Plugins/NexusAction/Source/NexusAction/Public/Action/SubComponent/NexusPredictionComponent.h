@@ -3,23 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusDataReplication.h"
-#include "NexusPrediction.h"
+#include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
+#include "Prediction/NexusDataReplication.h"
+#include "Prediction/NexusPrediction.h"
 #include "TargetData/NexusTargetData.h"
 #include "NexusPredictionComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusPredictionComponent : public UActorComponent
+class NEXUSACTION_API UNexusPredictionComponent : public UNexusAgentBoundComponent
 {
 	GENERATED_BODY()
 
 public:
 	UNexusPredictionComponent();
-	
+	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void Init();
+	
 	
 	void ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 	void SetCurrentPredictionTag(const FNexusPredictionTag& NewTag);

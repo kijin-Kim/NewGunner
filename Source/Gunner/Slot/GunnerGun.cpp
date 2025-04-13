@@ -3,7 +3,7 @@
 
 #include "GunnerGun.h"
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
 AGunnerGun::AGunnerGun()

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
+#include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
 #include "NexusGameplayTagComponent.generated.h"
 
@@ -47,7 +48,7 @@ struct FNexusGameplayTagCount
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusGameplayTagComponent : public UActorComponent, public IGameplayTagAssetInterface
+class NEXUSACTION_API UNexusGameplayTagComponent : public UNexusAgentBoundComponent, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 

@@ -1,24 +1,23 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "NexusActionInterface.h"
-#include "NexusCueComponent.h"
-#include "NexusGameplayTagComponent.h"
-#include "NexusPredictionScope.h"
+#include "Action/SubComponent/NexusCueComponent.h"
+#include "Action/SubComponent/NexusGameplayTagComponent.h"
+#include "NexusLog.h"
+#include "Prediction/NexusPredictionScope.h"
+#include "Action/SubComponent/NexusPropertyComponent.h"
+#include "Action/SubComponent/NexusSideEffectComponent.h"
 #include "Action/NexusAction.h"
 #include "Cue/NexusCue.h"
-#include "Engine/ActorChannel.h"
 #include "Engine/Canvas.h"
-#include "GameFramework/HUD.h"
-#include "SideEffect/NexusSideEffect.h"
-#include "SideEffect/NexusSideEffectDef.h"
-#include "NexusLog.h"
-#include "NexusPropertyComponent.h"
-#include "NexusSideEffectComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
+#include "GameFramework/HUD.h"
 #include "Net/UnrealNetwork.h"
+#include "SideEffect/NexusSideEffect.h"
+#include "SideEffect/NexusSideEffectDef.h"
 
 bool bShowActionFailedReason = false;
 FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
@@ -30,9 +29,20 @@ FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
 
 UNexusActionComponent::UNexusActionComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	AgentInfo = MakeShared<FNexusAgentInfo>();
+	bWantsInitializeComponent = true;
+}
+
+void UNexusActionComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	EnsureSubComponent<UNexusCueComponent>();
+	EnsureSubComponent<UNexusSideEffectComponent>();
+	EnsureSubComponent<UNexusPredictionComponent>();
+	EnsureSubComponent<UNexusPropertyComponent>();
+	EnsureSubComponent<UNexusGameplayTagComponent>();
 }
 
 void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -72,9 +82,11 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	check(InAgentActor);
 	FNexusAgentInfo OldAgentInfo = *AgentInfo;
 	AgentInfo->Init(GetOwner(), InAgentActor);
-	GetSideEffectComponent()->Init(GetOwner());
-	GetPredictionComponent()->Init();
-	GetCueComponent()->Init(AgentInfo);
+	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
+	{
+		SubComponent->Setup(AgentInfo);
+	}
+
 	EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner());
 	check(EventManagerComponent.IsValid());
 
@@ -128,12 +140,6 @@ void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParam
 {
 	GetCueComponent()->SimTriggerCue(CueParams, CueHandle);
 }
-
-void UNexusActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 
 FNexusActionDefHandle UNexusActionComponent::AuthAddAction(const FNexusActionDef& ActionDef)
 {
@@ -200,6 +206,11 @@ void UNexusActionComponent::AuthRemoveAllActions()
 		NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 제거"), *ActionDef.ActionInstance->GetName());
 	}
 	ActionDefs.AuthRemoveAll();
+}
+
+void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
+{
+	GetPropertyComponent()->AuthAddProperty(Tag, Value);
 }
 
 FNexusActionDefHandle UNexusActionComponent::FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const
@@ -782,34 +793,33 @@ void UNexusActionComponent::LocalTriggerAction(FNexusActionDef* ActionDef)
 
 UNexusPredictionComponent* UNexusActionComponent::GetPredictionComponent() const
 {
-	return Cast<UNexusPredictionComponent>(GetOwner()->GetComponentByClass(UNexusPredictionComponent::StaticClass()));
+	return GetCachedComponent(PredictionComponentCached);
 }
 
 UNexusSideEffectComponent* UNexusActionComponent::GetSideEffectComponent() const
 {
-	return Cast<UNexusSideEffectComponent>(GetOwner()->GetComponentByClass(UNexusSideEffectComponent::StaticClass()));
+	return GetCachedComponent(SideEffectComponentCached);
 }
 
 UNexusPropertyComponent* UNexusActionComponent::GetPropertyComponent() const
 {
-	return Cast<UNexusPropertyComponent>(GetOwner()->GetComponentByClass(UNexusPropertyComponent::StaticClass()));
+	return GetCachedComponent(PropertyComponentCached);
 }
 
 UNexusGameplayTagComponent* UNexusActionComponent::GetGameplayTagComponent() const
 {
-	return Cast<UNexusGameplayTagComponent>(GetOwner()->GetComponentByClass(UNexusGameplayTagComponent::StaticClass()));
+	return GetCachedComponent(GameplayTagComponentCached);
 }
 
 UNexusCueComponent* UNexusActionComponent::GetCueComponent() const
 {
-	return Cast<UNexusCueComponent>(GetOwner()->GetComponentByClass(UNexusCueComponent::StaticClass()));
+	return GetCachedComponent(CueComponentCached);
 }
 
 FNexusPredictionTag UNexusActionComponent::GetCurrentPredictionTag() const
 {
 	return GetPredictionComponent()->GetCurrentPredictionTag();
 }
-
 
 void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
 {

@@ -1,5 +1,6 @@
-#include "NexusPredictionScope.h"
+#include "Prediction/NexusPredictionScope.h"
 #include "NexusLog.h"
+#include "Action/SubComponent/NexusPredictionComponent.h"
 
 
 FNexusPredictionScope::FNexusPredictionScope(UNexusPredictionComponent& InPredictionComponent, FNexusPredictionTag InPredictionTag)
@@ -26,4 +27,9 @@ FNexusPredictionScope::~FNexusPredictionScope()
 	{
 		PredictionComponent.SetCurrentPredictionTag(FNexusPredictionTag());
 	}
+}
+
+UObject* FNexusPredictionScope::GetOuter() const
+{
+	return PredictionComponent.GetOwner();
 }

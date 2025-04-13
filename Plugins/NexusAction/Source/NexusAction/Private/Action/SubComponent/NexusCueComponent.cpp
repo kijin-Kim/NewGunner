@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusCueComponent.h"
+#include "Action/SubComponent/NexusCueComponent.h"
 
 #include "Action/NexusAgentInfo.h"
 #include "Net/UnrealNetwork.h"
@@ -14,9 +14,9 @@ UNexusCueComponent::UNexusCueComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-void UNexusCueComponent::Init(TSharedPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusCueComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
 {
-	AgentInfo = InAgentInfo;
+	Super::Setup(InAgentInfo);
 
 	LoopingCues.OnCueAddedDelegate.BindUObject(this, &UNexusCueComponent::OnCueAdded);
 	LoopingCues.OnCueRemovedDelegate.BindUObject(this, &UNexusCueComponent::OnCueRemoved);
@@ -106,7 +106,6 @@ void UNexusCueComponent::AuthEndCue(FNexusLoopingCueHandle CueHandle)
 }
 
 
-
 void UNexusCueComponent::SimTriggerCue(const FNexusTriggerCueParams& TriggerCueParams, FNexusLoopingCueHandle ServerCueHandle)
 {
 	if (!GetOwner()->HasAuthority() && !TriggerCueParams.PredictionTag.IsPredictable())
@@ -129,7 +128,7 @@ void UNexusCueComponent::SimTriggerCue(const FNexusTriggerCueParams& TriggerCueP
 
 void UNexusCueComponent::RemoveAllLoopingCues()
 {
-	 LoopingCues.RemoveAllLoopingCues();
+	LoopingCues.RemoveAllLoopingCues();
 }
 
 void UNexusCueComponent::NetMulticastTriggerCue_Implementation(const FNexusTriggerCueParams& TriggerCueParams, FNexusLoopingCueHandle ServerCueHandle)
@@ -150,7 +149,6 @@ INexusCueNetworkProxyInterface* UNexusCueComponent::GetCueNetworkProxyInterface(
 
 void UNexusCueComponent::OnCueAdded(FNexusLoopingCue& NexusLoopingCue)
 {
-	
 	if (!AgentInfo->GetAgentActor())
 	{
 		NX_LOG_SUB_FN(LogNexusCue, Verbose, TEXT("AgentActor가 유효하지 않습니다"));

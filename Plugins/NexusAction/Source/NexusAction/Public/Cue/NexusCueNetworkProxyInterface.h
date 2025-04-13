@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "NexusCue.h"
-#include "NexusPrediction.h"
+#include "Prediction/NexusPrediction.h"
 #include "TargetData/NexusTargetData.h"
 #include "UObject/Interface.h"
 #include "NexusCueNetworkProxyInterface.generated.h"

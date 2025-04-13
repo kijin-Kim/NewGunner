@@ -2,7 +2,7 @@
 
 
 #include "GunnerOverlayWidgetController.h"
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 

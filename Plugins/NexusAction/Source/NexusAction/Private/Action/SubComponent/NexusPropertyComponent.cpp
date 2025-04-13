@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusPropertyComponent.h"
+#include "Action/SubComponent/NexusPropertyComponent.h"
 
 #include "NexusLog.h"
 #include "Engine/ActorChannel.h"

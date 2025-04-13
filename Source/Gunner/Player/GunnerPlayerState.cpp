@@ -3,7 +3,7 @@
 
 #include "GunnerPlayerState.h"
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
 #include "Gunner/_Core/GunnerActionComponent.h"
@@ -14,8 +14,6 @@ AGunnerPlayerState::AGunnerPlayerState()
 {
 	NetUpdateFrequency = 100.0f;
 	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
-	PredictionComponent = CreateDefaultSubobject<UNexusPredictionComponent>(TEXT("PredictionComponent"));
-	CueComponent = CreateDefaultSubobject<UNexusCueComponent>(TEXT("CueComponent"));
 	EventManagerComponent = CreateDefaultSubobject<UNexusEventManagerComponent>(TEXT("EventManagerComponent"));
 	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
 }

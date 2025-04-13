@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusSideEffectComponent.h"
+#include "Action/SubComponent/NexusSideEffectComponent.h"
 
 #include "NexusLog.h"
 #include "Action/NexusAction.h"
@@ -15,10 +15,10 @@ UNexusSideEffectComponent::UNexusSideEffectComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-void UNexusSideEffectComponent::Init(AActor* Actor)
+void UNexusSideEffectComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
 {
-	check(Actor);
-	SideEffectDefs.Init(Actor);
+	Super::Setup(InAgentInfo);
+	SideEffectDefs.Init(GetOwnerActor());
 }
 
 void UNexusSideEffectComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -35,7 +35,6 @@ void UNexusSideEffectComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UNexusSideEffectComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, FNexusPredictionTag PredictionTag, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed)
 {
-	
 	if (!GetOwner()->HasAuthority() && !PredictionTag.IsPredictable())
 	{
 		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));

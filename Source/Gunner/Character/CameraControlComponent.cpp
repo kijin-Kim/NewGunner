@@ -3,8 +3,7 @@
 
 #include "CameraControlComponent.h"
 
-#include "NexusActionComponent.h"
-#include "Camera/CameraComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Kismet/GameplayStatics.h"

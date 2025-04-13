@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
 #include "Cue/NexusCue.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
@@ -15,13 +16,13 @@ struct FNexusAgentInfo;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusCueComponent : public UActorComponent, public INexusCueNetworkProxyInterface
+class NEXUSACTION_API UNexusCueComponent : public UNexusAgentBoundComponent, public INexusCueNetworkProxyInterface
 {
 	GENERATED_BODY()
 
 public:
 	UNexusCueComponent();
-	void Init(TSharedPtr<FNexusAgentInfo> InAgentInfo);
+	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void TriggerCue(const FNexusTriggerCueParams& TriggerCueParams);
 	void AuthEndCue(FNexusLoopingCueHandle CueHandle);
@@ -41,7 +42,6 @@ private:
 	
 
 private:
-	TSharedPtr<FNexusAgentInfo> AgentInfo;
 	UPROPERTY(Replicated)
 	FNexusLoopingCueContainer LoopingCues;
 

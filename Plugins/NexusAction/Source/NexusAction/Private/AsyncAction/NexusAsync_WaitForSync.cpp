@@ -3,7 +3,7 @@
 
 #include "AsyncAction/NexusAsync_WaitForSync.h"
 
-#include "NexusPredictionScope.h"
+#include "Prediction/NexusPredictionScope.h"
 
 UNexusAsync_WaitForSync* UNexusAsync_WaitForSync::WaitForSync(UNexusAction* InAction)
 {

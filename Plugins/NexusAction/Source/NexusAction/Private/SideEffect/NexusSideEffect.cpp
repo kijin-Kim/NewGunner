@@ -3,7 +3,7 @@
 
 #include "SideEffect/NexusSideEffect.h"
 
-#include "NexusActionComponent.h"
+#include "Action/NexusActionComponent.h"
 #include "NexusLog.h"
 
 
