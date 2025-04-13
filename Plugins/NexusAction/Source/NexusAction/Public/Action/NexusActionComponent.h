@@ -130,6 +130,14 @@ private:
 	template <typename T>
 	void EnsureSubComponent()
 	{
+		for (const auto& Comp : SubComponents)
+		{
+			if (Comp->IsA<T>())
+			{
+				return;
+			}
+		}
+		
 		if (T* Existing = GetOwner()->FindComponentByClass<T>())
 		{
 			SubComponents.Add(Existing);

@@ -31,7 +31,6 @@ UNexusActionComponent::UNexusActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
-	AgentInfo = MakeShared<FNexusAgentInfo>();
 	bWantsInitializeComponent = true;
 }
 
@@ -80,8 +79,8 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 {
 	check(InAgentActor);
-	FNexusAgentInfo OldAgentInfo = *AgentInfo;
-	AgentInfo->Init(GetOwner(), InAgentActor);
+	TSharedPtr<FNexusAgentInfo> OldAgentInfo = AgentInfo;
+	AgentInfo = MakeShared<FNexusAgentInfo>( GetOwner(), InAgentActor);
 	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
 	{
 		SubComponent->Setup(AgentInfo);
@@ -92,7 +91,7 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 
 	if (!ActionDefs.OnActionDefAddedDelegate.IsBound())
 	{
-		if (OldAgentInfo != *AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
+		if (OldAgentInfo != AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
 		{
 			for (auto& ActionDef : ActionDefs.Items)
 			{

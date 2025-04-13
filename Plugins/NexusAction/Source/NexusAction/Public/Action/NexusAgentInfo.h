@@ -12,6 +12,13 @@ USTRUCT(BlueprintType)
 struct NEXUSACTION_API FNexusAgentInfo
 {
 	GENERATED_BODY()
+
+	FNexusAgentInfo() = default;
+	FNexusAgentInfo(AActor* InOwnerActor, AActor* InAgentActor)
+	{
+		Init(InOwnerActor, InAgentActor);
+	}
+
 	void Init(AActor* InOwnerActor, AActor* InAgentActor);
 
 	bool operator==(const FNexusAgentInfo& Other) const = default;
@@ -22,7 +29,7 @@ struct NEXUSACTION_API FNexusAgentInfo
 	TWeakObjectPtr<AActor> AgentActor;
 	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AActor> OwnerActor;
-	
+
 	bool IsLocallyPlayerControlled() const;
 	bool IsLocallyControlled() const;
 	bool IsOwnerActorAuthoritative() const;
@@ -31,6 +38,4 @@ struct NEXUSACTION_API FNexusAgentInfo
 	AController* GetController() const { return Controller.Get(); }
 	AActor* GetAgentActor() const { return AgentActor.Get(); }
 	AActor* GetOwnerActor() const { return OwnerActor.Get(); }
-	
-	
 };
