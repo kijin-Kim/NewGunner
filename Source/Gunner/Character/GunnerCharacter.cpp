@@ -170,13 +170,11 @@ EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FN
 	return EGunnerHitBoxType::Body;
 }
 
-void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle)
 {
-	UNexusActionComponent* ActionComponent = GetActionComponent();
-	if (HasAuthority() || !PredictionTag.IsPredictable())
+	if (UNexusActionComponent* ActionComponent = GetActionComponent())
 	{
-		GR_VLOG_FN(this, LogGunner, Log, TEXT("[%s]"), *GetNameSafe(CueClass));
-		ActionComponent->InternalTriggerCue(CueClass, TargetDataHandle);
+		ActionComponent->CueSimulatedProxy(CueClass, TargetDataHandle, PredictionTag, CueHandle);
 	}
 }
 

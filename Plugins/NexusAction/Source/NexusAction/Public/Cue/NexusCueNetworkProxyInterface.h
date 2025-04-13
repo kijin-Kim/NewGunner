@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NexusCue.h"
 #include "NexusPrediction.h"
 #include "TargetData/NexusTargetData.h"
 #include "UObject/Interface.h"
@@ -26,6 +27,6 @@ class NEXUSACTION_API INexusCueNetworkProxyInterface
 
 public:
 	
-	void CallNetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag);
-	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) = 0;
+	void CallNetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle);
+	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle) = 0;
 };

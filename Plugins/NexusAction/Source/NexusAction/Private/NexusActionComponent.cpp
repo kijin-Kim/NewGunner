@@ -110,7 +110,7 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	LoopingCues.OnCueAddedDelegate.BindUObject(this, &UNexusActionComponent::OnCueAdded);
 	LoopingCues.OnCueRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnCueRemoved);
 
-	for (const FNexusLoopingCue& LoopingCue : LoopingCues.Items)
+	for (FNexusLoopingCue& LoopingCue : LoopingCues.Items)
 	{
 		LoopingCues.OnAdded(LoopingCue);
 	}
@@ -660,83 +660,84 @@ void UNexusActionComponent::TriggerCue(UNexusAction* Action, TSubclassOf<ANexusC
 {
 	check(Action);
 
+	ANexusCue* Default = CueClass.GetDefaultObject();
+	if (Default->GetCueType() != ENexusCueType::Looping)
+	{
+		return;
+	}
+
 	if (!CueClass)
 	{
 		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("CueClass가 유효하지 않습니다"));
 		return;
 	}
 
+	FNexusLoopingCueHandle Handle;
+	if (Default->GetCueType() == ENexusCueType::Looping)
+	{
+		FNexusLoopingCue NewLoopingCue;
+		NewLoopingCue.CueClass = CueClass;
+		NewLoopingCue.TargetDataHandle = TargetDataHandle;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetAgentActor();
+		NewLoopingCue.CueActor = GetWorld()->SpawnActor<ANexusCue>(NewLoopingCue.CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+		NewLoopingCue.CueActor->CallOnTriggered(TargetDataHandle);
+		Handle = LoopingCues.AddLoopingCue(NewLoopingCue, AgentInfo->IsOwnerActorAuthoritative());
+	}
 
 	if (!IsOwnerActorAuthoritative())
 	{
 		if (CurrentPredictionTag.IsPredictable())
 		{
-			InternalTriggerCue(CueClass, TargetDataHandle);
-			if (CueClass->GetDefaultObject<ANexusCue>()->GetCueType() == ENexusCueType::Looping)
+			if (Default->GetCueType() == ENexusCueType::Looping)
 			{
-				FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
-				PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, CueClass]()
+				if (!IsOwnerActorAuthoritative() && CurrentPredictionTag.IsPredictable())
 				{
-					int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-					Count--;
-					if (Count <= 0)
+					FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+					PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, Handle]()
 					{
-						LocalCueCountMap.Remove(CueClass);
-						LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-					}
-				});
+						LoopingCues.RemoveLoopingCue(Handle, IsOwnerActorAuthoritative());
+					});
 
-				PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, CueClass]()
-				{
-					int32& Count = LocalCueCountMap.FindOrAdd(CueClass);
-					Count--;
-					if (Count <= 0)
+					PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, Handle]()
 					{
-						LocalCueCountMap.Remove(CueClass);
-						LoopingCues.RemoveLoopingCue(CueClass, IsOwnerActorAuthoritative());
-					}
-				});
+						LoopingCues.RemoveLoopingCue(Handle, IsOwnerActorAuthoritative());
+					});
+				}
 			}
 		}
 	}
 	else if (GetCueNetworkProxyInterface())
 	{
-		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag);
+		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, TargetDataHandle, CurrentPredictionTag, Handle);
 	}
 }
 
-void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::CueSimulatedProxy(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle)
 {
-	if (IsOwnerActorAuthoritative() || !PredictionTag.IsPredictable())
+	if (!IsOwnerActorAuthoritative() && !PredictionTag.IsPredictable())
 	{
-		InternalTriggerCue(CueClass, TargetDataHandle);
+		FNexusLoopingCue* LoopingCue = LoopingCues.FindLoopingCueByHandle(CueHandle);
+		if (!LoopingCue)
+		{
+			FNexusLoopingCue NewLoopingCue;
+			NewLoopingCue.CueClass = CueClass;
+			NewLoopingCue.TargetDataHandle = TargetDataHandle;
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = GetAgentActor();
+			NewLoopingCue.CueActor = GetWorld()->SpawnActor<ANexusCue>(NewLoopingCue.CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+			NewLoopingCue.CueActor->CallOnTriggered(TargetDataHandle);
+			NewLoopingCue.Handle = CueHandle;
+			LoopingCues.AddLoopingCue(NewLoopingCue, true);
+		}
 	}
 }
 
-void UNexusActionComponent::InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle)
+void UNexusActionComponent::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle)
 {
-	check(CueClass);
-
-	ANexusCue* CueActor = CueClass.GetDefaultObject();
-	ENexusCueType CueType = CueActor->GetCueType();
-	if (CueType == ENexusCueType::Looping) // Looping일 경우에만 인스턴스를 만들고 컨테이너로 관리합니다. (State가 필요하고, 예측 및 롤백 로직이 필요하기 때문)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = GetAgentActor();
-		CueActor = GetWorld()->SpawnActor<ANexusCue>(CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
-		// TODO: AgentActor의 Children을 검사하여 재활용
-	}
-	check(CueActor);
-	CueActor->CallOnTriggered(TargetDataHandle);
-
-	if (CueType == ENexusCueType::Looping)
-	{
-		FNexusLoopingCue NewLoopingCue;
-		NewLoopingCue.CueClass = CueClass;
-		NewLoopingCue.TargetDataHandle = TargetDataHandle;
-		LoopingCues.AddLoopingCue(NewLoopingCue, AgentInfo->IsOwnerActorAuthoritative());
-	}
+	CueSimulatedProxy(CueClass, TargetDataHandle, PredictionTag, CueHandle);
 }
+
 
 void UNexusActionComponent::BP_AuthEndCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass)
 {
@@ -867,7 +868,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	}
 }
 
-void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
+void UNexusActionComponent::OnCueAdded(FNexusLoopingCue& NexusLoopingCue)
 {
 	if (!GetAgentActor())
 	{
@@ -875,38 +876,34 @@ void UNexusActionComponent::OnCueAdded(const FNexusLoopingCue& NexusLoopingCue)
 		return;
 	}
 
-	LocalCueCountMap.FindOrAdd(NexusLoopingCue.CueClass)++;
-	ANexusCue* CueActor = GetLoopingCueActor(NexusLoopingCue.CueClass);
-
-	if (!CueActor)
+	if (!NexusLoopingCue.CueActor)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = GetAgentActor();
-		CueActor = GetWorld()->SpawnActor<ANexusCue>(NexusLoopingCue.CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
-		check(CueActor);
+		NexusLoopingCue.CueActor = GetWorld()->SpawnActor<ANexusCue>(NexusLoopingCue.CueClass, GetAgentActor()->GetActorTransform(), SpawnParams);
+		check(NexusLoopingCue.CueActor);
 	}
 
-
-	CueActor->CallOnBecomeRelevant(NexusLoopingCue.TargetDataHandle);
+	NexusLoopingCue.CueActor->CallOnBecomeRelevant(NexusLoopingCue.TargetDataHandle);
 	if (IsOwnerActorAuthoritative())
 	{
-		CueActor->OnDurationExpiredDelegate.BindWeakLambda(this, [this, NexusLoopingCue]()
+		NexusLoopingCue.CueActor->OnDurationExpiredDelegate.BindWeakLambda(this, [this, NexusLoopingCue]()
 		{
 			if (NexusLoopingCue.CueClass)
 			{
-				LoopingCues.RemoveLoopingCue(NexusLoopingCue.CueClass, IsOwnerActorAuthoritative());
+				LoopingCues.RemoveLoopingCue(NexusLoopingCue.Handle, IsOwnerActorAuthoritative());
 			}
 		});
 	}
 }
 
 
-void UNexusActionComponent::OnCueRemoved(TSubclassOf<ANexusCue> CueClass)
+void UNexusActionComponent::OnCueRemoved(FNexusLoopingCue& NexusLoopingCue)
 {
-	if (ANexusCue* CueActor = GetLoopingCueActor(CueClass))
+	if (NexusLoopingCue.CueActor)
 	{
-		CueActor->CallOnCeaseRelevant();
-		CueActor->Destroy();
+		NexusLoopingCue.CueActor->CallOnCeaseRelevant();
+		NexusLoopingCue.CueActor->Destroy();
 	}
 }
 

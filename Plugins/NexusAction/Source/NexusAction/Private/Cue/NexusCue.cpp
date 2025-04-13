@@ -6,10 +6,31 @@
 #include "NexusLog.h"
 
 
+void FNexusLoopingCueHandle::GenerateNewHandle()
+{
+	static int32 HandleCounter = 1;
+	Handle = HandleCounter++;
+}
+
+FNexusLoopingCue::FNexusLoopingCue(): CueClass(nullptr)
+{
+	Handle.GenerateNewHandle();
+}
+
+bool FNexusLoopingCue::operator==(const FNexusLoopingCue& Other) const
+{
+	return Handle == Other.Handle && CueClass == Other.CueClass;
+}
+
+bool FNexusLoopingCue::operator!=(const FNexusLoopingCue& Other) const
+{
+	return !(*this == Other);
+}
+
 void FNexusLoopingCue::PreReplicatedRemove(const FNexusLoopingCueContainer& InArraySerializer)
 {
 	UE_LOG(LogNexusCue, Log, TEXT("FNexusLoopingCue::PreReplicatedRemove [%s]"), *GetNameSafe(CueClass));
-	InArraySerializer.OnRemoved(CueClass);
+	InArraySerializer.OnRemoved(*this);
 }
 
 void FNexusLoopingCue::PostReplicatedAdd(const FNexusLoopingCueContainer& InArraySerializer)
@@ -20,7 +41,6 @@ void FNexusLoopingCue::PostReplicatedAdd(const FNexusLoopingCueContainer& InArra
 
 void FNexusLoopingCue::PostReplicatedChange(const FNexusLoopingCueContainer& InArraySerializer)
 {
-	checkNoEntry();
 	UE_LOG(LogNexusCue, Log, TEXT("FNexusLoopingCue::PostReplicatedChange [%s]"), *GetNameSafe(CueClass));
 }
 
@@ -29,25 +49,32 @@ bool FNexusLoopingCueContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaP
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusLoopingCue, FNexusLoopingCueContainer>(Items, DeltaParms, *this);
 }
 
-void FNexusLoopingCueContainer::AddLoopingCue(const FNexusLoopingCue& InLoopingCue, bool bHasAuthority)
+FNexusLoopingCueHandle FNexusLoopingCueContainer::AddLoopingCue(const FNexusLoopingCue& InLoopingCue, bool bHasAuthority)
 {
 	check(InLoopingCue.CueClass);
-	OnAdded(InLoopingCue);
+
 	int32 Index = Items.Add(InLoopingCue);
 	if (bHasAuthority)
 	{
 		MarkItemDirty(Items[Index]);
 	}
+	OnAdded(Items[Index]);
+	return Items[Index].Handle;
 }
 
-void FNexusLoopingCueContainer::RemoveLoopingCue(TSubclassOf<ANexusCue> InCueClass, bool bHasAuthority)
+void FNexusLoopingCueContainer::RemoveLoopingCue(FNexusLoopingCueHandle Handle, bool bHasAuthority)
 {
-	Items.RemoveAll([InCueClass](const FNexusLoopingCue& LoopingCue)
+	FNexusLoopingCue* LoopingCue = FindLoopingCueByHandle(Handle);
+	if (!LoopingCue)
 	{
-		return LoopingCue.CueClass == InCueClass;
+		return;
+	}
+	OnRemoved(*LoopingCue);
+	int32 Removed = Items.RemoveAll([Handle](const FNexusLoopingCue& Other)
+	{
+		return Other.Handle == Handle;
 	});
-
-	OnRemoved(InCueClass);
+	check(Removed != 0);
 	if (bHasAuthority)
 	{
 		MarkArrayDirty();
@@ -56,15 +83,15 @@ void FNexusLoopingCueContainer::RemoveLoopingCue(TSubclassOf<ANexusCue> InCueCla
 
 void FNexusLoopingCueContainer::RemoveAllLoopingCues()
 {
-	for (const FNexusLoopingCue& LoopingCue : Items)
+	for (FNexusLoopingCue& LoopingCue : Items)
 	{
-		OnRemoved(LoopingCue.CueClass);
+		OnRemoved(LoopingCue);
 	}
 	Items.Empty();
 	MarkArrayDirty();
 }
 
-void FNexusLoopingCueContainer::OnAdded(const FNexusLoopingCue& LoopingCue) const
+void FNexusLoopingCueContainer::OnAdded(FNexusLoopingCue& LoopingCue) const
 {
 	if (OnCueAddedDelegate.IsBound())
 	{
@@ -72,12 +99,20 @@ void FNexusLoopingCueContainer::OnAdded(const FNexusLoopingCue& LoopingCue) cons
 	}
 }
 
-void FNexusLoopingCueContainer::OnRemoved(TSubclassOf<ANexusCue> CueClass) const
+void FNexusLoopingCueContainer::OnRemoved(FNexusLoopingCue& LoopingCue) const
 {
 	if (OnCueRemovedDelegate.IsBound())
 	{
-		OnCueRemovedDelegate.Execute(CueClass);
+		OnCueRemovedDelegate.Execute(LoopingCue);
 	}
+}
+
+FNexusLoopingCue* FNexusLoopingCueContainer::FindLoopingCueByHandle(const FNexusLoopingCueHandle& InHandle)
+{
+	return Items.FindByPredicate([InHandle](const FNexusLoopingCue& LoopingCue)
+	{
+		return LoopingCue.Handle == InHandle;
+	});
 }
 
 ANexusCue::ANexusCue()

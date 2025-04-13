@@ -137,9 +137,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
 	void TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	void CueSimulatedProxy(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle);
 	UFUNCTION(NetMulticast, Unreliable)
-	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag) override;
-	void InternalTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
+	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
 	static void BP_AuthEndCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass);
@@ -185,8 +185,8 @@ public:
 private:
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
-	void OnCueAdded(const FNexusLoopingCue& NexusLoopingCue);
-	void OnCueRemoved(TSubclassOf<ANexusCue> CueClass);
+	void OnCueAdded(FNexusLoopingCue& NexusLoopingCue);
+	void OnCueRemoved(FNexusLoopingCue& NexusLoopingCue);
 	void InternalSetupActionComponent(AActor* InAgentActor);
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
@@ -327,9 +327,9 @@ private:
 
 	TMap<FNexusRepDataKey, FNexusTargetDataDelegate> TargetDataDelegates;
 
+	
 	UPROPERTY(Replicated)
 	FNexusLoopingCueContainer LoopingCues;
-	TMap<TSubclassOf<ANexusCue>, int32> LocalCueCountMap;
 
 
 	UFUNCTION()
