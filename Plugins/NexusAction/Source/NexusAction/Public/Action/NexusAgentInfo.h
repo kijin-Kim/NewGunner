@@ -26,5 +26,11 @@ struct NEXUSACTION_API FNexusAgentInfo
 	bool IsLocallyPlayerControlled() const;
 	bool IsLocallyControlled() const;
 	bool IsOwnerActorAuthoritative() const;
+
+
+	AController* GetController() const { return Controller.Get(); }
+	AActor* GetAgentActor() const { return AgentActor.Get(); }
+	AActor* GetOwnerActor() const { return OwnerActor.Get(); }
+	
 	
 };

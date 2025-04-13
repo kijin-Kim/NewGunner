@@ -84,7 +84,7 @@ public:
 
 	//~ Begin INexusCueNetworkProxyInterface Interface.
 	UFUNCTION(NetMulticast, Unreliable)
-	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle) override;
+	virtual void NetMulticastTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle) override;
 	//~ End INexusCueNetworkProxyInterface Interface.
 
 private:

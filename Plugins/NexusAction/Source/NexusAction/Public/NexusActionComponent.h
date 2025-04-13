@@ -4,21 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "NexusDataReplication.h"
 #include "NexusPrediction.h"
 #include "NexusPredictionComponent.h"
 #include "Action/NexusActionDef.h"
 #include "Action/NexusAgentInfo.h"
 #include "Components/ActorComponent.h"
-#include "Cue/NexusCue.h"
-#include "Cue/NexusCueNetworkProxyInterface.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectDef.h"
 #include "NexusActionComponent.generated.h"
 
- 
+
+struct FNexusTriggerCueParams;
+class UNexusCueComponent;
 class UNexusActionComponent;
 class UNexusProperty;
 class UNexusSideEffect;
@@ -65,7 +64,7 @@ struct FNexusGameplayTagCount
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface, public INexusCueNetworkProxyInterface
+class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -81,12 +80,13 @@ public:
 
 
 	void SetupActionComponent(AActor* InAgentActor);
-	void AuthRemoveAllCues();
 	void TeardownActionComponent();
 
 	virtual void OnSetupActionComponent()
 	{
-	};
+	}
+
+	void SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle);
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -121,20 +121,12 @@ public:
 	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
 	void TriggerSideEffectByDef_Internal(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionEnded, TOptional<FNexusPredictionEventSignature::FDelegate> OnPredictionFailed);
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {});
-
-
-	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
+	
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
 	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
-	void TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle);
-	void CueSimulatedProxy(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle);
-	UFUNCTION(NetMulticast, Unreliable)
-	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle) override;
-
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
-	static void BP_AuthEndCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass);
-	void AuthEndCue(TSubclassOf<ANexusCue> CueClass);
+	static void BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle);
 
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
 	bool IsAgentLocallyControlled() const;
@@ -172,11 +164,11 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
+
+
 private:
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-
-	void OnCueAdded(FNexusLoopingCue& NexusLoopingCue);
-	void OnCueRemoved(FNexusLoopingCue& NexusLoopingCue);
+	
 	void InternalSetupActionComponent(AActor* InAgentActor);
 
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
@@ -209,9 +201,10 @@ private:
 	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 	UFUNCTION(Reliable, Client)
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
+	FNexusPredictionTag GetCurrentPredictionTag() const;
 
-	ANexusCue* GetLoopingCueActor(TSubclassOf<ANexusCue> CueClass) const;
-
+private:
+	UNexusCueComponent* GetCueComponent() const;
 	UNexusPredictionComponent* GetPredictionComponent() const;
 
 
@@ -259,65 +252,8 @@ private:
 
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UNexusProperty>> Properties;
-
-
-	struct FNexusRepDataDelegate
-	{
-		FNexusRepDataDelegate(const FNexusPredictionTag& InPredictionTag)
-			: PredictionTag(InPredictionTag)
-		{
-		}
-
-
-		FNexusPredictionTag PredictionTag;
-	};
-
-	struct FNexusNetSyncDelegate : public FNexusRepDataDelegate
-	{
-		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag)
-			: FNexusRepDataDelegate(InPredictionTag)
-		{
-		}
-
-
-		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag, FSimpleMulticastDelegate::FDelegate&& InDelegate)
-			: FNexusRepDataDelegate(InPredictionTag)
-		{
-			OnSyncDelegate.Add(MoveTemp(InDelegate));
-		}
-
-		FSimpleMulticastDelegate OnSyncDelegate;
-	};
-
-
-	TMap<FNexusRepDataKey, FNexusNetSyncDelegate> NetSyncPointDelegates;
-
-
-	struct FNexusTargetDataDelegate : public FNexusRepDataDelegate
-	{
-		FNexusTargetDataDelegate(const FNexusPredictionTag& InPredictionTag, const FNexusTargetDataHandle& InTargetDataHandle)
-			: FNexusRepDataDelegate(InPredictionTag)
-			  , TargetDataHandle(InTargetDataHandle)
-		{
-		}
-
-		FNexusTargetDataDelegate(FOnNexusTargetDataSetSignature::FDelegate&& InDelegate)
-			: FNexusRepDataDelegate(FNexusPredictionTag()),
-			  TargetDataHandle()
-		{
-			OnSetDelegate.Add(MoveTemp(InDelegate));
-		}
-
-
-		FOnNexusTargetDataSetSignature OnSetDelegate;
-		FNexusTargetDataHandle TargetDataHandle;
-	};
-
-	TMap<FNexusRepDataKey, FNexusTargetDataDelegate> TargetDataDelegates;
-
 	
-	UPROPERTY(Replicated)
-	FNexusLoopingCueContainer LoopingCues;
+	
 
 
 	UFUNCTION()

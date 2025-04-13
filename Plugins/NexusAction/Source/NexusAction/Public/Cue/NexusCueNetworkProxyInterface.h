@@ -9,6 +9,23 @@
 #include "UObject/Interface.h"
 #include "NexusCueNetworkProxyInterface.generated.h"
 
+
+
+USTRUCT()
+struct NEXUSACTION_API FNexusTriggerCueParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TSubclassOf<ANexusCue> CueClass;
+	UPROPERTY()
+	FNexusTargetDataHandle TargetDataHandle;
+	UPROPERTY()
+	FNexusPredictionTag PredictionTag;
+};
+
+
+
 class ANexusCue;
 class UNexusAction;
 // This class does not need to be modified.
@@ -27,6 +44,6 @@ class NEXUSACTION_API INexusCueNetworkProxyInterface
 
 public:
 	
-	void CallNetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle);
-	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle) = 0;
+	void CallNetMulticastTriggerCue(const FNexusTriggerCueParams& TriggerCueParams,  FNexusLoopingCueHandle CueHandle);
+	virtual void NetMulticastTriggerCue(const FNexusTriggerCueParams& TriggerCueParams,  FNexusLoopingCueHandle CueHandle) = 0;
 };

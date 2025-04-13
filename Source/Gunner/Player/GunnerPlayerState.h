@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NexusCueComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GunnerPlayerState.generated.h"
@@ -41,6 +42,8 @@ private:
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UNexusPredictionComponent> PredictionComponent;
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UNexusCueComponent> CueComponent;
 	UPROPERTY()
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -51,4 +54,5 @@ private:
 	FGenericTeamId TeamID = 0;
 
 	FOnGunnerTeamSetSignature OnTeamSet;
+	
 };

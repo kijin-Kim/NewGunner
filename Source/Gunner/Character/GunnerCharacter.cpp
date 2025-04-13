@@ -12,6 +12,7 @@
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
 #include "NexusActionComponent.h"
+#include "NexusCueComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Gunner/Gunner.h"
@@ -170,11 +171,11 @@ EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FN
 	return EGunnerHitBoxType::Body;
 }
 
-void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag, FNexusLoopingCueHandle CueHandle)
+void AGunnerCharacter::NetMulticastTriggerCue_Implementation(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle)
 {
 	if (UNexusActionComponent* ActionComponent = GetActionComponent())
 	{
-		ActionComponent->CueSimulatedProxy(CueClass, TargetDataHandle, PredictionTag, CueHandle);
+		ActionComponent->SimTriggerCue(CueParams, CueHandle);
 	}
 }
 

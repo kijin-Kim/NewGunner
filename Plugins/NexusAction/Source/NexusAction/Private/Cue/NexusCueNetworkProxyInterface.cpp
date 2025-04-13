@@ -3,7 +3,7 @@
 
 #include "Cue/NexusCueNetworkProxyInterface.h"
 
-void INexusCueNetworkProxyInterface::CallNetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusTargetDataHandle TargetDataHandle, FNexusPredictionTag PredictionTag,  FNexusLoopingCueHandle CueHandle)
+void INexusCueNetworkProxyInterface::CallNetMulticastTriggerCue(const FNexusTriggerCueParams& TriggerCueParams, FNexusLoopingCueHandle CueHandle)
 {
-	NetMulticastTriggerCue(CueClass, TargetDataHandle, PredictionTag, CueHandle);
+	NetMulticastTriggerCue(TriggerCueParams, CueHandle);
 }
