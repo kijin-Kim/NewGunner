@@ -5,6 +5,7 @@
 
 #include "GenericTeamAgentInterface.h"
 #include "GunnerNativeGameplayTags.h"
+#include "Action/NexusActionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Damage/GunnerDamageType.h"
 #include "Event/NexusEventManagerComponent.h"
@@ -64,49 +65,47 @@ void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedCompon
 
 void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 {
-	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
+	
+	FNexusEventMessage DamageEventMessage;
+	DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
+	APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
+	DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
+
+
+	AActor* EquippedActor = GetOwner()->GetOwner();
+	UWorld* World = EquippedActor->GetWorld();
+	UCameraComponent* CameraComponet = EquippedActor->GetComponentByClass<UCameraComponent>();
+	FVector CameraLocation = CameraComponet->GetComponentLocation();
+	FVector CameraForward = CameraComponet->GetForwardVector();
+
+	FCollisionQueryParams CollisionQueryParams;
+	TArray<AActor*> IgnoredActors = {GetOwner()->GetOwner(), GetOwner()};
+	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
+	TArray<FHitResult> OutHitResults;
+	World->LineTraceMultiByChannel(OutHitResults,
+	                               CameraLocation,
+	                               CameraLocation + CameraForward * 10000.0f,
+	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
+	FHitResult* HitResultPtr = OutHitResults.FindByPredicate([HitActor](const FHitResult& HitResult) { return HitResult.GetActor() == HitActor; });
+	check(HitResultPtr);
+	FName HitBoneName = TEXT("None");
+	FVector HitNormal = FVector::ZeroVector;
+	if (HitResultPtr)
 	{
-		FNexusEventMessage DamageEventMessage;
-		DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
-		APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
-		DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
-
-
-		AActor* EquippedActor = GetOwner()->GetOwner();
-		UWorld* World = EquippedActor->GetWorld();
-		UCameraComponent* CameraComponet = EquippedActor->GetComponentByClass<UCameraComponent>();
-		FVector CameraLocation = CameraComponet->GetComponentLocation();
-		FVector CameraForward = CameraComponet->GetForwardVector();
-
-		FCollisionQueryParams CollisionQueryParams;
-		TArray<AActor*> IgnoredActors = {GetOwner()->GetOwner(), GetOwner()};
-		CollisionQueryParams.AddIgnoredActors(IgnoredActors);
-		TArray<FHitResult> OutHitResults;
-		World->LineTraceMultiByChannel(OutHitResults,
-		                               CameraLocation,
-		                               CameraLocation + CameraForward * 10000.0f,
-		                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
-		FHitResult* HitResultPtr = OutHitResults.FindByPredicate([HitActor](const FHitResult& HitResult) { return HitResult.GetActor() == HitActor; });
-		check(HitResultPtr);
-		FName HitBoneName = TEXT("None");
-		FVector HitNormal = FVector::ZeroVector;
-		if (HitResultPtr)
-		{
-			HitBoneName = HitResultPtr->BoneName;
-			HitNormal = HitResultPtr->ImpactNormal;
-		}
-
-		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
-		AGunnerEquipment* EquipmentOwner = GetOwner<AGunnerEquipment>();
-		DamageContext->Instigator = EquipmentPawnOwner->GetController();
-		DamageContext->Causer = EquipmentOwner;
-		DamageContext->Target = HitActor;
-		DamageContext->HitNormal = HitNormal;
-		DamageContext->HitBoneName = HitBoneName;
-
-		DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
-		DamageEventMessage.EventDataObject = DamageContext;
-		
-		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+		HitBoneName = HitResultPtr->BoneName;
+		HitNormal = HitResultPtr->ImpactNormal;
 	}
+
+	UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
+	AGunnerEquipment* EquipmentOwner = GetOwner<AGunnerEquipment>();
+	DamageContext->Instigator = EquipmentPawnOwner->GetController();
+	DamageContext->Causer = EquipmentOwner;
+	DamageContext->Target = HitActor;
+	DamageContext->HitNormal = HitNormal;
+	DamageContext->HitBoneName = HitBoneName;
+
+	DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+	DamageEventMessage.EventDataObject = DamageContext;
+
+	UNexusActionComponent::SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 }

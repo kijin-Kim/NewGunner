@@ -6,7 +6,6 @@
 #include "NexusActionInterface.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
-#include "Event/NexusEventMangerInterface.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Slot/GunnerSlotManagerInterface.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
@@ -28,7 +27,6 @@ class GUNNER_API AGunnerCharacter
 	: public ACharacter,
 	  public INexusAnimMontagePlayerInterface,
 	  public INexusActionInterface,
-	  public INexusEventManagerInterface,
 	  public IGunnerTeamAgentInterface,
 	  public IGunnerHitBoxInterface,
 	  public INexusCueNetworkProxyInterface,
@@ -62,9 +60,7 @@ public:
 	virtual UNexusActionComponent* GetActionComponent() const override;
 	//~ End IGunnerActionComponentInterface Interface.
 
-	//~ Begin IGunnerEventManagerInterface Interface.
-	virtual UNexusEventManagerComponent* GetEventManagerComponent() const override;
-	//~ End IGunnerEventManagerInterface Interface.
+	
 
 	//~ Begin IGunnerSlotManagerInterface Interface.
 	virtual UGunnerSlotManagerComponent* GetSlotManagerComponent() const override;

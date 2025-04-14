@@ -16,10 +16,10 @@ UCameraControllerComponent::UCameraControllerComponent()
 
 TArray<FNexusEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 {
-	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()))
+	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner()))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Look, this, &ThisClass::Look)
+			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Look, this, &ThisClass::Look)
 		};
 	}
 	return {};
@@ -33,7 +33,7 @@ void UCameraControllerComponent::InitCameraController()
 		return;
 	}
 
-	UnbindEvents(UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner()));
+	UnbindEvents(UNexusActionComponent::GetActionComponentFromActor(GetOwner()));
 	BindEvents();
 }
 

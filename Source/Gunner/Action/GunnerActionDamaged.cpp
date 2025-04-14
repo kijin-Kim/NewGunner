@@ -19,6 +19,7 @@ UAnimMontage* UGunnerActionDamaged::GetDesiredHitMontage(FName HitBoneName) cons
 		DamageContext->Causer->GetActorLocation(),
 		DamageContext->Target->GetActorLocation(),
 		GetAgentActor()->GetActorForwardVector());
+	
 	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
 	const FGunnerDirectionalMontageSet* HitMontageSet = HitMontages.Find(HitBoxType);
 	if (!HitMontageSet)

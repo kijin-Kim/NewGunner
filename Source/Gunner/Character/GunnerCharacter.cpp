@@ -119,12 +119,6 @@ UNexusActionComponent* AGunnerCharacter::GetActionComponent() const
 	return PS ? PS->FindComponentByClass<UNexusActionComponent>() : FindComponentByClass<UNexusActionComponent>();
 }
 
-UNexusEventManagerComponent* AGunnerCharacter::GetEventManagerComponent() const
-{
-	const APlayerState* PS = GetPlayerState<APlayerState>();
-	return PS ? PS->FindComponentByClass<UNexusEventManagerComponent>() : FindComponentByClass<UNexusEventManagerComponent>();
-}
-
 UGunnerSlotManagerComponent* AGunnerCharacter::GetSlotManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();

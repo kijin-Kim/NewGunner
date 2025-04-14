@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NexusAsync.h"
-#include "Event/NexusEventInterface.h"
+#include "Event/NexusEventBindHelperInterface.h"
 #include "NexusAsync_WaitForEvent.generated.h"
 
 class UNexusAction;
@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusEventReceivedSignature, FGam
 
 
 UCLASS()
-class NEXUSACTION_API UNexusAsync_WaitForEvent : public UNexusAsync, public INexusEventInterface
+class NEXUSACTION_API UNexusAsync_WaitForEvent : public UNexusAsync, public INexusEventBindHelperInterface
 {
 	GENERATED_BODY()
 
@@ -41,7 +41,6 @@ public:
 
 private:
 	const void* MessagePtr;
-	TWeakObjectPtr<UNexusEventManagerComponent> TargetEventManagerComponent;
 	TWeakObjectPtr<UScriptStruct> EventMesageType;
 	FGameplayTag EventTag;
 	bool bAutoCancel = true;

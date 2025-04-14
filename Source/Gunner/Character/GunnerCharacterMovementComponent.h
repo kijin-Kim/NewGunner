@@ -6,13 +6,13 @@
 #include "GameplayTagContainer.h"
 #include "Event/NexusEventMessage.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Event/NexusEventInterface.h"
+#include "Event/NexusEventBindHelperInterface.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "GunnerCharacterMovementComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public INexusEventInterface
+class GUNNER_API UGunnerCharacterMovementComponent : public UCharacterMovementComponent, public INexusEventBindHelperInterface
 {
 	GENERATED_BODY()
 

@@ -61,7 +61,12 @@ float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamage
 {
 	check(DamageContext);
 
-	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
+	EGunnerHitBoxType HitBoxType = EGunnerHitBoxType::Body;
+	if (DamageContext->Target->Implements<UGunnerHitBoxInterface>())
+	{
+		HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
+	}
+
 	switch (HitBoxType)
 	{
 	case EGunnerHitBoxType::Head:
@@ -71,5 +76,4 @@ float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamage
 	default:
 		return 1.0f;
 	}
-
 }

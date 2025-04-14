@@ -39,8 +39,6 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	TObjectPtr<UGunnerActionComponent> ActionComponent;
-	UPROPERTY()
-	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
 	

@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "NexusEventManagerComponent.h"
 #include "UObject/Interface.h"
-#include "NexusEventInterface.generated.h"
+#include "NexusEventBindHelperInterface.generated.h"
 
+class UNexusActionComponent;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UNexusEventInterface : public UInterface
+class UNexusEventBindHelperInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,13 +18,13 @@ class UNexusEventInterface : public UInterface
 /**
  * 
  */
-class NEXUSACTION_API INexusEventInterface
+class NEXUSACTION_API INexusEventBindHelperInterface
 {
 	GENERATED_BODY()
 
 protected:
 	void BindEvents();
-	void UnbindEvents(UNexusEventManagerComponent* EventManagerComponent);
+	void UnbindEvents(UNexusActionComponent* ActionComponent);
 	virtual TArray<FNexusEventCallbackHandle> SetupEvents() = 0;
 
 private:

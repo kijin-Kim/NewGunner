@@ -137,7 +137,7 @@ private:
 				return;
 			}
 		}
-		
+
 		if (T* Existing = GetOwner()->FindComponentByClass<T>())
 		{
 			SubComponents.Add(Existing);
@@ -197,7 +197,32 @@ private:
 	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
+public:
+	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
+
+	template <typename FMessageStruct>
+	static void SendEventToActor(FGameplayTag EventTag, const FMessageStruct& Message, AActor* TargetActor)
+	{
+		if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(TargetActor))
+		{
+			ActionComponent->HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
+		}
+	}
+
+	UFUNCTION(BlueprintCallable, CustomThunk, Category = "Nexus|Event", meta = (CustomStructureParam = "Message", DisplayName= "Send Event To Actor"))
+	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
+	DECLARE_FUNCTION(execBP_SendEventToActor);
+
+	template <typename FMessageStruct, typename TOwner, typename... VarType>
+	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
+	{
+		return EventManagerComponent->BindEventCallback<FMessageStruct>(EventTag, Object, Function, Vars...);
+	}
+	FNexusEventCallbackHandle BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType) const;
+	void UnbindEventCallback(FNexusEventCallbackHandle Handle) const;
+
 protected:
+	UNexusEventManagerComponent* GetEventMangerComponent() const;
 	UNexusCueComponent* GetCueComponent() const;
 	UNexusPredictionComponent* GetPredictionComponent() const;
 	UNexusSideEffectComponent* GetSideEffectComponent() const;
@@ -205,10 +230,6 @@ protected:
 	UNexusGameplayTagComponent* GetGameplayTagComponent() const;
 
 private:
-	UPROPERTY()
-	TWeakObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
-
-
 	bool bSetupCompleted = false;
 	FOnNexusActionComponentSetupCompletedSignature OnActionComponentSetupCompletedDelegate;
 	FOnNexusActionComponentTeardownCompletedSignature OnActionComponentTeardownCompletedDelegate;
@@ -253,6 +274,8 @@ public:
 	void PopDynamicTag(const FGameplayTag& Tag);
 
 private:
+	UPROPERTY()
+	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	UPROPERTY()
 	mutable TObjectPtr<UNexusPredictionComponent> PredictionComponentCached;
 	UPROPERTY()

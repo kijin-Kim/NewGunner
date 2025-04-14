@@ -4,7 +4,6 @@
 #include "Event/NexusEventManagerComponent.h"
 
 #include "NexusLog.h"
-#include "Event/NexusEventMangerInterface.h"
 
 
 UNexusEventManagerComponent::UNexusEventManagerComponent()
@@ -56,27 +55,8 @@ void UNexusEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void*
 	}
 }
 
-UNexusEventManagerComponent* UNexusEventManagerComponent::GetEventManagerComponentFromActor(AActor* Actor)
-{
-	if (!Actor)
-	{
-		return nullptr;
-	}
 
-	if (INexusEventManagerInterface* EventManagerInterface = Cast<INexusEventManagerInterface>(Actor))
-	{
-		return EventManagerInterface->GetEventManagerComponent();
-	}
-
-	if (UNexusEventManagerComponent* EventManagerComponent = Actor->GetComponentByClass<UNexusEventManagerComponent>())
-	{
-		return EventManagerComponent;
-	}
-
-	return nullptr;
-}
-
-FNexusEventCallbackHandle UNexusEventManagerComponent::BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType)
+FNexusEventCallbackHandle UNexusEventManagerComponent::BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType)
 {
 	if (!EventTag.IsValid())
 	{
@@ -95,31 +75,6 @@ FNexusEventCallbackHandle UNexusEventManagerComponent::BindEventCallbackInternal
 	EventCallbackList.Callbacks.Add({EventCallbackList.HandleID, MoveTemp(Callbacks), MessageType});
 	return FNexusEventCallbackHandle(EventCallbacks[EventTag].HandleID, EventTag);
 }
-
-
-DEFINE_FUNCTION(UNexusEventManagerComponent::execBP_SendEventToActor)
-{
-	P_GET_STRUCT(FGameplayTag, EventTag);
-	P_GET_OBJECT(AActor, TargetActor);
-	Stack.MostRecentPropertyAddress = nullptr;
-	Stack.StepCompiledIn<FStructProperty>(nullptr);
-	FStructProperty* StructProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	void* MessagePtr = Stack.MostRecentPropertyAddress;
-
-
-	P_FINISH;
-
-	if (!EventTag.IsValid() || !TargetActor || !MessagePtr)
-	{
-		return;
-	}
-
-	if (UNexusEventManagerComponent* EventManagerComponent = GetEventManagerComponentFromActor(TargetActor))
-	{
-		EventManagerComponent->HandleEvent(EventTag, MessagePtr, StructProperty->Struct);
-	}
-}
-
 
 void UNexusEventManagerComponent::FEventCallback::operator()(FGameplayTag EventTag, const void* MessagePtr, UScriptStruct* InMessageType) const
 {

@@ -13,11 +13,6 @@ UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* I
 		return nullptr;
 	}
 
-	SelfObject->TargetEventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(EventTargetActor);
-	if (!SelfObject->TargetEventManagerComponent.IsValid())
-	{
-		return nullptr;
-	}
 
 	SelfObject->EventTag = InEventTag;
 	SelfObject->EventMesageType = InEventMessageType;
@@ -30,7 +25,7 @@ UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* I
 void UNexusAsync_WaitForEvent::Activate()
 {
 	Super::Activate();
-	UnbindEvents(TargetEventManagerComponent.Get());
+	UnbindEvents(ActionComponent.Get());
 	BindEvents();
 }
 
@@ -38,14 +33,14 @@ void UNexusAsync_WaitForEvent::SetReadyToDestroy()
 {
 	Super::SetReadyToDestroy();
 	MessagePtr = nullptr;
-	UnbindEvents(TargetEventManagerComponent.Get());
+	UnbindEvents(ActionComponent.Get());
 }
 
 TArray<FNexusEventCallbackHandle> UNexusAsync_WaitForEvent::SetupEvents()
 {
 	TWeakObjectPtr<UNexusAsync_WaitForEvent> Weak = this;
 	return {
-		TargetEventManagerComponent->BindEventCallbackInternal(EventTag, [Weak](FGameplayTag Tag, const void* MessagePtr)
+		ActionComponent->BindEventCallbackDirect(EventTag, [Weak](FGameplayTag Tag, const void* MessagePtr)
 		{
 			UNexusAsync_WaitForEvent* Strong = Weak.Get();
 			if (Strong && Strong->ShouldBroadcastDelegates())

@@ -3,18 +3,17 @@
 
 #include "GunnerActionGunFire.h"
 
+#include "Action/NexusActionComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Event/NexusEventManagerComponent.h"
 #include "GameFramework/Character.h"
-#include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/Slot/GunnerGun.h"
-#include "Gunner/_Core/Damage/GunnerDamageContext.h"
-#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
-#include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "TargetData/GunnerTargetData_Hit.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
+#include "Gunner/_Core/Damage/GunnerDamageType.h"
 
 
 TArray<FHitResult> UGunnerActionGunFire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
@@ -163,26 +162,29 @@ void UGunnerActionGunFire::AuthApplyDamageByHitResults(const TArray<FHitResult>&
 
 void UGunnerActionGunFire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal)
 {
-	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(HitActor))
+	if (!DamageType)
 	{
-		FNexusEventMessage DamageEventMessage;
-		DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
-		AGunnerGun* Gun = Cast<AGunnerGun>(GetSlotItem());
-		APawn* EquipmentPawnOwner = Cast<APawn>(Gun->GetOwner());
-		DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
-
-
-		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
-
-		DamageContext->Instigator = EquipmentPawnOwner->GetController();
-		DamageContext->Causer = Gun;
-		DamageContext->Target = HitActor;
-		DamageContext->HitNormal = HitNormal;
-		DamageContext->HitBoneName = HitBoneName;
-
-		DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
-		DamageEventMessage.EventDataObject = DamageContext;
-
-		EventManagerComponent->SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+		return;
 	}
+
+
+	FNexusEventMessage DamageEventMessage;
+	DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
+	AGunnerGun* Gun = Cast<AGunnerGun>(GetSlotItem());
+	APawn* EquipmentPawnOwner = Cast<APawn>(Gun->GetOwner());
+	DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
+
+
+	UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
+
+	DamageContext->Instigator = EquipmentPawnOwner->GetController();
+	DamageContext->Causer = Gun;
+	DamageContext->Target = HitActor;
+	DamageContext->HitNormal = HitNormal;
+	DamageContext->HitBoneName = HitBoneName;
+
+	DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
+	DamageEventMessage.EventDataObject = DamageContext;
+
+	UNexusActionComponent::SendEventToActor<FNexusEventMessage>(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 }

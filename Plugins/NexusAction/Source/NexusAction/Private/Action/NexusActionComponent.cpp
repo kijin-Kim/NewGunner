@@ -42,6 +42,8 @@ void UNexusActionComponent::InitializeComponent()
 	EnsureSubComponent<UNexusPredictionComponent>();
 	EnsureSubComponent<UNexusPropertyComponent>();
 	EnsureSubComponent<UNexusGameplayTagComponent>();
+	EventManagerComponent = NewObject<UNexusEventManagerComponent>(GetOwner());
+	EventManagerComponent->RegisterComponent();
 }
 
 void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -80,14 +82,11 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 {
 	check(InAgentActor);
 	TSharedPtr<FNexusAgentInfo> OldAgentInfo = AgentInfo;
-	AgentInfo = MakeShared<FNexusAgentInfo>( GetOwner(), InAgentActor);
+	AgentInfo = MakeShared<FNexusAgentInfo>(GetOwner(), InAgentActor);
 	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
 	{
 		SubComponent->Setup(AgentInfo);
 	}
-
-	EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(GetOwner());
-	check(EventManagerComponent.IsValid());
 
 	if (!ActionDefs.OnActionDefAddedDelegate.IsBound())
 	{
@@ -818,6 +817,49 @@ UNexusCueComponent* UNexusActionComponent::GetCueComponent() const
 FNexusPredictionTag UNexusActionComponent::GetCurrentPredictionTag() const
 {
 	return GetPredictionComponent()->GetCurrentPredictionTag();
+}
+
+void UNexusActionComponent::HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType)
+{
+	EventManagerComponent->HandleEvent(EventTag, Message, MessageType);
+}
+
+DEFINE_FUNCTION(UNexusActionComponent::execBP_SendEventToActor)
+{
+	P_GET_STRUCT(FGameplayTag, EventTag);
+	P_GET_OBJECT(AActor, TargetActor);
+	Stack.MostRecentPropertyAddress = nullptr;
+	Stack.StepCompiledIn<FStructProperty>(nullptr);
+	FStructProperty* StructProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	void* MessagePtr = Stack.MostRecentPropertyAddress;
+
+
+	P_FINISH;
+
+	if (!EventTag.IsValid() || !TargetActor || !MessagePtr)
+	{
+		return;
+	}
+
+	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(TargetActor))
+	{
+		ActionComponent->HandleEvent(EventTag, MessagePtr, StructProperty->Struct);
+	}
+}
+
+FNexusEventCallbackHandle UNexusActionComponent::BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType) const
+{
+	return EventManagerComponent->BindEventCallbackDirect(EventTag, MoveTemp(Callbacks), MessageType);
+}
+
+void UNexusActionComponent::UnbindEventCallback(FNexusEventCallbackHandle Handle) const
+{
+	EventManagerComponent->UnbindEventCallback(Handle);
+}
+
+UNexusEventManagerComponent* UNexusActionComponent::GetEventMangerComponent() const
+{
+	return EventManagerComponent;
 }
 
 void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)

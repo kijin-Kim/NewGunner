@@ -46,7 +46,7 @@ public:
 	template <typename FMessageStruct, typename... VarType>
 	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
-		return BindEventCallbackInternal(EventTag, [FreeFunction, Vars...](FGameplayTag EventTag, const void* MessagePtr)
+		return BindEventCallbackDirect(EventTag, [FreeFunction, Vars...](FGameplayTag EventTag, const void* MessagePtr)
 		{
 			FreeFunction(EventTag, *static_cast<const FMessageStruct*>(MessagePtr), Vars...);
 		}, TBaseStructure<FMessageStruct>::Get());
@@ -57,7 +57,7 @@ public:
 	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 	{
 		TWeakObjectPtr<TOwner> Weak = Object;
-		return BindEventCallbackInternal(EventTag, [Weak, Function, Vars...](FGameplayTag Tag, const void* MessagePtr)
+		return BindEventCallbackDirect(EventTag, [Weak, Function, Vars...](FGameplayTag Tag, const void* MessagePtr)
 		{
 			if (TOwner* Strong = Weak.Get())
 			{
@@ -65,31 +65,15 @@ public:
 			}
 		}, TBaseStructure<FMessageStruct>::Get());
 	}
-
-
+	
+	FNexusEventCallbackHandle BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType);
+	
 	void UnbindEventCallback(FNexusEventCallbackHandle Handle);
 	void UnbindAllEventCallbacks();
 	void HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType);
 
-	UFUNCTION(BlueprintCallable)
-	static UNexusEventManagerComponent* GetEventManagerComponentFromActor(AActor* Actor);
-
-	template <typename FMessageStruct>
-	static void SendEventToActor(FGameplayTag EventTag, const FMessageStruct& Message, AActor* TargetActor)
-	{
-		if (UNexusEventManagerComponent* EventManagerComponent = GetEventManagerComponentFromActor(TargetActor))
-		{
-			EventManagerComponent->HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
-		}
-	}
-
-	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "Message", DisplayName= "Send Event To Actor"))
-	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
-	DECLARE_FUNCTION(execBP_SendEventToActor);
-
-
 private:
-	FNexusEventCallbackHandle BindEventCallbackInternal(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType);
+	
 
 private:
 	struct FEventCallback

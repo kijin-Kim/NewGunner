@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Event/NexusEventInterface.h"
+#include "Event/NexusEventBindHelperInterface.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "CameraControlComponent.generated.h"
 
@@ -12,7 +12,7 @@ struct FNexusEventMessage;
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GUNNER_API UCameraControllerComponent : public UActorComponent, public INexusEventInterface
+class GUNNER_API UCameraControllerComponent : public UActorComponent, public INexusEventBindHelperInterface
 {
 	GENERATED_BODY()
 

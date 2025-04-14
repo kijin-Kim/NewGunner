@@ -37,13 +37,13 @@ float UGunnerCharacterMovementComponent::GetMaxSpeed() const
 
 TArray<FNexusEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents()
 {
-	if (UNexusEventManagerComponent* EventManagerComponent = UNexusEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner))
+	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(CharacterOwner))
 	{
 		return {
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Move, this, &ThisClass::Move),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Jump, this, &ThisClass::Jump),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Crouch, this, &ThisClass::CharacterCrouch),
-			EventManagerComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Uncrouch, this, &ThisClass::CharacterUncrouch)
+			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Move, this, &ThisClass::Move),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Jump, this, &ThisClass::Jump),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Crouch, this, &ThisClass::CharacterCrouch),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Uncrouch, this, &ThisClass::CharacterUncrouch)
 		};
 	}
 	return {};
@@ -51,7 +51,7 @@ TArray<FNexusEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents
 
 void UGunnerCharacterMovementComponent::InitEvents()
 {
-	UnbindEvents(UNexusEventManagerComponent::GetEventManagerComponentFromActor(CharacterOwner));
+	UnbindEvents(UNexusActionComponent::GetActionComponentFromActor(CharacterOwner));
 	BindEvents();
 }
 
