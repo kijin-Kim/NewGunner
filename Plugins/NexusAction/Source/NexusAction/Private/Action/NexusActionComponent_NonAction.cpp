@@ -13,23 +13,7 @@
 #include "SideEffect/NexusSideEffectDef.h"
 
 
-// ------------------------------------------------------------------------------
-// GameplayTag
-// ------------------------------------------------------------------------------
-void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-{
-	return GetGameplayTagComponent()->GetOwnedGameplayTags(TagContainer);
-}
 
-void UNexusActionComponent::PushDynamicTag(const FGameplayTag& Tag)
-{
-	GetGameplayTagComponent()->PushDynamicTag(Tag);
-}
-
-void UNexusActionComponent::PopDynamicTag(const FGameplayTag& Tag)
-{
-	GetGameplayTagComponent()->PopDynamicTag(Tag);
-}
 
 
 // ------------------------------------------------------------------------------
@@ -83,40 +67,6 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 	GetSideEffectComponent()->TriggerSideEffectByDef(NewSideEffectDef, GetCurrentPredictionTag(), MoveTemp(OnPredictionEnded), MoveTemp(OnPredictionFailed));
 }
 
-
-// ------------------------------------------------------------------------------
-// Cue
-// ------------------------------------------------------------------------------
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle)
-{
-	check(Action);
-	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
-	check(ActorOwner);
-	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
-	{
-		FNexusTriggerCueParams TriggerCueParams;
-		TriggerCueParams.CueClass = CueClass;
-		TriggerCueParams.TargetDataHandle = TargetDataHandle;
-		TriggerCueParams.PredictionTag = ActionComponent->GetCurrentPredictionTag();
-		ActionComponent->GetCueComponent()->TriggerCue(TriggerCueParams);
-	}
-}
-
-void UNexusActionComponent::BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle)
-{
-	check(Action);
-	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
-	check(ActorOwner);
-	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
-	{
-		ActionComponent->GetCueComponent()->AuthEndCue(CueHandle);
-	}
-}
-
-void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle)
-{
-	GetCueComponent()->SimTriggerCue(CueParams, CueHandle);
-}
 
 
 // ------------------------------------------------------------------------------
@@ -184,6 +134,59 @@ void UNexusActionComponent::AddDynamicOperation(FGameplayTag Tag, FNexusProperty
 void UNexusActionComponent::RemoveOperationByHandle(FGameplayTag Tag, const FNexusPropertyOperationHandle& OperationHandle)
 {
 	GetPropertyComponent()->RemoveOperationByHandle(Tag, OperationHandle);
+}
+
+// ------------------------------------------------------------------------------
+// GameplayTag
+// ------------------------------------------------------------------------------
+void UNexusActionComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	return GetGameplayTagComponent()->GetOwnedGameplayTags(TagContainer);
+}
+
+void UNexusActionComponent::PushDynamicTag(const FGameplayTag& Tag)
+{
+	GetGameplayTagComponent()->PushDynamicTag(Tag);
+}
+
+void UNexusActionComponent::PopDynamicTag(const FGameplayTag& Tag)
+{
+	GetGameplayTagComponent()->PopDynamicTag(Tag);
+}
+
+
+// ------------------------------------------------------------------------------
+// Cue
+// ------------------------------------------------------------------------------
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle)
+{
+	check(Action);
+	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
+	check(ActorOwner);
+	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
+	{
+		FNexusTriggerCueParams TriggerCueParams;
+		TriggerCueParams.CueClass = CueClass;
+		TriggerCueParams.TargetDataHandle = TargetDataHandle;
+		TriggerCueParams.PredictionTag = ActionComponent->GetCurrentPredictionTag();
+		ActionComponent->GetCueComponent()->TriggerCue(TriggerCueParams);
+	}
+}
+
+void UNexusActionComponent::BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle)
+{
+	check(Action);
+	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
+	check(ActorOwner);
+	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
+	{
+		ActionComponent->GetCueComponent()->AuthEndCue(CueHandle);
+	}
+}
+
+void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle)
+{
+	GetCueComponent()->SimTriggerCue(CueParams, CueHandle);
 }
 
 

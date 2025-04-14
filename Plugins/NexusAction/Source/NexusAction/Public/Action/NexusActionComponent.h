@@ -135,14 +135,6 @@ public:
 
 
 	// ------------------------------------------------------------------------------
-	// GameplayTag
-	// ------------------------------------------------------------------------------
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	void PushDynamicTag(const FGameplayTag& Tag);
-	void PopDynamicTag(const FGameplayTag& Tag);
-
-
-	// ------------------------------------------------------------------------------
 	// SideEffect
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
@@ -153,16 +145,6 @@ public:
 	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
-
-
-	// ------------------------------------------------------------------------------
-	// Cue
-	// ------------------------------------------------------------------------------
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
-	static void BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle);
-	void SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle);
 
 
 	// ------------------------------------------------------------------------------
@@ -179,6 +161,24 @@ public:
 	void AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);
 	void AddDynamicOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);
 	void RemoveOperationByHandle(FGameplayTag Tag, const FNexusPropertyOperationHandle& OperationHandle);
+
+
+	// ------------------------------------------------------------------------------
+	// GameplayTag
+	// ------------------------------------------------------------------------------
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	void PushDynamicTag(const FGameplayTag& Tag);
+	void PopDynamicTag(const FGameplayTag& Tag);
+
+
+	// ------------------------------------------------------------------------------
+	// Cue
+	// ------------------------------------------------------------------------------
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
+	static void BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle);
+	void SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle);
 
 
 	// ------------------------------------------------------------------------------
