@@ -15,6 +15,8 @@ void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerSt
 	
 	UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
 	check(BulletProperty);
+	
+	
 	BulletProperty->OnChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
 	OnBulletValueChanged(BulletProperty->GetStaticValue(), BulletProperty->GetDynamicValue());
 

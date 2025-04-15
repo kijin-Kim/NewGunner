@@ -69,7 +69,7 @@ class NEXUSACTION_API UNexusSideEffect : public UObject
 	GENERATED_BODY()
 
 public:
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 	
 #endif
 	void OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority);

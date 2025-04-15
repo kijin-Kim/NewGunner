@@ -25,8 +25,7 @@ void UGunnerActionComponent::OnSetupActionComponent()
 		{
 			if (ActionClass)
 			{
-				FNexusActionDef ActionDef(GetAgentActor(), ActionClass);
-				AuthAddAction(ActionDef);
+				AuthAddAction(ActionClass, GetAgentActor());
 			}
 		}
 	}

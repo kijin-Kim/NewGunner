@@ -46,13 +46,15 @@ void UNexusPropertyComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
-	if (!ensure(GetOwner()->HasAuthority()))
-	{
-		NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
-		return;
-	}
+	// if (!ensure(GetOwner()->HasAuthority()))
+	// {
+	// 	NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+	// 	return;
+	// }
 
-	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
+	
+	FString PropertyName = FString::Printf(TEXT("%s"), *Tag.ToString(), IsOwnerActorAuthoritative() ? TEXT("_Server") : TEXT("_Client"));
+	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner(), *PropertyName);
 	NewProperty->SetTag(Tag);
 	NewProperty->SetStaticValue(Value);
 	Properties.Add(NewProperty);
@@ -107,9 +109,9 @@ void UNexusPropertyComponent::AddDynamicOperation(FGameplayTag Tag, FNexusProper
 void UNexusPropertyComponent::RemoveOperationByHandle(FGameplayTag Tag, FNexusPropertyOperationHandle OperationHandle)
 {
 	TObjectPtr<UNexusProperty>* PropertyPtr = Properties.FindByPredicate([Tag](UNexusProperty* Property)
-		{
-			return Property->GetTag() == Tag;
-		});
+	{
+		return Property->GetTag() == Tag;
+	});
 
 	if (PropertyPtr)
 	{

@@ -11,6 +11,5 @@ AGunnerSlotItem* UGunnerActionSlotItemBase::GetSlotItem() const
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
 	check(ActionComponent);
 	FNexusActionDef* ActionDef = ActionComponent->FindActionDefByHandle(GetActionDefHandle());
-	check(ActionDef && ActionDef->ActionInstance && ActionDef->ActionInstance == this);
 	return Cast<AGunnerSlotItem>(ActionDef->SourceObject);
 }

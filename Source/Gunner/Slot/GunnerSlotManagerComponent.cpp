@@ -60,8 +60,7 @@ void AGunnerSlotItem::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusActio
 		{
 			if (ActionClass)
 			{
-				FNexusActionDef ActionDef(this, ActionClass);
-				FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionDef);
+				FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionClass, this);
 				AddedActionHandles.Add(AddedHandle);
 			}
 		}

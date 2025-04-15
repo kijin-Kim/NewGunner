@@ -87,7 +87,7 @@ class NEXUSACTION_API UNexusProperty : public UObject
 	GENERATED_BODY()
 
 public:
-	
+	virtual bool IsNameStableForNetworking() const override { return true; }
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool operator==(const UNexusProperty* Other) const { return Tag == Other->Tag; }

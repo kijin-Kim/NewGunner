@@ -3,8 +3,10 @@
 
 #include "GunnerPlayerController.h"
 
+#include "Action/NexusActionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/HUD.h"
+#include "GameFramework/PlayerState.h"
 #include "Gunner/_Core/GunnerGameInstance.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/Input/GunnerInputEventDispatcherComponent.h"
@@ -41,11 +43,15 @@ void AGunnerPlayerController::InitPlayerState()
 void AGunnerPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
-	check(GunnerHUD)
-	GunnerHUD->SetupHUD(PlayerState);
-
-	TrySetParameterCollectionLocalPlayerTeamID();
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
+	check(ActionComponent);
+	ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+	{
+		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
+		check(GunnerHUD)
+		GunnerHUD->SetupHUD(PlayerState);
+		TrySetParameterCollectionLocalPlayerTeamID();
+	}));
 }
 
 void AGunnerPlayerController::TrySetParameterCollectionLocalPlayerTeamID()

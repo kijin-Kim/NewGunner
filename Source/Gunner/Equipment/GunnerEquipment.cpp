@@ -214,10 +214,9 @@ void AGunnerEquipment::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusActi
 	{
 		if (ActionClass)
 		{
-			FNexusActionDef ActionDef(this, ActionClass);
 			if (ActorOwner->HasAuthority())
 			{
-				AddedActionHandles.Add(ActionComponent->AuthAddAction(ActionDef));
+				AddedActionHandles.Add(ActionComponent->AuthAddAction(ActionClass, this));
 			}
 		}
 	}

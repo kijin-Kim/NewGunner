@@ -13,7 +13,7 @@ AGunnerSpawnPointActor::AGunnerSpawnPointActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetupAttachment(RootComponent);
 	SphereComponent->SetSphereRadius(SpawnRadius);

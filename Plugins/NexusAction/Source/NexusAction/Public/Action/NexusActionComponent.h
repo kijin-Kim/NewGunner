@@ -49,6 +49,7 @@ public:
 	void SetupActionComponent(AActor* InAgentActor);
 	void TeardownActionComponent();
 
+
 	virtual void OnSetupActionComponent()
 	{
 	}
@@ -80,7 +81,7 @@ public:
 	// ------------------------------------------------------------------------------
 
 	UFUNCTION(BlueprintCallable)
-	FNexusActionDefHandle AuthAddAction(const FNexusActionDef& ActionDef);
+	FNexusActionDefHandle AuthAddAction(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject = nullptr);
 	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
 
@@ -88,25 +89,26 @@ public:
 	void DecreaseActionListLock();
 
 private:
-	void OnActionDefAdded(FNexusActionDef& ActionDef);
-	void OnActionDefRemoved(FNexusActionDef& ActionDef);
-	void HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDef);
-	void HandleTriggerableActionOnRemoved(const FNexusActionDef& ActionDef);
-	void BindActionTriggerEvent(const FNexusActionDef& NewActionDef);
-	void UnbindActionTriggerEvent(const FNexusActionDef& ActionDef);
+	FNexusActionDefHandle InternalAuthAddAction(const FNexusActionDef& ActionDef);
+	void OnActionDefAdded(const FNexusActionDef& ActionDef);
+	void OnActionDefRemoved(const FNexusActionDef& ActionDef);
+	void HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance);
+	void HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& Handle);
+	void BindActionTriggerEvent(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance);
+	void UnbindActionTriggerEvent(const FNexusActionDefHandle& Handle);
 
 	// ------------------------------------------------------------------------------
 	// Action Trigger
 	// ------------------------------------------------------------------------------
 public:
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
-	bool CanTriggerAction(FNexusActionDef* ActionDef, const FNexusEventMessage& EventMessage);
+	bool CanTriggerAction(UNexusAction* ActionInstance, const FNexusEventMessage& EventMessage);
 	UFUNCTION(BlueprintCallable)
-	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
+	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage = FNexusEventMessage());
 
 private:
-	bool InternalCanTriggerAction(const FNexusActionDef& ActionDef) const;
-	void LocalTriggerAction(FNexusActionDef* ActionDef);
+	bool InternalCanTriggerAction(UNexusAction* ActionInstance) const;
+	void LocalTriggerAction(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* ActionInstance);
 	UFUNCTION(Reliable, Server)
 	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
@@ -129,11 +131,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
 	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
+
+	UNexusAction* CreateActionInstance(const FNexusActionDef& Def);
+	void DestroyActionInstance(FNexusActionDefHandle Handle);
+	UNexusAction* FindActionInstanceByHandle(FNexusActionDefHandle Handle);
+	const UNexusAction* FindActionInstanceByHandle(FNexusActionDefHandle Handle) const;
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
-
 	FNexusPredictionTag GetCurrentPredictionTag() const;
-
-
+	
+	
 	// ------------------------------------------------------------------------------
 	// SideEffect
 	// ------------------------------------------------------------------------------
@@ -228,6 +234,9 @@ private:
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
+	TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>> LocalActionInstanceMap;
+
+
 	int32 ActionScopeLockCount = 0;
 	TArray<FNexusActionDefHandle> ActionPendingRemoves;
 

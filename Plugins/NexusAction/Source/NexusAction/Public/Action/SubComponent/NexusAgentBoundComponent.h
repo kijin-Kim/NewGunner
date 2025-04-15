@@ -8,7 +8,6 @@
 #include "NexusAgentBoundComponent.generated.h"
 
 
-
 UCLASS(Abstract)
 class NEXUSACTION_API UNexusAgentBoundComponent : public UActorComponent
 {
@@ -21,9 +20,12 @@ public:
 	}
 
 	TSharedPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
-	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->AgentActor.Get() : nullptr; }
-	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->OwnerActor.Get() : nullptr; }
-	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo->Controller.Get() : nullptr; }
+	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo->GetAgentActor() : nullptr; }
+	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo->GetOwnerActor() : nullptr; }
+	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo->GetController() : nullptr; }
+	bool IsLocallyPlayerControlled() const { return AgentInfo.IsValid() ? AgentInfo->IsLocallyPlayerControlled() : false; }
+	bool IsLocallyControlled() const { return AgentInfo.IsValid() ? AgentInfo->IsLocallyControlled() : false; }
+	bool IsOwnerActorAuthoritative() const { return AgentInfo.IsValid() ? AgentInfo->IsOwnerActorAuthoritative() : false; }
 
 protected:
 	TSharedPtr<FNexusAgentInfo> AgentInfo;

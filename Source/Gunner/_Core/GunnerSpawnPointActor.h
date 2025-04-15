@@ -15,7 +15,7 @@ class GUNNER_API AGunnerSpawnPointActor : public ATargetPoint
 
 public:
 	AGunnerSpawnPointActor();
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	

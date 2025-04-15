@@ -7,12 +7,17 @@
 #include "Action/NexusAction.h"
 
 
-FNexusActionDef::FNexusActionDef(): SourceObject(nullptr), ActionClass(nullptr)
+FNexusActionDef::FNexusActionDef()
+	: ActionClass(nullptr),
+	  SourceObject(nullptr)
 {
 	Handle.GenerateNewHandle();
 }
 
-FNexusActionDef::FNexusActionDef(UObject* InSourceObject, TSubclassOf<UNexusAction> InActionClass): SourceObject(InSourceObject), ActionClass(InActionClass)
+FNexusActionDef::FNexusActionDef(UObject* InSourceObject, TSubclassOf<UNexusAction> InActionClass)
+	: ActionClass(InActionClass),
+	  SourceObject(InSourceObject)
+
 {
 	Handle.GenerateNewHandle();
 }
@@ -107,18 +112,7 @@ FNexusActionDefHandle FNexusActionDefContainer::FindActionDefHandle(TSubclassOf<
 	return FNexusActionDefHandle();
 }
 
-TArray<FNexusActionDef> FNexusActionDefContainer::GetAllTriggeringActionDefs() const
-{
-	TArray<FNexusActionDef> TriggeringActionDefs;
-	for (const FNexusActionDef& Item : Items)
-	{
-		if (Item.ActionInstance && Item.ActionInstance->IsTriggering())
-		{
-			TriggeringActionDefs.Add(Item);
-		}
-	}
-	return TriggeringActionDefs;
-}
+
 
 bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {

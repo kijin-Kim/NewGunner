@@ -13,9 +13,6 @@
 #include "SideEffect/NexusSideEffectDef.h"
 
 
-
-
-
 // ------------------------------------------------------------------------------
 // SideEffect
 // ------------------------------------------------------------------------------
@@ -68,13 +65,17 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 }
 
 
-
 // ------------------------------------------------------------------------------
 // Property
 // ------------------------------------------------------------------------------
 
 UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 {
+	UNexusProperty* Property = GetPropertyComponent()->GetProperty(Tag);
+	if (!Property)
+	{
+		GetPropertyComponent()->AuthAddProperty(Tag, 0.0f);
+	}
 	return GetPropertyComponent()->GetProperty(Tag);
 }
 
