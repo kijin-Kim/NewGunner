@@ -234,6 +234,7 @@ private:
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
+	UPROPERTY()
 	TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>> LocalActionInstanceMap;
 
 
