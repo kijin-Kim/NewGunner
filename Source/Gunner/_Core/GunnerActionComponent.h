@@ -15,6 +15,7 @@ class GUNNER_API UGunnerActionComponent : public UNexusActionComponent
 	GENERATED_BODY()
 
 public:
+	UGunnerActionComponent();
 	virtual void OnSetupActionComponent() override;
 
 private:

@@ -6,21 +6,26 @@
 #include "Action/NexusAction.h"
 #include "Gunner/Action/GunnerActionSet.h"
 
+UGunnerActionComponent::UGunnerActionComponent()
+{
+	SetIsReplicatedByDefault(true);
+}
+
 void UGunnerActionComponent::OnSetupActionComponent()
 {
 	Super::OnSetupActionComponent();
-
-	if (!IsOwnerActorAuthoritative())
-	{
-		return;
-	}
-
 	for (UGunnerActionSet* ActionSet : ActionSets)
 	{
 		for (const auto& [Tag, Value] : ActionSet->InitialProperties)
 		{
-			AuthAddProperty(Tag, Value);
+			AddProperty(Tag, Value);
 		}
+
+		if (!IsOwnerActorAuthoritative())
+		{
+			continue;
+		}
+
 		for (TSubclassOf<UNexusAction> ActionClass : ActionSet->InitialActionClasses)
 		{
 			if (ActionClass)

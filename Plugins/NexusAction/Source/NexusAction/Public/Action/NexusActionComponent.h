@@ -40,7 +40,6 @@ public:
 	UNexusActionComponent();
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void InitializeComponent() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -158,7 +157,7 @@ public:
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
-	void AuthAddProperty(FGameplayTag Tag, float Value);
+	void AddProperty(FGameplayTag Tag, float Value);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -213,8 +212,6 @@ public:
 
 private:
 	template <typename T>
-	void EnsureSubComponent();
-	template <typename T>
 	T* GetCachedComponent(TObjectPtr<T>& Cache) const;
 
 protected:
@@ -223,7 +220,7 @@ protected:
 	UNexusSideEffectComponent* GetSideEffectComponent() const;
 	UNexusPropertyComponent* GetPropertyComponent() const;
 	UNexusGameplayTagComponent* GetGameplayTagComponent() const;
-	UNexusEventManagerComponent* GetEventMangerComponent() const;
+	UNexusEventManagerComponent* GetEventManagerComponent() const;
 
 private:
 	bool bSetupCompleted = false;
@@ -262,11 +259,7 @@ private:
 	UPROPERTY()
 	mutable TObjectPtr<UNexusCueComponent> CueComponentCached;
 	UPROPERTY()
-	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
-
-	UPROPERTY()
-	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
-
+	mutable TObjectPtr<UNexusEventManagerComponent> EventManagerComponentCached;
 
 	TMap<FNexusActionDefHandle, FNexusSideEffectDefHandle> TagSideEffectMap;
 
@@ -285,31 +278,10 @@ private:
 template <typename FMessageStruct, typename TOwner, typename... VarType>
 FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 {
-	return EventManagerComponent->BindEventCallback<FMessageStruct>(EventTag, Object, Function, Vars...);
+	return GetEventManagerComponent()->BindEventCallback<FMessageStruct>(EventTag, Object, Function, Vars...);
 }
 
-template <typename T>
-void UNexusActionComponent::EnsureSubComponent()
-{
-	for (const auto& Comp : SubComponents)
-	{
-		if (Comp->IsA<T>())
-		{
-			return;
-		}
-	}
 
-	if (T* Existing = GetOwner()->FindComponentByClass<T>())
-	{
-		SubComponents.Add(Existing);
-	}
-	else
-	{
-		T* Comp = NewObject<T>(GetOwner());
-		Comp->RegisterComponent();
-		SubComponents.Add(Comp);
-	}
-}
 
 template <typename T>
 T* UNexusActionComponent::GetCachedComponent(TObjectPtr<T>& Cache) const

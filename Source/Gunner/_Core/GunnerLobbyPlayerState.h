@@ -16,6 +16,7 @@ class GUNNER_API AGunnerLobbyPlayerState : public APlayerState, public IGunnerTe
 	GENERATED_BODY()
 
 public:
+	AGunnerLobbyPlayerState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void CopyProperties(APlayerState* PlayerState) override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;

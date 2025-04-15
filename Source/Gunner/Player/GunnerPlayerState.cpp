@@ -4,18 +4,23 @@
 #include "GunnerPlayerState.h"
 
 #include "Action/NexusActionComponent.h"
+#include "Action/SubComponent/NexusCueComponent.h"
+#include "Action/SubComponent/NexusGameplayTagComponent.h"
+#include "Action/SubComponent/NexusPropertyComponent.h"
+#include "Action/SubComponent/NexusSideEffectComponent.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
 #include "Gunner/_Core/GunnerActionComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
-AGunnerPlayerState::AGunnerPlayerState()
+AGunnerPlayerState::AGunnerPlayerState(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerActionComponent>(ANexusPlayerState::ActionCompomentName))
 {
-	NetUpdateFrequency = 100.0f;
-	ActionComponent = CreateDefaultSubobject<UGunnerActionComponent>(TEXT("ActionComponent"));
 	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
+	SlotManagerComponent->SetIsReplicated(true);
 }
+
 
 void AGunnerPlayerState::PostInitializeComponents()
 {

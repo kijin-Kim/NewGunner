@@ -10,7 +10,6 @@
 UNexusGameplayTagComponent::UNexusGameplayTagComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicatedByDefault(true);
 }
 
 void UNexusGameplayTagComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const

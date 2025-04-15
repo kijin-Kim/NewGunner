@@ -71,17 +71,12 @@ void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& Ne
 
 UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 {
-	UNexusProperty* Property = GetPropertyComponent()->GetProperty(Tag);
-	if (!Property)
-	{
-		GetPropertyComponent()->AuthAddProperty(Tag, 0.0f);
-	}
 	return GetPropertyComponent()->GetProperty(Tag);
 }
 
-void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
+void UNexusActionComponent::AddProperty(FGameplayTag Tag, float Value)
 {
-	GetPropertyComponent()->AuthAddProperty(Tag, Value);
+	GetPropertyComponent()->AddProperty(Tag, Value);
 }
 
 UNexusProperty* UNexusActionComponent::GetPropertyFromActor(AActor* Actor, FGameplayTag Tag)
@@ -196,7 +191,7 @@ void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParam
 // ------------------------------------------------------------------------------
 void UNexusActionComponent::HandleEvent(FGameplayTag EventTag, const void* Message, UScriptStruct* MessageType)
 {
-	EventManagerComponent->HandleEvent(EventTag, Message, MessageType);
+	GetEventManagerComponent()->HandleEvent(EventTag, Message, MessageType);
 }
 
 DEFINE_FUNCTION(UNexusActionComponent::execBP_SendEventToActor)
@@ -224,12 +219,12 @@ DEFINE_FUNCTION(UNexusActionComponent::execBP_SendEventToActor)
 
 FNexusEventCallbackHandle UNexusActionComponent::BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType) const
 {
-	return EventManagerComponent->BindEventCallbackDirect(EventTag, MoveTemp(Callbacks), MessageType);
+	return GetEventManagerComponent()->BindEventCallbackDirect(EventTag, MoveTemp(Callbacks), MessageType);
 }
 
 void UNexusActionComponent::UnbindEventCallback(FNexusEventCallbackHandle Handle) const
 {
-	EventManagerComponent->UnbindEventCallback(Handle);
+	GetEventManagerComponent()->UnbindEventCallback(Handle);
 }
 
 UNexusCueComponent* UNexusActionComponent::GetCueComponent() const
@@ -257,7 +252,7 @@ UNexusGameplayTagComponent* UNexusActionComponent::GetGameplayTagComponent() con
 	return GetCachedComponent(GameplayTagComponentCached);
 }
 
-UNexusEventManagerComponent* UNexusActionComponent::GetEventMangerComponent() const
+UNexusEventManagerComponent* UNexusActionComponent::GetEventManagerComponent() const
 {
-	return EventManagerComponent;
+	return GetCachedComponent(EventManagerComponentCached);
 }

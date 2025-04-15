@@ -24,6 +24,7 @@ AGunnerEquippable::AGunnerEquippable()
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	AnimMontagePlayerComponent->SetIsReplicated(true);
 }
 
 void AGunnerEquippable::OnConstruction(const FTransform& Transform)

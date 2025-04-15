@@ -5,6 +5,11 @@
 
 #include "Net/UnrealNetwork.h"
 
+AGunnerLobbyPlayerState::AGunnerLobbyPlayerState()
+{
+	bReplicates = true;
+}
+
 void AGunnerLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerState.h"
+#include "NexusPlayerState.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GunnerPlayerState.generated.h"
 
 
+class UNexusCueComponent;
+class UNexusGameplayTagComponent;
+class UNexusPropertyComponent;
+class UNexusSideEffectComponent;
 class UNexusPredictionComponent;
 class UGunnerActionComponent;
 class UGunnerSlotManagerComponent;
@@ -17,12 +21,12 @@ class UNexusActionComponent;
  * 
  */
 UCLASS()
-class GUNNER_API AGunnerPlayerState : public APlayerState, public IGunnerTeamAgentInterface
+class GUNNER_API AGunnerPlayerState : public ANexusPlayerState, public IGunnerTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerPlayerState();
+	AGunnerPlayerState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -37,15 +41,13 @@ private:
 	void OnRep_TeamID(FGenericTeamId OldTeamID);
 
 private:
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UGunnerActionComponent> ActionComponent;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
-	
+
 
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID = 0;
 
 	FOnGunnerTeamSetSignature OnTeamSet;
-	
 };

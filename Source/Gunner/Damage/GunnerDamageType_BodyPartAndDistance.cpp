@@ -60,6 +60,11 @@ float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(UGunne
 float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamageContext* DamageContext) const
 {
 	check(DamageContext);
+	
+	if (!DamageContext->Target)
+	{
+		return 1.0f;
+	}
 
 	EGunnerHitBoxType HitBoxType = EGunnerHitBoxType::Body;
 	if (DamageContext->Target->Implements<UGunnerHitBoxInterface>())

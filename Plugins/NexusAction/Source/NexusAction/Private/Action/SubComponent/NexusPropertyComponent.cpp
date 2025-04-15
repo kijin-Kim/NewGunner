@@ -12,7 +12,6 @@
 UNexusPropertyComponent::UNexusPropertyComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicatedByDefault(true);
 }
 
 void UNexusPropertyComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -44,17 +43,9 @@ void UNexusPropertyComponent::TickComponent(float DeltaTime, ELevelTick TickType
 }
 
 
-void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag, float Value)
+void UNexusPropertyComponent::AddProperty(FGameplayTag Tag, float Value)
 {
-	// if (!ensure(GetOwner()->HasAuthority()))
-	// {
-	// 	NX_LOG_SUB_FN(LogNexus, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
-	// 	return;
-	// }
-
-	
-	FString PropertyName = FString::Printf(TEXT("%s"), *Tag.ToString(), IsOwnerActorAuthoritative() ? TEXT("_Server") : TEXT("_Client"));
-	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner(), *PropertyName);
+	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
 	NewProperty->SetTag(Tag);
 	NewProperty->SetStaticValue(Value);
 	Properties.Add(NewProperty);

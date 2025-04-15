@@ -30,8 +30,6 @@ FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
 UNexusActionComponent::UNexusActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	SetIsReplicatedByDefault(true);
-	bWantsInitializeComponent = true;
 }
 
 void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -52,18 +50,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
-}
-
-void UNexusActionComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-	EnsureSubComponent<UNexusCueComponent>();
-	EnsureSubComponent<UNexusSideEffectComponent>();
-	EnsureSubComponent<UNexusPredictionComponent>();
-	EnsureSubComponent<UNexusPropertyComponent>();
-	EnsureSubComponent<UNexusGameplayTagComponent>();
-	EventManagerComponent = NewObject<UNexusEventManagerComponent>(GetOwner());
-	EventManagerComponent->RegisterComponent();
 }
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -144,6 +130,9 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 	check(InAgentActor);
 	TSharedPtr<FNexusAgentInfo> OldAgentInfo = AgentInfo;
 	AgentInfo = MakeShared<FNexusAgentInfo>(GetOwner(), InAgentActor);
+
+	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
+	GetOwner()->GetComponents(SubComponents);
 	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
 	{
 		SubComponent->Setup(AgentInfo);
@@ -408,7 +397,7 @@ void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewAct
 	FGameplayTagContainer ActionTriggerEventTags = ActionInstance->GetActionTriggerEventTags();
 	for (FGameplayTag Tag : ActionTriggerEventTags)
 	{
-		FNexusEventCallbackHandle EventCallbackHandle = EventManagerComponent->BindEventCallback<FNexusEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDef.Handle);
+		FNexusEventCallbackHandle EventCallbackHandle = GetEventManagerComponent()->BindEventCallback<FNexusEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDef.Handle);
 		BoundedActionEventHandles.FindOrAdd(NewActionDef.Handle).Add(EventCallbackHandle);
 	}
 }
@@ -419,7 +408,7 @@ void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDefHandle
 	{
 		for (FNexusEventCallbackHandle EventCallbackHandle : *EventCallbackHandles)
 		{
-			EventManagerComponent->UnbindEventCallback(EventCallbackHandle);
+			GetEventManagerComponent()->UnbindEventCallback(EventCallbackHandle);
 		}
 		BoundedActionEventHandles.Remove(Handle);
 	}

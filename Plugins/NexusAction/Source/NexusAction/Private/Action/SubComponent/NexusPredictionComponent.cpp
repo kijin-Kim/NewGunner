@@ -11,7 +11,6 @@
 UNexusPredictionComponent::UNexusPredictionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	SetIsReplicatedByDefault(true);
 }
 
 void UNexusPredictionComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)

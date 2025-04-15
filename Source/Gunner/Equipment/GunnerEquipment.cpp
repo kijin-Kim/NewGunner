@@ -30,6 +30,7 @@ AGunnerEquipment::AGunnerEquipment()
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
+	AnimMontagePlayerComponent->SetIsReplicated(true);
 }
 
 void AGunnerEquipment::OnConstruction(const FTransform& Transform)
