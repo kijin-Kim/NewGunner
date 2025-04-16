@@ -15,7 +15,7 @@
 
 class INexusActionDefInterface;
 class UNexusAction;
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNexusActionEndedSignature, FNexusActionDefHandle, UNexusAction*);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNexusActionEndedSignature, const FNexusActionDefHandle&, UNexusAction*);
 
 UENUM()
 enum class ENexusActionNetMethod : uint8
@@ -35,9 +35,8 @@ class NEXUSACTION_API UNexusAction : public UObject
 	GENERATED_BODY()
 
 public:
+	static UNexusAction* NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	virtual UWorld* GetWorld() const override;
-
-	void InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
 
 	void CallOnActionAdded();
@@ -105,6 +104,9 @@ protected:
 	virtual void OnTriggerAction();
 	virtual void OnEndAction();
 	virtual void OnActionRemoved();
+
+protected:
+	virtual void InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo);
 	
 
 

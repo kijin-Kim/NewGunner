@@ -11,6 +11,7 @@
 UNexusCueComponent::UNexusCueComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	 
 }
 
 void UNexusCueComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)

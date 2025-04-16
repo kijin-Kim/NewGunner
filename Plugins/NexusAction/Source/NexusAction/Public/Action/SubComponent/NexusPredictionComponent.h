@@ -27,12 +27,12 @@ public:
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendNetSyncPoint(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag);
-	void CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+	void ServerSendNetSyncPoint(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag);
+	void CallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendTargetData(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle);
-	void CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
+	void ServerSendTargetData(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle);
+	void CallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
 
 
 private:

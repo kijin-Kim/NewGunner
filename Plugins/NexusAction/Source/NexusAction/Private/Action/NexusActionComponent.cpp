@@ -17,7 +17,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Prediction/NexusPredictionScope.h"
 #include "SideEffect/NexusSideEffect.h"
-#include "SideEffect/NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffectInstance.h"
 
 bool bShowActionFailedReason = false;
 FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
@@ -159,7 +159,8 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
-	if (!AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
+	
+	if (!AgentInfo.IsValid() || !AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
 	{
 		return;
 	}
@@ -175,14 +176,14 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 		TMap<FGameplayTag, FString> PropertyLogs;
 
-		for (const FNexusSideEffectDef& Item : GetSideEffectComponent()->GetSideEffectDefs().Items)
+		for (const auto& SideEffectInstance : GetSideEffectComponent()->GetSideEffectInstances().SideEffectInstances)
 		{
-			if (Item.SideEffectInstance->DurationType == ESideEffectDurationType::Instant)
+			if (SideEffectInstance.Def.SideEffectAsset->DurationType == ESideEffectDurationType::Instant)
 			{
 				continue;
 			}
 
-			for (const FNexusPropertyMod& Mod : Item.SideEffectInstance->Modifiers)
+			for (const FNexusPropertyMod& Mod : SideEffectInstance.Def.SideEffectAsset->Modifiers)
 			{
 				float Value = 0.0f;
 				switch (Mod.CalculationType)
@@ -192,8 +193,11 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 					break;
 				case ENexusPropertyCalculationType::FromOutside:
 					{
-						const float* ValuePtr = Item.SideEffectInstance->GetInjectedValues().Find(Mod.InjectedValueTag);
-						Value = ValuePtr ? *ValuePtr : 0.0f;
+						const FNexusInjectedValuePair* PairPtr = SideEffectInstance.Def.InjectedValues.FindByPredicate( [&Mod](const FNexusInjectedValuePair& InjectedValue)
+						{
+							return InjectedValue.Tag == Mod.InjectedValueTag;
+						});
+						Value = PairPtr ? PairPtr->Value : 0.0f;
 						break;
 					}
 
@@ -209,15 +213,15 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 				FString& LogString = PropertyLogs.FindOrAdd(Mod.PropertyTag);
 				UEnum* StaticOperatorEnum = StaticEnum<ENexusPropertyOperator>();
 				check(StaticOperatorEnum);
-				FString EffectNameString = FString::Printf(TEXT("%s (%s) - "), *Item.SideEffectInstance->GetName(), *Item.Handle.ToString());
+				FString EffectNameString = FString::Printf(TEXT("%s (%s) - "), *SideEffectInstance.Def.SideEffectAsset->GetName(), *SideEffectInstance.Handle.ToString());
 				FString ModString = FString::Printf(TEXT("%s %.2f "), *StaticOperatorEnum->GetNameStringByValue(static_cast<int64>(Mod.Operator)), Value);
-				FString TimeString = FString::Printf(TEXT("[%.2f"), Item.SideEffectInstance->GetElapsedTime());
-				FString DurationString = Item.SideEffectInstance->DurationType == ESideEffectDurationType::Infinite
+				FString TimeString = FString::Printf(TEXT("[%.2f"), SideEffectInstance.ElapsedTime);
+				FString DurationString = SideEffectInstance.Def.SideEffectAsset->DurationType == ESideEffectDurationType::Infinite
 					                         ? TEXT("/INF]")
-					                         : FString::Printf(TEXT("/%.2f]"), Item.SideEffectInstance->Duration);
-				FString IntervalString = Item.SideEffectInstance->Interval <= 0.0f
+					                         : FString::Printf(TEXT("/%.2f]"), SideEffectInstance.Def.SideEffectAsset->Duration);
+				FString IntervalString = SideEffectInstance.Def.SideEffectAsset->Interval <= 0.0f
 					                         ? TEXT("")
-					                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), Item.SideEffectInstance->Interval, Item.SideEffectInstance->GetAppliedCount());
+					                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), SideEffectInstance.Def.SideEffectAsset->Interval, SideEffectInstance.AppliedCount);
 				LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString + TEXT("\n");
 			}
 		}
@@ -346,7 +350,6 @@ void UNexusActionComponent::OnActionDefAdded(const FNexusActionDef& ActionDef)
 	check(!LocalActionInstanceMap.Contains( ActionDef.Handle));
 	UNexusAction* ActionInstance = CreateActionInstance(ActionDef);
 	ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
-	ActionInstance->InitializeAction(ActionDef.Handle, AgentInfo);
 	ActionInstance->CallOnActionAdded();
 
 	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 추가"), *ActionInstance->GetName());
@@ -387,9 +390,9 @@ void UNexusActionComponent::HandleTriggerableActionOnAdded(const FNexusActionDef
 	});
 }
 
-void UNexusActionComponent::HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& Handle)
+void UNexusActionComponent::HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& ActionDefHandle)
 {
-	UnbindActionTriggerEvent(Handle);
+	UnbindActionTriggerEvent(ActionDefHandle);
 }
 
 void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance)
@@ -397,20 +400,20 @@ void UNexusActionComponent::BindActionTriggerEvent(const FNexusActionDef& NewAct
 	FGameplayTagContainer ActionTriggerEventTags = ActionInstance->GetActionTriggerEventTags();
 	for (FGameplayTag Tag : ActionTriggerEventTags)
 	{
-		FNexusEventCallbackHandle EventCallbackHandle = GetEventManagerComponent()->BindEventCallback<FNexusEventMessage>(Tag, this, &ThisClass::OnActionEventTriggered, NewActionDef.Handle);
+		FNexusEventCallbackHandle EventCallbackHandle = GetEventManagerComponent()->BindEventCallback<FNexusEventMessage, UNexusActionComponent, const FNexusActionDefHandle&>(Tag, this, &UNexusActionComponent::OnActionEventTriggered, NewActionDef.Handle);
 		BoundedActionEventHandles.FindOrAdd(NewActionDef.Handle).Add(EventCallbackHandle);
 	}
 }
 
-void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDefHandle& Handle)
+void UNexusActionComponent::UnbindActionTriggerEvent(const FNexusActionDefHandle& ActionDefHandle)
 {
-	if (TArray<FNexusEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(Handle))
+	if (TArray<FNexusEventCallbackHandle>* EventCallbackHandles = BoundedActionEventHandles.Find(ActionDefHandle))
 	{
 		for (FNexusEventCallbackHandle EventCallbackHandle : *EventCallbackHandles)
 		{
 			GetEventManagerComponent()->UnbindEventCallback(EventCallbackHandle);
 		}
-		BoundedActionEventHandles.Remove(Handle);
+		BoundedActionEventHandles.Remove(ActionDefHandle);
 	}
 }
 
@@ -441,7 +444,7 @@ bool UNexusActionComponent::CanTriggerAction(UNexusAction* ActionInstance, const
 	return InternalCanTriggerAction(ActionInstance);
 }
 
-void UNexusActionComponent::TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
 	check(ActionDefHandle.IsValid());
 
@@ -628,20 +631,20 @@ void UNexusActionComponent::LocalTriggerAction(const FNexusActionDefHandle& Acti
 
 	if (!ActionInstance->GetActionOwnedTags().IsEmpty())
 	{
-		FNexusSideEffectDef TagSideEffectDef = MakeSideEffectDef(ActionInstance, UNexusSideEffect::StaticClass());
-		TagSideEffectDef.SideEffectInstance->DurationType = ESideEffectDurationType::Infinite;
+		FNexusSideEffectInstanceDef SideEffectInstanceDef;
+		SideEffectInstanceDef.SideEffectAsset = GetDefault<UNexusSideEffectInfinite>();
 		FNexusGameplayTagMod TagMod;
 		TagMod.TagsToGrant.AppendTags(ActionInstance->GetActionOwnedTags());
-		TagSideEffectDef.SideEffectInstance->TagModifiers.Add(TagMod);
-		TriggerSideEffectByDef(TagSideEffectDef, ActionInstance);
+		SideEffectInstanceDef.DynamicTagModifiers.Add(TagMod);
+		FNexusSideEffectInstanceHandle SideEffectInstanceHandle = ApplySideEffectByDef(SideEffectInstanceDef);
 		if (IsOwnerActorAuthoritative())
 		{
-			TagSideEffectMap.Add({ActionDefHandle, TagSideEffectDef.Handle});
+			TagSideEffectMap.Add({ActionDefHandle, SideEffectInstanceHandle});
 		}
 	}
 }
 
-void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::ServerTryTriggerAction_Implementation(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
 {
 	if (!ActionDefHandle.IsValid())
 	{
@@ -661,7 +664,7 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(FNexusActionDe
 	LocalTriggerAction(ActionDefHandle, ActionInstance);
 }
 
-void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::ClientTriggerAction_Implementation(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag)
 {
 	check(ActionDefHandle.IsValid());
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
@@ -672,12 +675,12 @@ void UNexusActionComponent::ClientTriggerAction_Implementation(FNexusActionDefHa
 	LocalTriggerAction(ActionDefHandle, ActionInstance);
 }
 
-void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
 	LocalOnTriggerActionConfirmed(ActionDefHandle, PredictionTag);
 }
 
-void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
@@ -685,17 +688,17 @@ void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(FNex
 	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
 }
 
-void UNexusActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::ServerRemoteRequestTryTriggerAction_Implementation(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
 	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage)
+void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage)
 {
 	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::LocalOnTriggerActionConfirmed(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
 	UNexusAction* ConfirmedActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 승인 완료"), *ConfirmedActionInstance->GetName());
@@ -710,18 +713,18 @@ void UNexusActionComponent::LocalOnTriggerActionConfirmed(FNexusActionDefHandle 
 	}
 }
 
-void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle)
+void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, const FNexusActionDefHandle& ActionDefHandle)
 {
 	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action)
+void UNexusActionComponent::OnActionEnded(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* Action)
 {
 	if (IsOwnerActorAuthoritative())
 	{
-		if (FNexusSideEffectDefHandle* TagSideEffectHandle = TagSideEffectMap.Find(ActionDefHandle))
+		if (FNexusSideEffectInstanceHandle* TagSideEffectInstanceHandle = TagSideEffectMap.Find(ActionDefHandle))
 		{
-			GetSideEffectComponent()->RemoveSideEffect(*TagSideEffectHandle);
+			GetSideEffectComponent()->UnregisterAndRemoveSideEffect(*TagSideEffectInstanceHandle);
 			TagSideEffectMap.Remove(ActionDefHandle);
 		}
 	}
@@ -735,7 +738,7 @@ FNexusActionDefHandle UNexusActionComponent::FindActionDefHandle(TSubclassOf<UNe
 	return ActionDefs.FindActionDefHandle(ActionClass, SourceObject);
 }
 
-FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(FNexusActionDefHandle ActionDefHandle)
+FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(const FNexusActionDefHandle& ActionDefHandle)
 {
 	check(ActionDefHandle.IsValid());
 	if (FNexusActionDef* ActionDefPtr = ActionDefs.FindActionDefByHandle(ActionDefHandle))
@@ -746,24 +749,23 @@ FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(FNexusActionDefHan
 	return nullptr;
 }
 
-UNexusAction* UNexusActionComponent::CreateActionInstance(const FNexusActionDef& Def)
+UNexusAction* UNexusActionComponent::CreateActionInstance(const FNexusActionDef& ActionDef)
 {
-	if (LocalActionInstanceMap.Contains(Def.Handle))
+	if (LocalActionInstanceMap.Contains(ActionDef.Handle))
 	{
-		return LocalActionInstanceMap[Def.Handle];
+		return LocalActionInstanceMap[ActionDef.Handle];
 	}
 
-	UNexusAction* ActionInstance = NewObject<UNexusAction>(GetOwner(), Def.ActionClass);
-	check(ActionInstance);
-	return LocalActionInstanceMap.FindOrAdd(Def.Handle, ActionInstance);
+	UNexusAction* ActionInstance = UNexusAction::NewNexusActionObject(ActionDef.ActionClass, ActionDef.Handle, AgentInfo);
+	return LocalActionInstanceMap.Add(ActionDef.Handle, ActionInstance);
 }
 
-void UNexusActionComponent::DestroyActionInstance(FNexusActionDefHandle Handle)
+void UNexusActionComponent::DestroyActionInstance(const FNexusActionDefHandle& Handle)
 {
 	LocalActionInstanceMap.FindAndRemoveChecked(Handle);
 }
 
-UNexusAction* UNexusActionComponent::FindActionInstanceByHandle(FNexusActionDefHandle Handle)
+UNexusAction* UNexusActionComponent::FindActionInstanceByHandle(const FNexusActionDefHandle& Handle)
 {
 	return Handle.IsValid() ? LocalActionInstanceMap.FindRef(Handle) : nullptr;
 }

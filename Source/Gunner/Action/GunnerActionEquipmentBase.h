@@ -24,7 +24,7 @@ public:
 	AGunnerEquipment* GetEquipment() const;
 
 protected:
-	virtual void OnActionAdded() override;
+	virtual void InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo) override;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)

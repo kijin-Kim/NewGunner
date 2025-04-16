@@ -58,7 +58,7 @@ struct NEXUSACTION_API FNexusActionDefContainer : public FFastArraySerializer
 	void AuthAdd(const FNexusActionDef& ActionDef);
 	void AuthRemove(const FNexusActionDefHandle& Handle);
 	void AuthRemoveAll();
-	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
+	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
 	bool HasSameActionClassAndSourceObject(const FNexusActionDef& ActionDef) const;
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
 	

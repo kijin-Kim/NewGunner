@@ -348,6 +348,18 @@ void UGunnerSlotManagerComponent::ServerAckNewItem_Implementation(AGunnerSlotIte
 	Item->OnAcquired();
 }
 
+UGunnerSlotIndexChangeSideEffect::UGunnerSlotIndexChangeSideEffect()
+{
+	DurationType = ESideEffectDurationType::Instant;
+
+	FNexusPropertyMod Mod;
+	Mod.PropertyTag = TAG_Property_SlotIndex;
+	Mod.CalculationType = ENexusPropertyCalculationType::FromOutside;
+	Mod.Operator = ENexusPropertyOperator::Override;
+	Mod.InjectedValueTag = TAG_OperationValue_SlotIndex;
+	Modifiers.Add(Mod);
+}
+
 bool UGunnerActionSlotActivation::OnCanTriggerAction() const
 {
 	bool bCanTrigger = Super::OnCanTriggerAction();
@@ -366,24 +378,15 @@ void UGunnerActionSlotActivation::OnTriggerAction()
 	check(AgentActor);
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(AgentActor);
 	check(ActionComponent);
-	FNexusSideEffectDef SideEffectDef = UNexusActionComponent::MakeSideEffectDef(this, UNexusSideEffect::StaticClass());
-	SideEffectDef.SideEffectInstance->DurationType = ESideEffectDurationType::Instant;
 
-	FNexusPropertyMod Mod;
-	Mod.PropertyTag = TAG_Property_SlotIndex;
-	Mod.CalculationType = ENexusPropertyCalculationType::FromOutside;
-	Mod.Operator = ENexusPropertyOperator::Override;
-	Mod.InjectedValueTag = TAG_OperationValue_SlotIndex;
-
-	SideEffectDef.SideEffectInstance->Modifiers.Add(Mod);
-
+	FNexusSideEffectInstanceDef SideEffectInstanceDef{UGunnerSlotIndexChangeSideEffect::StaticClass()};
 	AGunnerSlotItem* SlotItem = GetSlotItem();
 	check(SlotItem);
-	SideEffectDef.SideEffectInstance->SetInjectedValue(Mod.InjectedValueTag, static_cast<float>(SlotItem->GetSlotType()));
+	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{TAG_OperationValue_SlotIndex, static_cast<float>(SlotItem->GetSlotType())});
 
-	ActionComponent->TriggerSideEffectByDef(SideEffectDef, this, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this, SideEffectDefHandle = SideEffectDef.Handle]()
+	ActionComponent->ApplySideEffectByDef(SideEffectInstanceDef, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this]()
 	{
-		GR_VLOG_SUB(GetOwnerActor(), LogGunner, Error, TEXT("슬롯 인덱스 변경 예측 실패"), *SideEffectDefHandle.ToString());
+		unimplemented(); // 슬롯 인덱스 변경 예측 실패
 	}));
 }
 

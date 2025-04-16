@@ -5,8 +5,11 @@
 
 #include "NexusLog.h"
 #include "Action/NexusAction.h"
+#include "Action/SubComponent/NexusGameplayTagComponent.h"
+#include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "SideEffect/NexusSideEffect.h"
+#include "SideEffect/NexusSideEffectInstance.h"
 
 
 UNexusSideEffectComponent::UNexusSideEffectComponent()
@@ -17,30 +20,35 @@ UNexusSideEffectComponent::UNexusSideEffectComponent()
 void UNexusSideEffectComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
 {
 	Super::Setup(InAgentInfo);
-	SideEffectDefs.Init(GetOwnerActor());
+	UNexusPropertyComponent* PropertyComponent = GetOwner()->GetComponentByClass<UNexusPropertyComponent>();
+	check(PropertyComponent);
+	UNexusGameplayTagComponent* GameplayTagComponent = GetOwner()->GetComponentByClass<UNexusGameplayTagComponent>();
+	check(GameplayTagComponent);
+
+	SideEffectInstances.Init(PropertyComponent, GameplayTagComponent, GetOwner()->HasAuthority());
 }
 
 void UNexusSideEffectComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(UNexusSideEffectComponent, SideEffectDefs, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UNexusSideEffectComponent, SideEffectInstances, COND_OwnerOnly);
 }
 
 void UNexusSideEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	SideEffectDefs.Tick(DeltaTime);
+	SideEffectInstances.Tick(DeltaTime);
 }
 
-void UNexusSideEffectComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, FNexusPredictionTag PredictionTag, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed)
+FNexusSideEffectInstanceHandle UNexusSideEffectComponent::ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef, FNexusPredictionTag PredictionTag, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed)
 {
 	if (!GetOwner()->HasAuthority() && !PredictionTag.IsPredictable())
 	{
 		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));
-		return;
+		return FNexusSideEffectInstanceHandle();
 	}
 
-	SideEffectDefs.Add(NewSideEffectDef, PredictionTag);
+	FNexusSideEffectInstanceHandle SideEffectInstanceHandle = RegisterAndApplySideEffect(SideEffectInstanceDef);
 	if (!GetOwner()->HasAuthority() && PredictionTag.IsPredictable())
 	{
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(PredictionTag);
@@ -53,26 +61,32 @@ void UNexusSideEffectComponent::TriggerSideEffectByDef(const FNexusSideEffectDef
 			PredictionEvent.OnPredictionFailed.Add(MoveTemp(OnPredictionFailed));
 		}
 
-		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this,SideEffectInstanceHandle, SideEffectName = SideEffectInstanceDef.SideEffectAsset->GetName()]()
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *NewSideEffectDef.SideEffectClass->GetName());
-			SideEffectDefs.Remove(SideEffectDefHandle);
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *SideEffectName);
+			UnregisterAndRemoveSideEffect(SideEffectInstanceHandle);
 		});
 
-		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, SideEffectDefHandle = NewSideEffectDef.Handle, NewSideEffectDef]()
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this,SideEffectInstanceHandle, SideEffectName = SideEffectInstanceDef.SideEffectAsset->GetName()]()
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *NewSideEffectDef.SideEffectClass->GetName());
-			SideEffectDefs.Remove(SideEffectDefHandle);
+			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *SideEffectName);
+			UnregisterAndRemoveSideEffect(SideEffectInstanceHandle);
 		});
 	}
+	return SideEffectInstanceHandle;
 }
 
-void UNexusSideEffectComponent::RemoveSideEffect(FNexusSideEffectDefHandle SideEffectDefHandle)
+const FNexusSideEffectInstanceContainer& UNexusSideEffectComponent::GetSideEffectInstances() const
 {
-	SideEffectDefs.Remove(SideEffectDefHandle);
+	return SideEffectInstances;
 }
 
-const FNexusSideEffectDefContainer& UNexusSideEffectComponent::GetSideEffectDefs() const
+void UNexusSideEffectComponent::UnregisterAndRemoveSideEffect(const FNexusSideEffectInstanceHandle& SideEffectInstanceHandle)
 {
-	return SideEffectDefs;
+	SideEffectInstances.RemoveSideEffectInstance(SideEffectInstanceHandle);
+}
+
+FNexusSideEffectInstanceHandle UNexusSideEffectComponent::RegisterAndApplySideEffect(const FNexusSideEffectInstanceDef& SideEffectInstanceDef)
+{
+	return SideEffectInstances.ApplySideEffectByDef(SideEffectInstanceDef);
 }

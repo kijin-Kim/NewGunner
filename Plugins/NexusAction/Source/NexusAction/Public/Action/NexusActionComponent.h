@@ -13,7 +13,7 @@
 #include "Event/NexusEventMessage.h"
 #include "Prediction/NexusPrediction.h"
 #include "SideEffect/NexusSideEffect.h"
-#include "SideEffect/NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffectInstance.h"
 #include "NexusActionComponent.generated.h"
 
 
@@ -92,9 +92,9 @@ private:
 	void OnActionDefAdded(const FNexusActionDef& ActionDef);
 	void OnActionDefRemoved(const FNexusActionDef& ActionDef);
 	void HandleTriggerableActionOnAdded(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance);
-	void HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& Handle);
+	void HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& ActionDefHandle);
 	void BindActionTriggerEvent(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance);
-	void UnbindActionTriggerEvent(const FNexusActionDefHandle& Handle);
+	void UnbindActionTriggerEvent(const FNexusActionDefHandle& ActionDefHandle);
 
 	// ------------------------------------------------------------------------------
 	// Action Trigger
@@ -103,53 +103,53 @@ public:
 	bool HasActionTriggerAuthority(UNexusAction* Action) const;
 	bool CanTriggerAction(UNexusAction* ActionInstance, const FNexusEventMessage& EventMessage);
 	UFUNCTION(BlueprintCallable)
-	void TryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage = FNexusEventMessage());
+	void TryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage = FNexusEventMessage());
 
 private:
 	bool InternalCanTriggerAction(UNexusAction* ActionInstance) const;
 	void LocalTriggerAction(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* ActionInstance);
 	UFUNCTION(Reliable, Server)
-	void ServerTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
+	void ServerTryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
+	void ClientTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessageReplicated& EventMessageReplicated, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerActionRequestSucceeded(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	void ClientTriggerActionRequestSucceeded(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Client)
-	void ClientTriggerActionRequestFailed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	void ClientTriggerActionRequestFailed(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag);
 	UFUNCTION(Reliable, Server)
-	void ServerRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
+	void ServerRemoteRequestTryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage);
 	UFUNCTION(Reliable, Client)
-	void ClientRemoteRequestTryTriggerAction(FNexusActionDefHandle ActionDefHandle, const FNexusEventMessage& EventMessage);
+	void ClientRemoteRequestTryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage);
 
-	void LocalOnTriggerActionConfirmed(FNexusActionDefHandle ActionDefHandle, FNexusPredictionTag PredictionTag);
+	void LocalOnTriggerActionConfirmed(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag);
 
-	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, FNexusActionDefHandle ActionDefHandle);
-	void OnActionEnded(FNexusActionDefHandle ActionDefHandle, UNexusAction* Action);
+	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, const FNexusActionDefHandle& ActionDefHandle);
+	void OnActionEnded(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* Action);
 
 public:
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
-	FNexusActionDef* FindActionDefByHandle(FNexusActionDefHandle Handle);
+	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
 
-	UNexusAction* CreateActionInstance(const FNexusActionDef& Def);
-	void DestroyActionInstance(FNexusActionDefHandle Handle);
-	UNexusAction* FindActionInstanceByHandle(FNexusActionDefHandle Handle);
-	const UNexusAction* FindActionInstanceByHandle(FNexusActionDefHandle Handle) const;
+	UNexusAction* CreateActionInstance(const FNexusActionDef& ActionDef);
+	void DestroyActionInstance(const FNexusActionDefHandle& Handle);
+	UNexusAction* FindActionInstanceByHandle(const FNexusActionDefHandle& Handle);
+	const UNexusAction* FindActionInstanceByHandle(const FNexusActionDefHandle& Handle) const;
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
 	FNexusPredictionTag GetCurrentPredictionTag() const;
-	
-	
+
+
 	// ------------------------------------------------------------------------------
 	// SideEffect
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
 	static void BP_TriggerSideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass);
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
-	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef);
+	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle);
 	UFUNCTION(BlueprintCallable)
-	static FNexusSideEffectDef MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass);
-	void TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
-	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
+	static FNexusSideEffectInstanceDefHandle MakeSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> SideEffectClass);
+	FNexusSideEffectInstanceHandle ApplySideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
+	FNexusSideEffectInstanceHandle ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
 
 
 	// ------------------------------------------------------------------------------
@@ -204,9 +204,12 @@ public:
 	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
 	DECLARE_FUNCTION(execBP_SendEventToActor);
 
+	template <typename FMessageStruct, typename... VarType>
+	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars);
 	template <typename FMessageStruct, typename TOwner, typename... VarType>
 	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars);
-
+	
+	
 	FNexusEventCallbackHandle BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType) const;
 	void UnbindEventCallback(FNexusEventCallbackHandle Handle) const;
 
@@ -261,7 +264,7 @@ private:
 	UPROPERTY()
 	mutable TObjectPtr<UNexusEventManagerComponent> EventManagerComponentCached;
 
-	TMap<FNexusActionDefHandle, FNexusSideEffectDefHandle> TagSideEffectMap;
+	TMap<FNexusActionDefHandle, FNexusSideEffectInstanceHandle> TagSideEffectMap;
 
 
 	struct FNexusPendingActionTriggerRequest
@@ -275,11 +278,18 @@ private:
 };
 
 
+template <typename FMessageStruct, typename ... VarType>
+FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag EventTag, void(* FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
+{
+	return GetEventManagerComponent()->BindEventCallback<FMessageStruct>(EventTag, FreeFunction, Vars...);
+}
+
 template <typename FMessageStruct, typename TOwner, typename... VarType>
 FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 {
 	return GetEventManagerComponent()->BindEventCallback<FMessageStruct>(EventTag, Object, Function, Vars...);
 }
+
 
 
 

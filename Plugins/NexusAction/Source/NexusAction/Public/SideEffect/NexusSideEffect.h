@@ -4,11 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Prediction/NexusPrediction.h"
 #include "NexusProperty.h"
+#include "NexusSideEffectInstanceHandle.h"
+#include "Action/NexusAgentInfo.h"
+#include "Prediction/NexusPrediction.h"
 #include "UObject/Object.h"
 #include "NexusSideEffect.generated.h"
 
+
+struct FNexusAgentInfo;
 
 UENUM()
 enum class ESideEffectDurationType
@@ -48,54 +52,33 @@ struct FNexusPropertyMod
 	FGameplayTag InjectedValueTag;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FNexusGameplayTagMod
 {
 	GENERATED_BODY()
-	
 
-	UPROPERTY(EditAnywhere, Category = "Tag Operation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Operation")
 	FGameplayTagContainer TagsToGrant;
-	UPROPERTY(EditAnywhere, Category = "Tag Operation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Operation")
 	FGameplayTagContainer TagsToRevoke;
 };
 
 /**
  * 
  */
-UCLASS(Blueprintable)
-class NEXUSACTION_API UNexusSideEffect : public UObject
+UCLASS()
+class NEXUSACTION_API UNexusSideEffect : public UDataAsset
 {
 	GENERATED_BODY()
 
-public:
-#if WITH_EDITOR
-	
-#endif
-	void OnApplied(FNexusPredictionTag PredictionTag, bool bHasAuthority);
-	void OnTick(float DeltaTime, bool bHasAuthority);
-	void OnRemoved();
-
-	UFUNCTION(BlueprintCallable)
-	void SetInjectedValue(FGameplayTag Tag, float Value);
-
-	const TMap<FGameplayTag, float>& GetInjectedValues() const { return InjectedValues; }
-	float GetRemainingDuration() const { return RemainingDuration; }
-	float GetElapsedTime() const { return ElapsedTime; }
-	int32 GetAppliedCount() const { return AppliedCount; }
-
-private:
-	void ApplyPropertyModifier(const FNexusPropertyMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
-	void ApplyTagModifier(const FNexusGameplayTagMod& Modifier, FNexusPredictionTag PredictionTag, bool bHasAuthority);
-	void ApplyAllModifiers(FNexusPredictionTag PredictionTag, bool bHasAuthority);
 
 public:
 	UPROPERTY(EditAnywhere)
 	ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
 	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ESideEffectDurationType::Duration", EditConditionHides))
-	float Duration;
+	float Duration = 0.0f;
 	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ESideEffectDurationType::Instant", EditConditionHides))
-	float Interval;
+	float Interval = 0.0f;
 
 
 	UPROPERTY(EditAnywhere, Category = "Property")
@@ -103,13 +86,17 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "GameplayTag")
 	TArray<FNexusGameplayTagMod> TagModifiers;
+};
 
 
-private:
-	TMap<FGameplayTag, float> InjectedValues;
-	TArray<FNexusPropertyOperationHandle> OperationHandles;
-	
-	float RemainingDuration = 0.0f;
-	float ElapsedTime = 0.0f;
-	int32 AppliedCount;
+UCLASS()
+class UNexusSideEffectInfinite : public UNexusSideEffect
+{
+	GENERATED_BODY()
+
+public:
+	UNexusSideEffectInfinite()
+	{
+		DurationType = ESideEffectDurationType::Infinite;
+	}
 };

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
-#include "SideEffect/NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffectInstance.h"
 #include "NexusSideEffectComponent.generated.h"
 
 
@@ -18,14 +18,18 @@ public:
 	UNexusSideEffectComponent();
 	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	FNexusSideEffectInstanceHandle ApplySideEffectByDef(const FNexusSideEffectInstanceDef& NewSideEffectDef, FNexusPredictionTag PredictionTag, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {});
+	const FNexusSideEffectInstanceContainer& GetSideEffectInstances() const;
 
-	void TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, FNexusPredictionTag PredictionTag, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {});
-	void RemoveSideEffect(FNexusSideEffectDefHandle SideEffectDefHandle);
+	void UnregisterAndRemoveSideEffect(const FNexusSideEffectInstanceHandle& SideEffectDefHandle);
+private:
+	FNexusSideEffectInstanceHandle RegisterAndApplySideEffect(const FNexusSideEffectInstanceDef& SideEffectInstanceDef);
 
-	const FNexusSideEffectDefContainer& GetSideEffectDefs() const;
+
 
 private:
 	UPROPERTY(Replicated)
-	FNexusSideEffectDefContainer SideEffectDefs;
+	FNexusSideEffectInstanceContainer SideEffectInstances;
 };

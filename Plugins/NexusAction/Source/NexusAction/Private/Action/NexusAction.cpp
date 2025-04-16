@@ -4,6 +4,14 @@
 #include "Action/NexusAction.h"
 
 
+UNexusAction* UNexusAction::NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+{
+	UNexusAction* NewAction = NewObject<UNexusAction>(InAgentInfo.Pin()->GetOwnerActor(), Class);
+	check(NewAction);
+	NewAction->InitializeAction(InActionDefHandle, InAgentInfo);
+	return NewAction;
+}
+
 UWorld* UNexusAction::GetWorld() const
 {
 	// https://forums.unrealengine.com/t/can-you-use-a-blueprint-function-library-in-an-object-class/350918/37
@@ -14,13 +22,6 @@ UWorld* UNexusAction::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UNexusAction::InitializeAction(FNexusActionDefHandle InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
-{
-	check(InAgentInfo.IsValid());
-	ActionDefHandle = InActionDefHandle;
-	AgentInfo = InAgentInfo;
-}
-
 void UNexusAction::SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage)
 {
 	EventMessage = InEventMessage;
@@ -28,6 +29,7 @@ void UNexusAction::SetActionCurrentEventMessage(const FNexusEventMessage& InEven
 
 void UNexusAction::CallOnActionAdded()
 {
+	check(ActionDefHandle.IsValid() && AgentInfo.IsValid() && TEXT("액션이 올바르게 생성되지 않았습니다. NewNexusActionObject를 사용하여 액션을 생성해야 합니다"));
 	OnActionAdded();
 	BP_OnActionAdded();
 }
@@ -87,7 +89,6 @@ void UNexusAction::OnTriggerAction()
 	}
 
 	bIsTriggering = true;
-	
 }
 
 void UNexusAction::OnEndAction()
@@ -97,4 +98,11 @@ void UNexusAction::OnEndAction()
 
 void UNexusAction::OnActionRemoved()
 {
+}
+
+void UNexusAction::InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+{
+	check(InActionDefHandle.IsValid() && InAgentInfo.IsValid());
+	ActionDefHandle = InActionDefHandle;
+	AgentInfo = InAgentInfo;
 }

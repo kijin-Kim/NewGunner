@@ -83,7 +83,7 @@ void FNexusActionDefContainer::AuthRemoveAll()
 	MarkArrayDirty();
 }
 
-FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(FNexusActionDefHandle Handle)
+FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusActionDefHandle& Handle)
 {
 	for (FNexusActionDef& Item : Items)
 	{
@@ -113,7 +113,6 @@ FNexusActionDefHandle FNexusActionDefContainer::FindActionDefHandle(TSubclassOf<
 }
 
 
-
 bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
 	return FFastArraySerializer::FastArrayDeltaSerialize<FNexusActionDef, FNexusActionDefContainer>(Items, DeltaParms, *this);
@@ -121,16 +120,10 @@ bool FNexusActionDefContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaPa
 
 void FNexusActionDefContainer::OnAdded(FNexusActionDef& ActionDef) const
 {
-	if (OnActionDefAddedDelegate.IsBound())
-	{
-		OnActionDefAddedDelegate.Execute(ActionDef);
-	}
+	OnActionDefAddedDelegate.ExecuteIfBound(ActionDef);
 }
 
 void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDef) const
 {
-	if (OnActionDefRemovedDelegate.IsBound())
-	{
-		OnActionDefRemovedDelegate.Execute(ActionDef);
-	}
+	OnActionDefRemovedDelegate.ExecuteIfBound(ActionDef);
 }

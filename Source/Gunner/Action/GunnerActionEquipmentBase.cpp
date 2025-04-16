@@ -22,9 +22,9 @@ AGunnerEquipment* UGunnerActionEquipmentBase::GetEquipment() const
 	return Cast<AGunnerEquipment>(ActionDef->SourceObject);
 }
 
-void UGunnerActionEquipmentBase::OnActionAdded()
+void UGunnerActionEquipmentBase::InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
-	Super::OnActionAdded();
+	Super::InitializeAction(InActionDefHandle, InAgentInfo);
 	EquipmentManager = GetAgentActor()->GetComponentByClass<UGunnerEquipmentManagerComponent>();
 	check(EquipmentManager);
 }

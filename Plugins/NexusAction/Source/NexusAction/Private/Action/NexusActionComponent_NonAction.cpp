@@ -10,7 +10,7 @@
 #include "Cue/NexusCue.h"
 #include "Event/NexusEventManagerComponent.h"
 #include "SideEffect/NexusSideEffect.h"
-#include "SideEffect/NexusSideEffectDef.h"
+#include "SideEffect/NexusSideEffectInstance.h"
 
 
 // ------------------------------------------------------------------------------
@@ -26,11 +26,11 @@ void UNexusActionComponent::BP_TriggerSideEffectToActor(UNexusAction* Action, AA
 
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffect(SideEffectClass, Action);
+		ActionComponent->ApplySideEffect(SideEffectClass, Action);
 	}
 }
 
-void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectDef& SideEffectDef)
+void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle)
 {
 	check(Action);
 	if (!SideEffectTarget)
@@ -40,28 +40,28 @@ void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Actio
 
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(SideEffectTarget))
 	{
-		ActionComponent->TriggerSideEffectByDef(SideEffectDef, Action);
+		ActionComponent->ApplySideEffectByDef(*SideEffectInstanceDefHandle.GetData());
 	}
 }
 
-FNexusSideEffectDef UNexusActionComponent::MakeSideEffectDef(UNexusAction* Action, TSubclassOf<UNexusSideEffect> SideEffectClass)
+FNexusSideEffectInstanceDefHandle UNexusActionComponent::MakeSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> SideEffectClass)
 {
-	check(Action);
-	FNexusSideEffectDef NewSideEffectDef{SideEffectClass};
-	NewSideEffectDef.SideEffectInstance = NewObject<UNexusSideEffect>(Action->GetOwnerActor(), SideEffectClass);
-	return NewSideEffectDef;
+	// Blueprint에서 복사방지 및 스테이트를 유지하기 위한 핸들 패턴
+	FNexusSideEffectInstanceDefHandle Handle;
+	Handle.SetData(MakeShared<FNexusSideEffectInstanceDef>(SideEffectClass));
+	return Handle;
 }
 
-void UNexusActionComponent::TriggerSideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action)
+FNexusSideEffectInstanceHandle UNexusActionComponent::ApplySideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action)
 {
 	check(Action);
-	FNexusSideEffectDef NewSideEffectDef = MakeSideEffectDef(Action, SideEffectClass);
-	TriggerSideEffectByDef(NewSideEffectDef, Action);
+	FNexusSideEffectInstanceDef SideEffectInstanceDef{SideEffectClass};
+	return ApplySideEffectByDef(SideEffectInstanceDef);
 }
 
-void UNexusActionComponent::TriggerSideEffectByDef(const FNexusSideEffectDef& NewSideEffectDef, UNexusAction* Action, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed) const
+FNexusSideEffectInstanceHandle UNexusActionComponent::ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed) const
 {
-	GetSideEffectComponent()->TriggerSideEffectByDef(NewSideEffectDef, GetCurrentPredictionTag(), MoveTemp(OnPredictionEnded), MoveTemp(OnPredictionFailed));
+	return GetSideEffectComponent()->ApplySideEffectByDef(SideEffectInstanceDef, GetCurrentPredictionTag(), MoveTemp(OnPredictionEnded), MoveTemp(OnPredictionFailed));
 }
 
 

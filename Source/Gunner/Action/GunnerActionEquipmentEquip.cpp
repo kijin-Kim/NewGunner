@@ -6,10 +6,11 @@
 #include "Gunner/Equipment/GunnerEquipment.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
-void UGunnerActionEquipmentEquip::OnActionAdded()
+
+void UGunnerActionEquipmentEquip::InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
-	Super::OnActionAdded();
-	
+	Super::InitializeAction(InActionDefHandle, InAgentInfo);
+		
 	AGunnerEquipment* Equipment = GetEquipment();
 	switch (Equipment->GetEquipmentType())
 	{

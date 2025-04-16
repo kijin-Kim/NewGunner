@@ -26,7 +26,7 @@ public:
 		SelfObject->Action = InAction;
 		SelfObject->ActionComponent = UNexusActionComponent::GetActionComponentFromActor(InAction->GetOwnerActor());
 		check(SelfObject->ActionComponent.IsValid());
-		SelfObject->Action->OnActionEndedDelegate.AddWeakLambda(SelfObject, [SelfObject](FNexusActionDefHandle, UNexusAction*)
+		SelfObject->Action->OnActionEndedDelegate.AddWeakLambda(SelfObject, [SelfObject](const FNexusActionDefHandle&, UNexusAction*)
 		{
 			SelfObject->Cancel();
 			SelfObject->Action->OnActionEndedDelegate.RemoveAll(SelfObject);

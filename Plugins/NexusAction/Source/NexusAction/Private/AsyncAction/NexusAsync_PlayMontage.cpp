@@ -47,7 +47,7 @@ void UNexusAsync_PlayMontage::Activate()
 
 	if (bStopWhenActionEnds)
 	{
-		Action->OnActionEndedDelegate.AddWeakLambda(this, [this, MontagePlayerComponent](FNexusActionDefHandle, UNexusAction*)
+		Action->OnActionEndedDelegate.AddWeakLambda(this, [this, MontagePlayerComponent](const FNexusActionDefHandle&, UNexusAction*)
 		{
 			MontagePlayerComponent->StopMontage(MontageToPlay.Get(), bIsThirdPerson);
 			Cancel();

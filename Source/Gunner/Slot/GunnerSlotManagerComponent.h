@@ -7,6 +7,7 @@
 #include "Action/NexusActionDefHandle.h"
 #include "Components/ActorComponent.h"
 #include "Gunner/Action/GunnerActionSlotItemBase.h"
+#include "SideEffect/NexusSideEffect.h"
 #include "GunnerSlotManagerComponent.generated.h"
 
 struct FNexusEventMessage;
@@ -137,10 +138,20 @@ private:
 };
 
 UCLASS()
-class UGunnerActionSlotActivation : public UGunnerActionSlotItemBase
+class UGunnerSlotIndexChangeSideEffect : public UNexusSideEffect
 {
 	GENERATED_BODY()
 	
+public:
+	UGunnerSlotIndexChangeSideEffect();
+};
+
+
+UCLASS()
+class UGunnerActionSlotActivation : public UGunnerActionSlotItemBase
+{
+	GENERATED_BODY()
+
 protected:
 	virtual bool OnCanTriggerAction() const override;
 	virtual void OnTriggerAction() override;

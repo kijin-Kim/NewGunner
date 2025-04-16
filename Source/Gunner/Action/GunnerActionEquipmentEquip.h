@@ -14,6 +14,6 @@ class GUNNER_API UGunnerActionEquipmentEquip : public UGunnerActionEquipmentBase
 {
 	GENERATED_BODY()
 
-public:
-	virtual void OnActionAdded() override;
+protected:
+	virtual void InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo) override;
 };

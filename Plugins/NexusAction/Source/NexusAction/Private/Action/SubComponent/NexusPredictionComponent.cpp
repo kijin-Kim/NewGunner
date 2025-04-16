@@ -41,7 +41,7 @@ FNexusPredictionTag UNexusPredictionComponent::GetCurrentPredictionTag() const
 	return CurrentPredictionTag;
 }
 
-void UNexusPredictionComponent::ServerSendNetSyncPoint_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag)
+void UNexusPredictionComponent::ServerSendNetSyncPoint_Implementation(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag)
 {
 	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
 	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
@@ -61,7 +61,7 @@ void UNexusPredictionComponent::ServerSendNetSyncPoint_Implementation(FNexusActi
 }
 
 
-void UNexusPredictionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
+void UNexusPredictionComponent::CallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
 	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
 	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
@@ -76,7 +76,7 @@ void UNexusPredictionComponent::CallOrAddNetsyncPointDelegate(FNexusActionDefHan
 	Delegate.ExecuteIfBound();
 }
 
-void UNexusPredictionComponent::ServerSendTargetData_Implementation(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
+void UNexusPredictionComponent::ServerSendTargetData_Implementation(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
 {
 	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
 	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
@@ -95,7 +95,7 @@ void UNexusPredictionComponent::ServerSendTargetData_Implementation(FNexusAction
 	}
 }
 
-void UNexusPredictionComponent::CallOrAddTargetDataDelegate(FNexusActionDefHandle Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
+void UNexusPredictionComponent::CallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
 {
 	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
 	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
