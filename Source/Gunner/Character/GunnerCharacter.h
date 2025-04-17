@@ -110,5 +110,4 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
 
-	FDelegateHandle OnAddPlayerStateDelegateHandle;
 };
