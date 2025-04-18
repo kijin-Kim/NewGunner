@@ -16,11 +16,14 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+	
 	virtual void Init() override;
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
 	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
+	void OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
 	void PlayLoadingScreen();
 	void StopLoadingScreen();
+	
 
 
 	virtual void Shutdown() override;
@@ -38,4 +41,5 @@ public:
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
+	
 };

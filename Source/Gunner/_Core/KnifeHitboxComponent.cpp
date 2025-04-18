@@ -37,12 +37,10 @@ void UKnifeHitboxComponent::StopHitDetection()
 
 void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AActor* Owner = GetOwner();
-	check(Owner);
-	AActor* EquippedActor = Owner->GetOwner();
-	check(EquippedActor);
+	AActor* AgentActor = GetAgentActor();
+	check(AgentActor);
 
-	if (IGenericTeamAgentInterface* EquippedOwnerTeamAgentInterface = Cast<IGenericTeamAgentInterface>(EquippedActor))
+	if (IGenericTeamAgentInterface* EquippedOwnerTeamAgentInterface = Cast<IGenericTeamAgentInterface>(AgentActor))
 	{
 		if (EquippedOwnerTeamAgentInterface->GetTeamAttitudeTowards(*OtherActor) != ETeamAttitude::Hostile)
 		{
@@ -51,13 +49,13 @@ void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	}
 
 
-	if (GetOwner() == OtherActor || EquippedActor == OtherActor || AlreadyHitDetectedActors.Contains(OtherActor))
+	if (GetOwner() == OtherActor || AgentActor == OtherActor || AlreadyHitDetectedActors.Contains(OtherActor))
 	{
 		return;
 	}
 	AlreadyHitDetectedActors.Add(OtherActor);
 
-	if (EquippedActor->HasAuthority())
+	if (AgentActor->HasAuthority())
 	{
 		AuthApplyDamage(OtherActor);
 	}
@@ -65,21 +63,21 @@ void UKnifeHitboxComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedCompon
 
 void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 {
-	
 	FNexusEventMessage DamageEventMessage;
-	DamageEventMessage.EventTag = TAG_GameEvent_Damaged;
-	APawn* EquipmentPawnOwner = Cast<APawn>(GetOwner()->GetOwner());
-	DamageEventMessage.Instigator = EquipmentPawnOwner->GetController();
+	DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	check(ActionComponent);
+	APawn* AgentPawn = Cast<APawn>(ActionComponent->GetAgentActor());
+	DamageEventMessage.Instigator = AgentPawn->GetController();
 
 
-	AActor* EquippedActor = GetOwner()->GetOwner();
-	UWorld* World = EquippedActor->GetWorld();
-	UCameraComponent* CameraComponet = EquippedActor->GetComponentByClass<UCameraComponent>();
+	UWorld* World = AgentPawn->GetWorld();
+	UCameraComponent* CameraComponet = AgentPawn->GetComponentByClass<UCameraComponent>();
 	FVector CameraLocation = CameraComponet->GetComponentLocation();
 	FVector CameraForward = CameraComponet->GetForwardVector();
 
 	FCollisionQueryParams CollisionQueryParams;
-	TArray<AActor*> IgnoredActors = {GetOwner()->GetOwner(), GetOwner()};
+	TArray<AActor*> IgnoredActors = {AgentPawn, GetOwner()};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	TArray<FHitResult> OutHitResults;
 	World->LineTraceMultiByChannel(OutHitResults,
@@ -97,15 +95,21 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 	}
 
 	UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
-	AGunnerEquipment* EquipmentOwner = GetOwner<AGunnerEquipment>();
-	DamageContext->Instigator = EquipmentPawnOwner->GetController();
-	DamageContext->Causer = EquipmentOwner;
+	AGunnerEquipment* Equipment = GetOwner<AGunnerEquipment>();
+	DamageContext->Instigator = AgentPawn->GetController();
+	DamageContext->Causer = Equipment;
 	DamageContext->Target = HitActor;
 	DamageContext->HitNormal = HitNormal;
 	DamageContext->HitBoneName = HitBoneName;
 
-	DamageContext->DamageAmount = EquipmentOwner->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+	DamageContext->DamageAmount = Equipment->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
 	DamageEventMessage.EventDataObject = DamageContext;
 
-	UNexusActionComponent::SendEventToActor(TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+	ActionComponent->SendEventToActor(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+}
+
+AActor* UKnifeHitboxComponent::GetAgentActor() const
+{
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	return ActionComponent ? ActionComponent->GetAgentActor() : nullptr;
 }

@@ -19,7 +19,7 @@ TArray<FNexusEventCallbackHandle> UCameraControllerComponent::SetupEvents()
 	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner()))
 	{
 		return {
-			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Look, this, &ThisClass::Look)
+			ActionComponent->BindEventCallback<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Look, this, &ThisClass::Look)
 		};
 	}
 	return {};

@@ -13,9 +13,15 @@
 void UGunnerGameInstance::Init()
 {
 	Super::Init();
+
+	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
 	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
+	
+	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
 	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
-	AHUD::OnShowDebugInfo.AddStatic(&UGunnerSlotManagerComponent::OnShowDebugInfo);
+
+	AHUD::OnShowDebugInfo.RemoveAll(this);
+	AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
 }
 
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)
@@ -26,6 +32,11 @@ void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& Ma
 void UGunnerGameInstance::PostLoadMapWithWorld(UWorld* InLoadedWorld)
 {
 	StopLoadingScreen();
+}
+
+void UGunnerGameInstance::OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
+{
+	UGunnerSlotManagerComponent::OnShowDebugInfo(Ahud, Canvas, DebugDisplayInfo, X, Arg);
 }
 
 void UGunnerGameInstance::PlayLoadingScreen()

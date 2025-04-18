@@ -9,7 +9,7 @@
 class UGunnerSlotManagerComponent;
 // This class does not need to be modified.
 UINTERFACE()
-class UGunnerSlotManagerInterface : public UInterface
+class GUNNER_API UGunnerSlotManagerInterface : public UInterface
 {
 	GENERATED_BODY()
 };

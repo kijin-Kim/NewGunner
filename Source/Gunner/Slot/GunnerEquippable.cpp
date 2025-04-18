@@ -19,9 +19,9 @@ AGunnerEquippable::AGunnerEquippable()
 	SetRootComponent(DefaultSceneRootComponent);
 	FirstPersonMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMeshComponent->SetupAttachment(GetRootComponent());
-	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	FirstPersonMeshComponent->CastShadow = false;
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
+	FirstPersonMeshComponent->SetIsReplicated(false);
 
 	AnimMontagePlayerComponent = CreateDefaultSubobject<UNexusAnimMontagePlayerComponent>(TEXT("AnimMontagePlayer"));
 	AnimMontagePlayerComponent->SetIsReplicated(true);
@@ -32,12 +32,11 @@ void AGunnerEquippable::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 	ThirdPersonMeshComponent = DuplicateObject(FirstPersonMeshComponent, this);
 	ThirdPersonMeshComponent->Rename(TEXT("ThirdPersonMeshComponent"), this);
-	ThirdPersonMeshComponent->bOnlyOwnerSee = false;
 	ThirdPersonMeshComponent->CastShadow = true;
-	ThirdPersonMeshComponent->bOwnerNoSee = true;
 	ThirdPersonMeshComponent->bRenderCustomDepth = false;
 	ThirdPersonMeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	ThirdPersonMeshComponent->RegisterComponent();
+	ThirdPersonMeshComponent->SetIsReplicated(false);
 
 	TArray<USceneComponent*> FPChildren;
 	FirstPersonMeshComponent->GetChildrenComponents(true, FPChildren);
@@ -46,12 +45,12 @@ void AGunnerEquippable::OnConstruction(const FTransform& Transform)
 		if (UMeshComponent* ChildMesh = Cast<UMeshComponent>(Child))
 		{
 			ChildMesh->bRenderCustomDepth = true;
+			ChildMesh->SetIsReplicated(false);
 			UMeshComponent* NewChild = Cast<UMeshComponent>(DuplicateObject(ChildMesh, this));
-			NewChild->bOnlyOwnerSee = false;
 			NewChild->CastShadow = true;
-			NewChild->bOwnerNoSee = true;
 			NewChild->AttachToComponent(ThirdPersonMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, ChildMesh->GetAttachSocketName());
 			NewChild->RegisterComponent();
+			NewChild->SetIsReplicated(false);
 		}
 	}
 }
@@ -72,14 +71,17 @@ USkeletalMeshComponent* AGunnerEquippable::GetThirdPersonMeshComponent_Implement
 }
 
 
-void AGunnerEquippable::OnAcquired()
+void AGunnerEquippable::OnAcquired(AActor* AgentActor)
 {
-	Super::OnAcquired();
-	AttachToOwner();
-	SetMeshVisibility(false);
-
-
-	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetOwner());
+	Super::OnAcquired(AgentActor);
+	SetMeshVisibility(AgentActor, false);
+	AttachToExpliciteOwner(AgentActor);
+	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(AgentActor);
+	check(TeamAgentInterface);
+	if (!TeamAgentInterface)
+	{
+		return;
+	}
 	TeamAgentInterface->GetOnTeamSetDelegate()->AddWeakLambda(this, [this](FGenericTeamId OldTeamId, FGenericTeamId NewTeamId)
 	{
 		SetCustomDepthStencilValue(NewTeamId + 1);
@@ -88,65 +90,81 @@ void AGunnerEquippable::OnAcquired()
 	SetCustomDepthStencilValue(TeamAgentInterface->GetGenericTeamId() + 1);
 }
 
-void AGunnerEquippable::OnRemoved()
+void AGunnerEquippable::OnRemoved(AActor* AgentActor)
 {
-	Super::OnRemoved();
-	SetMeshVisibility(false);
+	Super::OnRemoved(AgentActor);
+	SetMeshVisibility(AgentActor, false);
 
-	if (IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetOwner()))
+	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(AgentActor);
+	check(TeamAgentInterface);
+	if (TeamAgentInterface)
 	{
 		TeamAgentInterface->GetOnTeamSetDelegate()->RemoveAll(this);
 	}
 }
 
 
-
-void AGunnerEquippable::OnActivated()
+void AGunnerEquippable::OnActivated(AActor* AgentActor)
 {
-	Super::OnActivated();
-	SetMeshVisibility(true);
-	SetOwnerLocomotionAnimSet(LocomotionAnimSet);
+	Super::OnActivated(AgentActor);
+	SetMeshVisibility(AgentActor, true);
+	SetAgentActorLocomotionAnimSet(AgentActor, LocomotionAnimSet);
 	SetRenderCustomDepth(true);
 }
 
-void AGunnerEquippable::OnDeactivated()
+void AGunnerEquippable::OnDeactivated(AActor* AgentActor)
 {
-	Super::OnDeactivated();
-	SetMeshVisibility(false);
-	SetOwnerLocomotionAnimSet(nullptr);
+	Super::OnDeactivated(AgentActor);
+	SetMeshVisibility(AgentActor, false);
+	SetAgentActorLocomotionAnimSet(AgentActor, nullptr);
 	SetRenderCustomDepth(false);
 }
 
-void AGunnerEquippable::AttachToOwner() const
+void AGunnerEquippable::AttachToExpliciteOwner(AActor* AgentActor) const
 {
-	const AActor* ActorOwner = GetOwner();
-	if (ActorOwner && ActorOwner->Implements<UNexusAnimMontagePlayerInterface>())
+	if (AgentActor && AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{
-		USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
-		USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
+		USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(AgentActor);
+		USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(AgentActor);
 
 		FirstPersonMeshComponent->AttachToComponent(OwnerFPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("Socket_MasterWeapon"));
 		ThirdPersonMeshComponent->AttachToComponent(OwnerTPMeshComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("Socket_MasterWeapon"));
 	}
 }
 
-void AGunnerEquippable::SetMeshVisibility(bool bVisible) const
+void AGunnerEquippable::SetMeshVisibility(AActor* AgentActor, bool bVisible) const
 {
-	FirstPersonMeshComponent->SetVisibility(bVisible, true);
-	ThirdPersonMeshComponent->SetVisibility(bVisible, true);
+	APawn* AgentPawn = Cast<APawn>(AgentActor);
+	if(bVisible)
+	{
+		if (AgentPawn->IsLocallyControlled())
+		{
+			FirstPersonMeshComponent->SetVisibility(true, true);
+			ThirdPersonMeshComponent->SetVisibility(false, true);
+		}
+		else
+		{
+			FirstPersonMeshComponent->SetVisibility(false, true);
+			ThirdPersonMeshComponent->SetVisibility(true, true);
+		}
+	}
+	else
+	{
+		FirstPersonMeshComponent->SetVisibility(false, true);
+		ThirdPersonMeshComponent->SetVisibility(false, true);
+	}
 }
 
 
-void AGunnerEquippable::SetOwnerLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
+void AGunnerEquippable::SetAgentActorLocomotionAnimSet(AActor* AgentActor, UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
 {
-	AActor* ActorOwner = GetOwner();
-	if (!ActorOwner || !ActorOwner->Implements<UNexusAnimMontagePlayerInterface>())
+	if (!AgentActor || !AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{
 		return;
 	}
-
-	USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ActorOwner);
-	USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(ActorOwner);
+	
+	USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(AgentActor);
+	USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(AgentActor);
 
 	TArray<UGunnerAnimInstance*> AnimInstances = {
 		Cast<UGunnerAnimInstance>(OwnerFPMeshComponent->GetAnimInstance()),

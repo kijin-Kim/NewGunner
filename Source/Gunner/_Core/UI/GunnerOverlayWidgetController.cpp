@@ -13,23 +13,29 @@ void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* PlayerSt
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
 	check(ActionComponent);
 
-	UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
+	UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
 	check(BulletProperty);
-	BulletProperty->OnChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
+	BulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueChanged);
 	OnBulletValueChanged(BulletProperty->GetStaticValue(), BulletProperty->GetDynamicValue());
 
-	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
+	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 	check(MagazineBulletProperty);
-	MagazineBulletProperty->OnChangedDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
+	MagazineBulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueChanged);
 	OnMagazineBulletValueChanged(MagazineBulletProperty->GetStaticValue(), MagazineBulletProperty->GetDynamicValue());
 }
 
 void UGunnerOverlayWidgetController::OnBulletValueChanged(float OldValue, float NewValue)
 {
-	OnBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+	if (OldValue != NewValue)
+	{
+		OnBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+	}
 }
 
 void UGunnerOverlayWidgetController::OnMagazineBulletValueChanged(float OldValue, float NewValue)
 {
-	OnMagazineBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+	if (OldValue != NewValue)
+	{
+		OnMagazineBulletValueChangedDelegate.Broadcast(OldValue, NewValue);
+	}
 }

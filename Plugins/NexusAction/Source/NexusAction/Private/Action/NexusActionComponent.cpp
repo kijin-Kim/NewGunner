@@ -30,6 +30,7 @@ FAutoConsoleVariableRef ActionSystemShowActionTriggerFailedReasonCmd(
 UNexusActionComponent::UNexusActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	AgentInfo = MakeShared<FNexusAgentInfo>();
 }
 
 void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
@@ -50,6 +51,7 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(UNexusActionComponent, ActionDefs, COND_OwnerOnly);
+	DOREPLIFETIME(UNexusActionComponent, AgentActor);
 }
 
 void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -78,10 +80,26 @@ UNexusActionComponent* UNexusActionComponent::GetActionComponentFromActor(AActor
 	return nullptr;
 }
 
+void UNexusActionComponent::UpdateAgentInfo(AActor* InAgentActor)
+{
+	if (InAgentActor == AgentInfo->GetAgentActor())
+	{
+		return;
+	}
+
+	AgentActor = InAgentActor;
+	AgentInfo->Init(GetOwner(), InAgentActor);
+}
+
 void UNexusActionComponent::SetupActionComponent(AActor* InAgentActor)
 {
+	UpdateAgentInfo(InAgentActor);
+	if (bSetupCompleted)
+	{
+		return;
+	}
 	bSetupCompleted = true;
-	InternalSetupActionComponent(InAgentActor);
+	InternalSetupActionComponent();
 	OnSetupActionComponent();
 	if (OnActionComponentSetupCompletedDelegate.IsBound())
 	{
@@ -125,12 +143,8 @@ void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentSet
 	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
-void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
+void UNexusActionComponent::InternalSetupActionComponent()
 {
-	check(InAgentActor);
-	TSharedPtr<FNexusAgentInfo> OldAgentInfo = AgentInfo;
-	AgentInfo = MakeShared<FNexusAgentInfo>(GetOwner(), InAgentActor);
-
 	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
 	GetOwner()->GetComponents(SubComponents);
 	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
@@ -138,15 +152,9 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 		SubComponent->Setup(AgentInfo);
 	}
 
-	if (!ActionDefs.OnActionDefAddedDelegate.IsBound())
+	for (auto& ActionDef : ActionDefs.Items)
 	{
-		if (OldAgentInfo != AgentInfo && !GetOwner()->HasAuthority() && AgentInfo->IsLocallyControlled())
-		{
-			for (auto& ActionDef : ActionDefs.Items)
-			{
-				OnActionDefAdded(ActionDef);
-			}
-		}
+		OnActionDefAdded(ActionDef);
 	}
 	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
 	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
@@ -159,7 +167,6 @@ void UNexusActionComponent::InternalSetupActionComponent(AActor* InAgentActor)
 
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
-	
 	if (!AgentInfo.IsValid() || !AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
 	{
 		return;
@@ -193,7 +200,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 					break;
 				case ENexusPropertyCalculationType::FromOutside:
 					{
-						const FNexusInjectedValuePair* PairPtr = SideEffectInstance.Def.InjectedValues.FindByPredicate( [&Mod](const FNexusInjectedValuePair& InjectedValue)
+						const FNexusInjectedValuePair* PairPtr = SideEffectInstance.Def.InjectedValues.FindByPredicate([&Mod](const FNexusInjectedValuePair& InjectedValue)
 						{
 							return InjectedValue.Tag == Mod.InjectedValueTag;
 						});
@@ -250,6 +257,20 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	}
 }
 
+void UNexusActionComponent::OnRep_AgentActor()
+{
+	if (AgentInfo->GetAgentActor() != AgentActor || AgentInfo->GetOwnerActor() != GetOwner())
+	{
+		if (GetOwner())
+		{
+			UpdateAgentInfo(AgentActor);
+		}
+		else
+		{
+			UpdateAgentInfo(nullptr);
+		}
+	}
+}
 
 // ------------------------------------------------------------------------------
 // Action Add/Remove
@@ -347,6 +368,7 @@ FNexusActionDefHandle UNexusActionComponent::InternalAuthAddAction(const FNexusA
 
 void UNexusActionComponent::OnActionDefAdded(const FNexusActionDef& ActionDef)
 {
+	check(bSetupCompleted);
 	check(!LocalActionInstanceMap.Contains( ActionDef.Handle));
 	UNexusAction* ActionInstance = CreateActionInstance(ActionDef);
 	ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
@@ -360,8 +382,9 @@ void UNexusActionComponent::OnActionDefRemoved(const FNexusActionDef& ActionDef)
 {
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDef.Handle);
 	check(ActionInstance);
-	ActionInstance->CallOnEndAction();
+	ActionInstance->EndAction();
 	ActionInstance->CallOnActionRemoved();
+	NX_VLOG_SUB(GetOwner(), LogNexusAction, Log, TEXT("액션 [%s] 제거"), *ActionInstance->GetName());
 	DestroyActionInstance(ActionDef.Handle);
 	HandleTriggerableActionOnRemoved(ActionDef.Handle);
 }
@@ -379,10 +402,12 @@ void UNexusActionComponent::HandleTriggerableActionOnAdded(const FNexusActionDef
 		TryTriggerAction(NewActionDef.Handle, FNexusEventMessage());
 	}
 
-	ClientPendingActionTriggerRequests.RemoveAll([NewActionDefHandle = NewActionDef.Handle, this](const FNexusPendingActionTriggerRequest& Request)
+
+	ClientPendingActionTriggerRequests.RemoveAll([ActionInstance, NewActionDefHandle = NewActionDef.Handle, this](const FNexusPendingActionTriggerRequest& Request)
 	{
 		if (Request.ActionDefHandle == NewActionDefHandle)
 		{
+			NX_LOG_SUB(LogNexusAction, Verbose, TEXT("액션 [%s]를 지연 실행합니다"), *ActionInstance->GetName());
 			TryTriggerAction(Request.ActionDefHandle, Request.EventMessage);
 			return true;
 		}
@@ -461,15 +486,20 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 		{
 			return PendingActionInfo.ActionDef.Handle == ActionDefHandle;
 		});
-		if (ensure(FoundPendingInfo)) // TODO: 서버로부터 아직 Replicate 안됐을 때 처리
+		if (FoundPendingInfo) // Pending Add
 		{
 			FoundPendingInfo->bIsPendingTrigger = true;
+			return;
 		}
+
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("액션 [%s]을(를) 실행할 수 없습니다. (액션 데피니션 없음)"), *ActionDefHandle.ToString());
+		ClientPendingActionTriggerRequests.Add({ActionDefHandle, EventMessage});
 		return;
 	}
 
-	if (!bSetupCompleted)
+	if (!bSetupCompleted) // AgentInfo가 없어서 진행 못함
 	{
+		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("액션 [%s]을(를) 실행할 수 없습니다. (ActionComponent Setup이 완료되지 않음)"), *ActionDefHandle.ToString());
 		ClientPendingActionTriggerRequests.Add({ActionDefHandle, EventMessage});
 		return;
 	}
@@ -684,7 +714,7 @@ void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(cons
 {
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
-	ActionInstance->CallOnEndAction();
+	ActionInstance->EndAction();
 	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
 }
 
@@ -708,7 +738,7 @@ void UNexusActionComponent::LocalOnTriggerActionConfirmed(const FNexusActionDefH
 	{
 		if (LocalActionInstance->GetActionOwnedTags().HasAnyExact(CancelTags))
 		{
-			LocalActionInstance->CallOnEndAction();
+			LocalActionInstance->EndAction();
 		}
 	}
 }
@@ -756,6 +786,7 @@ UNexusAction* UNexusActionComponent::CreateActionInstance(const FNexusActionDef&
 		return LocalActionInstanceMap[ActionDef.Handle];
 	}
 
+	NX_LOG_SUB(LogNexusAction, Verbose, TEXT("액션 [%s] 로컬 인스턴스 생성"), *ActionDef.ActionClass->GetName());
 	UNexusAction* ActionInstance = UNexusAction::NewNexusActionObject(ActionDef.ActionClass, ActionDef.Handle, AgentInfo);
 	return LocalActionInstanceMap.Add(ActionDef.Handle, ActionInstance);
 }

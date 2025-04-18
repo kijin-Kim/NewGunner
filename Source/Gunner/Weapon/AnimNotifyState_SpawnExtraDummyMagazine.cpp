@@ -42,5 +42,5 @@ void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponen
 			ExtraDummyMagazine->GetStaticMeshComponent()->SetMaterial(i, Materials[i]);
 		}
 	}
-	ExtraDummyMagazine->FinishSpawning(FTransform::Identity, true);
+	ExtraDummyMagazine->FinishSpawning(FTransform::Identity);
 }

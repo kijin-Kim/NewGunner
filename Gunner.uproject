@@ -1,51 +1,56 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "{667954A3-449A-9ED2-227E-A1A626DEF448}",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "Gunner",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
-		},
-		{
-			"Name": "BlueprintAssist",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/9e895371fa3a471c87337860d6f341ff",
-			"TargetAllowList": [
-				"Editor"
-			]
-		},
-		{
-			"Name": "ConsoleVariables",
-			"Enabled": true
-		},
-		{
-			"Name": "OnlineSubsystemSteam",
-			"Enabled": true
-		},
-		{
-			"Name": "FreeBoneSnapper",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/12fcc1d822204c5c94c56899bf3a04bd"
-		},
-		{
-			"Name": "NexusAction",
-			"Enabled": true
-		},
-		{
-			"Name": "GitSourceControl",
-			"Enabled": false
-		}
-	]
+  "FileVersion": 3,
+  "EngineAssociation": "{667954A3-449A-9ED2-227E-A1A626DEF448}",
+  "Category": "",
+  "Description": "",
+  "Modules": [
+    {
+      "Name": "Gunner",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "GunnerTests",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "ModelingToolsEditorMode",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "BlueprintAssist",
+      "Enabled": true,
+      "MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/9e895371fa3a471c87337860d6f341ff",
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "ConsoleVariables",
+      "Enabled": true
+    },
+    {
+      "Name": "OnlineSubsystemSteam",
+      "Enabled": true
+    },
+    {
+      "Name": "FreeBoneSnapper",
+      "Enabled": true,
+      "MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/12fcc1d822204c5c94c56899bf3a04bd"
+    },
+    {
+      "Name": "NexusAction",
+      "Enabled": true
+    },
+    {
+      "Name": "GitSourceControl",
+      "Enabled": false
+    }
+  ]
 }

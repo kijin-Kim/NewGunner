@@ -42,9 +42,9 @@ private:
 	void AuthSpawnDummyMesh(const FMyPoseSnapshot& NearestFutureSnapshot, const FMyPoseSnapshot& NearestPastSnapshot, float TargetTime);
 
 private:
-	UPROPERTY(GlobalConfig)
+	UPROPERTY(Config)
 	TSubclassOf<URewoundSnapshotAnimInstance> PoseSnapshotAnimInstanceClass;
-	UPROPERTY(GlobalConfig)
+	UPROPERTY(Config)
 	double MaxRewindTime = 0.3;
 
 	UPROPERTY()

@@ -45,6 +45,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
 
+	void UpdateAgentInfo(AActor* InAgentActor);
 	void SetupActionComponent(AActor* InAgentActor);
 	void TeardownActionComponent();
 
@@ -59,9 +60,13 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
+
 private:
-	void InternalSetupActionComponent(AActor* InAgentActor);
+	void InternalSetupActionComponent();
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	UFUNCTION()
+	void OnRep_AgentActor();
+
 
 public:
 	// ------------------------------------------------------------------------------
@@ -134,8 +139,8 @@ public:
 	UNexusAction* CreateActionInstance(const FNexusActionDef& ActionDef);
 	void DestroyActionInstance(const FNexusActionDefHandle& Handle);
 	UNexusAction* FindActionInstanceByHandle(const FNexusActionDefHandle& Handle);
-	const UNexusAction* FindActionInstanceByHandle(const FNexusActionDefHandle& Handle) const;
 	const FNexusActionDefContainer& GetActionDefs() const { return ActionDefs; }
+	const TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>>& GetLocalActionInstanceMap() const { return LocalActionInstanceMap; }
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
 
@@ -200,6 +205,12 @@ public:
 		}
 	}
 
+	template <typename FMessageStruct>
+	void SendEventToSelf(FGameplayTag EventTag, const FMessageStruct& Message)
+	{
+		HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
+	}
+
 	UFUNCTION(BlueprintCallable, CustomThunk, Category = "Nexus|Event", meta = (CustomStructureParam = "Message", DisplayName= "Send Event To Actor"))
 	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
 	DECLARE_FUNCTION(execBP_SendEventToActor);
@@ -208,8 +219,8 @@ public:
 	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars);
 	template <typename FMessageStruct, typename TOwner, typename... VarType>
 	FNexusEventCallbackHandle BindEventCallback(FGameplayTag EventTag, TOwner* Object, void (TOwner::*Function)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars);
-	
-	
+
+
 	FNexusEventCallbackHandle BindEventCallbackDirect(FGameplayTag EventTag, TFunction<void(FGameplayTag, const void*)>&& Callbacks, UScriptStruct* MessageType) const;
 	void UnbindEventCallback(FNexusEventCallbackHandle Handle) const;
 
@@ -230,7 +241,10 @@ private:
 	FOnNexusActionComponentSetupCompletedSignature OnActionComponentSetupCompletedDelegate;
 	FOnNexusActionComponentTeardownCompletedSignature OnActionComponentTeardownCompletedDelegate;
 
+	// 로컬 캐시 및 주입하기 쉽도록 하는 구조체 
 	TSharedPtr<FNexusAgentInfo> AgentInfo;
+	UPROPERTY(ReplicatedUsing=OnRep_AgentActor)
+	TObjectPtr<AActor> AgentActor;
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
@@ -278,8 +292,8 @@ private:
 };
 
 
-template <typename FMessageStruct, typename ... VarType>
-FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag EventTag, void(* FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
+template <typename FMessageStruct, typename... VarType>
+FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag EventTag, void (*FreeFunction)(FGameplayTag, const FMessageStruct&, VarType...), VarType... Vars)
 {
 	return GetEventManagerComponent()->BindEventCallback<FMessageStruct>(EventTag, FreeFunction, Vars...);
 }
@@ -289,8 +303,6 @@ FNexusEventCallbackHandle UNexusActionComponent::BindEventCallback(FGameplayTag 
 {
 	return GetEventManagerComponent()->BindEventCallback<FMessageStruct>(EventTag, Object, Function, Vars...);
 }
-
-
 
 
 template <typename T>

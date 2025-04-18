@@ -8,7 +8,6 @@
 
 AGunnerGun::AGunnerGun()
 {
-
 }
 
 void AGunnerGun::OnConstruction(const FTransform& Transform)
@@ -19,39 +18,36 @@ void AGunnerGun::OnConstruction(const FTransform& Transform)
 	MaxBulletPerMagazineCount = Magazine;
 }
 
-void AGunnerGun::OnActivated()
+void AGunnerGun::OnActivated(AActor* AgentActor)
 {
-	Super::OnActivated();
-	AActor* ActorOwner = GetOwner();
-
-	if (ActorOwner && ActorOwner->HasAuthority())
+	Super::OnActivated(AgentActor);
+	if (AgentActor && AgentActor->HasAuthority())
 	{
-		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
+		UNexusActionComponent* ActionComponent = GetActionComponent(AgentActor);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
 		BulletProperty->SetStaticValue(BulletCount);
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletProperty->SetStaticValue(MagazineBulletCount);
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineProperty->SetStaticValue(MaxBulletPerMagazineCount);
 	}
 }
 
-void AGunnerGun::OnDeactivated()
+void AGunnerGun::OnDeactivated(AActor* AgentActor)
 {
-	Super::OnDeactivated();
-	AActor* ActorOwner = GetOwner();
-	if (ActorOwner && ActorOwner->HasAuthority())
+	Super::OnDeactivated(AgentActor);
+	if (AgentActor && AgentActor->HasAuthority())
 	{
-		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
+		UNexusActionComponent* ActionComponent = GetActionComponent(AgentActor);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
 		BulletCount = BulletProperty->GetStaticValue();
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletCount = MagazineBulletProperty->GetStaticValue();
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->GetStaticValue();
 	}
 }

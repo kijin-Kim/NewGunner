@@ -40,10 +40,10 @@ TArray<FNexusEventCallbackHandle> UGunnerCharacterMovementComponent::SetupEvents
 	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(CharacterOwner))
 	{
 		return {
-			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Move, this, &ThisClass::Move),
-			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Jump, this, &ThisClass::Jump),
-			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Crouch, this, &ThisClass::CharacterCrouch),
-			ActionComponent->BindEventCallback<FNexusEventMessage>(TAG_Input_Uncrouch, this, &ThisClass::CharacterUncrouch)
+			ActionComponent->BindEventCallback<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Move, this, &ThisClass::Move),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Jump, this, &ThisClass::Jump),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Crouch, this, &ThisClass::CharacterCrouch),
+			ActionComponent->BindEventCallback<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Uncrouch, this, &ThisClass::CharacterUncrouch)
 		};
 	}
 	return {};

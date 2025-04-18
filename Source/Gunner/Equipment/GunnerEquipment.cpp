@@ -125,15 +125,15 @@ void AGunnerEquipment::OnEquipped()
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
 		BulletProperty->SetStaticValue(BulletCount);
 
 
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletProperty->SetStaticValue(MagazineBulletCount);
 
 
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineProperty->SetStaticValue(MaxBulletPerMagazineCount);
 	}
 }
@@ -151,13 +151,13 @@ void AGunnerEquipment::OnUnequipped()
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(ActorOwner);
 		check(ActionComponent);
 
-		UNexusProperty* BulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_Bullet);
+		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
 		BulletCount = BulletProperty->GetStaticValue();
 
-		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MagazineBullet);
+		UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 		MagazineBulletCount = MagazineBulletProperty->GetStaticValue();
 
-		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(TAG_Property_Weapon_MaxBulletPerMagazine);
+		UNexusProperty* MaxBulletPerMagazineProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine);
 		MaxBulletPerMagazineCount = MaxBulletPerMagazineProperty->GetStaticValue();
 	}
 }

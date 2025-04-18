@@ -21,8 +21,8 @@ public:
 	//~ End AActor
 
 	//~ Begin AGunnerSlotItem
-	virtual void OnActivated() override;
-	virtual void OnDeactivated() override;
+	virtual void OnActivated( AActor* AgentActor) override;
+	virtual void OnDeactivated(AActor* AgentActor) override;
 	//~ End AGunnerSlotItem
 
 

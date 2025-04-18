@@ -6,9 +6,11 @@
 
 UNexusAction* UNexusAction::NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
 {
-	UNexusAction* NewAction = NewObject<UNexusAction>(InAgentInfo.Pin()->GetOwnerActor(), Class);
+	TSharedPtr<FNexusAgentInfo> AgentInfo = InAgentInfo.Pin();
+	check(AgentInfo.IsValid() && AgentInfo->GetAgentActor() && AgentInfo->GetOwnerActor());
+	UNexusAction* NewAction = NewObject<UNexusAction>(AgentInfo->GetOwnerActor(), Class);
 	check(NewAction);
-	NewAction->InitializeAction(InActionDefHandle, InAgentInfo);
+	NewAction->InitializeAction(InActionDefHandle, AgentInfo);
 	return NewAction;
 }
 
@@ -53,7 +55,7 @@ void UNexusAction::CallOnTriggerAction()
 	BP_OnTriggerAction();
 }
 
-void UNexusAction::CallOnEndAction()
+void UNexusAction::EndAction()
 {
 	if (bIsTriggering)
 	{
@@ -85,7 +87,7 @@ void UNexusAction::OnTriggerAction()
 
 	if (bIsTriggering && bIsRetriggerable)
 	{
-		CallOnEndAction();
+		EndAction();
 	}
 
 	bIsTriggering = true;

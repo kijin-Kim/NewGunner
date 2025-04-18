@@ -3,88 +3,24 @@
 
 #include "GunnerSlotManagerComponent.h"
 
+#include "GunnerSlotItemPlaceholder.h"
 #include "GunnerSlotManagerInterface.h"
-#include "Action/NexusActionComponent.h"
 #include "Action/NexusAction.h"
-#include "Action/NexusActionDef.h"
+#include "Action/NexusActionComponent.h"
 #include "Engine/Canvas.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/Action/GunnerActionDropSlotItem.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Misc/DataValidation.h"
 #include "Net/UnrealNetwork.h"
 
-AGunnerSlotItem::AGunnerSlotItem()
-{
-	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
-}
-
-void AGunnerSlotItem::AuthAddPersistentActivationActions()
-{
-	check(HasAuthority());
-	AuthAddDesiredActions(PersistentActivationActions, PersistentActivationActionHandles);
-}
-
-void AGunnerSlotItem::AuthAddTransientActivationActions()
-{
-	check(HasAuthority());
-	AuthAddDesiredActions(TransientActivationActions, TransientActivationActionHandles);
-}
-
-void AGunnerSlotItem::AuthRemovePersistentActivationActions()
-{
-	check(HasAuthority());
-	AuthRemoveDesiredActions(PersistentActivationActionHandles);
-}
-
-void AGunnerSlotItem::AuthRemoveTransientActivationActions()
-{
-	check(HasAuthority());
-	AuthRemoveDesiredActions(TransientActivationActionHandles);
-}
-
-UNexusActionComponent* AGunnerSlotItem::GetActionComponent() const
-{
-	AActor* ActorOwner = GetOwner();
-	return ActorOwner ? UNexusActionComponent::GetActionComponentFromActor(ActorOwner) : nullptr;
-}
-
-void AGunnerSlotItem::AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles)
-{
-	check(HasAuthority());
-	UNexusActionComponent* ActionComponent = GetActionComponent();
-	if (ActionComponent)
-	{
-		for (auto ActionClass : ActionsToAdd)
-		{
-			if (ActionClass)
-			{
-				FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionClass, this);
-				AddedActionHandles.Add(AddedHandle);
-			}
-		}
-	}
-}
-
-void AGunnerSlotItem::AuthRemoveDesiredActions(TArray<FNexusActionDefHandle>& AddedActionHandles)
-{
-	check(HasAuthority())
-	UNexusActionComponent* ActionComponent = GetActionComponent();
-	check(ActionComponent);
-
-	for (auto& ActionHandle : AddedActionHandles)
-	{
-		ActionComponent->AuthRemoveAction(ActionHandle);
-	}
-	AddedActionHandles.Empty();
-}
 
 UGunnerSlotManagerComponent::UGunnerSlotManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
-	SlotItems.SetNum(static_cast<int>(EGunnerSlotType::Num));
+	SlotItemInstances.SetNum(static_cast<int>(EGunnerSlotType::Num));
 }
 
 #if WITH_EDITOR
@@ -126,7 +62,7 @@ void UGunnerSlotManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AHUD* H
 		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
 		DisplayDebugManager.SetDrawColor(FColor::Orange);
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("선택된 슬롯: %s"), *UEnum::GetValueAsString(GetCurrentSlotType())));
-		for (AGunnerSlotItem* SlotItem : SlotItems)
+		for (AGunnerSlotItem* SlotItem : SlotItemInstances)
 		{
 			if (SlotItem)
 			{
@@ -159,7 +95,7 @@ UGunnerSlotManagerComponent* UGunnerSlotManagerComponent::GetSlotManagerComponen
 void UGunnerSlotManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UGunnerSlotManagerComponent, SlotItems);
+	DOREPLIFETIME(UGunnerSlotManagerComponent, SlotItemInstances);
 }
 
 void UGunnerSlotManagerComponent::BeginPlay()
@@ -168,6 +104,12 @@ void UGunnerSlotManagerComponent::BeginPlay()
 
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
+
+	if (!DropSlotItemActionClass)
+	{
+		DropSlotItemActionClass = UGunnerActionDropSlotItem::StaticClass();
+	}
+
 	ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
 	{
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
@@ -175,6 +117,15 @@ void UGunnerSlotManagerComponent::BeginPlay()
 
 		if (GetOwner()->HasAuthority())
 		{
+			ActionComponent->AuthAddAction(DropSlotItemActionClass);
+			ActionComponent->AuthAddAction(UGunnerActionCycleSlotItem::StaticClass());
+
+			ensure(!StartItemClasses[static_cast<int>(EGunnerSlotType::Num)]);
+			if (!StartItemClasses[static_cast<int>(EGunnerSlotType::Melee)])
+			{
+				StartItemClasses[static_cast<int>(EGunnerSlotType::Melee)] = AGunnerEquippable_MeleePlaceholder::StaticClass();
+			}
+
 			for (TSubclassOf<AGunnerSlotItem> ItemClass : StartItemClasses)
 			{
 				if (ItemClass)
@@ -186,17 +137,14 @@ void UGunnerSlotManagerComponent::BeginPlay()
 			}
 		}
 
-		if (ActionComponent->IsAgentLocallyControlled())
-		{
-			TArray<AGunnerSlotItem*> OldItems;
-			OldItems.SetNum(SlotItems.Num());
-			OnRep_SlotItems(OldItems);
-		}
 
-		UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(TAG_Property_SlotIndex);
+		UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
 		check(SlotIndexProperty);
-		SlotIndexProperty->OnChangedDelegate.AddDynamic(this, &ThisClass::OnSlotIndexChanged);
-		OnSlotIndexChanged(SlotIndexProperty->GetStaticValue(), SlotIndexProperty->GetStaticValue());
+		SlotIndexProperty->OnDirtyDelegate.AddDynamic(this, &ThisClass::HandleSlotIndexDirty);
+		if (AGunnerSlotItem* CurrentItem = GetCurrentSlotItem())
+		{
+			OnItemActivated(CurrentItem);
+		}
 	}));
 }
 
@@ -219,9 +167,8 @@ void UGunnerSlotManagerComponent::AuthAddItemToSlot(AGunnerSlotItem* Item)
 
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
-	Item->SetOwner(ActionComponent->GetAgentActor());
-
-	SlotItems[static_cast<int>(Item->GetSlotType())] = Item;
+	SlotItemInstances[static_cast<int>(Item->GetSlotType())] = Item;
+	OnItemAcquired(Item);
 	GR_VLOG_SUB(ActorOwner, LogGunner, Log, TEXT("아이템 [%s]가 슬롯 [%s]에 추가되었습니다"), *Item->GetName(), *UEnum::GetValueAsString(Item->GetSlotType()));
 }
 
@@ -231,80 +178,108 @@ void UGunnerSlotManagerComponent::AuthRemoveItemFromSlot(AGunnerSlotItem* Item, 
 	AActor* ActorOwner = GetOwner();
 	check(ActorOwner);
 	check(ActorOwner->HasAuthority());
-	SlotItems.Remove(Item);
+	if (GetCurrentSlotItem() == Item)
+	{
+		OnItemDeactivated(Item);
+	}
+	SlotItemInstances[static_cast<int>(Item->GetSlotType())] = nullptr;
 	if (bDestroyItem)
 	{
 		Item->Destroy();
 	}
-	Item->AuthRemovePersistentActivationActions();
-	Item->OnRemoved();
+
+	OnItemRemoved(Item);
 }
 
-void UGunnerSlotManagerComponent::OnSlotIndexChanged(float OldValue, float NewValue)
+void UGunnerSlotManagerComponent::HandleSlotIndexDirty(float OldValue, float NewValue)
 {
 	EGunnerSlotType NewActiveSlot = static_cast<EGunnerSlotType>(NewValue);
 	EGunnerSlotType OldActiveSlot = static_cast<EGunnerSlotType>(OldValue);
 
 	if (OldActiveSlot != NewActiveSlot)
 	{
-		if (AGunnerSlotItem* OldItemToDeactivate = OldActiveSlot == EGunnerSlotType::Num ? nullptr : SlotItems[static_cast<int>(OldActiveSlot)])
+		if (AGunnerSlotItem* OldItemToDeactivate = OldActiveSlot == EGunnerSlotType::Num ? nullptr : SlotItemInstances[static_cast<int>(OldActiveSlot)])
 		{
-			DeactivateSlot(OldItemToDeactivate);
+			OnItemDeactivated(OldItemToDeactivate);
 		}
-	}
 
-	if (AGunnerSlotItem* NewItem = NewActiveSlot == EGunnerSlotType::Num ? nullptr : SlotItems[static_cast<int>(NewActiveSlot)])
-	{
-		ActivateSlot(NewItem);
+		if (AGunnerSlotItem* NewItem = (NewActiveSlot == EGunnerSlotType::Num) ? nullptr : SlotItemInstances[static_cast<int>(NewActiveSlot)])
+		{
+			OnItemActivated(NewItem);
+		}
 	}
 }
 
 AGunnerSlotItem* UGunnerSlotManagerComponent::GetCurrentSlotItem() const
 {
-	EGunnerSlotType CurrentSlotType = static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetOwner(), TAG_Property_SlotIndex));
-	return CurrentSlotType == EGunnerSlotType::Num ? nullptr : SlotItems[static_cast<int>(CurrentSlotType)];
+	EGunnerSlotType CurrentSlotType = static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetOwner(), GunnerNativeGameplayTags::TAG_Property_SlotIndex));
+	return CurrentSlotType == EGunnerSlotType::Num ? nullptr : SlotItemInstances[static_cast<int>(CurrentSlotType)];
 }
 
 EGunnerSlotType UGunnerSlotManagerComponent::GetCurrentSlotType() const
 {
-	return static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetOwner(), TAG_Property_SlotIndex));
+	return static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetOwner(), GunnerNativeGameplayTags::TAG_Property_SlotIndex));
 }
 
-void UGunnerSlotManagerComponent::ActivateSlot(AGunnerSlotItem* Item)
+bool UGunnerSlotManagerComponent::IsSlotEmpty(EGunnerSlotType SlotType) const
+{
+	return SlotType != EGunnerSlotType::Num && SlotItemInstances[static_cast<int>(SlotType)] == nullptr;
+}
+
+AGunnerSlotItem* UGunnerSlotManagerComponent::GetSlotItemByType(EGunnerSlotType SlotType) const
+{
+	if (SlotType == EGunnerSlotType::Num)
+	{
+		return nullptr;
+	}
+	return SlotItemInstances[static_cast<int>(SlotType)];
+}
+
+void UGunnerSlotManagerComponent::OnItemAcquired(AGunnerSlotItem* Item)
 {
 	check(Item);
-	if (Item->IsActivated())
-	{
-		return;
-	}
-
-	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (ActorOwner->HasAuthority())
-	{
-		Item->AuthAddTransientActivationActions();
-	}
-	Item->OnActivated();
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	Item->OnAcquired(ActionComponent->GetAgentActor());
 }
 
-void UGunnerSlotManagerComponent::DeactivateSlot(AGunnerSlotItem* Item)
+void UGunnerSlotManagerComponent::OnItemRemoved(AGunnerSlotItem* Item)
 {
 	check(Item);
-	if (!Item->IsActivated())
-	{
-		return;
-	}
-
-	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	if (ActorOwner->HasAuthority())
-	{
-		Item->AuthRemoveTransientActivationActions();
-	}
-	Item->OnDeactivated();
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	Item->OnRemoved(ActionComponent->GetAgentActor());
 }
 
-void UGunnerSlotManagerComponent::OnRep_SlotItems(const TArray<AGunnerSlotItem*>& OldItems)
+void UGunnerSlotManagerComponent::OnItemActivated(AGunnerSlotItem* Item)
+{
+	check(Item);
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	Item->OnActivated(ActionComponent->GetAgentActor());
+}
+
+void UGunnerSlotManagerComponent::OnItemDeactivated(AGunnerSlotItem* Item)
+{
+	check(Item);
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
+	Item->OnDeactivated(ActionComponent->GetAgentActor());
+}
+
+EGunnerSlotType UGunnerSlotManagerComponent::FindActivableSlotType() const
+{
+	if (!IsSlotEmpty(EGunnerSlotType::Primary))
+	{
+		return EGunnerSlotType::Primary;
+	}
+
+	if (!IsSlotEmpty(EGunnerSlotType::Secondary))
+	{
+		return EGunnerSlotType::Secondary;
+	}
+
+	return EGunnerSlotType::Melee;
+}
+
+
+void UGunnerSlotManagerComponent::OnRep_SlotItemInstances(const TArray<AGunnerSlotItem*>& OldItems)
 {
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
@@ -315,49 +290,47 @@ void UGunnerSlotManagerComponent::OnRep_SlotItems(const TArray<AGunnerSlotItem*>
 
 	for (int i = 0; i < static_cast<int>(EGunnerSlotType::Num); ++i)
 	{
-		if (bool bSlotItemNotChanged = SlotItems[i] == OldItems[i])
+		if (SlotItemInstances[i] == OldItems[i])
 		{
 			continue;
 		}
 
-		if (SlotItems[i])
+		if (SlotItemInstances[i])
 		{
-			ServerAckNewItem(SlotItems[i]);
-			if (!GetOwner()->HasAuthority())
+			OnItemAcquired(SlotItemInstances[i]);
+			if (SlotItemInstances[i]->GetSlotType() == GetCurrentSlotType())
 			{
-				SlotItems[i]->OnAcquired();
-				if (GetCurrentSlotType() == static_cast<EGunnerSlotType>(i))
-				{
-					OnSlotIndexChanged(static_cast<float>(i), static_cast<float>(i));
-				}
+				OnItemActivated(SlotItemInstances[i]);
 			}
 		}
 
 		if (OldItems[i])
 		{
-			OldItems[i]->OnRemoved();
+			if (OldItems[i]->GetSlotType() == GetCurrentSlotType())
+			{
+				OnItemDeactivated(OldItems[i]);
+			}
+			OnItemRemoved(OldItems[i]);
 		}
 	}
 }
 
-void UGunnerSlotManagerComponent::ServerAckNewItem_Implementation(AGunnerSlotItem* Item)
-{
-	check(Item);
-	GR_VLOG_SUB(GetOwner(), LogGunner, Log, TEXT("아이템 [%s]가 Ack되었습니다"), *Item->GetName());
-	Item->AuthAddPersistentActivationActions();
-	Item->OnAcquired();
-}
 
 UGunnerSlotIndexChangeSideEffect::UGunnerSlotIndexChangeSideEffect()
 {
 	DurationType = ESideEffectDurationType::Instant;
 
 	FNexusPropertyMod Mod;
-	Mod.PropertyTag = TAG_Property_SlotIndex;
+	Mod.PropertyTag = GunnerNativeGameplayTags::TAG_Property_SlotIndex;
 	Mod.CalculationType = ENexusPropertyCalculationType::FromOutside;
 	Mod.Operator = ENexusPropertyOperator::Override;
-	Mod.InjectedValueTag = TAG_OperationValue_SlotIndex;
+	Mod.InjectedValueTag = GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex;
 	Modifiers.Add(Mod);
+}
+
+UGunnerActionSlotActivation::UGunnerActionSlotActivation()
+{
+	bAllowRemoteTrigger = true;
 }
 
 bool UGunnerActionSlotActivation::OnCanTriggerAction() const
@@ -382,7 +355,7 @@ void UGunnerActionSlotActivation::OnTriggerAction()
 	FNexusSideEffectInstanceDef SideEffectInstanceDef{UGunnerSlotIndexChangeSideEffect::StaticClass()};
 	AGunnerSlotItem* SlotItem = GetSlotItem();
 	check(SlotItem);
-	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{TAG_OperationValue_SlotIndex, static_cast<float>(SlotItem->GetSlotType())});
+	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex, static_cast<float>(SlotItem->GetSlotType())});
 
 	ActionComponent->ApplySideEffectByDef(SideEffectInstanceDef, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this]()
 	{
@@ -392,5 +365,5 @@ void UGunnerActionSlotActivation::OnTriggerAction()
 
 EGunnerSlotType UGunnerActionSlotActivation::GetCurrentSlotType() const
 {
-	return static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetAgentActor(), TAG_Property_SlotIndex));
+	return static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetAgentActor(), GunnerNativeGameplayTags::TAG_Property_SlotIndex));
 }

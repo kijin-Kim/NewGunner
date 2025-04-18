@@ -43,7 +43,7 @@ public:
 	bool CallOnCanTriggerAction() const;
 	void CallOnTriggerAction();
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "End Action"))
-	void CallOnEndAction();
+	void EndAction();
 	void CallOnActionRemoved();
 
 

@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GunnerPickup.h"
-#include "GunnerEquipmentPickup.generated.h"
+#include "GunnerSlotItemPickup.generated.h"
 
-class AGunnerEquipment;
+class UProjectileMovementComponent;
+class AGunnerSlotItem;
 
 UCLASS()
-class GUNNER_API AGunnerEquipmentPickup : public AGunnerPickup
+class GUNNER_API AGunnerSlotItemPickup : public AGunnerPickup
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerEquipmentPickup();
+	AGunnerSlotItemPickup();
+	void InitializeSlotItemPickup(AGunnerSlotItem* InSlotItemInstance);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual bool CanPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent) const override;
@@ -28,8 +30,11 @@ private:
 	
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_EquipmentInstance, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ExposeOnSpawn = "true"))
-	AGunnerEquipment* EquipmentInstance;
+	AGunnerSlotItem* SlotItemInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* PickupMeshComponent;
+
+	UPROPERTY()
+	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
 };

@@ -1,0 +1,19 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "GunnerTestActionComponent.h"
+
+#include "Gunner/Action/GunnerActionDropSlotItem.h"
+#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
+
+
+void UGunnerTestActionComponent::OnSetupActionComponent()
+{
+	Super::OnSetupActionComponent();
+	
+	AddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet, 0);
+	AddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet, 0);
+	AddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine, 0);
+	AddProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex, static_cast<float>(EGunnerSlotType::Num));
+}

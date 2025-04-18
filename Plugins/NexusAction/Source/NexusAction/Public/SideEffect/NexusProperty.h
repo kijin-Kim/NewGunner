@@ -8,7 +8,7 @@
 #include "NexusProperty.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNexusPropertyChangedSignature, float, OldValue, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNexusPropertyDirtySignature, float, OldValue, float, NewValue);
 
 
 UENUM(BlueprintType)
@@ -31,7 +31,7 @@ enum class ENexusPropertyCalculationType : uint8
 };
 
 USTRUCT()
-struct FNexusPropertyOperationHandle
+struct NEXUSACTION_API FNexusPropertyOperationHandle
 {
 	GENERATED_BODY()
 
@@ -54,7 +54,7 @@ private:
 
 
 USTRUCT()
-struct FNexusPropertyOperation
+struct NEXUSACTION_API FNexusPropertyOperation
 {
 	GENERATED_BODY()
 	FNexusPropertyOperation()
@@ -91,7 +91,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool operator==(const UNexusProperty* Other) const { return Tag == Other->Tag; }
 	bool operator!=(const UNexusProperty* Other) const { return !(*this == Other); }
-
+	
 	void Tick();
 	
 	void SetStaticValue(float NewValue);
@@ -110,17 +110,19 @@ private:
 	void EvaluateOperations(const TArray<FNexusPropertyOperation>& PropertyOperations, float& TargetValue);
 
 	UFUNCTION()
+	void OnRep_StaticValue();
+	UFUNCTION()
 	void OnRep_DynamicValue(float OldValue);
 
 public:
 	UPROPERTY(BlueprintAssignable)
-	FOnNexusPropertyChangedSignature OnChangedDelegate;
+	FOnNexusPropertyDirtySignature OnDirtyDelegate;
 
 private:
 	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	FGameplayTag Tag;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(ReplicatedUsing=OnRep_StaticValue, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float StaticValue;
 	UPROPERTY(ReplicatedUsing=OnRep_DynamicValue, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float DynamicValue;
