@@ -240,6 +240,7 @@ void UGunnerSlotManagerComponent::OnItemAcquired(AGunnerSlotItem* Item)
 	check(Item);
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	Item->OnAcquired(ActionComponent->GetAgentActor());
+	OnGunnerSlotItemAcquiredDelegate.Broadcast(Item);
 }
 
 void UGunnerSlotManagerComponent::OnItemRemoved(AGunnerSlotItem* Item)
@@ -247,6 +248,7 @@ void UGunnerSlotManagerComponent::OnItemRemoved(AGunnerSlotItem* Item)
 	check(Item);
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	Item->OnRemoved(ActionComponent->GetAgentActor());
+	OnGunnerSlotItemRemovedDelegate.Broadcast(Item);
 }
 
 void UGunnerSlotManagerComponent::OnItemActivated(AGunnerSlotItem* Item)
@@ -313,57 +315,4 @@ void UGunnerSlotManagerComponent::OnRep_SlotItemInstances(const TArray<AGunnerSl
 			OnItemRemoved(OldItems[i]);
 		}
 	}
-}
-
-
-UGunnerSlotIndexChangeSideEffect::UGunnerSlotIndexChangeSideEffect()
-{
-	DurationType = ESideEffectDurationType::Instant;
-
-	FNexusPropertyMod Mod;
-	Mod.PropertyTag = GunnerNativeGameplayTags::TAG_Property_SlotIndex;
-	Mod.CalculationType = ENexusPropertyCalculationType::FromOutside;
-	Mod.Operator = ENexusPropertyOperator::Override;
-	Mod.InjectedValueTag = GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex;
-	Modifiers.Add(Mod);
-}
-
-UGunnerActionSlotActivation::UGunnerActionSlotActivation()
-{
-	bAllowRemoteTrigger = true;
-}
-
-bool UGunnerActionSlotActivation::OnCanTriggerAction() const
-{
-	bool bCanTrigger = Super::OnCanTriggerAction();
-	if (!bCanTrigger)
-	{
-		return false;
-	}
-
-	return GetSlotItem() ? GetSlotItem()->GetSlotType() != GetCurrentSlotType() : false;
-}
-
-void UGunnerActionSlotActivation::OnTriggerAction()
-{
-	Super::OnTriggerAction();
-	AActor* AgentActor = GetAgentActor();
-	check(AgentActor);
-	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(AgentActor);
-	check(ActionComponent);
-
-	FNexusSideEffectInstanceDef SideEffectInstanceDef{UGunnerSlotIndexChangeSideEffect::StaticClass()};
-	AGunnerSlotItem* SlotItem = GetSlotItem();
-	check(SlotItem);
-	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex, static_cast<float>(SlotItem->GetSlotType())});
-
-	ActionComponent->ApplySideEffectByDef(SideEffectInstanceDef, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this]()
-	{
-		unimplemented(); // 슬롯 인덱스 변경 예측 실패
-	}));
-}
-
-EGunnerSlotType UGunnerActionSlotActivation::GetCurrentSlotType() const
-{
-	return static_cast<EGunnerSlotType>(UNexusActionComponent::GetPropertyValueFromActor(GetAgentActor(), GunnerNativeGameplayTags::TAG_Property_SlotIndex));
 }

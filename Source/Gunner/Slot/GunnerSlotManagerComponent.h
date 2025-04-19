@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "GunnerSlotItem.h"
 #include "Components/ActorComponent.h"
-#include "Gunner/Action/GunnerActionSlotItemBase.h"
-#include "SideEffect/NexusSideEffect.h"
 #include "GunnerSlotManagerComponent.generated.h"
 
 class UGunnerActionDropSlotItem;
@@ -14,8 +12,9 @@ struct FNexusEventMessage;
 class UNexusActionComponent;
 class UNexusAction;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerSlotItemAcquiredSignature, AGunnerSlotItem*, Item);
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerSlotItemRemovedSignature, AGunnerSlotItem*, Item);
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -72,33 +71,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UGunnerActionDropSlotItem> DropSlotItemActionClass;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnGunnerSlotItemAcquiredSignature OnGunnerSlotItemAcquiredDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnGunnerSlotItemRemovedSignature OnGunnerSlotItemRemovedDelegate;
+
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_SlotItemInstances)
 	TArray<TObjectPtr<AGunnerSlotItem>> SlotItemInstances;
 };
-
-UCLASS()
-class GUNNER_API UGunnerSlotIndexChangeSideEffect : public UNexusSideEffect
-{
-	GENERATED_BODY()
-
-public:
-	UGunnerSlotIndexChangeSideEffect();
-};
-
-
-UCLASS()
-class GUNNER_API UGunnerActionSlotActivation : public UGunnerActionSlotItemBase
-{
-	GENERATED_BODY()
-
-protected:
-	UGunnerActionSlotActivation();
-	virtual bool OnCanTriggerAction() const override;
-	virtual void OnTriggerAction() override;
-
-private:
-	EGunnerSlotType GetCurrentSlotType() const;
-};
-
-

@@ -20,7 +20,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UGunnerUserWidgetController* GetUserWidgetController() const;
 
-private:
+protected:
 	UPROPERTY()
 	TObjectPtr<UGunnerUserWidgetController> UserWidgetController;
 };

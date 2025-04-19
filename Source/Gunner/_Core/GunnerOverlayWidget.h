@@ -16,6 +16,9 @@ class GUNNER_API UGunnerOverlayWidget : public UGunnerUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+
+public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* TimeText;
 	

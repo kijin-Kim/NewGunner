@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "GunnerUserWidgetController.h"
 #include "GunnerOverlayWidgetController.generated.h"
 
@@ -18,17 +17,22 @@ class GUNNER_API UGunnerOverlayWidgetController : public UGunnerUserWidgetContro
 	GENERATED_BODY()
 
 public:
-	virtual void InitWidgetController(APlayerState* PlayerState) override;
+	
+	virtual void InitWidgetController(APlayerState* InPlayerState) override;
 
 	UFUNCTION()
-	void OnBulletValueChanged(float OldValue, float NewValue);
+	void OnSlotIndexValueDirty(float OldValue, float NewValue);
 	UFUNCTION()
-	void OnMagazineBulletValueChanged(float OldValue, float NewValue);
-	
+	void OnBulletValueDirty(float OldValue, float NewValue);
+	UFUNCTION()
+	void OnMagazineBulletValueDirty(float OldValue, float NewValue);
+
 
 public:
+	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnSlotIndexValueChanged"))
+	FGunnerUserWidgetSimpleTwoParamSignature OnSlotIndexValueDirtyDelegate;
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnBulletValueChanged"))
-	FGunnerUserWidgetSimpleTwoParamSignature OnBulletValueChangedDelegate;
+	FGunnerUserWidgetSimpleTwoParamSignature OnBulletValueDirtyDelegate;
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnMagazineBulletValueChanged"))
-	FGunnerUserWidgetSimpleTwoParamSignature OnMagazineBulletValueChangedDelegate;
+	FGunnerUserWidgetSimpleTwoParamSignature OnMagazineBulletValueDirtyDelegate;
 };

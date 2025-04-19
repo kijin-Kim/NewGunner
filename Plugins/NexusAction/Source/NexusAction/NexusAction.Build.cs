@@ -28,7 +28,9 @@ public class NexusAction : ModuleRules
 				"Core",
 				"NetCore", 
 				"EnhancedInput",
-				"GameplayTags"
+				"GameplayTags",
+				"UMG",
+				"ModelViewViewModel"
 			}
 			);
 			

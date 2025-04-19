@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "GunnerSlotItem.generated.h"
 
+
 class UNexusActionComponent;
 class UNexusAction;
 
@@ -41,6 +42,7 @@ public:
 	EGunnerSlotType GetSlotType() const { return SlotType; }
 
 	UNexusActionComponent* GetActionComponent(AActor* AgentActor) const;
+	TSubclassOf<UUserWidget> GetSlotItemWidgetClass() const { return SlotItemWidgetClass; }
 
 private:
 	void AuthAddDesiredActions(AActor* AgentActor, const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
@@ -57,6 +59,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UNexusAction>> TransientActivationActions;
 	TArray<FNexusActionDefHandle> TransientActivationActionHandles;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> SlotItemWidgetClass;
 };
 
 

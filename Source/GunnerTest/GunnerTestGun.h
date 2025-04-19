@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Gunner/Slot/GunnerActionSlotActivation.h"
 #include "Gunner/Slot/GunnerGun.h"
 #include "GunnerTestGun.generated.h"
 

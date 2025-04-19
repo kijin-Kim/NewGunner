@@ -14,9 +14,8 @@ AGunnerPickup::AGunnerPickup()
 	bReplicates = true;
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetCollisionResponseToAllChannels(ECR_Block);
-	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	BoxComponent->SetBoxExtent({30.0f, 30.0f, 5.0f});
-	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	SetRootComponent(BoxComponent);
 }
@@ -41,12 +40,12 @@ void AGunnerPickup::BeginPlay()
 		FTimerHandle InitialDelayTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(InitialDelayTimerHandle, [this]()
 		{
-			BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 		}, PickupInitialDelay, false);
 	}
 	else
 	{
-		BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	}
 }
 

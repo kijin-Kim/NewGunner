@@ -4,8 +4,6 @@
 #include "GunnerActionDropSlotItem.h"
 
 #include "Action/NexusActionComponent.h"
-#include "Animation/NexusAnimMontagePlayerInterface.h"
-#include "GameFramework/Character.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
 #include "Gunner/Slot/GunnerSlotManagerInterface.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
@@ -25,7 +23,7 @@ void UGunnerActionDropSlotItem::OnActionAdded()
 	{
 		SlotManagerComponent = SlotManagerInterface->GetSlotManagerComponent();
 	}
-	
+
 	if (!PickupClass)
 	{
 		PickupClass = AGunnerSlotItemPickup::StaticClass();
@@ -51,24 +49,19 @@ void UGunnerActionDropSlotItem::OnTriggerAction()
 
 
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
-	check( ActionComponent);
+	check(ActionComponent);
 	ActionComponent->SendEventToSelf<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_CycleSlot, {});
 
 
-	
-	
 	AGunnerSlotItemPickup* PickupActor = GetWorld()->SpawnActorDeferred<AGunnerSlotItemPickup>(PickupClass, FTransform::Identity);
 	check(PickupActor)
 	PickupActor->InitializeSlotItemPickup(ItemToDrop);
 
 	FTransform SpawnTransform = GetAgentActor()->GetActorTransform();
-	if (ItemToDrop && ItemToDrop->Implements<UNexusAnimMontagePlayerInterface>())
-	{
-		USkeletalMeshComponent* FirstPersonMesh = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(ItemToDrop);
-		check(FirstPersonMesh);
-		SpawnTransform = FirstPersonMesh->GetComponentTransform();
-	}
-	PickupActor->FinishSpawning(SpawnTransform);
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	GetAgentActor()->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+	PickupActor->FinishSpawning(FTransform{EyeRotation, EyeLocation});
 	EndAction();
 }
 
@@ -117,9 +110,9 @@ void UGunnerActionCycleSlotItem::OnTriggerAction()
 		checkNoEntry();
 		break;
 	}
-	
+
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
-	check( ActionComponent);
+	check(ActionComponent);
 	ActionComponent->SendEventToSelf<FNexusEventMessage>(EventTag, {});
 	EndAction();
 }

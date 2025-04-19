@@ -16,8 +16,13 @@ class GUNNER_API UGunnerUserWidgetController : public UObject
 {
 	GENERATED_BODY()
 public:
-	virtual void InitWidgetController(APlayerState* PlayerState)
+	virtual void InitWidgetController(APlayerState* InPlayerState)
 	{
-		
+		PlayerState = InPlayerState;
 	}
+
+protected:
+	
+	UPROPERTY()
+	TObjectPtr<APlayerState> PlayerState;
 };

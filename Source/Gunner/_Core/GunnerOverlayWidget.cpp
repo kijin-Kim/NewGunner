@@ -2,3 +2,11 @@
 
 
 #include "GunnerOverlayWidget.h"
+
+#include "UI/GunnerOverlayWidgetController.h"
+
+void UGunnerOverlayWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+}

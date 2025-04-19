@@ -27,9 +27,9 @@ bool AGunnerTestSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UAc
 	return OtherActor && OtherActor != TestGun->LastAgentActor;
 }
 
-void AGunnerTestSlotItemPickup::SetCollisionEnabled(bool bEnabled)
+void AGunnerTestSlotItemPickup::SetPickupEnabled(bool bEnabled)
 {
-	BoxComponent->SetCollisionEnabled(bEnabled ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, bEnabled ? ECR_Overlap : ECR_Ignore);
 }
 
 UGunnerActionTestDropSlotItem::UGunnerActionTestDropSlotItem()

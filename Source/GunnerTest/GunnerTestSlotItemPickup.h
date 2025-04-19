@@ -17,7 +17,7 @@ class AGunnerTestSlotItemPickup : public AGunnerSlotItemPickup
 public:
 	AGunnerTestSlotItemPickup();
 	virtual bool CanPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent) const override;
-	void SetCollisionEnabled(bool bEnabled);
+	void SetPickupEnabled(bool bEnabled);
 };
 
 

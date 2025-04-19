@@ -233,7 +233,7 @@ public:
 			for (TActorIterator<AActor> It(WorldContext.World(), AGunnerTestSlotItemPickup::StaticClass()); It; ++It)
 			{
 				AGunnerTestSlotItemPickup* Pickup = Cast<AGunnerTestSlotItemPickup>(*It);
-				Pickup->SetCollisionEnabled(true);
+				Pickup->SetPickupEnabled(true);
 				Count++;
 			}
 			Test->TestTrue(Prefix(TEXT("서버에서 Pickup을 활성화했습니다")), Count == 3);
