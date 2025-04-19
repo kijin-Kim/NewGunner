@@ -15,8 +15,8 @@ AGunnerPickup::AGunnerPickup()
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetCollisionResponseToAllChannels(ECR_Block);
 	BoxComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	BoxComponent->SetBoxExtent({30.0f, 30.0f, 5.0f});
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	SetRootComponent(BoxComponent);
 }
@@ -34,17 +34,19 @@ void AGunnerPickup::OnPickup_Implementation(AActor* OtherActor, UActorComponent*
 void AGunnerPickup::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AGunnerPickup::OnBeginOverlap);
+	BoxComponent->OnComponentCollisionSettingsChangedEvent.AddDynamic(this, &AGunnerPickup::OnCollisionSettingsChanged);
+	if (PickupInitialDelay > 0.0f)
 	{
 		FTimerHandle InitialDelayTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(InitialDelayTimerHandle, [this]()
 		{
-			BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AGunnerPickup::OnBeginOverlap);
-			ClearComponentOverlaps();
-			UpdateOverlaps();
-			
+			BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		}, PickupInitialDelay, false);
+	}
+	else
+	{
+		BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 }
 
@@ -55,4 +57,10 @@ void AGunnerPickup::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		OnPickup(OtherActor, OtherComp);
 		Destroy();
 	}
+}
+
+void AGunnerPickup::OnCollisionSettingsChanged(UPrimitiveComponent* ChangedComponent)
+{
+	ClearComponentOverlaps();
+	UpdateOverlaps();
 }

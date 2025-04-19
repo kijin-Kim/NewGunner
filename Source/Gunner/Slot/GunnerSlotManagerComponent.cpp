@@ -53,7 +53,7 @@ void UGunnerSlotManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, co
 	}
 }
 
-void UGunnerSlotManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UGunnerSlotManagerComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 
@@ -66,7 +66,7 @@ void UGunnerSlotManagerComponent::InternalOnShowDebugInfo(AActor* Actor, AHUD* H
 		{
 			if (SlotItem)
 			{
-				DisplayDebugManager.DrawString(FString::Printf(TEXT("슬롯 [%s] 아이템: %s"), *UEnum::GetValueAsString(SlotItem->GetSlotType()), *SlotItem->GetName()));
+				SlotItem->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
 			}
 		}
 	}
@@ -164,6 +164,7 @@ void UGunnerSlotManagerComponent::AuthAddItemToSlot(AGunnerSlotItem* Item)
 	check(ActorOwner);
 
 	check(ActorOwner->HasAuthority());
+	check(IsSlotEmpty(Item->GetSlotType()));
 
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
@@ -182,13 +183,12 @@ void UGunnerSlotManagerComponent::AuthRemoveItemFromSlot(AGunnerSlotItem* Item, 
 	{
 		OnItemDeactivated(Item);
 	}
-	SlotItemInstances[static_cast<int>(Item->GetSlotType())] = nullptr;
+	OnItemRemoved(Item);
 	if (bDestroyItem)
 	{
 		Item->Destroy();
 	}
-
-	OnItemRemoved(Item);
+	SlotItemInstances[static_cast<int>(Item->GetSlotType())] = nullptr;
 }
 
 void UGunnerSlotManagerComponent::HandleSlotIndexDirty(float OldValue, float NewValue)

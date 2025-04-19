@@ -16,6 +16,7 @@ class GUNNER_API AGunnerGun : public AGunnerEquippable
 
 public:
 	AGunnerGun();
+
 	//~ Begin AActor
 	virtual void OnConstruction(const FTransform& Transform) override;
 	//~ End AActor
@@ -26,7 +27,7 @@ public:
 	//~ End AGunnerSlotItem
 
 
-private:
+protected:
 	UPROPERTY(EditAnywhere)
 	float Magazine;
 	UPROPERTY(EditAnywhere)

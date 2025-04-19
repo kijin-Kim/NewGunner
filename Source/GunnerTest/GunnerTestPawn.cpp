@@ -1,23 +1,16 @@
 #include "GunnerTestPawn.h"
 
 #include "GunnerTestActionComponent.h"
+#include "GunnerTestGun.h"
+#include "GunnerTestSlotItemPickup.h"
 #include "Action/NexusActionComponent.h"
 #include "Action/SubComponent/NexusCueComponent.h"
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
+#include "Components/SphereComponent.h"
 #include "Gunner/Slot/GunnerSlotManagerComponent.h"
 
-
-AGunnerTestSlotItemPickup::AGunnerTestSlotItemPickup()
-{
-	PickupInitialDelay = TNumericLimits<float>::Max();
-}
-
-UGunnerActionTestDropSlotItem::UGunnerActionTestDropSlotItem()
-{
-	PickupClass = AGunnerTestSlotItemPickup::StaticClass();
-}
 
 AGunnerTestPawn::AGunnerTestPawn()
 {
@@ -40,6 +33,12 @@ AGunnerTestPawn::AGunnerTestPawn()
 	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
 	SlotManagerComponent->SetIsReplicated(true);
 	SlotManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
+
+	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComponent->SetCollisionObjectType(ECC_Pawn);
+	SphereComponent->SetSphereRadius(100.0f);
+	SetRootComponent(SphereComponent);
 }
 
 UNexusActionComponent* AGunnerTestPawn::GetActionComponent() const
@@ -57,7 +56,6 @@ void AGunnerTestPawn::NotifyControllerChanged()
 	Super::NotifyControllerChanged();
 	if (Controller)
 	{
-		ActionComponent->SetupActionComponent( this);
+		ActionComponent->SetupActionComponent(this);
 	}
-
 }

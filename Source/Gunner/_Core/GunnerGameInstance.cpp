@@ -13,15 +13,22 @@
 void UGunnerGameInstance::Init()
 {
 	Super::Init();
-
-	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
-	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
 	
-	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
-	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
+	static bool bIsInitialized = false;
+	if (!bIsInitialized)
+	{
+		FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
+		FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
 
-	AHUD::OnShowDebugInfo.RemoveAll(this);
-	AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
+		FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
+		FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
+
+		AHUD::OnShowDebugInfo.RemoveAll(this);
+		AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
+		bIsInitialized = true;
+	}
+
+
 }
 
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)

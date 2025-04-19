@@ -32,7 +32,7 @@ class GUNNER_API AGunnerSlotItem : public AActor
 
 public:
 	AGunnerSlotItem();
-
+	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	virtual void OnAcquired(AActor* AgentActor);
 	virtual void OnRemoved(AActor* AgentActor);
 	virtual void OnActivated(AActor* AgentActor);

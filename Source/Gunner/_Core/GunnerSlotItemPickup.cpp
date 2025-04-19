@@ -46,8 +46,8 @@ void AGunnerSlotItemPickup::OnConstruction(const FTransform& Transform)
 
 bool AGunnerSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent) const
 {
-	bool bCanPickup = Super::CanPickup_Implementation(OtherActor, OtherComponent);
-	if (!bCanPickup)
+	bool bResult = Super::CanPickup_Implementation(OtherActor, OtherComponent);
+	if (!bResult)
 	{
 		return false;
 	}

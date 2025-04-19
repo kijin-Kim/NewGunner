@@ -5,6 +5,7 @@
 
 #include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
+#include "Engine/Canvas.h"
 #include "Gunner/Gunner.h"
 
 
@@ -12,6 +13,12 @@ AGunnerSlotItem::AGunnerSlotItem()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+}
+
+void AGunnerSlotItem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+{
+	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("슬롯 아이템: %s"), *UEnum::GetValueAsString(GetSlotType())));
 }
 
 void AGunnerSlotItem::OnAcquired(AActor* AgentActor)

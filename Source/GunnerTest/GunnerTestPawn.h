@@ -4,11 +4,11 @@
 #include "NexusActionInterface.h"
 #include "Gunner/Action/GunnerActionDropSlotItem.h"
 #include "Gunner/Slot/GunnerSlotManagerInterface.h"
-#include "Gunner/_Core/GunnerSlotItemPickup.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "UObject/ObjectMacros.h"
 #include "GunnerTestPawn.generated.h"
 
+class USphereComponent;
 class UGunnerTestActionComponent;
 class UNexusPredictionComponent;
 class UNexusSideEffectComponent;
@@ -18,25 +18,6 @@ class UNexusCueComponent;
 class UGunnerTestSlotManagerComponent;
 class UNexusEventManagerComponent;
 
-
-UCLASS()
-class AGunnerTestSlotItemPickup : public AGunnerSlotItemPickup
-{
-	GENERATED_BODY()
-
-public:
-	 AGunnerTestSlotItemPickup();
-};
-
-
-UCLASS()
-class UGunnerActionTestDropSlotItem : public UGunnerActionDropSlotItem
-{
-	GENERATED_BODY()
-
-public:
-	UGunnerActionTestDropSlotItem();
-};
 
 
 UCLASS()
@@ -58,6 +39,10 @@ public:
 	FOnGunnerTeamSetSignature OnTeamSet;
 
 private:
+	UPROPERTY()
+	TObjectPtr<USphereComponent> SphereComponent;
+	
+	
 	UPROPERTY()
 	TObjectPtr<UGunnerTestActionComponent> ActionComponent;
 	UPROPERTY()

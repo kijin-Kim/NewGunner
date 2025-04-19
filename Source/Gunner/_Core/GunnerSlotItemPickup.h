@@ -28,13 +28,13 @@ private:
 	UFUNCTION()
 	void OnRep_EquipmentInstance();
 	
-private:
+protected:
 	UPROPERTY(ReplicatedUsing=OnRep_EquipmentInstance, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ExposeOnSpawn = "true"))
 	AGunnerSlotItem* SlotItemInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* PickupMeshComponent;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
 };

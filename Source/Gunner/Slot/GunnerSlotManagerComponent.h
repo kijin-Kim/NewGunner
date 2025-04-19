@@ -30,7 +30,7 @@ public:
 #endif
 
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-	void InternalOnShowDebugInfo(AActor* Actor, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UGunnerSlotManagerComponent* GetSlotManagerComponentFromActor(const AActor* Actor);

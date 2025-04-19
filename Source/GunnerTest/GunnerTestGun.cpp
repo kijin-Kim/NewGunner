@@ -23,3 +23,8 @@ AGunnerTestGun::AGunnerTestGun()
 	TransientActivationActions.Add(UGunnerTestActionTransient::StaticClass());
 }
 
+void AGunnerTestGun::OnRemoved(AActor* AgentActor)
+{
+	Super::OnRemoved(AgentActor);
+	LastAgentActor = AgentActor;
+}
