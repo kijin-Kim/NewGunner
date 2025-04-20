@@ -15,7 +15,6 @@ class UNexusSideEffectComponent;
 class UNexusGameplayTagComponent;
 class UNexusPropertyComponent;
 class UNexusCueComponent;
-class UGunnerTestSlotManagerComponent;
 class UNexusEventManagerComponent;
 
 
@@ -60,5 +59,5 @@ private:
 
 
 	UPROPERTY()
-	TObjectPtr<UGunnerInventoryManagerComponent> SlotManagerComponent;
+	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;
 };

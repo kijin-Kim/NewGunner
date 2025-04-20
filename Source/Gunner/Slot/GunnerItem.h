@@ -24,7 +24,7 @@ public:
 	virtual void PostOnAcquired() {}
 	virtual void OnRemoved();
 	
-	const UGunnerSlotItemUiData* GetSlotItemUIData() const { return SlotItemUIData; }
+	const UGunnerSlotItemUiData* GetSlotItemUiData() const { return SlotItemUiData; }
 
 protected:
 	void AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
@@ -36,7 +36,7 @@ protected:
 	TArray<FNexusActionDefHandle> PersistentActivationActionHandles;
 
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<const UGunnerSlotItemUiData> SlotItemUIData;
+	TObjectPtr<const UGunnerSlotItemUiData> SlotItemUiData;
 
 	UPROPERTY()
 	TObjectPtr<AActor> AgentActor;

@@ -18,8 +18,8 @@ void UNexusProperty::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UNexusProperty, Tag);
-	DOREPLIFETIME_CONDITION(UNexusProperty, StaticValue, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION_NOTIFY(UNexusProperty, DynamicValue, COND_SimulatedOnly, REPNOTIFY_Always);
+	DOREPLIFETIME(UNexusProperty, StaticValue);
+	DOREPLIFETIME_CONDITION(UNexusProperty, DynamicValue, COND_SimulatedOnly);
 }
 
 void UNexusProperty::Tick()
@@ -141,5 +141,5 @@ void UNexusProperty::OnRep_StaticValue()
 
 void UNexusProperty::OnRep_DynamicValue(float OldValue)
 {
-	bIsDirty = true;
+	OnDirtyDelegate.Broadcast(OldValue, DynamicValue);
 }

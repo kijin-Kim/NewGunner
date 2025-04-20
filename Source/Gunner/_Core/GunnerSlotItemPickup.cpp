@@ -77,12 +77,10 @@ bool AGunnerSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UActorC
 void AGunnerSlotItemPickup::OnPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent)
 {
 	Super::OnPickup_Implementation(OtherActor, OtherComponent);
-
-	IGunnerInventoryManagerInterface* SlotManagerInterface = Cast<IGunnerInventoryManagerInterface>(OtherActor);
-	check(SlotManagerInterface);
-	UGunnerInventoryManagerComponent* SlotManager = SlotManagerInterface->GetInventoryManagerComponent();
-	check(SlotManager);
-	SlotManager->AuthAddItem(SlotItemInstance);
+	
+	UGunnerInventoryManagerComponent* InventoryManager = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(OtherActor);
+	check(InventoryManager);
+	InventoryManager->AuthAddItem(SlotItemInstance);
 }
 
 void AGunnerSlotItemPickup::CopyMeshFromSource()
@@ -113,7 +111,7 @@ void AGunnerSlotItemPickup::CopyMeshFromSource()
 	}
 }
 
-void AGunnerSlotItemPickup::OnRep_EquipmentInstance()
+void AGunnerSlotItemPickup::OnRep_SlotItemInstance()
 {
 	CopyMeshFromSource();
 }

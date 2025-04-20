@@ -30,9 +30,9 @@ AGunnerTestPawn::AGunnerTestPawn()
 	EventManagerComponent->SetIsReplicated(true);
 
 
-	SlotManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("SlotManagerComponent"));
-	SlotManagerComponent->SetIsReplicated(true);
-	SlotManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
+	InventoryManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("InventoryManagerComponent"));
+	InventoryManagerComponent->SetIsReplicated(true);
+	InventoryManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -48,7 +48,7 @@ UNexusActionComponent* AGunnerTestPawn::GetActionComponent() const
 
 UGunnerInventoryManagerComponent* AGunnerTestPawn::GetInventoryManagerComponent() const
 {
-	return SlotManagerComponent;
+	return InventoryManagerComponent;
 }
 
 void AGunnerTestPawn::NotifyControllerChanged()

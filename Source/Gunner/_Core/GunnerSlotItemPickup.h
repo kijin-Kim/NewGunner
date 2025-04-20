@@ -26,10 +26,10 @@ private:
 	void CopyMeshFromSource();
 	
 	UFUNCTION()
-	void OnRep_EquipmentInstance();
+	void OnRep_SlotItemInstance();
 	
 protected:
-	UPROPERTY(ReplicatedUsing=OnRep_EquipmentInstance, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ExposeOnSpawn = "true"))
+	UPROPERTY(ReplicatedUsing=OnRep_SlotItemInstance, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ExposeOnSpawn = "true"))
 	AGunnerSlotItem* SlotItemInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

@@ -62,9 +62,9 @@ public:
 
 	
 
-	//~ Begin IGunnerSlotManagerInterface Interface.
+	//~ Begin IGunnerInventoryInterface Interface.
 	virtual UGunnerInventoryManagerComponent* GetInventoryManagerComponent() const override;
-	//~ End IGunnerSlotManagerInterface Interface.
+	//~ End IGunnerInventoryInterface Interface.
 
 
 	//~ Begin IGenericTeamAgentInterface Interface.

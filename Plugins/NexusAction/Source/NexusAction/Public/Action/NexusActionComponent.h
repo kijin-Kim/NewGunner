@@ -162,7 +162,7 @@ public:
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
-	void AddProperty(FGameplayTag Tag, float Value);
+	void AuthAddProperty(FGameplayTag Tag, float Value);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, BlueprintPure)

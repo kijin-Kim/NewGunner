@@ -16,14 +16,14 @@ void UGunnerActionComponent::OnSetupActionComponent()
 	Super::OnSetupActionComponent();
 	for (UGunnerActionSet* ActionSet : ActionSets)
 	{
-		for (const auto& [Tag, Value] : ActionSet->InitialProperties)
-		{
-			AddProperty(Tag, Value);
-		}
-
 		if (!IsOwnerActorAuthoritative())
 		{
 			continue;
+		}
+
+		for (const auto& [Tag, Value] : ActionSet->InitialProperties)
+		{
+			AuthAddProperty(Tag, Value);
 		}
 
 		for (TSubclassOf<UNexusAction> ActionClass : ActionSet->InitialActionClasses)

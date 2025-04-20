@@ -74,9 +74,9 @@ UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 	return GetPropertyComponent()->GetProperty(Tag);
 }
 
-void UNexusActionComponent::AddProperty(FGameplayTag Tag, float Value)
+void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
-	GetPropertyComponent()->AddProperty(Tag, Value);
+	GetPropertyComponent()->AuthAddProperty(Tag, Value);
 }
 
 UNexusProperty* UNexusActionComponent::GetPropertyFromActor(AActor* Actor, FGameplayTag Tag)

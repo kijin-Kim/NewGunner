@@ -54,7 +54,7 @@ void UGunnerItemHudViewModel::OnItemAcquired(AGunnerItem* Item)
 	}
 
 
-	if (const UGunnerSlotItemUiData* UiData = SlotItem->GetSlotItemUIData())
+	if (const UGunnerSlotItemUiData* UiData = SlotItem->GetSlotItemUiData())
 	{
 		ItemHudData[static_cast<int>(SlotItem->GetSlotType())] = FGunnerItemHudDataEntry{
 			UiData->ItemName,

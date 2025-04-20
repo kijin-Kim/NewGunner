@@ -55,9 +55,9 @@ void UGunnerInventoryManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canva
 		return;
 	}
 
-	if (UGunnerInventoryManagerComponent* SlotManager = GetInventoryManagerComponentFromActor(DebugTarget))
+	if (UGunnerInventoryManagerComponent* InventoryManager = GetInventoryManagerComponentFromActor(DebugTarget))
 	{
-		SlotManager->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
+		InventoryManager->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
 	}
 }
 
@@ -86,14 +86,14 @@ UGunnerInventoryManagerComponent* UGunnerInventoryManagerComponent::GetInventory
 		return nullptr;
 	}
 
-	if (UGunnerInventoryManagerComponent* SlotManagerComponent = Actor->GetComponentByClass<UGunnerInventoryManagerComponent>())
+	if (UGunnerInventoryManagerComponent* InventoryManager = Actor->GetComponentByClass<UGunnerInventoryManagerComponent>())
 	{
-		return SlotManagerComponent;
+		return InventoryManager;
 	}
 
-	if (const IGunnerInventoryManagerInterface* SlotManagerInterface = Cast<IGunnerInventoryManagerInterface>(Actor))
+	if (const IGunnerInventoryManagerInterface* InventoryManagerInterface = Cast<IGunnerInventoryManagerInterface>(Actor))
 	{
-		return SlotManagerInterface->GetInventoryManagerComponent();
+		return InventoryManagerInterface->GetInventoryManagerComponent();
 	}
 
 	return nullptr;

@@ -43,12 +43,15 @@ void UNexusPropertyComponent::TickComponent(float DeltaTime, ELevelTick TickType
 }
 
 
-void UNexusPropertyComponent::AddProperty(FGameplayTag Tag, float Value)
+void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
-	UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
-	NewProperty->SetTag(Tag);
-	NewProperty->SetStaticValue(Value);
-	Properties.Add(NewProperty);
+	if (ensure(GetOwner()->HasAuthority()))
+	{
+		UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
+		NewProperty->SetTag(Tag);
+		NewProperty->SetStaticValue(Value);
+		Properties.Add(NewProperty);
+	}
 }
 
 void UNexusPropertyComponent::AuthRemoveAllProperties()

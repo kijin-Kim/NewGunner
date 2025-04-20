@@ -43,7 +43,7 @@ public:
 	{
 	}
 
-	void Test_SlotManager_AddItem()
+	void Test_InventoryManager_AddItem()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -57,7 +57,7 @@ public:
 			APawn* Pawn = PC->GetPawn();
 
 
-			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
 			check(InventoryManagerComponent);
 			if (IsServer(WorldContext))
 			{
@@ -66,11 +66,11 @@ public:
 
 			CheckAquire(Pawn);
 		}
-		Test->AddInfo(Prefix(TEXT("Test_SlotManager_AddItem() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_AddItem() 완료")));
 	}
 
 
-	void Test_SlotManager_ActivateItem()
+	void Test_InventoryManager_ActivateItem()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -93,7 +93,7 @@ public:
 				SlotIndexProperty->Tick();
 			}
 
-			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
 
 
 			Test->TestEqual(Prefix(TEXT("활성화된 슬롯 아이템의 타입이 같습니다")), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()), GetDefault<AGunnerTestGun>()->GetSlotType());
@@ -105,10 +105,10 @@ public:
 				return Element.ActionClass == UGunnerTestActionTransient::StaticClass();
 			}));
 		}
-		Test->AddInfo(Prefix(TEXT("Test_SlotManager_ActivateItem() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ActivateItem() 완료")));
 	}
 
-	void Test_SlotManager_ChangeBullet()
+	void Test_InventoryManager_ChangeBullet()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -136,10 +136,10 @@ public:
 			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 총알 수가 같습니다")), BulletProperty->GetDynamicValue(), 5.0f);
 			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 같습니다")), MagazineBulletProperty->GetDynamicValue(), 10.0f);
 		}
-		Test->AddInfo(Prefix(TEXT("Test_SlotManager_ChangeBullet() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ChangeBullet() 완료")));
 	}
 
-	void Test_SlotManager_Drop()
+	void Test_InventoryManager_Drop()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -154,7 +154,7 @@ public:
 			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 			check(ActionComponent);
 
-			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
 			check(InventoryManagerComponent);
 
 
@@ -201,15 +201,16 @@ public:
 			Test->TestNotEqual(Prefix(TEXT("슬롯 아이템의 총알 수가 업데이트 되었습니다")), BulletProperty->GetDynamicValue(), PreDropBulletCount);
 			Test->TestNotEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 업데이트 되었습니다")), MagazineBulletProperty->GetDynamicValue(), PreDropMagazineBulletCount);
 		}
-		Test->AddInfo(Prefix(TEXT("Test_SlotManager_Drop() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_Drop() 완료")));
 	}
 
 	void CheckAquire(APawn* Pawn)
 	{
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 		check(ActionComponent);
+		
 
-		UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+		UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
 		check(InventoryManagerComponent);
 
 		const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
@@ -238,7 +239,7 @@ public:
 		}));
 	}
 
-	void Test_SlotManager_ServerEnablePickup()
+	void Test_InventoryManager_ServerEnablePickup()
 	{
 		if (IsServer(WorldContext))
 		{
@@ -250,11 +251,11 @@ public:
 				Count++;
 			}
 			Test->TestTrue(Prefix(TEXT("서버에서 Pickup을 활성화했습니다")), Count == 3);
-			Test->AddInfo(Prefix(TEXT("Test_SlotManager_ServerEnablePickup() 완료")));
+			Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ServerEnablePickup() 완료")));
 		}
 	}
 
-	void Test_SlotManager_Acquire()
+	void Test_InventoryManager_Acquire()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -268,10 +269,10 @@ public:
 			CheckAquire(Pawn);
 		}
 
-		Test->AddInfo(Prefix(TEXT("Test_SlotManager_Acquire() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_Acquire() 완료")));
 	}
 
-	void Test_SlotManger_CheckPreDropProperties()
+	void Test_InventoryManager_CheckPreDropProperties()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -300,26 +301,9 @@ public:
 			UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
 			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 같습니다")), MagazineBulletProperty->GetDynamicValue(), PreDropMagazineBulletCount);
 		}
-		Test->AddInfo(Prefix(TEXT("Test_SlotManger_CheckPreDropProperties() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_CheckPreDropProperties() 완료")));
 	}
 
-
-	UGunnerInventoryManagerComponent* GetInventoryManagerComponent(AActor* Actor)
-	{
-		if (Actor)
-		{
-			if (UGunnerInventoryManagerComponent* InventoryManagerComponent = Actor->GetComponentByClass<UGunnerInventoryManagerComponent>())
-			{
-				return InventoryManagerComponent;
-			}
-
-			if (const IGunnerInventoryManagerInterface* SlotManagerInterface = Cast<IGunnerInventoryManagerInterface>(Actor))
-			{
-				return SlotManagerInterface->GetInventoryManagerComponent();
-			}
-		}
-		return nullptr;
-	}
 
 	static bool IsServer(const FWorldContext& WorldContext) { return WorldContext.PIEInstance == 0; }
 	FString Prefix(const FString& Msg) const { return FString::Printf(TEXT("[PIE_%d]"), WorldContext.PIEInstance) + ": " + Msg; }
@@ -341,18 +325,18 @@ public:
 	FGunnerTest(const FString& InName)
 		: FAutomationTestBase(InName, false)
 	{
-		AddTest(&FGunnerTestCollection::Test_SlotManager_AddItem, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManager_ActivateItem, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManager_ChangeBullet, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManager_Drop, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManager_ServerEnablePickup, TEXT("SlotManager.TestSlotManager"));
-		AddTest(&FGunnerTestCollection::Test_SlotManager_Acquire, TEXT("SlotManager.TestSlotManager"), 0.2f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManager_ActivateItem, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_SlotManger_CheckPreDropProperties, TEXT("SlotManager.TestSlotManager"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_AddItem, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_ActivateItem, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_ChangeBullet, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_Drop, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_ServerEnablePickup, TEXT("TestInventory"));
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_Acquire, TEXT("TestInventory"), 0.2f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_ActivateItem, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_CheckPreDropProperties, TEXT("TestInventory"), 0.0f, 0.2f);
 	}
 
 	virtual uint32 GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }
-	virtual FString GetBeautifiedTestName() const override { return TEXT("System.Gunner.GunnerTest"); }
+	virtual FString GetBeautifiedTestName() const override { return TEXT("Gunner.GunnerTest"); }
 	virtual uint32 GetRequiredDeviceNum() const override { return 1; }
 
 
