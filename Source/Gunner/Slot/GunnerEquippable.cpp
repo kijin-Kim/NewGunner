@@ -71,11 +71,11 @@ USkeletalMeshComponent* AGunnerEquippable::GetThirdPersonMeshComponent_Implement
 }
 
 
-void AGunnerEquippable::OnAcquired(AActor* AgentActor)
+void AGunnerEquippable::OnAcquired(AActor* InAgentActor)
 {
-	Super::OnAcquired(AgentActor);
-	SetMeshVisibility(AgentActor, false);
-	AttachToExpliciteOwner(AgentActor);
+	Super::OnAcquired(InAgentActor);
+	SetMeshVisibility(false);
+	AttachToAgentActor();
 	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(AgentActor);
 	check(TeamAgentInterface);
 	if (!TeamAgentInterface)
@@ -90,10 +90,9 @@ void AGunnerEquippable::OnAcquired(AActor* AgentActor)
 	SetCustomDepthStencilValue(TeamAgentInterface->GetGenericTeamId() + 1);
 }
 
-void AGunnerEquippable::OnRemoved(AActor* AgentActor)
+void AGunnerEquippable::OnRemoved()
 {
-	Super::OnRemoved(AgentActor);
-	SetMeshVisibility(AgentActor, false);
+	SetMeshVisibility(false);
 
 	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(AgentActor);
 	check(TeamAgentInterface);
@@ -101,26 +100,27 @@ void AGunnerEquippable::OnRemoved(AActor* AgentActor)
 	{
 		TeamAgentInterface->GetOnTeamSetDelegate()->RemoveAll(this);
 	}
+	
+	Super::OnRemoved();
 }
 
-
-void AGunnerEquippable::OnActivated(AActor* AgentActor)
+void AGunnerEquippable::OnActivated()
 {
-	Super::OnActivated(AgentActor);
-	SetMeshVisibility(AgentActor, true);
-	SetAgentActorLocomotionAnimSet(AgentActor, LocomotionAnimSet);
+	Super::OnActivated();
+	SetMeshVisibility(true);
+	SetAgentActorLocomotionAnimSet(LocomotionAnimSet);
 	SetRenderCustomDepth(true);
 }
 
-void AGunnerEquippable::OnDeactivated(AActor* AgentActor)
+void AGunnerEquippable::OnDeactivated()
 {
-	Super::OnDeactivated(AgentActor);
-	SetMeshVisibility(AgentActor, false);
-	SetAgentActorLocomotionAnimSet(AgentActor, nullptr);
+	Super::OnDeactivated();
+	SetMeshVisibility(false);
+	SetAgentActorLocomotionAnimSet(nullptr);
 	SetRenderCustomDepth(false);
 }
 
-void AGunnerEquippable::AttachToExpliciteOwner(AActor* AgentActor) const
+void AGunnerEquippable::AttachToAgentActor() const
 {
 	if (AgentActor && AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{
@@ -132,7 +132,7 @@ void AGunnerEquippable::AttachToExpliciteOwner(AActor* AgentActor) const
 	}
 }
 
-void AGunnerEquippable::SetMeshVisibility(AActor* AgentActor, bool bVisible) const
+void AGunnerEquippable::SetMeshVisibility(bool bVisible) const
 {
 	APawn* AgentPawn = Cast<APawn>(AgentActor);
 	if(bVisible)
@@ -156,7 +156,7 @@ void AGunnerEquippable::SetMeshVisibility(AActor* AgentActor, bool bVisible) con
 }
 
 
-void AGunnerEquippable::SetAgentActorLocomotionAnimSet(AActor* AgentActor, UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
+void AGunnerEquippable::SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
 {
 	if (!AgentActor || !AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{

@@ -19,12 +19,12 @@ void AGunnerGun::OnConstruction(const FTransform& Transform)
 	MaxBulletPerMagazineCount = Magazine;
 }
 
-void AGunnerGun::OnActivated(AActor* AgentActor)
+void AGunnerGun::OnActivated()
 {
-	Super::OnActivated(AgentActor);
+	Super::OnActivated();
 	if (AgentActor && AgentActor->HasAuthority())
 	{
-		UNexusActionComponent* ActionComponent = GetActionComponent(AgentActor);
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(AgentActor);
 		check(ActionComponent);
 
 		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
@@ -36,12 +36,12 @@ void AGunnerGun::OnActivated(AActor* AgentActor)
 	}
 }
 
-void AGunnerGun::OnDeactivated(AActor* AgentActor)
+void AGunnerGun::OnDeactivated()
 {
-	Super::OnDeactivated(AgentActor);
+	Super::OnDeactivated();
 	if (AgentActor && AgentActor->HasAuthority())
 	{
-		UNexusActionComponent* ActionComponent = GetActionComponent(AgentActor);
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(AgentActor);
 		check(ActionComponent);
 
 		UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);

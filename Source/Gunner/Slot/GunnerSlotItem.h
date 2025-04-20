@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GunnerItem.h"
 #include "Action/NexusActionDefHandle.h"
 #include "GameFramework/Actor.h"
 #include "GunnerSlotItem.generated.h"
 
 
+class UNexusProperty;
+class UGunnerSlotItemUiData;
 class UNexusActionComponent;
 class UNexusAction;
 
@@ -26,42 +29,38 @@ enum class EGunnerSlotType : uint8
 };
 
 
+
+
 UCLASS()
-class GUNNER_API AGunnerSlotItem : public AActor
+class GUNNER_API AGunnerSlotItem : public AGunnerItem
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerSlotItem();
-	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
-	virtual void OnAcquired(AActor* AgentActor);
-	virtual void OnRemoved(AActor* AgentActor);
-	virtual void OnActivated(AActor* AgentActor);
-	virtual void OnDeactivated(AActor* AgentActor);
-
+	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
+	virtual bool CanAcquire(const TArray<AGunnerItem*>& InventoryItems) const override;
+	virtual void PostOnAcquired() override;
+	virtual void OnRemoved() override;
+	
 	EGunnerSlotType GetSlotType() const { return SlotType; }
 
-	UNexusActionComponent* GetActionComponent(AActor* AgentActor) const;
-	TSubclassOf<UUserWidget> GetSlotItemWidgetClass() const { return SlotItemWidgetClass; }
+
+protected:
+	virtual void OnActivated();
+	virtual void OnDeactivated();
 
 private:
-	void AuthAddDesiredActions(AActor* AgentActor, const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
-	void AuthRemoveDesiredActions(AActor* AgentActor, TArray<FNexusActionDefHandle>& AddedActionHandles);
+	UFUNCTION()
+	void HandleSlotIndexDirty(float OldValue, float NewValue);
+	UNexusProperty* GetSlotIndexProperty() const;
 
 protected:
 	UPROPERTY(EditAnywhere)
 	EGunnerSlotType SlotType = EGunnerSlotType::Num;
 
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UNexusAction>> PersistentActivationActions;
-	TArray<FNexusActionDefHandle> PersistentActivationActionHandles;
-
-	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UNexusAction>> TransientActivationActions;
 	TArray<FNexusActionDefHandle> TransientActivationActionHandles;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UUserWidget> SlotItemWidgetClass;
 };
 
 

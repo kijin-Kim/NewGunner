@@ -9,7 +9,7 @@
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
 #include "Event/NexusEventManagerComponent.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerActionComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -17,8 +17,8 @@
 AGunnerPlayerState::AGunnerPlayerState(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerActionComponent>(ANexusPlayerState::ActionCompomentName))
 {
-	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
-	SlotManagerComponent->SetIsReplicated(true);
+	InventoryManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("InventoryManagerComponent"));
+	InventoryManagerComponent->SetIsReplicated(true);
 }
 
 

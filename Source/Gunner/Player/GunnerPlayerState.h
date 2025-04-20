@@ -14,7 +14,7 @@ class UNexusPropertyComponent;
 class UNexusSideEffectComponent;
 class UNexusPredictionComponent;
 class UGunnerActionComponent;
-class UGunnerSlotManagerComponent;
+class UGunnerInventoryManagerComponent;
 class UNexusEventManagerComponent;
 class UNexusActionComponent;
 /**
@@ -43,7 +43,7 @@ private:
 private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;
 
 
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)

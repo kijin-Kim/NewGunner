@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "GunnerSlotManagerInterface.generated.h"
+#include "GunnerInventoryManagerInterface.generated.h"
 
-class UGunnerSlotManagerComponent;
+class UGunnerInventoryManagerComponent;
 // This class does not need to be modified.
 UINTERFACE()
-class GUNNER_API UGunnerSlotManagerInterface : public UInterface
+class GUNNER_API UGunnerInventoryManagerInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,11 +17,11 @@ class GUNNER_API UGunnerSlotManagerInterface : public UInterface
 /**
  * 
  */
-class GUNNER_API IGunnerSlotManagerInterface
+class GUNNER_API IGunnerInventoryManagerInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual UGunnerSlotManagerComponent* GetSlotManagerComponent() const = 0;
+	virtual UGunnerInventoryManagerComponent* GetInventoryManagerComponent() const = 0;
 };

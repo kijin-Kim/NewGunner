@@ -8,7 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 
 void UGunnerGameInstance::Init()
 {
@@ -43,7 +43,7 @@ void UGunnerGameInstance::PostLoadMapWithWorld(UWorld* InLoadedWorld)
 
 void UGunnerGameInstance::OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
 {
-	UGunnerSlotManagerComponent::OnShowDebugInfo(Ahud, Canvas, DebugDisplayInfo, X, Arg);
+	UGunnerInventoryManagerComponent::OnShowDebugInfo(Ahud, Canvas, DebugDisplayInfo, X, Arg);
 }
 
 void UGunnerGameInstance::PlayLoadingScreen()

@@ -27,6 +27,7 @@ namespace GunnerNativeGameplayTags
 
 	GUNNER_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_OperationValue_SlotIndex);
 
+	GUNNER_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Property_Health);
 	GUNNER_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Property_Weapon_Bullet);
 	GUNNER_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Property_Weapon_MagazineBullet);
 	GUNNER_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Property_Weapon_MaxBulletPerMagazine);

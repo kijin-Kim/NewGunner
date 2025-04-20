@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GunnerSlotManagerComponent.h"
+#include "GunnerInventoryManagerComponent.h"
+#include "GunnerSlotItem.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "GunnerEquippable.generated.h"
 
@@ -27,16 +28,16 @@ public:
 	USkeletalMeshComponent* GetThirdPersonMeshComponent() const;
 	//~ End INexusAnimMontagePlayerInterface
 	
-	virtual void OnAcquired(AActor* AgentActor) override;
-	virtual void OnRemoved(AActor* AgentActor) override;
+	virtual void OnAcquired(AActor* InAgentActor) override;
+	virtual void OnRemoved() override;
 	
-	virtual void OnActivated(AActor* AgentActor) override;
-	virtual void OnDeactivated(AActor* AgentActor) override;
+	virtual void OnActivated() override;
+	virtual void OnDeactivated() override;
 
 private:
-	void AttachToExpliciteOwner(AActor* AgentActor) const;
-	void SetMeshVisibility(AActor* AgentActor, bool bVisible) const;
-	void SetAgentActorLocomotionAnimSet(AActor* AgentActor, UGunnerLocomotionAnimSet* InLocomotionAnimSet) const;
+	void AttachToAgentActor() const;
+	void SetMeshVisibility(bool bVisible) const;
+	void SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const;
 	void SetRenderCustomDepth(bool bSetRenderCustomDepth);
 	void SetCustomDepthStencilValue(int32 StencilValue) const;
 

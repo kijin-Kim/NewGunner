@@ -9,7 +9,7 @@
 #include "GunnerTestPawn.h"
 #include "GunnerTestSlotItemPickup.h"
 #include "Editor/UnrealEdEngine.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Misc/AutomationTest.h"
 #include "Tests/AutomationCommon.h"
@@ -57,11 +57,11 @@ public:
 			APawn* Pawn = PC->GetPawn();
 
 
-			UGunnerSlotManagerComponent* SlotManagerComponent = GetSlotManagerComponent(Pawn);
-			check(SlotManagerComponent);
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+			check(InventoryManagerComponent);
 			if (IsServer(WorldContext))
 			{
-				SlotManagerComponent->AuthAddItemToSlot(WorldContext.World()->SpawnActor<AGunnerTestGun>());
+				InventoryManagerComponent->AuthAddItem(WorldContext.World()->SpawnActor<AGunnerTestGun>());
 			}
 
 			CheckAquire(Pawn);
@@ -82,22 +82,21 @@ public:
 
 
 			APawn* Pawn = PC->GetPawn();
-			
+
 			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 			check(ActionComponent);
 
+			UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
 			if (IsServer(WorldContext))
 			{
 				ActionComponent->SendEventToSelf<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_ActivateSlot_Primary, {});
-				UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
 				SlotIndexProperty->Tick();
 			}
 
-			UGunnerSlotManagerComponent* SlotManagerComponent = GetSlotManagerComponent(Pawn);
-			
-			Test->TestEqual(Prefix(TEXT("활성화된 슬롯 아이템의 타입이 같습니다")), SlotManagerComponent->GetCurrentSlotType(), GetDefault<AGunnerTestGun>()->GetSlotType());
-			Test->TestNotNull(Prefix(TEXT("슬롯 아이템이 활성화되었습니다")), Cast<AGunnerTestGun>(SlotManagerComponent->GetCurrentSlotItem()));
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
 
+
+			Test->TestEqual(Prefix(TEXT("활성화된 슬롯 아이템의 타입이 같습니다")), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()), GetDefault<AGunnerTestGun>()->GetSlotType());
 
 			const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
 
@@ -155,8 +154,8 @@ public:
 			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 			check(ActionComponent);
 
-			UGunnerSlotManagerComponent* SlotManagerComponent = GetSlotManagerComponent(Pawn);
-			check(SlotManagerComponent);
+			UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+			check(InventoryManagerComponent);
 
 
 			UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
@@ -166,9 +165,14 @@ public:
 				SlotIndexProperty->Tick();
 			}
 
+			const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
+			Test->TestFalse(Prefix(TEXT("슬롯 아이템이 제거되었습니다")), InventoryItems.ContainsByPredicate([](const AGunnerItem* Item)
+			{
+				const AGunnerSlotItem* SlotItem = Cast<AGunnerSlotItem>(Item);
+				return SlotItem && SlotItem->GetSlotType() == EGunnerSlotType::Primary;
+			}));
 
-			Test->TestTrue(Prefix(TEXT("슬롯 아이템이 제거되었습니다")), SlotManagerComponent->IsSlotEmpty(EGunnerSlotType::Primary));
-			if (!Test->TestTrue(Prefix(TEXT("슬롯이 비활성화 되었습니다.")), SlotManagerComponent->GetCurrentSlotType() != EGunnerSlotType::Primary))
+			if (!Test->TestNotEqual(Prefix(TEXT("슬롯이 비활성화 되었습니다.")), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()), EGunnerSlotType::Primary))
 			{
 				Test->AddInfo(Prefix(FString::Printf(TEXT("슬롯 인덱스: %f"), SlotIndexProperty->GetDynamicValue())));
 				Test->AddInfo(Prefix(FString::Printf(TEXT("슬롯 인덱스(스태틱): %f"), SlotIndexProperty->GetStaticValue())));
@@ -205,16 +209,25 @@ public:
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 		check(ActionComponent);
 
-		UGunnerSlotManagerComponent* SlotManagerComponent = GetSlotManagerComponent(Pawn);
-		check(SlotManagerComponent);
+		UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent(Pawn);
+		check(InventoryManagerComponent);
 
-		AGunnerTestGun* TestGun = Cast<AGunnerTestGun>(SlotManagerComponent->GetSlotItemByType(GetDefault<AGunnerTestGun>()->GetSlotType()));
-
-		if (!Test->TestNotNull(Prefix(TEXT("슬롯 아이템이 추가되었습니다")), TestGun))
+		const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
+		AGunnerItem* const* FoundItemPtr = InventoryItems.FindByPredicate([](const AGunnerItem* Item)
+			{
+				return Item && Item->IsA<AGunnerTestGun>();
+			}
+		);
+		if (!FoundItemPtr || !*FoundItemPtr)
 		{
+			Test->TestFalse(Prefix(TEXT("슬롯 아이템이 획득되지 않았습니다")), true);
 			return;
 		}
-		Test->TestNotEqual(Prefix(TEXT("획득한 슬롯 아이템이 아직 장착되지 않았습니다")), TestGun->GetSlotType(), SlotManagerComponent->GetCurrentSlotType());
+
+		AGunnerTestGun* TestGun = Cast<AGunnerTestGun>(*FoundItemPtr);
+		UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
+
+		Test->TestNotEqual(Prefix(TEXT("획득한 슬롯 아이템이 아직 장착되지 않았습니다")), TestGun->GetSlotType(), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()));
 		Test->TestNotEqual(Prefix(TEXT("획득한 아이템의 이전 오너와 현재 오너가 다릅니다")), Cast<APawn>(TestGun->LastAgentActor), Pawn);
 
 
@@ -291,18 +304,18 @@ public:
 	}
 
 
-	UGunnerSlotManagerComponent* GetSlotManagerComponent(AActor* Actor)
+	UGunnerInventoryManagerComponent* GetInventoryManagerComponent(AActor* Actor)
 	{
 		if (Actor)
 		{
-			if (UGunnerSlotManagerComponent* SlotManagerComponent = Actor->GetComponentByClass<UGunnerSlotManagerComponent>())
+			if (UGunnerInventoryManagerComponent* InventoryManagerComponent = Actor->GetComponentByClass<UGunnerInventoryManagerComponent>())
 			{
-				return SlotManagerComponent;
+				return InventoryManagerComponent;
 			}
 
-			if (const IGunnerSlotManagerInterface* SlotManagerInterface = Cast<IGunnerSlotManagerInterface>(Actor))
+			if (const IGunnerInventoryManagerInterface* SlotManagerInterface = Cast<IGunnerInventoryManagerInterface>(Actor))
 			{
-				return SlotManagerInterface->GetSlotManagerComponent();
+				return SlotManagerInterface->GetInventoryManagerComponent();
 			}
 		}
 		return nullptr;

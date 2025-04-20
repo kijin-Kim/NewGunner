@@ -24,7 +24,7 @@ enum class ENexusPropertyOperator : uint8
 UENUM(BlueprintType)
 enum class ENexusPropertyCalculationType : uint8
 {
-	None, 
+	None,
 	Direct,
 	FromOutside,
 	PropertyBased,
@@ -91,9 +91,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool operator==(const UNexusProperty* Other) const { return Tag == Other->Tag; }
 	bool operator!=(const UNexusProperty* Other) const { return !(*this == Other); }
-	
+
 	void Tick();
-	
+
 	void SetStaticValue(float NewValue);
 	void SetDynamicValue(float NewValue);
 	void SetTag(FGameplayTag InTag);

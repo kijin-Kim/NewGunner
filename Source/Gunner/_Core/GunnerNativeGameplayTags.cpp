@@ -28,6 +28,7 @@ namespace GunnerNativeGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_SlotIndex, "OperationValue.SlotIndex");
 
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Health, "Property.Health");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_Bullet, "Property.Weapon.Bullet");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MagazineBullet, "Property.Weapon.MagazineBullet");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MaxBulletPerMagazine, "Property.Weapon.MaxBulletPerMagazine");

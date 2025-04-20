@@ -7,7 +7,7 @@
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
 #include "GameFramework/Character.h"
-#include "Gunner/Slot/GunnerSlotManagerInterface.h"
+#include "Gunner/Slot/GunnerInventoryManagerInterface.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
@@ -30,7 +30,7 @@ class GUNNER_API AGunnerCharacter
 	  public IGunnerTeamAgentInterface,
 	  public IGunnerHitBoxInterface,
 	  public INexusCueNetworkProxyInterface,
-	  public IGunnerSlotManagerInterface
+	  public IGunnerInventoryManagerInterface
 {
 	GENERATED_BODY()
 
@@ -63,7 +63,7 @@ public:
 	
 
 	//~ Begin IGunnerSlotManagerInterface Interface.
-	virtual UGunnerSlotManagerComponent* GetSlotManagerComponent() const override;
+	virtual UGunnerInventoryManagerComponent* GetInventoryManagerComponent() const override;
 	//~ End IGunnerSlotManagerInterface Interface.
 
 

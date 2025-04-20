@@ -53,6 +53,7 @@ void UGunnerActionSlotActivation::OnTriggerAction()
 	{
 		unimplemented(); // 슬롯 인덱스 변경 예측 실패
 	}));
+	EndAction();
 }
 
 EGunnerSlotType UGunnerActionSlotActivation::GetCurrentSlotType() const

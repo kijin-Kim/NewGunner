@@ -3,34 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MVVMViewModelBase.h"
-#include "Gunner/Slot/GunnerSlotItem.h"
 #include "MVVM/NexusActionViewModelContextResolver.h"
-#include "GunnerSlotManagerViewModel.generated.h"
+#include "GunnerBulletIndicatorViewModel.generated.h"
 
 /**
  * 
  */
-UCLASS()
-class GUNNER_API UGunnerSlotManagerViewModelContextResolver : public UNexusActionViewModelContextResolver
+
+UCLASS(DisplayName = "Bullet Indicator ViewModel")
+class GUNNER_API UGunnerBulletIndicatorViewModel : public UNexusActionViewModel
 {
 	GENERATED_BODY()
 
 public:
-	virtual UObject* CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const override;
-};
-
-UCLASS()
-class GUNNER_API UGunnerSlotManagerViewModel : public UMVVMViewModelBase
-{
-	GENERATED_BODY()
-
-public:
-	static UGunnerSlotManagerViewModel* CreateInstance(UNexusActionComponent* ActionComponent, const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View);
-
-
-	
-	void Init(UNexusActionComponent* InActionComponent);
+	virtual void OnCreateViewModel(const UUserWidget* UserWidget) override;
+	virtual void OnDestroyViewModel(const UObject* Object, const UMVVMView* View) const override;
 
 	void SetBulletCount(int32 InBulletCount)
 	{
@@ -48,7 +35,7 @@ public:
 		}
 	}
 
-	
+
 	UFUNCTION(BlueprintPure, FieldNotify)
 	FText GetBulletIndicatorText() const
 	{
@@ -62,9 +49,6 @@ private:
 	void OnMagazineBulletCountChanged(float OldValue, float NewValue);
 
 protected:
-	UPROPERTY()
-	TObjectPtr<UNexusActionComponent> ActionComponent;
-
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
 	int32 BulletCount;
 	UPROPERTY(BlueprintReadOnly, FieldNotify)

@@ -31,7 +31,7 @@ class GUNNERTESTS_API AGunnerTestGun : public AGunnerGun
 
 public:
 	AGunnerTestGun();
-	virtual void OnRemoved(AActor* AgentActor) override;
+	virtual void OnRemoved() override;
 
 	const TArray<TSubclassOf<UNexusAction>>& GetPersistentActivationActions() const
 	{

@@ -33,6 +33,11 @@ void AGunnerPickup::OnPickup_Implementation(AActor* OtherActor, UActorComponent*
 void AGunnerPickup::BeginPlay()
 {
 	Super::BeginPlay();
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AGunnerPickup::OnBeginOverlap);
 	BoxComponent->OnComponentCollisionSettingsChangedEvent.AddDynamic(this, &AGunnerPickup::OnCollisionSettingsChanged);
 	if (PickupInitialDelay > 0.0f)

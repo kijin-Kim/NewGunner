@@ -17,7 +17,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/Player/GunnerPlayerState.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -120,10 +120,10 @@ UNexusActionComponent* AGunnerCharacter::GetActionComponent() const
 	return PS ? PS->FindComponentByClass<UNexusActionComponent>() : FindComponentByClass<UNexusActionComponent>();
 }
 
-UGunnerSlotManagerComponent* AGunnerCharacter::GetSlotManagerComponent() const
+UGunnerInventoryManagerComponent* AGunnerCharacter::GetInventoryManagerComponent() const
 {
 	const APlayerState* PS = GetPlayerState<APlayerState>();
-	return PS ? PS->FindComponentByClass<UGunnerSlotManagerComponent>() : FindComponentByClass<UGunnerSlotManagerComponent>();
+	return PS ? PS->FindComponentByClass<UGunnerInventoryManagerComponent>() : FindComponentByClass<UGunnerInventoryManagerComponent>();
 }
 
 void AGunnerCharacter::SetGenericTeamId(const FGenericTeamId& TeamID)

@@ -9,7 +9,7 @@
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
 #include "Components/SphereComponent.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 
 
 AGunnerTestPawn::AGunnerTestPawn()
@@ -30,7 +30,7 @@ AGunnerTestPawn::AGunnerTestPawn()
 	EventManagerComponent->SetIsReplicated(true);
 
 
-	SlotManagerComponent = CreateDefaultSubobject<UGunnerSlotManagerComponent>(TEXT("SlotManagerComponent"));
+	SlotManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("SlotManagerComponent"));
 	SlotManagerComponent->SetIsReplicated(true);
 	SlotManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
 
@@ -46,7 +46,7 @@ UNexusActionComponent* AGunnerTestPawn::GetActionComponent() const
 	return ActionComponent;
 }
 
-UGunnerSlotManagerComponent* AGunnerTestPawn::GetSlotManagerComponent() const
+UGunnerInventoryManagerComponent* AGunnerTestPawn::GetInventoryManagerComponent() const
 {
 	return SlotManagerComponent;
 }

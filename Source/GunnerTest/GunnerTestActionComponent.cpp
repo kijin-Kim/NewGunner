@@ -4,7 +4,7 @@
 #include "GunnerTestActionComponent.h"
 
 #include "Gunner/Action/GunnerActionDropSlotItem.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
 

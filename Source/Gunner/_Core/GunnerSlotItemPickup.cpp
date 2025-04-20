@@ -5,9 +5,9 @@
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Gunner/Equipment/GunnerEquipment.h"
-#include "Gunner/Equipment/GunnerEquipmentManagerComponent.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
-#include "Gunner/Slot/GunnerSlotManagerInterface.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerInterface.h"
+#include "Gunner/Slot/GunnerSlotItem.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -63,26 +63,26 @@ bool AGunnerSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UActorC
 	}
 
 
-	IGunnerSlotManagerInterface* SlotManagerInterface = Cast<IGunnerSlotManagerInterface>(OtherActor);
-	if (!SlotManagerInterface)
+	IGunnerInventoryManagerInterface* InventoryManagerInterface = Cast<IGunnerInventoryManagerInterface>(OtherActor);
+	if (!InventoryManagerInterface)
 	{
 		return false;
 	}
 
-	UGunnerSlotManagerComponent* SlotManager = SlotManagerInterface->GetSlotManagerComponent();
-	check(SlotManager);
-	return SlotManager->IsSlotEmpty(SlotItemInstance->GetSlotType());
+	UGunnerInventoryManagerComponent* InventoryManager = InventoryManagerInterface->GetInventoryManagerComponent();
+	check(InventoryManager);
+	return InventoryManager->CanAcquireItem(SlotItemInstance);
 }
 
 void AGunnerSlotItemPickup::OnPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent)
 {
 	Super::OnPickup_Implementation(OtherActor, OtherComponent);
 
-	IGunnerSlotManagerInterface* SlotManagerInterface = Cast<IGunnerSlotManagerInterface>(OtherActor);
+	IGunnerInventoryManagerInterface* SlotManagerInterface = Cast<IGunnerInventoryManagerInterface>(OtherActor);
 	check(SlotManagerInterface);
-	UGunnerSlotManagerComponent* SlotManager = SlotManagerInterface->GetSlotManagerComponent();
+	UGunnerInventoryManagerComponent* SlotManager = SlotManagerInterface->GetInventoryManagerComponent();
 	check(SlotManager);
-	SlotManager->AuthAddItemToSlot(SlotItemInstance);
+	SlotManager->AuthAddItem(SlotItemInstance);
 }
 
 void AGunnerSlotItemPickup::CopyMeshFromSource()

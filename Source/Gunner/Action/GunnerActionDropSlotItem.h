@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Action/NexusAction.h"
-#include "Gunner/Slot/GunnerSlotManagerComponent.h"
+#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
+#include "Gunner/Slot/GunnerSlotItem.h"
 #include "GunnerActionDropSlotItem.generated.h"
 
 
 class AGunnerSlotItemPickup;
-class UGunnerSlotManagerComponent;
+class UGunnerInventoryManagerComponent;
 /**
  * 
  */
@@ -24,6 +25,9 @@ public:
 	virtual bool OnCanTriggerAction() const override;
 	virtual void OnTriggerAction() override;
 
+private:
+	EGunnerSlotType GetCurrentSlotType() const;
+
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -31,7 +35,9 @@ protected:
 
 private:
 	UPROPERTY()
-	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;
+	UPROPERTY()
+	TObjectPtr<UNexusActionComponent> ActionComponent;
 };
 
 UCLASS()
@@ -47,5 +53,5 @@ public:
 
 private:
 	UPROPERTY()
-	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;
 };

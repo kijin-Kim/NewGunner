@@ -7,8 +7,21 @@
 #include "Gunner/Slot/GunnerSlotItem.h"
 #include "GunnerHUD.generated.h"
 
+class UGunnerInventoryManagerComponent;
 class UGunnerOverlayWidget;
 class UGunnerUserWidget;
+
+USTRUCT()
+struct FGunnerSlotWidgetContainer
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TArray<TObjectPtr<UUserWidget>> Widgets;
+};
+
+
 /**
  * 
  */
@@ -18,20 +31,18 @@ class GUNNER_API AGunnerHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	
 	void SetupHUD(APlayerState* PlayerState);
 	virtual void GetDebugActorList(TArray<AActor*>& InOutList) override;
 
 private:
-	void InitViewModel(UGunnerUserWidget* SlotWidget, AGunnerSlotItem* Item);
-	UFUNCTION()
-	void OnSlotItemAcquired(AGunnerSlotItem* Item);
-	UFUNCTION()
-	void OnSlotItemRemoved(AGunnerSlotItem* Item);
+	void OnSlotItemActivated(EGunnerSlotType SlotType);
+	void OnSlotItemDeactivated(EGunnerSlotType SlotType);
 	UFUNCTION()
 	void HandleSlotIndexDirty(float OldValue, float NewValue);
 
-	void SetSlotWidgetVisibility(EGunnerSlotType SlotType, ESlateVisibility Visibility);
+private:
+	UGunnerInventoryManagerComponent* GetInventoryManagerComponentChecked() const;
+
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -39,8 +50,7 @@ public:
 	UPROPERTY()
 	TObjectPtr<UGunnerOverlayWidget> OverlayWidget;
 
-
 private:
 	UPROPERTY()
-	TMap<EGunnerSlotType, TObjectPtr<UUserWidget>> SlotWidgets;
+	TMap<EGunnerSlotType, FGunnerSlotWidgetContainer> SlotTypeWidgetMap;
 };

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "NexusActionInterface.h"
 #include "Gunner/Action/GunnerActionDropSlotItem.h"
-#include "Gunner/Slot/GunnerSlotManagerInterface.h"
+#include "Gunner/Slot/GunnerInventoryManagerInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "UObject/ObjectMacros.h"
 #include "GunnerTestPawn.generated.h"
@@ -21,14 +21,14 @@ class UNexusEventManagerComponent;
 
 
 UCLASS()
-class AGunnerTestPawn : public APawn, public INexusActionInterface, public IGunnerSlotManagerInterface, public IGunnerTeamAgentInterface
+class AGunnerTestPawn : public APawn, public INexusActionInterface, public IGunnerInventoryManagerInterface, public IGunnerTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	AGunnerTestPawn();
 	virtual UNexusActionComponent* GetActionComponent() const override;
-	virtual UGunnerSlotManagerComponent* GetSlotManagerComponent() const override;
+	virtual UGunnerInventoryManagerComponent* GetInventoryManagerComponent() const override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override { return &OnTeamSet; }
 
@@ -60,5 +60,5 @@ private:
 
 
 	UPROPERTY()
-	TObjectPtr<UGunnerSlotManagerComponent> SlotManagerComponent;
+	TObjectPtr<UGunnerInventoryManagerComponent> SlotManagerComponent;
 };
