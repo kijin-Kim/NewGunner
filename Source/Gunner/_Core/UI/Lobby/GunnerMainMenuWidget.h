@@ -49,7 +49,7 @@ struct FRoomInfo
 		{
 			ParticipantsString += Participant + TEXT(", ");
 		}
-		return FString::Printf(TEXT("RoomName: %s, MapName: %s, PlayerCount: %d, MaxPlayerCount: %d, PingInMs: %d, SessionId: %s, Participants: %s"), *RoomName, *MapName, PlayerCount, MaxPlayerCount, PingInMs, *SessionId, *ParticipantsString);
+		return FString::Printf(TEXT("RoomInfo={RoomName: %s, MapName: %s, PlayerCount: %d, MaxPlayerCount: %d, PingInMs: %d, SessionId: %s, Participants: %s}"), *RoomName, *MapName, PlayerCount, MaxPlayerCount, PingInMs, *SessionId, *ParticipantsString);
 	}
 };
 

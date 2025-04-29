@@ -3,14 +3,43 @@
 
 #include "Action/NexusAction.h"
 
+#include "Misc/DataValidation.h"
 
-UNexusAction* UNexusAction::NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+
+EDataValidationResult UNexusAction::IsDataValid(FDataValidationContext& Context) const
 {
+	EDataValidationResult Result = Super::IsDataValid(Context);
+	TArray<const FGameplayTagContainer*> TagContainerPtrs = {
+		&ActionTriggerEventTags,
+		&ActionOwnedTags,
+		&ActionCancelTags,
+		&ShouldHaveTags,
+		&ShouldNotHaveTags
+	};
+
+	for (const FGameplayTagContainer* TagContainer : TagContainerPtrs)
+	{
+		for (const FGameplayTag& Tag : *TagContainer)
+		{
+			if (!Tag.IsValid())
+			{
+				Context.AddError(NSLOCTEXT("NexusAction", "InvalidTag", "유효하지 않은 태그 존재"));
+				Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
+			}
+		}
+	}
+
+	return Result;
+}
+
+UNexusAction* UNexusAction::NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo, TWeakObjectPtr<UObject> InSourceObject)
+{
+	
 	TSharedPtr<FNexusAgentInfo> AgentInfo = InAgentInfo.Pin();
 	check(AgentInfo.IsValid() && AgentInfo->GetAgentActor() && AgentInfo->GetOwnerActor());
 	UNexusAction* NewAction = NewObject<UNexusAction>(AgentInfo->GetOwnerActor(), Class);
 	check(NewAction);
-	NewAction->InitializeAction(InActionDefHandle, AgentInfo);
+	NewAction->InitializeAction(InActionDefHandle, AgentInfo, InSourceObject);
 	return NewAction;
 }
 
@@ -29,11 +58,11 @@ void UNexusAction::SetActionCurrentEventMessage(const FNexusEventMessage& InEven
 	EventMessage = InEventMessage;
 }
 
-void UNexusAction::CallOnActionAdded()
+void UNexusAction::CallOnAddAction()
 {
 	check(ActionDefHandle.IsValid() && AgentInfo.IsValid() && TEXT("액션이 올바르게 생성되지 않았습니다. NewNexusActionObject를 사용하여 액션을 생성해야 합니다"));
-	OnActionAdded();
-	BP_OnActionAdded();
+	OnAddAction();
+	BP_OnAddAction();
 }
 
 bool UNexusAction::CallOnCanTriggerAction() const
@@ -55,23 +84,29 @@ void UNexusAction::CallOnTriggerAction()
 	BP_OnTriggerAction();
 }
 
+void UNexusAction::CallOnConfirmAction()
+{
+	OnConfirmAction();
+	BP_OnConfirmAction();
+}
+
 void UNexusAction::EndAction()
 {
 	if (bIsTriggering)
 	{
-		bIsTriggering = false;
 		OnEndAction();
 		BP_OnEndAction();
+		bIsTriggering = false;
 	}
 }
 
-void UNexusAction::CallOnActionRemoved()
+void UNexusAction::CallOnRemoveAction()
 {
-	OnActionRemoved();
-	BP_OnActionRemoved();
+	OnRemoveAction();
+	BP_OnRemoveAction();
 }
 
-void UNexusAction::OnActionAdded()
+void UNexusAction::OnAddAction()
 {
 }
 
@@ -93,18 +128,23 @@ void UNexusAction::OnTriggerAction()
 	bIsTriggering = true;
 }
 
+void UNexusAction::OnConfirmAction()
+{
+}
+
 void UNexusAction::OnEndAction()
 {
 	OnActionEndedDelegate.Broadcast(ActionDefHandle, this);
 }
 
-void UNexusAction::OnActionRemoved()
+void UNexusAction::OnRemoveAction()
 {
 }
 
-void UNexusAction::InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo)
+void UNexusAction::InitializeAction(const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo, TWeakObjectPtr<UObject> InSourceObject)
 {
 	check(InActionDefHandle.IsValid() && InAgentInfo.IsValid());
 	ActionDefHandle = InActionDefHandle;
 	AgentInfo = InAgentInfo;
+	SourceObject = InSourceObject;
 }

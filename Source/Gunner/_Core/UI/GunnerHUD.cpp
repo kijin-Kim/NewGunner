@@ -7,9 +7,7 @@
 #include "GunnerUserWidget.h"
 #include "Gunner/_Core/GunnerOverlayWidget.h"
 #include "Action/NexusActionComponent.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
-#include "Gunner/Slot/UI/Data/GunnerSlotItemUiData.h"
-#include "Gunner/Slot/UI/Data/Component/Transient/GunnerSlotItemTransientUiComponentBase.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/UI/GunnerOverlayWidgetController.h"
 

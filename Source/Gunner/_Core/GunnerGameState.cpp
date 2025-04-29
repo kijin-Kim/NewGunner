@@ -10,7 +10,7 @@
 
 FString FGunnerKillLog::ToString() const
 {
-	return FString::Printf(TEXT("Killer: %s, Victim: %s, Cause: %s"), *KillerPlayerState->GetPlayerName(), *VictimPlayerState->GetPlayerName(), *KillCauserName.ToString());
+	return FString::Printf(TEXT("KillLog={Killer: %s, Victim: %s, Cause: %s}"), *KillerPlayerState->GetPlayerName(), *VictimPlayerState->GetPlayerName(), *KillCauserName.ToString());
 }
 
 void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

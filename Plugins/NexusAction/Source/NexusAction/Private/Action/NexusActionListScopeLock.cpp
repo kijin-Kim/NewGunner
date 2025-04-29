@@ -10,3 +10,13 @@ FNexusActionListScopeLock::~FNexusActionListScopeLock()
 {
 	ActionComponent.DecreaseActionListLock();
 }
+
+FNexusLocalActionInstanceMapScopeLock::FNexusLocalActionInstanceMapScopeLock(UNexusActionComponent& InActionComponent) : ActionComponent(InActionComponent)
+{
+	ActionComponent.IncreaseLocalActionInstanceMapLock();
+}
+
+FNexusLocalActionInstanceMapScopeLock::~FNexusLocalActionInstanceMapScopeLock()
+{
+	ActionComponent.DecreaseLocalActionInstanceMapLock();
+}

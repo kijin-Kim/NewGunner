@@ -11,7 +11,6 @@
 UNexusCueComponent::UNexusCueComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	 
 }
 
 void UNexusCueComponent::Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
@@ -41,11 +40,7 @@ void UNexusCueComponent::TriggerCue(const FNexusTriggerCueParams& TriggerCuePara
 		return;
 	}
 
-	if (!TriggerCueParams.CueClass)
-	{
-		NX_LOG_SUB(LogNexusAction, Verbose, TEXT("CueClass가 유효하지 않습니다"));
-		return;
-	}
+	checkf(TriggerCueParams.CueClass, TEXT("CueClass가 유효하지 않습니다"));
 
 
 	FNexusLoopingCueHandle Handle;
@@ -94,7 +89,7 @@ void UNexusCueComponent::AuthEndCue(FNexusLoopingCueHandle CueHandle)
 {
 	if (!GetOwner()->HasAuthority())
 	{
-		NX_LOG_SUB(LogNexusAction, Warning, TEXT("함수는 서버에서만 호출 가능합니다."));
+		NX_LOG_SUB(GetAgentActor(), LogNexusAction, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
 
@@ -149,11 +144,7 @@ INexusCueNetworkProxyInterface* UNexusCueComponent::GetCueNetworkProxyInterface(
 
 void UNexusCueComponent::OnCueAdded(FNexusLoopingCue& NexusLoopingCue)
 {
-	if (!AgentInfo->GetAgentActor())
-	{
-		NX_LOG_SUB_FN(LogNexusCue, Verbose, TEXT("AgentActor가 유효하지 않습니다"));
-		return;
-	}
+	checkf(AgentInfo->GetAgentActor(), TEXT("AgentActor가 유효하지 않습니다"));
 
 	if (!NexusLoopingCue.CueActor)
 	{

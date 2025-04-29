@@ -5,11 +5,11 @@
 
 #include "Action/NexusActionComponent.h"
 #include "Action/SubComponent/NexusCueComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Action/SubComponent/NexusPredictionComponent.h"
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
-#include "Event/NexusEventManagerComponent.h"
 
 ANexusPlayerState::ANexusPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

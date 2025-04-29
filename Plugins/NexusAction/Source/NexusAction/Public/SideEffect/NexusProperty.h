@@ -43,7 +43,7 @@ struct NEXUSACTION_API FNexusPropertyOperationHandle
 	void GenerateNewHandle();
 	bool IsValid() const { return Handle != INDEX_NONE; }
 	bool operator==(const FNexusPropertyOperationHandle& Other) const = default;
-	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
+	FString ToString() const { return FString::Printf(TEXT("PropertyOperationHandle={Handle=%d}"), Handle); }
 
 	friend uint32 GetTypeHash(const FNexusPropertyOperationHandle& DefHandle) { return GetTypeHash(DefHandle.Handle); }
 
@@ -71,10 +71,21 @@ struct NEXUSACTION_API FNexusPropertyOperation
 		Handle.GenerateNewHandle();
 	}
 
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("PropertyOperation={Handle=%s, Operand=%.2f, Operator=%s}"), *Handle.ToString(), Operand, *UEnum::GetValueAsString(Operator));
+	}
+
 public:
 	float Operand;
 	ENexusPropertyOperator Operator;
 	FNexusPropertyOperationHandle Handle;
+};
+
+struct FNexusPropertyOperationQueryResult
+{
+	TArray<FNexusPropertyOperation> StaticOperations;
+	TArray<FNexusPropertyOperation> DynamicOperations;
 };
 
 /**
@@ -92,7 +103,7 @@ public:
 	bool operator==(const UNexusProperty* Other) const { return Tag == Other->Tag; }
 	bool operator!=(const UNexusProperty* Other) const { return !(*this == Other); }
 
-	void Tick();
+	bool Evaluate();
 
 	void SetStaticValue(float NewValue);
 	void SetDynamicValue(float NewValue);
@@ -103,10 +114,14 @@ public:
 
 	void AddStaticOperation(const FNexusPropertyOperation& Operation);
 	void AddDynamicOperation(const FNexusPropertyOperation& Operation);
-	void RemoveOperationByHandle(const FNexusPropertyOperationHandle& OperationHandle);
+	FNexusPropertyOperationQueryResult FindOperationsByHandle(const FNexusPropertyOperationHandle& OperationHandle) const;
+	void RemoveStaticOperation(const FNexusPropertyOperation& Operation);
+	void RemoveDynamicOperation(const FNexusPropertyOperation& Operation);
+
+
+	FString ToString() const;
 
 private:
-	void Evaluate();
 	void EvaluateOperations(const TArray<FNexusPropertyOperation>& PropertyOperations, float& TargetValue);
 
 	UFUNCTION()

@@ -18,16 +18,23 @@ void UNexusProperty::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UNexusProperty, Tag);
-	DOREPLIFETIME(UNexusProperty, StaticValue);
+	DOREPLIFETIME_CONDITION(UNexusProperty, StaticValue, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UNexusProperty, DynamicValue, COND_SimulatedOnly);
 }
 
-void UNexusProperty::Tick()
+bool UNexusProperty::Evaluate()
 {
 	if (bIsDirty)
 	{
-		Evaluate();
+		float OldValue = DynamicValue;
+		EvaluateOperations(StaticOperations, StaticValue);
+		EvaluateOperations(DynamicOperations, DynamicValue);
+		bIsDirty = false;
+		OnDirtyDelegate.Broadcast(OldValue, DynamicValue);
+		return true;
 	}
+
+	return false;
 }
 
 void UNexusProperty::SetStaticValue(float NewValue)
@@ -59,28 +66,43 @@ void UNexusProperty::AddDynamicOperation(const FNexusPropertyOperation& Operatio
 	bIsDirty = true;
 }
 
-void UNexusProperty::RemoveOperationByHandle(const FNexusPropertyOperationHandle& OperationHandle)
+FNexusPropertyOperationQueryResult UNexusProperty::FindOperationsByHandle(const FNexusPropertyOperationHandle& OperationHandle) const
 {
-	StaticOperations.RemoveAll([OperationHandle](const FNexusPropertyOperation& Operation)
+	FNexusPropertyOperationQueryResult Result;
+	Result.StaticOperations = StaticOperations.FilterByPredicate([OperationHandle](const FNexusPropertyOperation& Operation)
 	{
 		return Operation.Handle == OperationHandle;
 	});
-	DynamicOperations.RemoveAll([OperationHandle](const FNexusPropertyOperation& Operation)
+
+	Result.DynamicOperations = DynamicOperations.FilterByPredicate([OperationHandle](const FNexusPropertyOperation& Operation)
 	{
 		return Operation.Handle == OperationHandle;
+	});
+
+	return Result;
+}
+
+void UNexusProperty::RemoveStaticOperation(const FNexusPropertyOperation& Operation)
+{
+	StaticOperations.RemoveAll([Operation](const FNexusPropertyOperation& StaticOperation)
+	{
+		return StaticOperation.Handle == Operation.Handle;
 	});
 	bIsDirty = true;
 }
 
-void UNexusProperty::Evaluate()
+void UNexusProperty::RemoveDynamicOperation(const FNexusPropertyOperation& Operation)
 {
-	float OldValue = DynamicValue;
-	EvaluateOperations(StaticOperations, StaticValue);
-	StaticOperations.Empty();
-	EvaluateOperations(DynamicOperations, DynamicValue);
-	bIsDirty = false;
-	NX_VLOG_SUB(Cast<AActor>(GetOuter()), LogNexusProperty, Log, TEXT("프로퍼티 [%s] 더티 %.2f -> %.2f"), *Tag.ToString(), OldValue, DynamicValue);
-	OnDirtyDelegate.Broadcast(OldValue, DynamicValue);
+	DynamicOperations.RemoveAll([Operation](const FNexusPropertyOperation& DynamicOperation)
+	{
+		return DynamicOperation.Handle == Operation.Handle;
+	});
+	bIsDirty = true;
+}
+
+FString UNexusProperty::ToString() const
+{
+	return FString::Printf(TEXT("Property={Tag=%s, StaticValue=%.2f, DynamicValue=%.2f}"), *Tag.ToString(), StaticValue, DynamicValue);
 }
 
 
@@ -136,7 +158,7 @@ void UNexusProperty::EvaluateOperations(const TArray<FNexusPropertyOperation>& P
 
 void UNexusProperty::OnRep_StaticValue()
 {
-	bIsDirty = true; 
+	bIsDirty = true;
 }
 
 void UNexusProperty::OnRep_DynamicValue(float OldValue)

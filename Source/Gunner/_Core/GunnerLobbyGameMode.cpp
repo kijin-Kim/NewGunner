@@ -10,7 +10,7 @@
 void AGunnerLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-	GR_VLOG_FN(this, LogGunner, Log, TEXT("[%s]"), *NewPlayer->PlayerState->GetPlayerName());
+	GR_VLOG_FN(this, LogGunnerSession, Display, TEXT("PlayerName=%s"), *NewPlayer->PlayerState->GetPlayerName());
 	if (AGunnerLobbyGameState* GS = GetGameState<AGunnerLobbyGameState>())
 	{
 		GS->AuthOnPlayerJoinedLobby(NewPlayer->PlayerState);
@@ -20,7 +20,7 @@ void AGunnerLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 void AGunnerLobbyGameMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
-	GR_VLOG(this, LogGunner, Log, TEXT("[%s]"), *Exiting->PlayerState->GetPlayerName());
+	GR_VLOG_FN(this, LogGunnerSession, Display, TEXT("PlayerName=%s"), *Exiting->PlayerState->GetPlayerName());
 	if (AGunnerLobbyGameState* GS = GetGameState<AGunnerLobbyGameState>())
 	{
 		GS->AuthOnPlayerLeftLobby(Exiting->PlayerState);

@@ -21,7 +21,7 @@ class UNexusSideEffect;
 
 
 /**
- * 사이드 이펙트 실행 관련 동적, 정적(UNexusSideEffect) 데이터를 가지고 있는 구조체
+ * 사이드이펙트 실행 관련 동적, 정적(UNexusSideEffect) 데이터를 가지고 있는 구조체
  */
 
 USTRUCT()
@@ -43,9 +43,9 @@ struct NEXUSACTION_API FNexusSideEffectInstanceDef
 public:
 	FNexusSideEffectInstanceDef();
 	explicit FNexusSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> InSideEffectClass);
+	FString ToString() const;
 
-
-	// 정적 사이드 이펙트 데이터
+	// 정적 사이드이펙트 데이터
 	UPROPERTY()
 	TObjectPtr<const UNexusSideEffect> SideEffectAsset;
 	UPROPERTY()
@@ -73,7 +73,7 @@ public:
 		Data = Other.Data;
 		return *this;
 	}
-	
+
 	FNexusSideEffectInstanceDefHandle(FNexusSideEffectInstanceDefHandle&& Other)
 	{
 		Data = MoveTemp(Other.Data);
@@ -95,9 +95,8 @@ private:
 };
 
 
-
 /**
- *  사이드 이펙트의 실행 인스턴스. 모디파이어를 적용하고 자신의 지속시간을 관리
+ *  사이드이펙트의 실행 인스턴스. 모디파이어를 적용하고 자신의 지속시간을 관리
  */
 USTRUCT()
 struct FNexusSideEffectInstance : public FFastArraySerializerItem
@@ -123,6 +122,12 @@ struct FNexusSideEffectInstance : public FFastArraySerializerItem
 	void ApplyTagModifier(const FNexusGameplayTagMod& Modifier);
 	void ApplyAllModifiers();
 	bool IsExpired() const;
+
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("SideEffectInstance={%s, Def=%s, RemainingDuration=%.2f, ElapsedTime=%.2f, Interval=%.2f, AppliedCount=%d}"),
+		                       *Handle.ToString(), *Def.ToString(), RemainingDuration, ElapsedTime, Interval, AppliedCount);
+	}
 
 	FNexusSideEffectInstanceHandle Handle;
 
@@ -161,15 +166,29 @@ struct FNexusSideEffectInstanceContainer : public FFastArraySerializer
 	void OnSideEffectInstanceAdded(FNexusSideEffectInstance& SideEffectInstance) const;
 	void OnSideEffectInstanceRemoved(const FNexusSideEffectInstance& SideEffectInstance) const;
 	void Tick(float DeltaTime);
+	
+	void IncreaseSideEffectContainerLock();
+	void DecreaseSideEffectContainerLock();
+
+private:
+	FNexusSideEffectInstanceHandle InternalApplySideEffectByInstance(const FNexusSideEffectInstance& SideEffectInstance);
+	int32 RemoveSideEffectInstanceByPredicate(const TFunction<bool(const FNexusSideEffectInstance&)>& Predicate);
 
 public:
 	UPROPERTY()
 	TArray<FNexusSideEffectInstance> SideEffectInstances;
 	TWeakObjectPtr<UNexusPropertyComponent> PropertyComponent;
 	TWeakObjectPtr<UNexusGameplayTagComponent> GameplayTagComponent;
-
+	
 private:
+
+	bool TEMP_LOOPING = false;
+	
 	bool bHasAuthority = false;
+	int32 ScopeLockCount = 0;
+	TArray<FNexusSideEffectInstance> PendingAdds;
+	TArray<FNexusSideEffectInstanceHandle> PendingRemoves;
+
 };
 
 template <>
@@ -180,3 +199,14 @@ struct TStructOpsTypeTraits<FNexusSideEffectInstanceContainer> : public TStructO
 		WithNetDeltaSerializer = true,
 	};
 };
+
+
+struct FNexusSideEffectContainerLock
+{
+	FNexusSideEffectContainerLock(FNexusSideEffectInstanceContainer& InSideEffectContainer);
+	~FNexusSideEffectContainerLock();
+
+	FNexusSideEffectInstanceContainer& SideEffectContainer;
+};
+
+#define EFFECT_CONTAINER_SCOPE_LOCK() FNexusSideEffectContainerLock SideEffectContScopeLock(*this)

@@ -4,6 +4,7 @@
 #include "GunnerActionComponent.h"
 
 #include "Action/NexusAction.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/Action/GunnerActionSet.h"
 
 UGunnerActionComponent::UGunnerActionComponent()

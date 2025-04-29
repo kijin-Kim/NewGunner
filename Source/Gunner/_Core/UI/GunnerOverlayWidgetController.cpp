@@ -22,12 +22,12 @@ void UGunnerOverlayWidgetController::InitWidgetController(APlayerState* InPlayer
 	SlotIndexProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnSlotIndexValueDirty);
 	OnSlotIndexValueDirty(SlotIndexProperty->GetDynamicValue(), SlotIndexProperty->GetDynamicValue());
 	
-	UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
+	UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Bullet);
 	check(BulletProperty);
 	BulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnBulletValueDirty);
 	OnBulletValueDirty(BulletProperty->GetDynamicValue(), BulletProperty->GetDynamicValue());
 
-	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
+	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet);
 	check(MagazineBulletProperty);
 	MagazineBulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerOverlayWidgetController::OnMagazineBulletValueDirty);
 	OnMagazineBulletValueDirty(MagazineBulletProperty->GetDynamicValue(), MagazineBulletProperty->GetDynamicValue());

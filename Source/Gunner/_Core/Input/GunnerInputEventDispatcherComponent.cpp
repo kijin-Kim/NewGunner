@@ -9,7 +9,7 @@
 #include "Action/NexusActionComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
-#include "Event/NexusEventManagerComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 
 
 UGunnerInputEventDispatcherComponent::UGunnerInputEventDispatcherComponent()

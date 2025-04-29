@@ -29,19 +29,17 @@ bool FNexusLoopingCue::operator!=(const FNexusLoopingCue& Other) const
 
 void FNexusLoopingCue::PreReplicatedRemove(const FNexusLoopingCueContainer& InArraySerializer)
 {
-	UE_LOG(LogNexusCue, Log, TEXT("FNexusLoopingCue::PreReplicatedRemove [%s]"), *GetNameSafe(CueClass));
 	InArraySerializer.OnRemoved(*this);
 }
 
 void FNexusLoopingCue::PostReplicatedAdd(const FNexusLoopingCueContainer& InArraySerializer)
 {
-	UE_LOG(LogNexusCue, Log, TEXT("FNexusLoopingCue::PostReplicatedAdd [%s]"), *GetNameSafe(CueClass));
 	InArraySerializer.OnAdded(*this);
 }
 
 void FNexusLoopingCue::PostReplicatedChange(const FNexusLoopingCueContainer& InArraySerializer)
 {
-	UE_LOG(LogNexusCue, Log, TEXT("FNexusLoopingCue::PostReplicatedChange [%s]"), *GetNameSafe(CueClass));
+	unimplemented();
 }
 
 bool FNexusLoopingCueContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -156,15 +154,12 @@ void ANexusCue::EndCue() const
 
 void ANexusCue::OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
 {
-	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 트리거"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
 }
 
 void ANexusCue::OnBecomeRelevant()
 {
-	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 활성화"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
 }
 
 void ANexusCue::OnCeaseRelevant()
 {
-	UE_LOG(LogNexusCue, Log, TEXT( "[EditorID: %d] 큐 [%s] 비활성화"), static_cast<int32>(GPlayInEditorID), *GetNameSafe(this));
 }

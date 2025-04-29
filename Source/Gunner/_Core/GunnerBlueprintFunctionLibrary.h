@@ -21,7 +21,7 @@ class GUNNER_API UGunnerBlueprintFunctionLibrary : public UBlueprintFunctionLibr
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	UFUNCTION(BlueprintCallable, Category = "Gunner|TargetData")
 	static FNexusTargetDataHandle MakeHitTargetData(float ServerTime, AActor* AgentActor, const TArray<FHitResult>& HitResults)
 	{
 		TSharedPtr<FGunnerTargetData_Hit> HitData = MakeShared<FGunnerTargetData_Hit>();
@@ -35,7 +35,7 @@ public:
 		return Handle;
 	}
 	
-	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	UFUNCTION(BlueprintCallable, Category = "Gunner|TargetData")
 	static FNexusTargetDataHandle MakeActorTargetData(AActor* Actor)
 	{
 		TSharedPtr<FGunnerTargetData_Actor> ActorData = MakeShared<FGunnerTargetData_Actor>();
@@ -47,7 +47,7 @@ public:
 		return Handle;
 	}
 
-	UFUNCTION(BlueprintPure, Category = "Gunner|TargetData")
+	UFUNCTION(BlueprintCallable, Category = "Gunner|TargetData")
 	static FNexusTargetDataHandle MakeSoundBaseTargetData(USoundBase* Sound, USceneComponent* ContextComponent, FName ContextBoneName = NAME_None)
 	{
 		if (!Sound || !ContextComponent)

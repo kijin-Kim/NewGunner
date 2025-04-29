@@ -25,6 +25,11 @@ FNexusSideEffectInstanceDef::FNexusSideEffectInstanceDef(TSubclassOf<UNexusSideE
 {
 }
 
+FString FNexusSideEffectInstanceDef::ToString() const
+{
+	return GetNameSafe(SideEffectAsset);
+}
+
 FNexusSideEffectInstance::FNexusSideEffectInstance() :
 	Def()
 	, RemainingDuration(0.0f)
@@ -88,12 +93,19 @@ void FNexusSideEffectInstance::PostReplicatedChange(const FNexusSideEffectInstan
 void FNexusSideEffectInstance::OnApplied()
 {
 	RemainingDuration = Def.SideEffectAsset->Duration;
-	ApplyAllModifiers();
+	//ApplyAllModifiers();
 }
 
 void FNexusSideEffectInstance::OnTick(float DeltaTime)
 {
-	if (Def.SideEffectAsset->DurationType == ESideEffectDurationType::Duration)
+	if (Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Instant)
+	{
+		ApplyAllModifiers();
+		return;
+	}
+
+
+	if (Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Duration)
 	{
 		RemainingDuration -= DeltaTime;
 	}
@@ -134,7 +146,7 @@ void FNexusSideEffectInstance::OnRemoved() const
 	}
 
 
-	if (Def.SideEffectAsset->DurationType != ESideEffectDurationType::Instant || !bHasAuthority)
+	if (Def.SideEffectAsset->DurationType != ENexusSideEffectDurationType::Instant || !bHasAuthority)
 	{
 		for (const FNexusGameplayTagMod& TagMod : Def.SideEffectAsset->TagModifiers)
 		{
@@ -152,7 +164,7 @@ void FNexusSideEffectInstance::OnRemoved() const
 
 void FNexusSideEffectInstance::ApplyPropertyModifier(const FNexusPropertyMod& Modifier)
 {
-	if (Def.SideEffectAsset->DurationType != ESideEffectDurationType::Instant && Interval > 0.0f
+	if (Def.SideEffectAsset->DurationType != ENexusSideEffectDurationType::Instant && Interval > 0.0f
 		&& !bHasAuthority)
 	{
 		return;
@@ -198,7 +210,7 @@ void FNexusSideEffectInstance::ApplyPropertyModifier(const FNexusPropertyMod& Mo
 	}
 
 
-	if ((Def.SideEffectAsset->DurationType != ESideEffectDurationType::Instant && Interval <= 0.0f)
+	if ((Def.SideEffectAsset->DurationType != ENexusSideEffectDurationType::Instant && Interval <= 0.0f)
 		|| (!bHasAuthority))
 	{
 		FNexusPropertyOperation NewOperation{DesiredValue, Modifier.Operator};
@@ -244,8 +256,8 @@ void FNexusSideEffectInstance::ApplyAllModifiers()
 
 bool FNexusSideEffectInstance::IsExpired() const
 {
-	return Def.SideEffectAsset->DurationType == ESideEffectDurationType::Instant
-		|| (Def.SideEffectAsset->DurationType == ESideEffectDurationType::Duration && RemainingDuration <= 0.0f);
+	return Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Instant
+		|| (Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Duration && RemainingDuration <= 0.0f);
 }
 
 
@@ -258,32 +270,23 @@ void FNexusSideEffectInstanceContainer::Init(UNexusPropertyComponent* InProperty
 
 FNexusSideEffectInstanceHandle FNexusSideEffectInstanceContainer::ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef)
 {
-	int32 Index = SideEffectInstances.Add(FNexusSideEffectInstance{SideEffectInstanceDef});
-	check(Index != INDEX_NONE);
-	if (bHasAuthority)
-	{
-		MarkItemDirty(SideEffectInstances[Index]);
-	}
-	OnSideEffectInstanceAdded(SideEffectInstances[Index]);
-	return SideEffectInstances[Index].Handle;
+	return InternalApplySideEffectByInstance(FNexusSideEffectInstance{SideEffectInstanceDef});
 }
 
 void FNexusSideEffectInstanceContainer::RemoveSideEffectInstance(const FNexusSideEffectInstanceHandle& SideEffectInstanceHandle)
 {
-	const int32 Removed = SideEffectInstances.RemoveAll([this, SideEffectInstanceHandle](FNexusSideEffectInstance& Element)
+	if (ScopeLockCount > 0)
 	{
-		if (Element.Handle == SideEffectInstanceHandle)
-		{
-			OnSideEffectInstanceRemoved(Element);
-			return true;
-		}
-		return false;
+		PendingRemoves.Add(SideEffectInstanceHandle);
+		return;
+	}
+
+	EFFECT_CONTAINER_SCOPE_LOCK();
+	const int32 Removed = RemoveSideEffectInstanceByPredicate([SideEffectInstanceHandle](const FNexusSideEffectInstance& SideEffectInstance)
+	{
+		return SideEffectInstance.Handle == SideEffectInstanceHandle;
 	});
 	check(Removed != 0);
-	if (bHasAuthority) // TODO: 필요한지 테스트
-	{
-		MarkArrayDirty();
-	}
 }
 
 bool FNexusSideEffectInstanceContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -293,36 +296,114 @@ bool FNexusSideEffectInstanceContainer::NetDeltaSerialize(FNetDeltaSerializeInfo
 
 void FNexusSideEffectInstanceContainer::OnSideEffectInstanceAdded(FNexusSideEffectInstance& SideEffectInstance) const
 {
+	NX_CLOG_SUB(PropertyComponent->GetAgentActor(), ScopeLockCount > 1, LogNexusSideEffect, Warning, TEXT("잠긴 상태의 사이드이펙트 컨테이너에 추가 시도: %s; ScopeLockCount=%d"), *SideEffectInstance.ToString(), ScopeLockCount);
 	SideEffectInstance.InitializeSideEffectInstance(PropertyComponent.Get(), GameplayTagComponent.Get(), bHasAuthority);
+	NX_CVLOG_SUB(PropertyComponent.IsValid(), PropertyComponent->GetAgentActor(), LogNexusSideEffect, Display, TEXT("사이드이펙트 적용: %s; ScopeLockCount=%d"), *SideEffectInstance.ToString(), ScopeLockCount);
 	SideEffectInstance.OnApplied();
 }
 
 void FNexusSideEffectInstanceContainer::OnSideEffectInstanceRemoved(const FNexusSideEffectInstance& SideEffectInstance) const
 {
+	NX_CLOG_SUB(PropertyComponent->GetAgentActor(), ScopeLockCount > 1, LogNexusSideEffect, Warning, TEXT("잠긴 상태의 사이드이펙트 컨테이너에 제거 시도: %s; ScopeLockCount=%d"), *SideEffectInstance.ToString(), ScopeLockCount);
+	NX_CVLOG_SUB(PropertyComponent.IsValid(), PropertyComponent->GetAgentActor(), LogNexusSideEffect, Display, TEXT("사이드이펙트 제거: %s; ScopeLockCount=%d"), *SideEffectInstance.ToString(), ScopeLockCount);
 	SideEffectInstance.OnRemoved();
 }
 
 void FNexusSideEffectInstanceContainer::Tick(float DeltaTime)
 {
+	TEMP_LOOPING = true;
+	check(ScopeLockCount == 0);
+	EFFECT_CONTAINER_SCOPE_LOCK();
 	for (FNexusSideEffectInstance& SideEffectInstance : SideEffectInstances)
 	{
 		SideEffectInstance.OnTick(DeltaTime);
 	}
 
+	if (PropertyComponent.IsValid())
+	{
+		PropertyComponent->EvaluateProperties();
+	}
+
 	if (bHasAuthority)
 	{
-		int32 Removed = SideEffectInstances.RemoveAll([this](FNexusSideEffectInstance& SideEffectInstance)
+		RemoveSideEffectInstanceByPredicate([](const FNexusSideEffectInstance& SideEffectInstance)
 		{
-			if (SideEffectInstance.IsExpired())
-			{
-				OnSideEffectInstanceRemoved(SideEffectInstance);
-				return true;
-			}
-			return false;
+			return SideEffectInstance.IsExpired();
 		});
-		if (Removed != 0)
+	}
+	TEMP_LOOPING = false;
+}
+
+void FNexusSideEffectInstanceContainer::IncreaseSideEffectContainerLock()
+{
+	ScopeLockCount++;
+}
+
+void FNexusSideEffectInstanceContainer::DecreaseSideEffectContainerLock()
+{
+	ScopeLockCount--;
+	if (ScopeLockCount == 0 && (PendingAdds.Num() != 0 || PendingRemoves.Num() != 0))
+	{
+		TArray<FNexusSideEffectInstance> PendingAddsCopy = MoveTemp(PendingAdds);
+		TArray<FNexusSideEffectInstanceHandle> PendingRemovesCopy = MoveTemp(PendingRemoves);
+
+		for (const FNexusSideEffectInstance& SideEffectInstance : PendingAddsCopy)
 		{
-			MarkArrayDirty();
+			InternalApplySideEffectByInstance(SideEffectInstance);
+		}
+
+		for (const FNexusSideEffectInstanceHandle& SideEffectInstanceHandle : PendingRemovesCopy)
+		{
+			RemoveSideEffectInstance(SideEffectInstanceHandle);
 		}
 	}
+}
+
+FNexusSideEffectInstanceHandle FNexusSideEffectInstanceContainer::InternalApplySideEffectByInstance(const FNexusSideEffectInstance& SideEffectInstance)
+{
+	if (ScopeLockCount > 0)
+	{
+		const int32 Index = PendingAdds.Add(SideEffectInstance);
+		check(Index != INDEX_NONE);
+		return PendingAdds[Index].Handle;
+	}
+
+	EFFECT_CONTAINER_SCOPE_LOCK();
+	const int32 Index = SideEffectInstances.Add(SideEffectInstance);
+	check(Index != INDEX_NONE);
+	if (bHasAuthority)
+	{
+		MarkItemDirty(SideEffectInstances[Index]);
+	}
+	OnSideEffectInstanceAdded(SideEffectInstances[Index]);
+	return SideEffectInstances[Index].Handle;
+}
+
+int32 FNexusSideEffectInstanceContainer::RemoveSideEffectInstanceByPredicate(const TFunction<bool(const FNexusSideEffectInstance&)>& Predicate)
+{
+	int32 Removed = SideEffectInstances.RemoveAll([this, Predicate](FNexusSideEffectInstance& SideEffectInstance)
+	{
+		if (Predicate(SideEffectInstance))
+		{
+			OnSideEffectInstanceRemoved(SideEffectInstance);
+			return true;
+		}
+		return false;
+	});
+	if (Removed != 0)
+	{
+		MarkArrayDirty();
+	}
+	return Removed;
+}
+
+FNexusSideEffectContainerLock::FNexusSideEffectContainerLock(FNexusSideEffectInstanceContainer& InSideEffectContainer) :
+	SideEffectContainer(InSideEffectContainer)
+{
+	SideEffectContainer.IncreaseSideEffectContainerLock();
+}
+
+FNexusSideEffectContainerLock::~FNexusSideEffectContainerLock()
+{
+	SideEffectContainer.DecreaseSideEffectContainerLock();
 }

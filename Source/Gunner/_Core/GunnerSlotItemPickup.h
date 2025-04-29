@@ -30,7 +30,7 @@ private:
 	
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_SlotItemInstance, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ExposeOnSpawn = "true"))
-	AGunnerSlotItem* SlotItemInstance;
+	AGunnerSlotItem* SlotItem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* PickupMeshComponent;

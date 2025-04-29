@@ -34,12 +34,7 @@ bool FNexusActionDef::operator!=(const FNexusActionDef& Other) const
 
 FString FNexusActionDef::ToString() const
 {
-	return FString::Printf(TEXT("ActionClass: %s, Handle: %s, SourceObject: %s"), *ActionClass->GetName(), *Handle.ToString(), SourceObject.IsValid() ? *SourceObject->GetName() : TEXT(""));
-}
-
-void FNexusActionDef::PostReplicatedAdd(const FNexusActionDefContainer& InArraySerializer)
-{
-	InArraySerializer.OnAdded(*this);
+	return FString::Printf(TEXT("ActionDef={ActionClass=%s, Handle=%s, SourceObject=%s}"), *ActionClass->GetName(), *Handle.ToString(), SourceObject ? *SourceObject->GetName() : TEXT(""));
 }
 
 void FNexusActionDef::PreReplicatedRemove(const FNexusActionDefContainer& InArraySerializer)
@@ -47,13 +42,27 @@ void FNexusActionDef::PreReplicatedRemove(const FNexusActionDefContainer& InArra
 	InArraySerializer.OnRemoved(*this);
 }
 
+FNexusActionDefContainer::~FNexusActionDefContainer()
+{
+	Items.Empty();
+	AcuumulatedAddedIndices.Empty();
+}
+
+void FNexusActionDefContainer::Init()
+{
+	bInitialized = true;
+	for (const auto& AddedIndex : PreInitAddedIndices)
+	{
+		if (Items.IsValidIndex(AddedIndex))
+		{
+			OnAdded(Items[AddedIndex]);
+		}
+	}
+	PreInitAddedIndices.Empty();
+}
+
 void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
 {
-	if (HasSameActionClassAndSourceObject(ActionDef))
-	{
-		UE_LOG(LogNexusAction, Verbose, TEXT("액션 데피니션 [ActionClass: %s, SourceObject: %s]가 이미 추가 되었습니다."), *ActionDef.ActionClass->GetName(), ActionDef.SourceObject.IsValid() ? *ActionDef.SourceObject->GetName() : TEXT(""));
-		return;
-	}
 	int32 Index = Items.Add(ActionDef);
 	MarkItemDirty(Items[Index]);
 	OnAdded(Items[Index]);
@@ -83,9 +92,10 @@ void FNexusActionDefContainer::AuthRemoveAll()
 	MarkArrayDirty();
 }
 
-FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusActionDefHandle& Handle)
+const FNexusActionDef* FNexusActionDefContainer::FindActionDefByHandle(const FNexusActionDefHandle& Handle) const
 {
-	for (FNexusActionDef& Item : Items)
+	check(Handle.IsValid());
+	for (const FNexusActionDef& Item : Items)
 	{
 		if (Item.Handle == Handle)
 		{
@@ -127,3 +137,56 @@ void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDef) const
 {
 	OnActionDefRemovedDelegate.ExecuteIfBound(ActionDef);
 }
+
+void FNexusActionDefContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
+{
+	AcuumulatedAddedIndices.Append(AddedIndices);
+}
+
+void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
+{
+	// 다음 상황에서 SourceObject가 매핑되지 않을 수 있음
+	// 1. SourceObject가 리플리케이트 될 때까지 기다린 후 액션을 최종적으로 추가
+	// 2. SourceObject가 같은 프레임에 도착하나, 리플리케이트 순서가 빠를 경우,
+	// 3. SourceObject가 클라이언트에서 아직 소환되지 않은 액터일 경우
+
+	// 이를 위해 PostReplicatedReceive를 통해 SourceObject가 완전히 매핑된 후 액션을 추가함
+	if (!Parameters.bHasMoreUnmappedReferences)
+	{
+		for (const auto& AddedIndex : AcuumulatedAddedIndices)
+		{
+			if (Items.IsValidIndex(AddedIndex))
+			{
+				if (bInitialized)
+				{
+					OnAdded(Items[AddedIndex]);
+				}
+				else
+				{
+					PreInitAddedIndices.Add(AddedIndex);
+				}
+			}
+		}
+		AcuumulatedAddedIndices.Empty();
+	}
+	else
+	{
+		UE_LOG(LogNexusAction, VeryVerbose, TEXT("매핑되지 않은 레퍼런스 존재: FrameNumber=%d"), GFrameNumber);
+	}
+}
+
+// for (const auto& [OuterIndex, GuidRefeMap] : GuidReferencesMap_StructDelta)
+// {
+// 	for (const auto& [Index, GuidRefs] : GuidRefeMap)
+// 	{
+// 		UE_LOG(LogNexusAction, Error, TEXT("PostReplicatedAdd: Index: Outer: [%d] Inner: [%d]"), OuterIndex, Index);
+// 		for (const auto& GUID : GuidRefs.UnmappedGUIDs)
+// 		{
+// 			UE_LOG(LogNexusAction, Error, TEXT("PostReplicatedAdd: Unmapped references exist: %s; %d"), *GUID.ToString(), GFrameNumber);
+// 		}
+// 		for (const auto& GUID : GuidRefs.MappedDynamicGUIDs)
+// 		{
+// 			UE_LOG(LogNexusAction, Display, TEXT("PostReplicatedAdd: Mapped dynamic references exist: %s; %d"), *GUID.ToString(), GFrameNumber);
+// 		}
+// 	}
+// }

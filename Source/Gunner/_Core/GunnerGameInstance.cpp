@@ -8,7 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
 
 void UGunnerGameInstance::Init()
 {

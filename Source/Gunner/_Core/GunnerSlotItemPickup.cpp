@@ -3,11 +3,11 @@
 
 #include "GunnerSlotItemPickup.h"
 
+#include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "Gunner/Equipment/GunnerEquipment.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
-#include "Gunner/Slot/GunnerInventoryManagerInterface.h"
-#include "Gunner/Slot/GunnerSlotItem.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerInventoryManagerInterface.h"
+#include "Gunner/Item/GunnerSlotItem.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -27,7 +27,7 @@ void AGunnerSlotItemPickup::InitializeSlotItemPickup(AGunnerSlotItem* InSlotItem
 {
 	if (InSlotItemInstance)
 	{
-		SlotItemInstance = InSlotItemInstance;
+		SlotItem = InSlotItemInstance;
 		CopyMeshFromSource();
 	}
 }
@@ -35,7 +35,7 @@ void AGunnerSlotItemPickup::InitializeSlotItemPickup(AGunnerSlotItem* InSlotItem
 void AGunnerSlotItemPickup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION_NOTIFY(AGunnerSlotItemPickup, SlotItemInstance, COND_InitialOnly, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AGunnerSlotItemPickup, SlotItem, COND_InitialOnly, REPNOTIFY_Always);
 }
 
 void AGunnerSlotItemPickup::OnConstruction(const FTransform& Transform)
@@ -57,7 +57,7 @@ bool AGunnerSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UActorC
 		return false;
 	}
 
-	if (!SlotItemInstance)
+	if (!SlotItem)
 	{
 		return false;
 	}
@@ -71,7 +71,7 @@ bool AGunnerSlotItemPickup::CanPickup_Implementation(AActor* OtherActor, UActorC
 
 	UGunnerInventoryManagerComponent* InventoryManager = InventoryManagerInterface->GetInventoryManagerComponent();
 	check(InventoryManager);
-	return InventoryManager->CanAcquireItem(SlotItemInstance);
+	return InventoryManager->CanAcquireItem(SlotItem);
 }
 
 void AGunnerSlotItemPickup::OnPickup_Implementation(AActor* OtherActor, UActorComponent* OtherComponent)
@@ -80,17 +80,17 @@ void AGunnerSlotItemPickup::OnPickup_Implementation(AActor* OtherActor, UActorCo
 	
 	UGunnerInventoryManagerComponent* InventoryManager = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(OtherActor);
 	check(InventoryManager);
-	InventoryManager->AuthAddItem(SlotItemInstance);
+	InventoryManager->AuthAddItem(SlotItem);
 }
 
 void AGunnerSlotItemPickup::CopyMeshFromSource()
 {
-	if (!PickupMeshComponent || !SlotItemInstance || !SlotItemInstance->Implements<UNexusAnimMontagePlayerInterface>())
+	if (!PickupMeshComponent || !SlotItem || !SlotItem->Implements<UNexusAnimMontagePlayerInterface>())
 	{
 		return;
 	}
 
-	USkeletalMeshComponent* SourceEquipmentMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(SlotItemInstance);
+	USkeletalMeshComponent* SourceEquipmentMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(SlotItem);
 	if (!SourceEquipmentMeshComponent)
 	{
 		return;

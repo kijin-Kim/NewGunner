@@ -19,7 +19,12 @@ struct NEXUSACTION_API FNexusActionDefHandle
 	void GenerateNewHandle();
 	bool IsValid() const { return Handle != INDEX_NONE; }
 	bool operator==(const FNexusActionDefHandle& Other) const = default;
-	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
+	FString ToString() const
+	{
+		
+		return FString::Printf(TEXT("ActionDefHandle={Handle=%d}"), Handle);
+		
+	}
 
 	friend uint32 GetTypeHash(const FNexusActionDefHandle& DefHandle) { return GetTypeHash(DefHandle.Handle); }
 

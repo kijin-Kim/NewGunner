@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "NexusActionInterface.h"
-#include "Gunner/Action/GunnerActionDropSlotItem.h"
-#include "Gunner/Slot/GunnerInventoryManagerInterface.h"
+#include "Gunner/Action/GunnerAction_DropSlotItem.h"
+#include "Gunner/Item/GunnerInventoryManagerInterface.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "UObject/ObjectMacros.h"
 #include "GunnerTestPawn.generated.h"
@@ -16,7 +16,6 @@ class UNexusGameplayTagComponent;
 class UNexusPropertyComponent;
 class UNexusCueComponent;
 class UNexusEventManagerComponent;
-
 
 
 UCLASS()
@@ -40,8 +39,8 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<USphereComponent> SphereComponent;
-	
-	
+
+
 	UPROPERTY()
 	TObjectPtr<UGunnerTestActionComponent> ActionComponent;
 	UPROPERTY()
@@ -56,7 +55,6 @@ private:
 	TObjectPtr<UNexusPredictionComponent> PredictionComponent;
 	UPROPERTY()
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
-
 
 	UPROPERTY()
 	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;

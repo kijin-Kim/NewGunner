@@ -12,6 +12,8 @@ namespace GunnerNativeGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Uncrouch, "Input.Uncrouch");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Drop, "Input.Drop");
 
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Action_Equip, "Action.Equip");
+
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Primary, "Input.ActivateSlot.Primary");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Secondary, "Input.ActivateSlot.Secondary");
@@ -24,16 +26,17 @@ namespace GunnerNativeGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Damaged, "GameEvent.Damaged");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CycleSlot, "GameEvent.CycleSlot");
-	 
+
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_SlotIndex, "OperationValue.SlotIndex");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_Bullet, "OperationValue.Bullet");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_MagazineBullet, "OperationValue.MagazineBullet");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_OperationValue_MaxBulletPerMagazine, "OperationValue.MaxBulletPerMagazine");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Health, "Property.Health");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_Bullet, "Property.Weapon.Bullet");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MagazineBullet, "Property.Weapon.MagazineBullet");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Weapon_MaxBulletPerMagazine, "Property.Weapon.MaxBulletPerMagazine");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_Bullet, "Property.Bullet");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_MagazineBullet, "Property.MagazineBullet");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_MaxBulletPerMagazine, "Property.MaxBulletPerMagazine");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_SlotIndex, "Property.SlotIndex");
-
 }
-
 

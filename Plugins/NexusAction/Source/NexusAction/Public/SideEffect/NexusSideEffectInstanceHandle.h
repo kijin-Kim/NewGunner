@@ -21,7 +21,7 @@ struct FNexusSideEffectInstanceHandle
 	void GenerateNewHandle();
 	bool IsValid() const { return Handle != INDEX_NONE; }
 	bool operator==(const FNexusSideEffectInstanceHandle& Other) const = default;
-	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
+	FString ToString() const { return FString::Printf(TEXT("SideEffectInstancdHandle={Handle=%d}"), Handle); }
 
 	friend uint32 GetTypeHash(const FNexusSideEffectInstanceHandle& DefHandle) { return GetTypeHash(DefHandle.Handle); }
 

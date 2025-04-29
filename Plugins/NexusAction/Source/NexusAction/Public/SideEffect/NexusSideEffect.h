@@ -15,7 +15,7 @@
 struct FNexusAgentInfo;
 
 UENUM()
-enum class ESideEffectDurationType
+enum class ENexusSideEffectDurationType
 {
 	Instant,
 	Duration,
@@ -66,18 +66,17 @@ struct FNexusGameplayTagMod
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class NEXUSACTION_API UNexusSideEffect : public UDataAsset
 {
 	GENERATED_BODY()
 
-
 public:
 	UPROPERTY(EditAnywhere)
-	ESideEffectDurationType DurationType = ESideEffectDurationType::Instant;
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ESideEffectDurationType::Duration", EditConditionHides))
+	ENexusSideEffectDurationType DurationType = ENexusSideEffectDurationType::Instant;
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType == ENexusSideEffectDurationType::Duration", EditConditionHides))
 	float Duration = 0.0f;
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ESideEffectDurationType::Instant", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "DurationType != ENexusSideEffectDurationType::Instant", EditConditionHides))
 	float Interval = 0.0f;
 
 
@@ -97,6 +96,6 @@ class UNexusSideEffectInfinite : public UNexusSideEffect
 public:
 	UNexusSideEffectInfinite()
 	{
-		DurationType = ESideEffectDurationType::Infinite;
+		DurationType = ENexusSideEffectDurationType::Infinite;
 	}
 };

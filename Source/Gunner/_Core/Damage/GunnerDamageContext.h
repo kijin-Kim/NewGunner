@@ -6,7 +6,6 @@
 #include "UObject/Object.h"
 #include "GunnerDamageContext.generated.h"
 
-class AGunnerEquipment;
 /**
  * 
  */

@@ -32,7 +32,8 @@ void UGunnerMainMenuWidget::OnSessionParticipantJoined(FName Name, const FUnique
 	{
 		IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
 		OnJoinedSessionParticipantsChanged.Broadcast(GetParticipants(SessionInterfacePtr->GetNamedSession(NAME_GameSession)));
-		UE_LOG(LogGunner, Log, TEXT("플레이어 [%s]가 세션에 참가하였습니다."), *UniqueNetId.ToString());
+
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("플레이어 세션 참가: UniqueNetId=%s"), *UniqueNetId.ToString());
 	}
 }
 
@@ -42,7 +43,7 @@ void UGunnerMainMenuWidget::OnSessionParticipantLeft(FName Name, const FUniqueNe
 	{
 		IOnlineSessionPtr SessionInterfacePtr = Online::GetSubsystem(GetWorld())->GetSessionInterface();
 		OnJoinedSessionParticipantsChanged.Broadcast(GetParticipants(SessionInterfacePtr->GetNamedSession(NAME_GameSession)));
-		UE_LOG(LogGunner, Log, TEXT("플레이어가 세션을 떠났습니다: %s 사유: %s"), *UniqueNetId.ToString(), *ToLogString(OnSessionParticipantLeftReason));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("플레이어 퇴장: UniqueNetId=%s; Reason="), *UniqueNetId.ToString(), *ToLogString(OnSessionParticipantLeftReason));
 	}
 }
 
@@ -66,7 +67,6 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 		Session->SessionSettings.Get(TEXT("MAP_NAME"), MapName);
 
 
-		UE_LOG(LogGunner, Log, TEXT("세션 [%s] 생성 성공. 방 이름 [%s], 맵 이름 [%s]"), *SessionName.ToString(), *RoomName, *MapName);
 		FRoomInfo RoomInfo{};
 		RoomInfo.RoomName = RoomName;
 		RoomInfo.MapName = MapName;
@@ -75,13 +75,16 @@ void UGunnerMainMenuWidget::OnCreateSessionComplete(FName SessionName, bool bWas
 		RoomInfo.PingInMs = 0;
 		RoomInfo.SessionId = Session->GetSessionIdStr();
 		RoomInfo.Participants = GetParticipants(Session);
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("세션 생성: %s"), *RoomInfo.ToString());
+
 
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
 		GetWorld()->ServerTravel("/Game/Maps/Lobby?listen");
 		return;
 	}
 
-	UE_LOG(LogGunner, Error, TEXT("세션 생성 실패"));
+	
+	GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Fatal, TEXT("세션 생성 실패"));
 }
 
 
@@ -94,6 +97,7 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 	TArray<FRoomInfo> RoomInfos;
 	if (bWasSuccessful && SessionSearch.IsValid())
 	{
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("세션 검색 성공"));
 		for (const FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
 		{
 			if (!SearchResult.IsSessionInfoValid())
@@ -108,7 +112,7 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			RoomName = DecodeString(RoomName);
 			MapName = DecodeString(MapName);
 
-			
+
 			FRoomInfo NewRoomInfo;
 			NewRoomInfo.RoomName = RoomName;
 			NewRoomInfo.MapName = MapName;
@@ -116,14 +120,14 @@ void UGunnerMainMenuWidget::OnFindSessionsComplete(bool bWasSuccessful)
 			NewRoomInfo.MaxPlayerCount = SearchResult.Session.SessionSettings.NumPublicConnections;
 			NewRoomInfo.PingInMs = SearchResult.PingInMs;
 			NewRoomInfo.SessionId = SearchResult.GetSessionIdStr();
-			
+
 			RoomInfos.Add(NewRoomInfo);
-			UE_LOG(LogGunner, Log, TEXT("%s"), *NewRoomInfo.ToString());
+			GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, VeryVerbose, TEXT("%s"), *NewRoomInfo.ToString());
 		}
 	}
 	else
 	{
-		UE_LOG(LogGunner, Error, TEXT("세션 검색 실패"));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("세션 검색 실패"));
 	}
 
 	if (!RoomInfos.IsEmpty())
@@ -162,7 +166,7 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 		RoomInfo.Participants = GetParticipants(Session);
 
 		OnJoinSessionLobbySucceeded.Broadcast(RoomInfo);
-		UE_LOG(LogGunner, Log, TEXT("세션 [%s] 참가 성공. 방 이름 [%s], 맵 이름 [%s]"), *Name.ToString(), *RoomName, *MapName);
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("세션 참가: %s"), *RoomInfo.ToString());
 		FString Address;
 		SessionInterfacePtr->GetResolvedConnectString(NAME_GameSession, Address);
 		if (APlayerController* PC = GetOwningPlayer())
@@ -172,7 +176,7 @@ void UGunnerMainMenuWidget::OnJoinSessionComplete(FName Name, EOnJoinSessionComp
 	}
 	else
 	{
-		UE_LOG(LogGunner, Error, TEXT("세션 참가 실패"));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Display, TEXT("세션 참가 실패"));
 	}
 }
 
@@ -183,11 +187,11 @@ void UGunnerMainMenuWidget::OnStartSessionComplete(FName Name, bool bArg)
 
 	if (bArg)
 	{
-		UE_LOG(LogGunner, Log, TEXT("세션 [%s] 시작 성공"), *Name.ToString());
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Log, TEXT("세션 시작 성공: Name=%s"), *Name.ToString());
 	}
 	else
 	{
-		UE_LOG(LogGunner, Error, TEXT("세션 시작 실패"));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Error, TEXT("세션 시작 실패: Name=%s"), *Name.ToString());
 	}
 }
 
@@ -195,7 +199,7 @@ void UGunnerMainMenuWidget::FindSession(FString RoomName)
 {
 	if (GIsPlayInEditorWorld && Online::GetSubsystem(GetWorld())->GetSubsystemName() != "NULL")
 	{
-		UE_LOG(LogGunner, Error, TEXT("에디터에서 실행 중에는 사용할 수 없습니다."));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Error, TEXT("에디터에서 세션 기능 시도"));
 		OnFindSessionsComplete(false);
 		return;
 	}
@@ -305,7 +309,7 @@ void UGunnerMainMenuWidget::OnHostButtonClicked(FString RoomName, FString MapNam
 {
 	if (GIsPlayInEditorWorld && Online::GetSubsystem(GetWorld())->GetSubsystemName() != "NULL")
 	{
-		UE_LOG(LogGunner, Error, TEXT("에디터에서 실행 중에는 사용할 수 없습니다."));
+		GR_VLOG_SUB(GetOwningPlayer(), LogGunnerSession, Error, TEXT("에디터에서 세션 기능 시도"));
 		return;
 	}
 

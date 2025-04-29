@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusEventManagerComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "UObject/Interface.h"
 #include "NexusEventBindHelperInterface.generated.h"
 

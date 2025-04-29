@@ -19,10 +19,10 @@ void UNexusCheatManager::DumpAddedActions()
 	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn))
 	{
 		const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
-		NX_LOG_SUB(LogNexusAction, Log, TEXT("추가된 액션 덤프: "));
+		NX_LOG_SUB(ActionComponent->GetAgentActor(), LogNexusAction, Log, TEXT("액션 덤프: "));
 		for (int i = 0; i < ActionDefs.Items.Num(); i++)
 		{
-			UE_LOG(LogNexusAction, Log, TEXT("    %d: %s"), i, *ActionDefs.Items[i].ToString());
+			NX_LOG_SUB(ActionComponent->GetAgentActor(), LogNexusAction, Log, TEXT("    %d: %s"), i, *ActionDefs.Items[i].ToString());
 		}
 	}
 }

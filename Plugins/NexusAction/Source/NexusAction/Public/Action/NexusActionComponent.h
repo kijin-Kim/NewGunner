@@ -9,7 +9,7 @@
 #include "Action/SubComponent/NexusPredictionComponent.h"
 #include "Components/ActorComponent.h"
 #include "Cue/NexusCue.h"
-#include "Event/NexusEventManagerComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "Event/NexusEventMessage.h"
 #include "Prediction/NexusPrediction.h"
 #include "SideEffect/NexusSideEffect.h"
@@ -29,6 +29,20 @@ class UNexusSideEffect;
 
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
+
+
+struct FNexusPendingAddActionInfo
+{
+	FNexusActionDef ActionDef;
+	bool bIsPendingTrigger = false;
+	FNexusEventMessage PendingEventMessage;
+};
+
+struct FNexusPendingAddLocalActionInstanceInfo
+{
+	FNexusActionDefHandle Handle;
+	UNexusAction* ActionInstance;
+};
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -60,13 +74,11 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
-
 private:
 	void InternalSetupActionComponent();
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 	UFUNCTION()
 	void OnRep_AgentActor();
-
 
 public:
 	// ------------------------------------------------------------------------------
@@ -78,14 +90,16 @@ public:
 	bool IsAgentLocallyPlayerControlled() const { return AgentInfo->IsLocallyPlayerControlled(); }
 	bool IsOwnerActorAuthoritative() const { return AgentInfo->IsOwnerActorAuthoritative(); }
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
+	AController* GetController() const { return AgentInfo->Controller.Get(); }
 
 
 	// ------------------------------------------------------------------------------
 	// Action Add/Remove
 	// ------------------------------------------------------------------------------
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	FNexusActionDefHandle AuthAddAction(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject = nullptr);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
 
@@ -100,6 +114,7 @@ private:
 	void HandleTriggerableActionOnRemoved(const FNexusActionDefHandle& ActionDefHandle);
 	void BindActionTriggerEvent(const FNexusActionDef& NewActionDef, UNexusAction* ActionInstance);
 	void UnbindActionTriggerEvent(const FNexusActionDefHandle& ActionDefHandle);
+
 
 	// ------------------------------------------------------------------------------
 	// Action Trigger
@@ -130,11 +145,16 @@ private:
 
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, const FNexusActionDefHandle& ActionDefHandle);
 	void OnActionEnded(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* Action);
+	FNexusPendingAddActionInfo* FindPendingAddActionInfo(const FNexusActionDefHandle& ActionDefHandle);
 
 public:
 	UFUNCTION(BlueprintCallable)
 	FNexusActionDefHandle FindActionDefHandle(TSubclassOf<UNexusAction> ActionClass, UObject* SourceObject) const;
-	FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle);
+	const FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle) const;
+
+
+	void IncreaseLocalActionInstanceMapLock();
+	void DecreaseLocalActionInstanceMapLock();
 
 	UNexusAction* CreateActionInstance(const FNexusActionDef& ActionDef);
 	void DestroyActionInstance(const FNexusActionDefHandle& Handle);
@@ -143,14 +163,17 @@ public:
 	const TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>>& GetLocalActionInstanceMap() const { return LocalActionInstanceMap; }
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
+private:
+	UNexusAction* InternalAddActionInstance(const FNexusActionDefHandle& Handle, UNexusAction* ActionInstance);
 
+public:
 	// ------------------------------------------------------------------------------
 	// SideEffect
 	// ------------------------------------------------------------------------------
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect"))
-	static void BP_TriggerSideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass);
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Side Effect By Def"))
-	static void BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Apply Side Effect"))
+	static void BP_ApplySideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Apply Side Effect By Def"))
+	static void BP_ApplySideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle);
 	UFUNCTION(BlueprintCallable)
 	static FNexusSideEffectInstanceDefHandle MakeSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> SideEffectClass);
 	FNexusSideEffectInstanceHandle ApplySideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
@@ -162,6 +185,7 @@ public:
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
+	float GetPropertyValue(FGameplayTag Tag);
 	void AuthAddProperty(FGameplayTag Tag, float Value);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
@@ -248,21 +272,15 @@ private:
 
 	UPROPERTY(Replicated)
 	FNexusActionDefContainer ActionDefs;
-	UPROPERTY()
-	TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>> LocalActionInstanceMap;
-
-
 	int32 ActionScopeLockCount = 0;
 	TArray<FNexusActionDefHandle> ActionPendingRemoves;
+	TArray<FNexusPendingAddActionInfo> ActionPendingAdds;
 
-	struct FNexusPendingAddActionInfo
-	{
-		FNexusActionDef ActionDef;
-		bool bIsPendingTrigger = false;
-		FNexusEventMessage PendingEventMessage;
-	};
-
-	TArray<struct FNexusPendingAddActionInfo> ActionPendingAdds;
+	UPROPERTY()
+	TMap<FNexusActionDefHandle, TObjectPtr<UNexusAction>> LocalActionInstanceMap;
+	int32 LocalActionInstanceMapScopeLockCount = 0;
+	TArray<FNexusPendingAddLocalActionInstanceInfo> LocalActionInstancePendingAdds;
+	TArray<FNexusActionDefHandle> LocalActionInstancePendingRemoves;
 
 private:
 	UPROPERTY()

@@ -37,7 +37,7 @@ struct FNexusLoopingCueHandle
 	void GenerateNewHandle();
 	bool IsValid() const { return Handle != INDEX_NONE; }
 	bool operator==(const FNexusLoopingCueHandle& Other) const = default;
-	FString ToString() const { return FString::Printf(TEXT("%d"), Handle); }
+	FString ToString() const { return FString::Printf(TEXT("LoopingCueHandle={Handle=%d}"), Handle); }
 
 	friend uint32 GetTypeHash(const FNexusLoopingCueHandle& CueHandle) { return GetTypeHash(CueHandle.Handle); }
 
@@ -71,15 +71,6 @@ struct FNexusLoopingCue : public FFastArraySerializerItem
 
 	UPROPERTY(NotReplicated)
 	TObjectPtr<ANexusCue> CueActor;
-};
-
-template <>
-struct TStructOpsTypeTraits<FNexusLoopingCue> : public TStructOpsTypeTraitsBase2<FNexusLoopingCue>
-{
-	enum
-	{
-		WithIdenticalViaEquality = true
-	};
 };
 
 

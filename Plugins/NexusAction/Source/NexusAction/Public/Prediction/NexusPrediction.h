@@ -45,7 +45,7 @@ struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 	bool IsServerCreated() const { return bIsServerCreated; }
 
 
-	FString ToString() const { return FString::Printf(TEXT("핸들: %d, 생성 호스트: %s"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
+	FString ToString() const { return FString::Printf(TEXT("PredictionTag={Handle=%d, Host=%s}"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
 	friend uint32 GetTypeHash(const FNexusPredictionTag& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
 
 private:
@@ -64,7 +64,6 @@ struct TStructOpsTypeTraits<FNexusPredictionTag> : public TStructOpsTypeTraitsBa
 	enum
 	{
 		WithNetSerializer = true,
-		WithIdenticalViaEquality = true
 	};
 };
 
@@ -124,8 +123,9 @@ public:
 	static void ResetPredictionEvents();
 	static void BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag);
 	static void BroadcastOnPredictionFailed(const FNexusPredictionTag& PredictionTag);
-	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionTag) { return PredictionEvents.FindOrAdd(PredictionTag); }
+	static FPredictionEvent& GetPredictionEvent(const FNexusPredictionTag& PredictionTag) { return PredictionEventMap.FindOrAdd(PredictionTag); }
+
 
 private:
-	inline static TMap<FNexusPredictionTag, FPredictionEvent> PredictionEvents;
+	inline static TMap<FNexusPredictionTag, FPredictionEvent> PredictionEventMap;
 };

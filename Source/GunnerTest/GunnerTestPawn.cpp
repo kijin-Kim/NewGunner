@@ -1,15 +1,15 @@
 #include "GunnerTestPawn.h"
 
 #include "GunnerTestActionComponent.h"
-#include "GunnerTestGun.h"
-#include "GunnerTestSlotItemPickup.h"
+#include "Gunner/Item/GunnerItemDef.h"
+#include "GunnerItemPickup_Test.h"
 #include "Action/NexusActionComponent.h"
 #include "Action/SubComponent/NexusCueComponent.h"
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
 #include "Components/SphereComponent.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
 
 
 AGunnerTestPawn::AGunnerTestPawn()
@@ -33,6 +33,10 @@ AGunnerTestPawn::AGunnerTestPawn()
 	InventoryManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("InventoryManagerComponent"));
 	InventoryManagerComponent->SetIsReplicated(true);
 	InventoryManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
+	
+	static ConstructorHelpers::FObjectFinder<UGunnerItemDef> ItemDefFinder(TEXT("/Game/Developers/kijin/Test/ID_TestItem.ID_TestItem"));
+	check(ItemDefFinder.Object);
+	InventoryManagerComponent->StartItemDefs.Add(ItemDefFinder.Object);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);

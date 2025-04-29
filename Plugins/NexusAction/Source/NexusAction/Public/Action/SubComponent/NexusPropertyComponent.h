@@ -22,7 +22,7 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void EvaluateProperties();
 
 	 
 	void AuthAddProperty(FGameplayTag Tag, float Value);
@@ -31,9 +31,11 @@ public:
 
 	const TArray<TObjectPtr<UNexusProperty>>& GetProperties() const { return Properties; }
 	UNexusProperty* GetProperty(FGameplayTag Tag);
+	float GetPropertyValue(FGameplayTag Tag);
 	void AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);
 	void AddDynamicOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);
 	void RemoveOperationByHandle(FGameplayTag Tag, FNexusPropertyOperationHandle OperationHandle);
+	
 
 private:
 	UPROPERTY(Replicated)

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Gunner/Slot/GunnerSlotItem.h"
+#include "Gunner/Item/GunnerSlotItem.h"
 #include "GunnerHUD.generated.h"
 
 class UGunnerInventoryManagerComponent;
@@ -47,7 +47,7 @@ private:
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UGunnerOverlayWidget> OverlayWidgetClass;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UGunnerOverlayWidget> OverlayWidget;
 
 private:

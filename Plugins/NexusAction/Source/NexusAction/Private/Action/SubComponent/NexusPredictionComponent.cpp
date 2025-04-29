@@ -34,6 +34,21 @@ void UNexusPredictionComponent::ReplicateNetPredictionTag(const FNexusPrediction
 void UNexusPredictionComponent::SetCurrentPredictionTag(const FNexusPredictionTag& NewTag)
 {
 	CurrentPredictionTag = NewTag;
+
+
+	if (!GetOwner()->HasAuthority() && CurrentPredictionTag.IsPredictable())
+	{
+		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, PredictionTagString = CurrentPredictionTag.ToString()]()
+		{
+			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측 종료: %s"), *PredictionTagString);
+		});
+
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, PredictionTagString = CurrentPredictionTag.ToString()]()
+		{
+			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측 실패: %s"), *PredictionTagString);
+		});
+	}
 }
 
 FNexusPredictionTag UNexusPredictionComponent::GetCurrentPredictionTag() const
@@ -110,4 +125,3 @@ void UNexusPredictionComponent::CallOrAddTargetDataDelegate(const FNexusActionDe
 	TargetDataDelegates.Remove(Key);
 	Delegate.ExecuteIfBound(CopiedHandle);
 }
-

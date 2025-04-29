@@ -1,16 +1,15 @@
 #include "EngineUtils.h"
+#include "GunnerItemPickup_Test.h"
+#include "GunnerItem_Test.h"
 #include "GunnerTestGameMode.h"
-#include "GunnerTestGun.h"
 #include "LevelEditor.h"
 #include "UnrealEdGlobals.h"
-#include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
 
 #include "GunnerTestPawn.h"
-#include "GunnerTestSlotItemPickup.h"
 #include "Editor/UnrealEdEngine.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
-#include "Gunner/_Core/GunnerNativeGameplayTags.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerItemDef.h"
 #include "Misc/AutomationTest.h"
 #include "Tests/AutomationCommon.h"
 #include "Tests/AutomationEditorCommon.h"
@@ -37,6 +36,9 @@ public:
 	FGunnerTestCollection(const FWorldContext& InWorldContext, FAutomationTestBase* InTest)
 		: WorldContext(InWorldContext), Test(InTest)
 	{
+		UObject* LoadedItemDef = StaticLoadObject(UGunnerItemDef::StaticClass(), nullptr, TEXT("/Game/Developers/kijin/Test/ID_TestItem.ID_TestItem"));
+		TestItemDef = Cast<UGunnerItemDef>(LoadedItemDef);
+		check(TestItemDef);
 	}
 
 	~FGunnerTestCollection()
@@ -56,21 +58,26 @@ public:
 
 			APawn* Pawn = PC->GetPawn();
 
-
 			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
-			check(InventoryManagerComponent);
-			if (IsServer(WorldContext))
+			const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
+			Test->TestTrue(Prefix(TEXT("아이템 추가 확인")), InventoryItems.ContainsByPredicate([this](const AGunnerItem* Item)
 			{
-				InventoryManagerComponent->AuthAddItem(WorldContext.World()->SpawnActor<AGunnerTestGun>());
-			}
+				return Item->GetClass() == TestItemDef->ItemClass;
+			}));
 
-			CheckAquire(Pawn);
+			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
+			check(ActionComponent);
+			const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
+			Test->TestTrue(Prefix(TEXT("Acquired 액션 추가 확인")), ActionDefs.Items.ContainsByPredicate([this](const FNexusActionDef& Element)
+			{
+				return TestItemDef->AcquiredActionClasses.Contains(Element.ActionClass);
+			}));
 		}
 		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_AddItem() 완료")));
 	}
 
 
-	void Test_InventoryManager_ActivateItem()
+	void Test_InventoryManager_RemoveItem()
 	{
 		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
@@ -80,228 +87,36 @@ public:
 				continue;
 			}
 
-
 			APawn* Pawn = PC->GetPawn();
-
-			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
-			check(ActionComponent);
-
-			UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
-			if (IsServer(WorldContext))
-			{
-				ActionComponent->SendEventToSelf<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_ActivateSlot_Primary, {});
-				SlotIndexProperty->Tick();
-			}
-
-			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
-
-
-			Test->TestEqual(Prefix(TEXT("활성화된 슬롯 아이템의 타입이 같습니다")), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()), GetDefault<AGunnerTestGun>()->GetSlotType());
-
-			const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
-
-			Test->TestTrue(Prefix(TEXT("Transient액션이 추가되었습니다")), ActionDefs.Items.ContainsByPredicate([](const FNexusActionDef& Element)
-			{
-				return Element.ActionClass == UGunnerTestActionTransient::StaticClass();
-			}));
-		}
-		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ActivateItem() 완료")));
-	}
-
-	void Test_InventoryManager_ChangeBullet()
-	{
-		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-		{
-			APlayerController* PC = Iterator->Get();
-			if (!PC || !PC->GetPawn() || !PC->GetPawn()->IsA(AGunnerTestPawn::StaticClass()))
-			{
-				continue;
-			}
-			APawn* Pawn = PC->GetPawn();
-
-			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
-			check(ActionComponent);
-
-			UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
-			UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
-			if (IsServer(WorldContext))
-			{
-				BulletProperty->SetStaticValue(PreDropBulletCount);
-				BulletProperty->Tick();
-
-				MagazineBulletProperty->SetStaticValue(PreDropMagazineBulletCount);
-				MagazineBulletProperty->Tick();
-			}
-
-			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 총알 수가 같습니다")), BulletProperty->GetDynamicValue(), 5.0f);
-			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 같습니다")), MagazineBulletProperty->GetDynamicValue(), 10.0f);
-		}
-		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ChangeBullet() 완료")));
-	}
-
-	void Test_InventoryManager_Drop()
-	{
-		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-		{
-			APlayerController* PC = Iterator->Get();
-			if (!PC || !PC->GetPawn() || !PC->GetPawn()->IsA(AGunnerTestPawn::StaticClass()))
-			{
-				continue;
-			}
-
-
-			APawn* Pawn = PC->GetPawn();
-			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
-			check(ActionComponent);
-
 			UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
 			check(InventoryManagerComponent);
+			
 
-
-			UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
 			if (IsServer(WorldContext))
 			{
-				ActionComponent->SendEventToSelf<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_Input_Drop, {});
-				SlotIndexProperty->Tick();
+				const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
+				AGunnerItem* const* TestItem = InventoryItems.FindByPredicate([this](const AGunnerItem* Item)
+				{
+					return Item->GetClass() == TestItemDef->ItemClass;
+				});
+				InventoryManagerComponent->AuthRemoveItem(*TestItem);
 			}
 
 			const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
-			Test->TestFalse(Prefix(TEXT("슬롯 아이템이 제거되었습니다")), InventoryItems.ContainsByPredicate([](const AGunnerItem* Item)
+			Test->TestFalse(Prefix(TEXT("아이템 제거 확인")), InventoryItems.ContainsByPredicate([this](const AGunnerItem* Item)
 			{
-				const AGunnerSlotItem* SlotItem = Cast<AGunnerSlotItem>(Item);
-				return SlotItem && SlotItem->GetSlotType() == EGunnerSlotType::Primary;
+				return Item->GetClass() == TestItemDef->ItemClass;
 			}));
 
-			if (!Test->TestNotEqual(Prefix(TEXT("슬롯이 비활성화 되었습니다.")), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()), EGunnerSlotType::Primary))
-			{
-				Test->AddInfo(Prefix(FString::Printf(TEXT("슬롯 인덱스: %f"), SlotIndexProperty->GetDynamicValue())));
-				Test->AddInfo(Prefix(FString::Printf(TEXT("슬롯 인덱스(스태틱): %f"), SlotIndexProperty->GetStaticValue())));
-			}
-
-			const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
-			Test->TestFalse(Prefix(TEXT("Persistent액션이 제거되었습니다")), ActionDefs.Items.ContainsByPredicate([](const FNexusActionDef& Element)
-			{
-				return Element.ActionClass == UGunnerTestActionActivatePrimary::StaticClass();
-			}));
-			Test->TestFalse(Prefix(TEXT("Transient액션이 제거되었습니다")), ActionDefs.Items.ContainsByPredicate([](const FNexusActionDef& Element)
-			{
-				return Element.ActionClass == UGunnerTestActionTransient::StaticClass();
-			}));
-
-
-			UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
-			UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
-
-			if (IsServer(WorldContext))
-			{
-				BulletProperty->Tick();
-				MagazineBulletProperty->Tick();
-			}
-
-			Test->TestNotEqual(Prefix(TEXT("슬롯 아이템의 총알 수가 업데이트 되었습니다")), BulletProperty->GetDynamicValue(), PreDropBulletCount);
-			Test->TestNotEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 업데이트 되었습니다")), MagazineBulletProperty->GetDynamicValue(), PreDropMagazineBulletCount);
-		}
-		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_Drop() 완료")));
-	}
-
-	void CheckAquire(APawn* Pawn)
-	{
-		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
-		check(ActionComponent);
-		
-
-		UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Pawn);
-		check(InventoryManagerComponent);
-
-		const TArray<AGunnerItem*>& InventoryItems = InventoryManagerComponent->GetInventoryItems();
-		AGunnerItem* const* FoundItemPtr = InventoryItems.FindByPredicate([](const AGunnerItem* Item)
-			{
-				return Item && Item->IsA<AGunnerTestGun>();
-			}
-		);
-		if (!FoundItemPtr || !*FoundItemPtr)
-		{
-			Test->TestFalse(Prefix(TEXT("슬롯 아이템이 획득되지 않았습니다")), true);
-			return;
-		}
-
-		AGunnerTestGun* TestGun = Cast<AGunnerTestGun>(*FoundItemPtr);
-		UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
-
-		Test->TestNotEqual(Prefix(TEXT("획득한 슬롯 아이템이 아직 장착되지 않았습니다")), TestGun->GetSlotType(), static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()));
-		Test->TestNotEqual(Prefix(TEXT("획득한 아이템의 이전 오너와 현재 오너가 다릅니다")), Cast<APawn>(TestGun->LastAgentActor), Pawn);
-
-
-		const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
-		Test->TestTrue(Prefix(TEXT("Persistent액션이 추가되었습니다")), ActionDefs.Items.ContainsByPredicate([](const FNexusActionDef& Element)
-		{
-			return Element.ActionClass == UGunnerTestActionActivatePrimary::StaticClass();
-		}));
-	}
-
-	void Test_InventoryManager_ServerEnablePickup()
-	{
-		if (IsServer(WorldContext))
-		{
-			int32 Count = 0;
-			for (TActorIterator<AActor> It(WorldContext.World(), AGunnerTestSlotItemPickup::StaticClass()); It; ++It)
-			{
-				AGunnerTestSlotItemPickup* Pickup = Cast<AGunnerTestSlotItemPickup>(*It);
-				Pickup->SetPickupEnabled(true);
-				Count++;
-			}
-			Test->TestTrue(Prefix(TEXT("서버에서 Pickup을 활성화했습니다")), Count == 3);
-			Test->AddInfo(Prefix(TEXT("Test_InventoryManager_ServerEnablePickup() 완료")));
-		}
-	}
-
-	void Test_InventoryManager_Acquire()
-	{
-		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-		{
-			APlayerController* PC = Iterator->Get();
-			if (!PC || !PC->GetPawn() || !PC->GetPawn()->IsA(AGunnerTestPawn::StaticClass()))
-			{
-				continue;
-			}
-
-			APawn* Pawn = PC->GetPawn();
-			CheckAquire(Pawn);
-		}
-
-		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_Acquire() 완료")));
-	}
-
-	void Test_InventoryManager_CheckPreDropProperties()
-	{
-		for (FConstPlayerControllerIterator Iterator = WorldContext.World()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-		{
-			APlayerController* PC = Iterator->Get();
-			if (!PC || !PC->GetPawn() || !PC->GetPawn()->IsA(AGunnerTestPawn::StaticClass()))
-			{
-				continue;
-			}
-
-			APawn* Pawn = PC->GetPawn();
 			UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
 			check(ActionComponent);
-
-			if (IsServer(WorldContext))
+			const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
+			Test->TestFalse(Prefix(TEXT("Acquired 액션 제거 확인")), ActionDefs.Items.ContainsByPredicate([this](const FNexusActionDef& Element)
 			{
-				UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
-				BulletProperty->Tick();
-				UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
-				MagazineBulletProperty->Tick();
-			}
-
-
-			UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet);
-			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 총알 수가 같습니다")), BulletProperty->GetDynamicValue(), PreDropBulletCount);
-
-			UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet);
-			Test->TestEqual(Prefix(TEXT("슬롯 아이템의 탄알집의 총알 수가 같습니다")), MagazineBulletProperty->GetDynamicValue(), PreDropMagazineBulletCount);
+				return TestItemDef->AcquiredActionClasses.Contains(Element.ActionClass);
+			}));
 		}
-		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_CheckPreDropProperties() 완료")));
+		Test->AddInfo(Prefix(TEXT("Test_InventoryManager_RemoveItem() 완료")));
 	}
 
 
@@ -309,11 +124,10 @@ public:
 	FString Prefix(const FString& Msg) const { return FString::Printf(TEXT("[PIE_%d]"), WorldContext.PIEInstance) + ": " + Msg; }
 
 private:
+	UGunnerItemDef* TestItemDef;
+
 	FWorldContext WorldContext;
 	FAutomationTestBase* Test = nullptr;
-
-	float PreDropBulletCount = 5.0f;
-	float PreDropMagazineBulletCount = 10.0f;
 };
 
 
@@ -326,13 +140,7 @@ public:
 		: FAutomationTestBase(InName, false)
 	{
 		AddTest(&FGunnerTestCollection::Test_InventoryManager_AddItem, TEXT("TestInventory"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_ActivateItem, TEXT("TestInventory"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_ChangeBullet, TEXT("TestInventory"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_Drop, TEXT("TestInventory"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_ServerEnablePickup, TEXT("TestInventory"));
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_Acquire, TEXT("TestInventory"), 0.2f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_ActivateItem, TEXT("TestInventory"), 0.0f, 0.2f);
-		AddTest(&FGunnerTestCollection::Test_InventoryManager_CheckPreDropProperties, TEXT("TestInventory"), 0.0f, 0.2f);
+		AddTest(&FGunnerTestCollection::Test_InventoryManager_RemoveItem, TEXT("TestInventory"), 0.0f, 0.2f);
 	}
 
 	virtual uint32 GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }

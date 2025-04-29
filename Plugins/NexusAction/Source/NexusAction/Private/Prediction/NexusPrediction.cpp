@@ -18,8 +18,8 @@ bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
 	bool bSerializingOwningConnection = false;
 	if (Ar.IsSaving())
 	{
-		// 서버 생성 예측 태그는 모든 클라이언트에서 유효합니다.
-		// 클라이언트 생성 예측 태그는 해당 클라이언트와 서버에서만 유효합니다.
+		// 서버 생성 예측태그는 모든 클라이언트에서 유효합니다.
+		// 클라이언트 생성 예측태그는 해당 클라이언트와 서버에서만 유효합니다.
 		// 주: 유효하다는 것은 Handle이 INDEX_NONE이 아니라는 것을 의미합니다.
 		bSerializingOwningConnection = Handle != INDEX_NONE ? ConnectionIdentifier == nullptr || Map == ConnectionIdentifier || bIsServerCreated : false;
 	}
@@ -43,20 +43,17 @@ bool FNexusPredictionTag::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
 
 void FNexusPredictionTag::PostReplicatedAdd(const FNexusPredictionTagContainer& InArray)
 {
-	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 추가"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer& InArray)
 {
-	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 제거"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
 	checkNoEntry();
-	UE_LOG(LogNexus, Log, TEXT("PredictionTag(%d) 변경"), Handle);
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
 
@@ -76,7 +73,7 @@ void FNexusPredictionTagContainer::ReplicateNetPredictionTag(const FNexusPredict
 
 void FNexusPredictionEvents::ResetPredictionEvents()
 {
-	PredictionEvents.Empty();
+	PredictionEventMap.Empty();
 }
 
 void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTag& PredictionTag)
@@ -86,13 +83,13 @@ void FNexusPredictionEvents::BroadcastOnPredictionEnded(const FNexusPredictionTa
 		return;
 	}
 
-	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
+	if (FPredictionEvent* Event = PredictionEventMap.Find(PredictionTag))
 	{
 		Event->OnPredictionEnded.Broadcast();
 	}
-	PredictionEvents.Remove(PredictionTag);
+	PredictionEventMap.Remove(PredictionTag);
 
-	for (auto It = PredictionEvents.CreateIterator(); It; ++It)
+	for (auto It = PredictionEventMap.CreateIterator(); It; ++It)
 	{
 		if (It.Key() <= PredictionTag)
 		{
@@ -109,9 +106,9 @@ void FNexusPredictionEvents::BroadcastOnPredictionFailed(const FNexusPredictionT
 		return;
 	}
 
-	if (FPredictionEvent* Event = PredictionEvents.Find(PredictionTag))
+	if (FPredictionEvent* Event = PredictionEventMap.Find(PredictionTag))
 	{
 		Event->OnPredictionFailed.Broadcast();
 	}
-	PredictionEvents.Remove(PredictionTag);
+	PredictionEventMap.Remove(PredictionTag);
 }

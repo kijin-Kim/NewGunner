@@ -23,12 +23,12 @@ public:
 };
 
 UCLASS()
-class NEXUSACTION_API UNexusActionViewModel : public UMVVMViewModelBase
+class NEXUSACTION_API UNexusActionViewModelBase : public UMVVMViewModelBase
 {
 	GENERATED_BODY()
 
 public:
-	static UNexusActionViewModel* CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View);
+	static UNexusActionViewModelBase* CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View);
 	virtual void OnCreateViewModel(const UUserWidget* UserWidget);
 	virtual void OnDestroyViewModel(const UObject* Object, const UMVVMView* View) const {}
 

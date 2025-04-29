@@ -3,8 +3,8 @@
 
 #include "GunnerTestActionComponent.h"
 
-#include "Gunner/Action/GunnerActionDropSlotItem.h"
-#include "Gunner/Slot/GunnerInventoryManagerComponent.h"
+#include "Gunner/Action/GunnerAction_DropSlotItem.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
 
@@ -14,9 +14,9 @@ void UGunnerTestActionComponent::OnSetupActionComponent()
 
 	if (GetOwner()->HasAuthority())
 	{
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_Bullet, 0);
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MagazineBullet, 0);
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Weapon_MaxBulletPerMagazine, 0);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Bullet, 0);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet, 0);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MaxBulletPerMagazine, 0);
 		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex, static_cast<float>(EGunnerSlotType::Num));
 	}
 }

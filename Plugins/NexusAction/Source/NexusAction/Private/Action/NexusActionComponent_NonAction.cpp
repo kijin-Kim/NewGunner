@@ -7,8 +7,8 @@
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "Action/SubComponent/NexusSideEffectComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "Cue/NexusCue.h"
-#include "Event/NexusEventManagerComponent.h"
 #include "SideEffect/NexusSideEffect.h"
 #include "SideEffect/NexusSideEffectInstance.h"
 
@@ -16,7 +16,7 @@
 // ------------------------------------------------------------------------------
 // SideEffect
 // ------------------------------------------------------------------------------
-void UNexusActionComponent::BP_TriggerSideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass)
+void UNexusActionComponent::BP_ApplySideEffectToActor(UNexusAction* Action, AActor* SideEffectTarget, TSubclassOf<UNexusSideEffect> SideEffectClass)
 {
 	check(Action);
 	if (!SideEffectTarget)
@@ -30,7 +30,7 @@ void UNexusActionComponent::BP_TriggerSideEffectToActor(UNexusAction* Action, AA
 	}
 }
 
-void UNexusActionComponent::BP_TriggerSideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle)
+void UNexusActionComponent::BP_ApplySideEffectToActorByDef(UNexusAction* Action, AActor* SideEffectTarget, const FNexusSideEffectInstanceDefHandle& SideEffectInstanceDefHandle)
 {
 	check(Action);
 	if (!SideEffectTarget)
@@ -74,6 +74,11 @@ UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 	return GetPropertyComponent()->GetProperty(Tag);
 }
 
+float UNexusActionComponent::GetPropertyValue(FGameplayTag Tag)
+{
+	return GetPropertyComponent()->GetPropertyValue(Tag);
+}
+
 void UNexusActionComponent::AuthAddProperty(FGameplayTag Tag, float Value)
 {
 	GetPropertyComponent()->AuthAddProperty(Tag, Value);
@@ -106,15 +111,10 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	if (!ActionComponent)
 	{
 		return 0.0f;
+		
 	}
 
-	UNexusProperty* PropertyPtr = ActionComponent->GetProperty(Tag);
-	if (!PropertyPtr)
-	{
-		return 0.0f;
-	}
-
-	return PropertyPtr->GetDynamicValue();
+	return ActionComponent->GetPropertyValue(Tag);
 }
 
 void UNexusActionComponent::AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation)

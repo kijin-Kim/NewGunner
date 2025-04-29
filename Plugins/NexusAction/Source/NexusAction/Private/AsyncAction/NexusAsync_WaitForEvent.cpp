@@ -3,7 +3,7 @@
 
 #include "AsyncAction/NexusAsync_WaitForEvent.h"
 
-#include "Event/NexusEventManagerComponent.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 
 UNexusAsync_WaitForEvent* UNexusAsync_WaitForEvent::WaitForEvent(UNexusAction* InAction, AActor* EventTargetActor, FGameplayTag InEventTag, UScriptStruct* InEventMessageType, bool bInAutoCancel)
 {

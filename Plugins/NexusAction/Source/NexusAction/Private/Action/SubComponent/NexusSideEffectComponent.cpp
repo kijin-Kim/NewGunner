@@ -44,7 +44,7 @@ FNexusSideEffectInstanceHandle UNexusSideEffectComponent::ApplySideEffectByDef(c
 {
 	if (!GetOwner()->HasAuthority() && !PredictionTag.IsPredictable())
 	{
-		NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Verbose, TEXT("예측 불가능한 예측 태그에서 사이드 이펙트를 실행할 수 없습니다"));
+		NX_VLOG_SUB(GetAgentActor(), LogNexusSideEffect, Error, TEXT("사이드이펙트 실행 오류 (예측 불가): %s; %s"), *SideEffectInstanceDef.ToString(), *PredictionTag.ToString());
 		return FNexusSideEffectInstanceHandle();
 	}
 
@@ -61,15 +61,13 @@ FNexusSideEffectInstanceHandle UNexusSideEffectComponent::ApplySideEffectByDef(c
 			PredictionEvent.OnPredictionFailed.Add(MoveTemp(OnPredictionFailed));
 		}
 
-		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this,SideEffectInstanceHandle, SideEffectName = SideEffectInstanceDef.SideEffectAsset->GetName()]()
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this,SideEffectInstanceHandle]()
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Log, TEXT("사이드 이펙트 [%s] 삭제 (예측 종료)"), *SideEffectName);
 			UnregisterAndRemoveSideEffect(SideEffectInstanceHandle);
 		});
 
-		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this,SideEffectInstanceHandle, SideEffectName = SideEffectInstanceDef.SideEffectAsset->GetName()]()
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this,SideEffectInstanceHandle]()
 		{
-			NX_VLOG_SUB(GetOwner(), LogNexusSideEffect, Error, TEXT("사이드 이펙트 [%s] 삭제 (예측 실패)"), *SideEffectName);
 			UnregisterAndRemoveSideEffect(SideEffectInstanceHandle);
 		});
 	}
