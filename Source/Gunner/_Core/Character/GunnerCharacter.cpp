@@ -69,8 +69,6 @@ void AGunnerCharacter::OnConstruction(const FTransform& Transform)
 }
 
 
-
-
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);

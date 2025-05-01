@@ -374,7 +374,7 @@ void UNexusActionComponent::OnActionDefAdded(const FNexusActionDef& ActionDef)
 	ActionInstance->OnActionEndedDelegate.AddUObject(this, &UNexusActionComponent::OnActionEnded);
 	ActionInstance->CallOnAddAction();
 
-	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 추가: %s"), *ActionDef.ToString());
+	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Log, TEXT("액션 추가: %s"), *ActionDef.ToString());
 	HandleTriggerableActionOnAdded(ActionDef, ActionInstance);
 }
 
@@ -384,7 +384,7 @@ void UNexusActionComponent::OnActionDefRemoved(const FNexusActionDef& ActionDef)
 	check(ActionInstance);
 	ActionInstance->EndAction();
 	ActionInstance->CallOnRemoveAction();
-	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 제거: %s"), *ActionDef.ToString());
+	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Log, TEXT("액션 제거: %s"), *ActionDef.ToString());
 	DestroyActionInstance(ActionDef.Handle);
 	HandleTriggerableActionOnRemoved(ActionDef.Handle);
 }
@@ -525,7 +525,7 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 	const bool bIsOwnerActorAuthoritative = AgentInfo->IsOwnerActorAuthoritative();
 	FNexusPredictionTag PredictionTag;
 	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
-	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag, TEXT("ActionTrigger"));;
 	ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 
 
@@ -689,7 +689,7 @@ void UNexusActionComponent::ServerTryTriggerAction_Implementation(const FNexusAc
 	}
 
 	ClientTriggerActionRequestSucceeded(ActionDefHandle, PredictionTag);
-	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag, TEXT("ActionTrigger"));
 	ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 	LocalTriggerAction(ActionDefHandle, ActionInstance);
 }
@@ -700,7 +700,7 @@ void UNexusActionComponent::ClientTriggerAction_Implementation(const FNexusActio
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
 	ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
-	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag);
+	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag, TEXT("ActionTrigger"));
 	ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 	LocalTriggerAction(ActionDefHandle, ActionInstance);
 }
@@ -820,7 +820,7 @@ UNexusAction* UNexusActionComponent::CreateActionInstance(const FNexusActionDef&
 		return LocalActionInstanceMap[ActionDef.Handle];
 	}
 
-	NX_LOG_SUB(GetAgentActor(), LogNexusAction, VeryVerbose, TEXT("액션 로컬 인스턴스 생성: %s"), *ActionDef.ToString());
+	NX_LOG_SUB(GetAgentActor(), LogNexusAction, Log, TEXT("액션 로컬 인스턴스 생성: %s"), *ActionDef.ToString());
 	UNexusAction* ActionInstance = UNexusAction::NewNexusActionObject(ActionDef.ActionClass, ActionDef.Handle, AgentInfo, ActionDef.SourceObject);
 	return InternalAddActionInstance(ActionDef.Handle, ActionInstance);
 }

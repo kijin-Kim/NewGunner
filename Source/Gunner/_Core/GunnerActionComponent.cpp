@@ -4,8 +4,8 @@
 #include "GunnerActionComponent.h"
 
 #include "Action/NexusAction.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/Action/GunnerActionSet.h"
+#include "Gunner/Action/GunnerAction_DebugFire.h"
 
 UGunnerActionComponent::UGunnerActionComponent()
 {
@@ -33,6 +33,17 @@ void UGunnerActionComponent::OnSetupActionComponent()
 			{
 				AuthAddAction(ActionClass, GetAgentActor());
 			}
+		}
+	}
+}
+
+void UGunnerActionComponent::ClientSendDebugHitConfirmedData_Implementation(const TArray<FGunnerDebugHitConfirmedDataEntry>& DebugHitConfirmedData)
+{
+	for (const FGunnerDebugHitConfirmedDataEntry& Entry : DebugHitConfirmedData)
+	{
+		if (Entry.ClientClaimedHitCharacter)
+		{
+			UGunnerAction_DebugFire::DrawDebugHitBoxData(GetWorld(), Entry.DebugHitBoxData, Entry.bHitConfirmed ? FColor::Green : FColor::Red, true, 0.0f);
 		}
 	}
 }

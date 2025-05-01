@@ -5,7 +5,7 @@
 struct FNexusPredictionScope
 {
 public:
-	FNexusPredictionScope(UNexusPredictionComponent& InPredictionComponent, FNexusPredictionTag InPredictionTag);
+	FNexusPredictionScope(UNexusPredictionComponent& InPredictionComponent, FNexusPredictionTag InPredictionTag, const FString& InPredictionScopeName);
 	~FNexusPredictionScope();
 
 private:
@@ -15,4 +15,5 @@ private:
 public:
 	UNexusPredictionComponent& PredictionComponent;
 	FNexusPredictionTag PrevPredictionTag;
+	FString PredictionScopeName;
 };

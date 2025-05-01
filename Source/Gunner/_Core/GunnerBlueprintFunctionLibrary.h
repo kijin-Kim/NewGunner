@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
-#include "Cue/NexusCue.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_SoundBase.h"
@@ -12,6 +11,11 @@
 #include "GunnerBlueprintFunctionLibrary.generated.h"
 
 struct FTeamBoxSlot;
+
+
+
+
+
 /**
  * 
  */
@@ -113,4 +117,5 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
 	static FGenericTeamId GetTeamId(APlayerState* PlayerState);
+	
 };

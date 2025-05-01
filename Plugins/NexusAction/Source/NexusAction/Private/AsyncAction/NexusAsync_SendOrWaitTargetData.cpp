@@ -22,7 +22,7 @@ void UNexusAsync_SendOrWaitTargetData::Activate()
 	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
 	UNexusPredictionComponent* PredictionComponent = Action->GetOwnerActor()->GetComponentByClass<UNexusPredictionComponent>();
 	check(PredictionComponent);
-	FNexusPredictionScope PredictionScope(*PredictionComponent, PredictionTag);
+	FNexusPredictionScope PredictionScope(*PredictionComponent, PredictionTag, TEXT("TargetData"));
 
 
 	if (Action->GetActionNetMethod() != ENexusActionNetMethod::LocalPredicted

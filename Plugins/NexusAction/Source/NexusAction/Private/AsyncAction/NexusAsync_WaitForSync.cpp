@@ -20,7 +20,7 @@ void UNexusAsync_WaitForSync::Activate()
 	FNexusPredictionTag PredictionTag;
 	PredictionTag.GenerateNewHandle(bIsOwnerActorAuthoritative);
 	UNexusPredictionComponent* PredictionComponent = Action->GetOwnerActor()->GetComponentByClass<UNexusPredictionComponent>();
-	FNexusPredictionScope PredictionScope(*PredictionComponent, PredictionTag);
+	FNexusPredictionScope PredictionScope(*PredictionComponent, PredictionTag, TEXT("NetSyncPoint"));
 
 
 	if (Action->GetActionNetMethod() != ENexusActionNetMethod::LocalPredicted

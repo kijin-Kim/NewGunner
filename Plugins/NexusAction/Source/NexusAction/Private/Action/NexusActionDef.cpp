@@ -155,7 +155,7 @@ void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer:
 	{
 		for (const auto& AddedIndex : AcuumulatedAddedIndices)
 		{
-			if (Items.IsValidIndex(AddedIndex))
+			if (ensure(Items.IsValidIndex(AddedIndex)))
 			{
 				if (bInitialized)
 				{
@@ -168,10 +168,11 @@ void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer:
 			}
 		}
 		AcuumulatedAddedIndices.Empty();
+		UE_LOG(LogNexusAction, VeryVerbose, TEXT("액션 추가 플러시"));
 	}
 	else
 	{
-		UE_LOG(LogNexusAction, VeryVerbose, TEXT("매핑되지 않은 레퍼런스 존재: FrameNumber=%d"), GFrameNumber);
+		UE_LOG(LogNexusAction, VeryVerbose, TEXT("매핑되지 않은 레퍼런스 존재"));
 	}
 }
 

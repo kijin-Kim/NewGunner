@@ -74,6 +74,7 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
+
 private:
 	void InternalSetupActionComponent();
 	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);

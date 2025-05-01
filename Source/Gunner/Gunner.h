@@ -5,15 +5,15 @@
 #include "CoreMinimal.h"
 #include "NexusLog.h"
 
-#define GR_LOG(CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_LOG_FN(CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_CLOG(Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_CLOG_FN(Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_LOG(CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, GFrameNumber, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_LOG_FN(CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, GFrameNumber, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_CLOG(Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, GFrameNumber, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_CLOG_FN(Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s %s"), LOG_NETMODEINFO, LOG_LOCALROLEINFO, LOG_REMOTEROLEINFO, GFrameNumber, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
 
-#define GR_LOG_SUB(LogOwner, CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_LOG_SUB_FN(LogOwner, CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_CLOG_SUB(LogOwner, Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s] %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), *FString::Printf(Format, ##__VA_ARGS__))
-#define GR_CLOG_SUB_FN(LogOwner, Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s] %s %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_LOG_SUB(LogOwner, CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), GFrameNumber, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_LOG_SUB_FN(LogOwner, CategoryName, Verbosity, Format, ...) UE_LOG(CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), GFrameNumber, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_CLOG_SUB(LogOwner, Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), GFrameNumber, *FString::Printf(Format, ##__VA_ARGS__))
+#define GR_CLOG_SUB_FN(LogOwner, Condition, CategoryName, Verbosity, Format, ...) UE_CLOG(Condition, CategoryName, Verbosity, TEXT("[%s][%s/%s](%d) %s %s"), LOG_NETMODEINFO_SUB(Cast<AActor>(LogOwner)), LOG_LOCALROLEINFO_SUB(Cast<AActor>(LogOwner)), LOG_REMOTEROLEINFO_SUB(Cast<AActor>(LogOwner)), GFrameNumber, LOG_CALL_INFO, *FString::Printf(Format, ##__VA_ARGS__))
 
 
 

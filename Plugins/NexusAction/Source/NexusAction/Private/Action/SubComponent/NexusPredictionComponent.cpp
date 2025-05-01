@@ -41,12 +41,12 @@ void UNexusPredictionComponent::SetCurrentPredictionTag(const FNexusPredictionTa
 		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(CurrentPredictionTag);
 		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, PredictionTagString = CurrentPredictionTag.ToString()]()
 		{
-			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측 종료: %s"), *PredictionTagString);
+			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측태그 도착 (성공): %s"), *PredictionTagString);
 		});
 
 		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, PredictionTagString = CurrentPredictionTag.ToString()]()
 		{
-			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측 실패: %s"), *PredictionTagString);
+			NX_VLOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("예측태그 도착 (실패): %s"), *PredictionTagString);
 		});
 	}
 }
@@ -70,7 +70,7 @@ void UNexusPredictionComponent::ServerSendNetSyncPoint_Implementation(const FNex
 	NetSyncPointDelegates.Remove(Key);
 	if (CopiedDelegate.OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag);
+		FNexusPredictionScope PredictionScope(*this, PredictionTag, TEXT("NetSyncPoint"));
 		CopiedDelegate.OnSyncDelegate.Broadcast();
 	}
 }
@@ -86,7 +86,7 @@ void UNexusPredictionComponent::CallOrAddNetsyncPointDelegate(const FNexusAction
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
+	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag, TEXT("NetSyncPoint"));
 	NetSyncPointDelegates.Remove(Key);
 	Delegate.ExecuteIfBound();
 }
@@ -105,7 +105,7 @@ void UNexusPredictionComponent::ServerSendTargetData_Implementation(const FNexus
 	TargetDataDelegates.Remove(Key);
 	if (CopiedDelegate.OnSetDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag);
+		FNexusPredictionScope PredictionScope(*this, PredictionTag, TEXT("TargetData"));
 		CopiedDelegate.OnSetDelegate.Broadcast(TargetDataHandle);
 	}
 }
@@ -120,7 +120,7 @@ void UNexusPredictionComponent::CallOrAddTargetDataDelegate(const FNexusActionDe
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag);
+	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag, TEXT("TargetData"));
 	FNexusTargetDataHandle CopiedHandle = RepDataDelegate->TargetDataHandle;
 	TargetDataDelegates.Remove(Key);
 	Delegate.ExecuteIfBound(CopiedHandle);

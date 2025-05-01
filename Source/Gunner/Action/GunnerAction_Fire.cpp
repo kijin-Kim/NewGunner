@@ -9,14 +9,19 @@
 #include "Action/NexusActionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
-#include "Gunner/Item/GunnerGun.h"
-#include "Gunner/_Core/GunnerLagCompensationComponent.h"
-#include "TargetData/GunnerTargetData_Hit.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/_Core/GunnerActionComponent.h"
+#include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
+#include "Gunner/_Core/GunnerLagCompensationComponent.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
+#include "Kismet/GameplayStatics.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "TargetData/GunnerTargetData_Hit.h"
+
+
+
 
 TArray<FHitResult> UGunnerAction_Fire::HitScanTrace()
 {
@@ -38,6 +43,7 @@ TArray<FHitResult> UGunnerAction_Fire::HitScanTrace()
 	                               CameraLocation + CameraForward * 10000.0f, // TODO: 설정파일을 통해 설정할 수 있도록 변경
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 
+
 	return HitResults;
 }
 
@@ -58,10 +64,10 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 		}
 	}
 
-	AuthBeginRewind(LagCompensationTargetCharacters, HitTargetData->TimeStamp);
+
+	AuthOnBeginRewind(LagCompensationTargetCharacters, bEnableLagCompensation ? HitTargetData->TimeStamp : GetWorld()->GetTimeSeconds());
 
 
-	// line trace portion
 	FCollisionQueryParams CollisionQueryParams;
 	TArray<AActor*> LagCompensatableActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACharacter::StaticClass(), LagCompensatableActors);
@@ -71,7 +77,7 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 		check(Character);
 		CollisionQueryParams.AddIgnoredComponent(Character->GetMesh());
 	}
-	
+
 	APawn* AgentPawn = Cast<APawn>(GetAgentActor());
 	TArray<AActor*> IgnoredActors = {GetSourceObject<AActor>(), AgentPawn};
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
@@ -79,10 +85,15 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 
 	TArray<FHitResult> HitResults = HitScanTrace();
 
-	AuthEndRewind(LagCompensationTargetCharacters);
+	AuthOnEndRewind(LagCompensationTargetCharacters);
 
 	AuthApplyDamageByHitResults(HitResults);
+
+	
 }
+
+
+
 
 TArray<FHitResult> UGunnerAction_Fire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
 {
@@ -132,7 +143,7 @@ TArray<AActor*> UGunnerAction_Fire::GetIgnoredActorsByTeam(APlayerState* PlayerS
 	return IgnoredActors;
 }
 
-void UGunnerAction_Fire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp)
+void UGunnerAction_Fire::AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp)
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
@@ -142,7 +153,7 @@ void UGunnerAction_Fire::AuthBeginRewind(TArray<ACharacter*> LagCompensationTarg
 	}
 }
 
-void UGunnerAction_Fire::AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters)
+void UGunnerAction_Fire::AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters)
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{

@@ -5,6 +5,7 @@
 
 #include "GameFramework/Character.h"
 #include "RewoundSnapshotAnimInstance.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 
 UGunnerLagCompensationComponent::UGunnerLagCompensationComponent()
@@ -38,6 +39,7 @@ void UGunnerLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick 
 		{
 			PoseSnapshots.AddFront(NewPoseSnapshot);
 		}
+		
 	}
 }
 
@@ -118,3 +120,5 @@ void UGunnerLagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& 
 		DummyMeshComponent->FinalizeBoneTransform();
 	}
 }
+
+

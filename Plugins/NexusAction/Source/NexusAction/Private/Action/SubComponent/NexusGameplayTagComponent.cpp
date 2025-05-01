@@ -3,6 +3,7 @@
 
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 
+#include "NexusLog.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -69,8 +70,8 @@ void UNexusGameplayTagComponent::TickComponent(float DeltaTime, ELevelTick TickT
 void UNexusGameplayTagComponent::PushDynamicTag(const FGameplayTag& Tag)
 {
 	check(Tag.IsValid());
+	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("태그 푸쉬: GameplayTag=%s"), *Tag.ToString());
 	bIsTagCountMapDirty = true;
-
 	if (GetOwner()->HasAuthority())
 	{
 		int32 Index = TagCountMap.Find(Tag);
@@ -101,6 +102,7 @@ void UNexusGameplayTagComponent::PushDynamicTag(const FGameplayTag& Tag)
 void UNexusGameplayTagComponent::PopDynamicTag(const FGameplayTag& Tag)
 {
 	check(Tag.IsValid());
+	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("태그 팝: GameplayTag=%s"), *Tag.ToString());
 	bIsTagCountMapDirty = true;
 	if (GetOwner()->HasAuthority())
 	{

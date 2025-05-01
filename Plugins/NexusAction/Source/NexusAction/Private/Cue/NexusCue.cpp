@@ -39,7 +39,8 @@ void FNexusLoopingCue::PostReplicatedAdd(const FNexusLoopingCueContainer& InArra
 
 void FNexusLoopingCue::PostReplicatedChange(const FNexusLoopingCueContainer& InArraySerializer)
 {
-	unimplemented();
+	ensure(false);
+	//unimplemented();
 }
 
 bool FNexusLoopingCueContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)

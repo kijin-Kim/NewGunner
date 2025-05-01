@@ -4,10 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GunnerAction_SlotItemBase.h"
+#include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
+
+
 #include "GunnerAction_Fire.generated.h"
 
+class USkeletalBodySetup;
 class UGunnerDamageType;
 struct FNexusTargetDataHandle;
+
 /**
  * 
  */
@@ -16,27 +21,31 @@ class GUNNER_API UGunnerAction_Fire : public UGunnerAction_SlotItemBase
 {
 	GENERATED_BODY()
 
-
 public:
 	UFUNCTION(BlueprintCallable)
-	TArray<FHitResult> HitScanTrace();
+	virtual TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
+	virtual void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
 
-private:
+protected:
+	virtual void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
+	virtual void AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
+	
 	TArray<FHitResult> FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetIgnoredActorsByTeam(APlayerState* PlayerState);
-	void AuthBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
-	void AuthEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
-
+	
+private:
+	
 	void AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults);
 	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal);
 
-
+private:
 
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced)
 	TObjectPtr<const UGunnerDamageType> DamageType;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bEnableLagCompensation = true;
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Action/NexusActionComponent.h"
+#include "Debug/GunnerDebugHitData.h"
 #include "GunnerActionComponent.generated.h"
 
 
@@ -17,6 +18,9 @@ class GUNNER_API UGunnerActionComponent : public UNexusActionComponent
 public:
 	UGunnerActionComponent();
 	virtual void OnSetupActionComponent() override;
+
+	UFUNCTION(Client, Reliable)
+	void ClientSendDebugHitConfirmedData(const TArray<FGunnerDebugHitConfirmedDataEntry>& DebugHitConfirmedData);
 
 private:
 	UPROPERTY(EditAnywhere)

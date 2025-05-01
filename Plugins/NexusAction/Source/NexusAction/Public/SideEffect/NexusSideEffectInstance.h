@@ -166,12 +166,9 @@ struct FNexusSideEffectInstanceContainer : public FFastArraySerializer
 	void OnSideEffectInstanceAdded(FNexusSideEffectInstance& SideEffectInstance) const;
 	void OnSideEffectInstanceRemoved(const FNexusSideEffectInstance& SideEffectInstance) const;
 	void Tick(float DeltaTime);
-	
-	void IncreaseSideEffectContainerLock();
-	void DecreaseSideEffectContainerLock();
+
 
 private:
-	FNexusSideEffectInstanceHandle InternalApplySideEffectByInstance(const FNexusSideEffectInstance& SideEffectInstance);
 	int32 RemoveSideEffectInstanceByPredicate(const TFunction<bool(const FNexusSideEffectInstance&)>& Predicate);
 
 public:
@@ -181,13 +178,7 @@ public:
 	TWeakObjectPtr<UNexusGameplayTagComponent> GameplayTagComponent;
 	
 private:
-
-	bool TEMP_LOOPING = false;
-	
 	bool bHasAuthority = false;
-	int32 ScopeLockCount = 0;
-	TArray<FNexusSideEffectInstance> PendingAdds;
-	TArray<FNexusSideEffectInstanceHandle> PendingRemoves;
 
 };
 
@@ -200,13 +191,3 @@ struct TStructOpsTypeTraits<FNexusSideEffectInstanceContainer> : public TStructO
 	};
 };
 
-
-struct FNexusSideEffectContainerLock
-{
-	FNexusSideEffectContainerLock(FNexusSideEffectInstanceContainer& InSideEffectContainer);
-	~FNexusSideEffectContainerLock();
-
-	FNexusSideEffectInstanceContainer& SideEffectContainer;
-};
-
-#define EFFECT_CONTAINER_SCOPE_LOCK() FNexusSideEffectContainerLock SideEffectContScopeLock(*this)
