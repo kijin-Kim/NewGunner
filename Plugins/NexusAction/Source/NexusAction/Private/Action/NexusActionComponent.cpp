@@ -759,6 +759,11 @@ void UNexusActionComponent::OnActionEnded(const FNexusActionDefHandle& ActionDef
 {
 	if (IsOwnerActorAuthoritative())
 	{
+		if (UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle))
+		{
+			GetPredictionComponent()->AuthClearAllReplicationDelegates(ActionDefHandle, ActionInstance->GetPrimaryPredictionTag());
+		}
+		
 		if (FNexusSideEffectInstanceHandle* TagSideEffectInstanceHandle = TagSideEffectMap.Find(ActionDefHandle))
 		{
 			GetSideEffectComponent()->UnregisterAndRemoveSideEffect(*TagSideEffectInstanceHandle);

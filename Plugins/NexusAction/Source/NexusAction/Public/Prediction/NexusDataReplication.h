@@ -42,6 +42,11 @@ struct NEXUSACTION_API FNexusRepDataKey
 		return HashCombine(GetTypeHash(RepDataKey.ActionDefHandle), GetTypeHash(RepDataKey.PrimaryPredictionTag));
 	}
 
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("NexusRepDataKey={Hash=%d, %s, Primary%s}"), GetTypeHash(this), *ActionDefHandle.ToString(), *PrimaryPredictionTag.ToString());
+	}
+
 	UPROPERTY()
 	FNexusActionDefHandle ActionDefHandle;
 

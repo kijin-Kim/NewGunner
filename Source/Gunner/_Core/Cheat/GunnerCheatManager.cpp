@@ -4,17 +4,17 @@
 #include "GunnerCheatManager.h"
 
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
-#include "GameFramework/GameModeBase.h"
 
 void UGunnerCheatManager::InitCheatManager()
 {
 	Super::InitCheatManager();
-	FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UGunnerCheatManager::OnPlayerPostLogin);
+	PingPongTeam = AttackerTeam;
 }
 
 void UGunnerCheatManager::SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode)
 {
 	CheatTeamMode = NewCheatTeamMode;
+	PingPongTeam = AttackerTeam;
 
 	UWorld* World = GetWorld();
 	if (!World)
@@ -42,7 +42,6 @@ void UGunnerCheatManager::SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode)
 
 void UGunnerCheatManager::OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController)
 {
-	static FGenericTeamId PingPongTeam = AttackerTeam;
 	switch (CheatTeamMode)
 	{
 	case ECheatTeamMode::None:
@@ -76,7 +75,6 @@ void UGunnerCheatManager::SetAllControllersTeam(FGenericTeamId TeamId)
 
 void UGunnerCheatManager::SetAllControllersTeamPingPong()
 {
-	static FGenericTeamId PingPongTeam = AttackerTeam;
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PC = Iterator->Get();

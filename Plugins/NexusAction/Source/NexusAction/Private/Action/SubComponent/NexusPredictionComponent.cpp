@@ -59,69 +59,108 @@ FNexusPredictionTag UNexusPredictionComponent::GetCurrentPredictionTag() const
 void UNexusPredictionComponent::ServerSendNetSyncPoint_Implementation(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag)
 {
 	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		NetSyncPointDelegates.Add(Key, PredictionTag);
-		return;
-	}
+	FNexusNetSyncDelegate& RepDataDelegate = NetSyncPointDelegates.FindOrAdd(Key);
+	NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("서버 넷싱크포인트 수신: Key=%s, Current%s"), *Key.ToString(), *PredictionTag.ToString());
 
-	FNexusNetSyncDelegate CopiedDelegate = *RepDataDelegate;
-	NetSyncPointDelegates.Remove(Key);
-	if (CopiedDelegate.OnSyncDelegate.IsBound())
+	RepDataDelegate.PredictionTag = PredictionTag;
+	if (RepDataDelegate.OnSyncDelegate.IsBound())
 	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag, TEXT("NetSyncPoint"));
+		FNexusPredictionScope PredictionScope(*this, RepDataDelegate.PredictionTag, TEXT("NetSyncPoint"));
+		FNexusNetSyncDelegate CopiedDelegate = RepDataDelegate;
+		RepDataDelegate.Reset();
 		CopiedDelegate.OnSyncDelegate.Broadcast();
 	}
 }
 
 
-void UNexusPredictionComponent::CallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
+void UNexusPredictionComponent::AuthCallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate)
 {
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusNetSyncDelegate* RepDataDelegate = NetSyncPointDelegates.Find(Key);
-	if (!RepDataDelegate)
+	if (!IsOwnerActorAuthoritative())
 	{
-		NetSyncPointDelegates.Add(Key, FNexusNetSyncDelegate{PrimaryPredictionTag, MoveTemp(Delegate)});
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
 
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag, TEXT("NetSyncPoint"));
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+
+	FNexusNetSyncDelegate& RepDataDelegate = NetSyncPointDelegates.FindOrAdd(Key);
+	RepDataDelegate.OnSyncDelegate.Add(MoveTemp(Delegate));
+	if (RepDataDelegate.PredictionTag.IsValid())
+	{
+		FNexusPredictionScope PredictionScope(*this, RepDataDelegate.PredictionTag, TEXT("NetSyncPoint"));
+		FNexusNetSyncDelegate CopiedDelegate = RepDataDelegate;
+		RepDataDelegate.Reset();
+		CopiedDelegate.OnSyncDelegate.Broadcast();
+	}
+}
+
+void UNexusPredictionComponent::ServerSendTargetData_Implementation(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, const FNexusTargetDataHandle& TargetDataHandle)
+{
+	check(TargetDataHandle.IsValid());
+	check(PrimaryPredictionTag.IsValid() && PredictionTag.IsValid());
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusTargetDataDelegate& RepDataDelegate = TargetDataDelegates.FindOrAdd(Key);
+	if (RepDataDelegate.PredictionTag.IsValid())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("서버 타깃데이터 수신 (오버라이드): Key=%s, Current%s"), *Key.ToString(), *PredictionTag.ToString());
+	}
+	else
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("서버 타깃데이터 수신: Key=%s, Current%s"), *Key.ToString(), *PredictionTag.ToString());
+	}
+
+	RepDataDelegate.TargetDataHandle = TargetDataHandle;
+	RepDataDelegate.PredictionTag = PredictionTag;
+
+	if (RepDataDelegate.OnSetDelegate.IsBound())
+	{
+		FNexusPredictionScope PredictionScope(*this, RepDataDelegate.PredictionTag, TEXT("TargetData"));
+		FNexusTargetDataDelegate CopiedDelegate = RepDataDelegate;
+		RepDataDelegate.Reset();
+		CopiedDelegate.OnSetDelegate.Broadcast(CopiedDelegate.TargetDataHandle);
+	}
+}
+
+void UNexusPredictionComponent::AuthCallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
+{
+	if (!IsOwnerActorAuthoritative())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	FNexusTargetDataDelegate& RepDataDelegate = TargetDataDelegates.FindOrAdd(Key);
+	if (RepDataDelegate.OnSetDelegate.IsBound())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("타깃데이터 델리게이트 추가 (오버라이드): Key=%s"), *Key.ToString());
+	}
+	else
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("타깃데이터 델리게이트 추가: Key=%s"), *Key.ToString());
+	}
+
+	RepDataDelegate.OnSetDelegate.Add(MoveTemp(Delegate));
+	if (RepDataDelegate.PredictionTag.IsValid())
+	{
+		FNexusPredictionScope PredictionScope(*this, RepDataDelegate.PredictionTag, TEXT("TargetData"));
+		FNexusTargetDataDelegate CopiedDelegate = RepDataDelegate;
+		RepDataDelegate.Reset();
+		CopiedDelegate.OnSetDelegate.Broadcast(CopiedDelegate.TargetDataHandle);
+	}
+}
+
+void UNexusPredictionComponent::AuthClearAllReplicationDelegates(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag)
+{
+	if (!IsOwnerActorAuthoritative())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
+	NX_LOG_SUB(GetAgentActor(), LogNexusPrediction, Verbose, TEXT("모든 리플리케이션 델리게이트 제거: Key=%s"), *Key.ToString());
 	NetSyncPointDelegates.Remove(Key);
-	Delegate.ExecuteIfBound();
-}
-
-void UNexusPredictionComponent::ServerSendTargetData_Implementation(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		TargetDataDelegates.Add(Key, {PredictionTag, TargetDataHandle});
-		return;
-	}
-
-	FNexusTargetDataDelegate CopiedDelegate = *RepDataDelegate;
 	TargetDataDelegates.Remove(Key);
-	if (CopiedDelegate.OnSetDelegate.IsBound())
-	{
-		FNexusPredictionScope PredictionScope(*this, PredictionTag, TEXT("TargetData"));
-		CopiedDelegate.OnSetDelegate.Broadcast(TargetDataHandle);
-	}
-}
-
-void UNexusPredictionComponent::CallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate)
-{
-	const FNexusRepDataKey Key{Handle, PrimaryPredictionTag};
-	FNexusTargetDataDelegate* RepDataDelegate = TargetDataDelegates.Find(Key);
-	if (!RepDataDelegate)
-	{
-		TargetDataDelegates.Add(Key, MoveTemp(Delegate));
-		return;
-	}
-
-	FNexusPredictionScope PredictionScope(*this, RepDataDelegate->PredictionTag, TEXT("TargetData"));
-	FNexusTargetDataHandle CopiedHandle = RepDataDelegate->TargetDataHandle;
-	TargetDataDelegates.Remove(Key);
-	Delegate.ExecuteIfBound(CopiedHandle);
 }

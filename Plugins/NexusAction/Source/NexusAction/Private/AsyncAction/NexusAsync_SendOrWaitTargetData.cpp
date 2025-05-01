@@ -34,16 +34,17 @@ void UNexusAsync_SendOrWaitTargetData::Activate()
 
 	if (bIsOwnerActorAuthoritative && !Action->IsLocallyControlled())
 	{
-		PredictionComponent->CallOrAddTargetDataDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FOnNexusTargetDataSetSignature::FDelegate::CreateUObject(this, &UNexusAsync_SendOrWaitTargetData::OnArrived));
+		PredictionComponent->AuthCallOrAddTargetDataDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FOnNexusTargetDataSetSignature::FDelegate::CreateUObject(this, &UNexusAsync_SendOrWaitTargetData::OnArrived));
 		return;
 	}
 
-	check(TargetDataHandle.IsValid());
+	check(TargetDataHandle.IsValid() && PredictionTag.IsValid());
+	NX_LOG_SUB(Action->GetAgentActor(), LogNexusPrediction, Verbose, TEXT("클라이언트 타깃데이터 송신: Primary%s, Current%s"), *Action->GetPrimaryPredictionTag().ToString(), *PredictionTag.ToString());
 	PredictionComponent->ServerSendTargetData(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), PredictionComponent->GetCurrentPredictionTag(), TargetDataHandle);
 	OnArrived(TargetDataHandle);
 }
 
-void UNexusAsync_SendOrWaitTargetData::OnArrived(FNexusTargetDataHandle InTargetDataHandle)
+void UNexusAsync_SendOrWaitTargetData::OnArrived(const FNexusTargetDataHandle& InTargetDataHandle)
 {
 	check(InTargetDataHandle.IsValid());
 	if (ShouldBroadcastDelegates() && OnArrivedDelegate.IsBound())

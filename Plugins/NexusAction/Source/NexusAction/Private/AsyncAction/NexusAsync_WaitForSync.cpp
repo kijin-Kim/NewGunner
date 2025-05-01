@@ -32,7 +32,7 @@ void UNexusAsync_WaitForSync::Activate()
 
 	if (bIsOwnerActorAuthoritative && !Action->IsLocallyControlled())
 	{
-		PredictionComponent->CallOrAddNetsyncPointDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UNexusAsync_WaitForSync::OnSync));
+		PredictionComponent->AuthCallOrAddNetsyncPointDelegate(Action->GetActionDefHandle(), Action->GetPrimaryPredictionTag(), FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &UNexusAsync_WaitForSync::OnSync));
 		return;
 	}
 

@@ -30,7 +30,7 @@ public:
 	virtual void Activate() override;
 	//~ End UCancellableAsyncAction Interface.
 	
-	void OnArrived(FNexusTargetDataHandle InTargetDataHandle);
+	void OnArrived(const FNexusTargetDataHandle& InTargetDataHandle);
 
 public:
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "OnArrived"))

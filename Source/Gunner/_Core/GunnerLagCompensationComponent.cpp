@@ -5,6 +5,7 @@
 
 #include "GameFramework/Character.h"
 #include "RewoundSnapshotAnimInstance.h"
+#include "Gunner/Gunner.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 
 
@@ -39,38 +40,50 @@ void UGunnerLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick 
 		{
 			PoseSnapshots.AddFront(NewPoseSnapshot);
 		}
-		
 	}
 }
 
-void UGunnerLagCompensationComponent::AuthBeginRewind(float TimeStamp)
+bool UGunnerLagCompensationComponent::AuthBeginRewind(float TimeStamp, double& OutRewoundedTimeStamp)
 {
-	if (CharacterOwner->HasAuthority())
+	if (!CharacterOwner->HasAuthority())
 	{
-		const double SingleTripTimeFromClient = GetWorld()->GetTimeSeconds() - TimeStamp;
-		const double AdjustedClientTimeStamp = TimeStamp - SingleTripTimeFromClient;
-		const double TargetTime = FMath::Min(GetWorld()->GetTimeSeconds(), AdjustedClientTimeStamp);
-
-		FMyPoseSnapshot NearestFutureSnapshot;
-		FMyPoseSnapshot NearestPastSnapshot;
-
-		NearestFutureSnapshot = PoseSnapshots.First();
-		NearestPastSnapshot = NearestFutureSnapshot;
-		for (int i = 1; i < PoseSnapshots.Num(); ++i)
-		{
-			if (PoseSnapshots[i].Time <= TargetTime)
-			{
-				NearestPastSnapshot = PoseSnapshots[i];
-				break;
-			}
-			NearestFutureSnapshot = PoseSnapshots[i];
-		}
-		AuthSpawnDummyMesh(NearestFutureSnapshot, NearestPastSnapshot, TargetTime);
+		GR_LOG_SUB(CharacterOwner, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return 0.0;
 	}
+
+	const double SingleTripTimeFromClient = GetWorld()->GetTimeSeconds() - TimeStamp;
+	const double AdjustedClientTimeStamp = TimeStamp - SingleTripTimeFromClient;
+	const double TargetTime = FMath::Min(GetWorld()->GetTimeSeconds(), AdjustedClientTimeStamp);
+
+	FMyPoseSnapshot NearestFutureSnapshot;
+	FMyPoseSnapshot NearestPastSnapshot;
+
+	NearestFutureSnapshot = PoseSnapshots.First();
+	NearestPastSnapshot = NearestFutureSnapshot;
+	bool bFound = false;
+	for (int i = 1; i < PoseSnapshots.Num(); ++i)
+	{
+		if (PoseSnapshots[i].Time <= TargetTime)
+		{
+			bFound = true;
+			NearestPastSnapshot = PoseSnapshots[i];
+			break;
+		}
+		NearestFutureSnapshot = PoseSnapshots[i];
+	}
+	AuthSpawnDummyMesh(NearestFutureSnapshot, NearestPastSnapshot, TargetTime);
+	OutRewoundedTimeStamp = FMath::Max(NearestPastSnapshot.Time, TargetTime);
+	return bFound;
 }
 
 void UGunnerLagCompensationComponent::AuthEndRewind()
 {
+	if (!CharacterOwner->HasAuthority())
+	{
+		GR_LOG_SUB(CharacterOwner, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
 	if (DummyMeshComponent)
 	{
 		DummyMeshComponent->DestroyComponent();
@@ -120,5 +133,3 @@ void UGunnerLagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& 
 		DummyMeshComponent->FinalizeBoneTransform();
 	}
 }
-
-

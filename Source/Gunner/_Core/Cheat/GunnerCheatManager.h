@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
 #include "NexusCheatManager.h"
+#include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GunnerCheatManager.generated.h"
 
 
@@ -29,10 +30,9 @@ public:
 	virtual void InitCheatManager() override;
 	UFUNCTION(Exec)
 	void SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode);
-
+	void OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController);
 
 private:
-	void OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController);
 	void SetAllControllersTeam(FGenericTeamId TeamId);
 	void SetAllControllersTeamPingPong();
 	void SetTeam(APlayerController* PC, FGenericTeamId TeamId);
@@ -40,4 +40,6 @@ private:
 private:
 	UPROPERTY()
 	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
+	
+	FGenericTeamId PingPongTeam = AttackerTeam;
 };

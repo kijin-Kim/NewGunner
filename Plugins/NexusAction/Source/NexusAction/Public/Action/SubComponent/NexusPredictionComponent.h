@@ -20,66 +20,43 @@ public:
 	UNexusPredictionComponent();
 	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	
+
 	void ReplicateNetPredictionTag(const FNexusPredictionTag& PredictionTag);
 	void SetCurrentPredictionTag(const FNexusPredictionTag& NewTag);
 	FNexusPredictionTag GetCurrentPredictionTag() const;
 
 	UFUNCTION(Server, Reliable)
 	void ServerSendNetSyncPoint(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag);
-	void CallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
+	void AuthCallOrAddNetsyncPointDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FSimpleMulticastDelegate::FDelegate&& Delegate);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendTargetData(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, FNexusTargetDataHandle TargetDataHandle);
-	void CallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
-
+	void ServerSendTargetData(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FNexusPredictionTag PredictionTag, const FNexusTargetDataHandle& TargetDataHandle);
+	void AuthCallOrAddTargetDataDelegate(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag, FOnNexusTargetDataSetSignature::FDelegate&& Delegate);
+	void AuthClearAllReplicationDelegates(const FNexusActionDefHandle& Handle, FNexusPredictionTag PrimaryPredictionTag);
 
 private:
-	struct FNexusRepDataDelegate
+	struct FNexusNetSyncDelegate
 	{
-		FNexusRepDataDelegate(const FNexusPredictionTag& InPredictionTag)
-			: PredictionTag(InPredictionTag)
+		void Reset()
 		{
+			PredictionTag = FNexusPredictionTag();
+			OnSyncDelegate.Clear();
 		}
-
 
 		FNexusPredictionTag PredictionTag;
-	};
-
-	struct FNexusNetSyncDelegate : public FNexusRepDataDelegate
-	{
-		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag)
-			: FNexusRepDataDelegate(InPredictionTag)
-		{
-		}
-
-
-		FNexusNetSyncDelegate(const FNexusPredictionTag& InPredictionTag, FSimpleMulticastDelegate::FDelegate&& InDelegate)
-			: FNexusRepDataDelegate(InPredictionTag)
-		{
-			OnSyncDelegate.Add(MoveTemp(InDelegate));
-		}
-
 		FSimpleMulticastDelegate OnSyncDelegate;
 	};
 
-	struct FNexusTargetDataDelegate : public FNexusRepDataDelegate
+	struct FNexusTargetDataDelegate
 	{
-		FNexusTargetDataDelegate(const FNexusPredictionTag& InPredictionTag, const FNexusTargetDataHandle& InTargetDataHandle)
-			: FNexusRepDataDelegate(InPredictionTag)
-			  , TargetDataHandle(InTargetDataHandle)
+		void Reset()
 		{
+			PredictionTag = FNexusPredictionTag();
+			OnSetDelegate.Clear();
+			TargetDataHandle = FNexusTargetDataHandle();
 		}
 
-		FNexusTargetDataDelegate(FOnNexusTargetDataSetSignature::FDelegate&& InDelegate)
-			: FNexusRepDataDelegate(FNexusPredictionTag()),
-			  TargetDataHandle()
-		{
-			OnSetDelegate.Add(MoveTemp(InDelegate));
-		}
-
-
+		FNexusPredictionTag PredictionTag;
 		FOnNexusTargetDataSetSignature OnSetDelegate;
 		FNexusTargetDataHandle TargetDataHandle;
 	};

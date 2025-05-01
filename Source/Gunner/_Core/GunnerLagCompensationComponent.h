@@ -35,7 +35,7 @@ public:
 	UGunnerLagCompensationComponent();
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void AuthBeginRewind(float TimeStamp);
+	bool AuthBeginRewind(float TimeStamp, double& OutRewoundedTimeStamp);
 	void AuthEndRewind();
 
 private:
@@ -46,6 +46,7 @@ private:
 	TSubclassOf<URewoundSnapshotAnimInstance> PoseSnapshotAnimInstanceClass;
 	UPROPERTY(Config)
 	double MaxRewindTime = 0.3;
+	
 
 	UPROPERTY()
 	ACharacter* CharacterOwner;

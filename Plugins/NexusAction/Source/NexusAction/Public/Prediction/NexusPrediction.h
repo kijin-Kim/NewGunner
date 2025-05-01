@@ -46,7 +46,7 @@ struct NEXUSACTION_API FNexusPredictionTag : public FFastArraySerializerItem
 
 
 	FString ToString() const { return FString::Printf(TEXT("PredictionTag={Handle=%d, Host=%s}"), Handle, bIsServerCreated ? TEXT("Server") : TEXT("Client")); }
-	friend uint32 GetTypeHash(const FNexusPredictionTag& DefHandle) { return ::GetTypeHash(DefHandle.Handle); }
+	friend uint32 GetTypeHash(const FNexusPredictionTag& DefHandle) { return HashCombine(::GetTypeHash(DefHandle.Handle), ::GetTypeHash(DefHandle.bIsServerCreated)); }
 
 private:
 	UPROPERTY()

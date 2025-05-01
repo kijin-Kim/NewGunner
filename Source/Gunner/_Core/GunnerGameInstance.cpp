@@ -3,9 +3,12 @@
 
 #include "GunnerGameInstance.h"
 
+#include "GunnerGameMode.h"
 #include "MoviePlayer.h"
 #include "Prediction/NexusPrediction.h"
 #include "Blueprint/UserWidget.h"
+#include "Cheat/GunnerCheatManager.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
@@ -13,7 +16,7 @@
 void UGunnerGameInstance::Init()
 {
 	Super::Init();
-	
+
 	static bool bIsInitialized = false;
 	if (!bIsInitialized)
 	{
@@ -25,11 +28,30 @@ void UGunnerGameInstance::Init()
 
 		AHUD::OnShowDebugInfo.RemoveAll(this);
 		AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
+
+		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UGunnerGameInstance::OnPlayerPostLogin);
+
+
 		bIsInitialized = true;
 	}
-
-
 }
+
+void UGunnerGameInstance::Shutdown()
+{
+	Super::Shutdown();
+	FNexusPredictionEvents::ResetPredictionEvents();
+}
+
+UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const
+{
+	return DamageCurveTable;
+}
+
+UDataTable* UGunnerGameInstance::GetWeaponDataTable() const
+{
+	return WeaponDataTable;
+}
+
 
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)
 {
@@ -76,18 +98,15 @@ void UGunnerGameInstance::StopLoadingScreen()
 	GetMoviePlayer()->StopMovie();
 }
 
-void UGunnerGameInstance::Shutdown()
+void UGunnerGameInstance::OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController)
 {
-	Super::Shutdown();
-	FNexusPredictionEvents::ResetPredictionEvents();
-}
+	if (!PlayerController || !PlayerController->HasAuthority())
+	{
+		return;
+	}
 
-UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const
-{
-	return DamageCurveTable;
-}
-
-UDataTable* UGunnerGameInstance::GetWeaponDataTable() const
-{
-	return WeaponDataTable;
+	if (UGunnerCheatManager* CheatManager = CastChecked<UGunnerCheatManager>(PlayerController->CheatManager))
+	{
+		CheatManager->OnPlayerPostLogin(GameModeBase, PlayerController);
+	}
 }

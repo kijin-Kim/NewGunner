@@ -18,17 +18,19 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 public:
 	
 	virtual void Init() override;
+	virtual void Shutdown() override;
+    	UCurveTable* GetDamageCurveTable() const;
+    	UDataTable* GetWeaponDataTable() const;
+private:
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
 	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
 	void OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
 	void PlayLoadingScreen();
 	void StopLoadingScreen();
+	void OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController);
 	
-
-
-	virtual void Shutdown() override;
-	UCurveTable* GetDamageCurveTable() const;
-	UDataTable* GetWeaponDataTable() const;
+	
+	
 
 public:
 	UPROPERTY(EditAnywhere)

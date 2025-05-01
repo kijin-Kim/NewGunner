@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GunnerAction_SlotItemBase.h"
 #include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
+#include "Gunner/_Core/Debug/GunnerDebugHitData.h"
 
 
 #include "GunnerAction_Fire.generated.h"
@@ -23,13 +24,14 @@ class GUNNER_API UGunnerAction_Fire : public UGunnerAction_SlotItemBase
 
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual TArray<FHitResult> HitScanTrace();
+	TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	virtual void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
+	void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
+	static void DrawDebugHitBoxData(UWorld* World, const TArray<FGunnerDebugHitBoxDataEntry>& HitBoxData, const FColor& DebugDrawColor, bool bPersistentLines = false, float LifeTime = -1.0f);
 
 protected:
-	virtual void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
-	virtual void AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters);
+	void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
+	void AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters, const TArray<FHitResult>& HitResults);
 	
 	TArray<FHitResult> FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults);
@@ -48,4 +50,10 @@ protected:
 	TObjectPtr<const UGunnerDamageType> DamageType;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bEnableLagCompensation = true;
+	
+
+	UPROPERTY(EditAnywhere)
+	bool bEnableDebug = false;
+	UPROPERTY()
+	TArray<FGunnerDebugHitConfirmedDataEntry> DebugHitConfirmData;
 };
