@@ -20,7 +20,8 @@ public:
 	virtual void OnSetupActionComponent() override;
 
 	UFUNCTION(Client, Reliable)
-	void ClientSendDebugHitConfirmedData(const TArray<FGunnerDebugHitConfirmedDataEntry>& DebugHitConfirmedData);
+	void ClientSendDebugHitConfirmedData(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos);
+
 
 private:
 	UPROPERTY(EditAnywhere)

@@ -53,10 +53,8 @@ void FNexusPredictionTag::PreReplicatedRemove(const FNexusPredictionTagContainer
 
 void FNexusPredictionTag::PostReplicatedChange(const FNexusPredictionTagContainer& InArray)
 {
-	checkNoEntry();
 	FNexusPredictionEvents::BroadcastOnPredictionEnded(*this);
 }
-
 
 bool FNexusPredictionTagContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {

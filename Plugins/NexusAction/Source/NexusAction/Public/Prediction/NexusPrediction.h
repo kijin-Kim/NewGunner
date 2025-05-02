@@ -55,7 +55,8 @@ private:
 	bool bIsServerCreated = false;
 
 	// 서버에서 각 커넥션에 대한 UPackage
-	UPackageMap* ConnectionIdentifier = nullptr;
+	UPROPERTY(NotReplicated)
+	TObjectPtr<UPackageMap> ConnectionIdentifier;
 };
 
 template <>

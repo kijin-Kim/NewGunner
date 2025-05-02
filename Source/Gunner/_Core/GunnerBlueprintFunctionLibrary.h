@@ -26,10 +26,9 @@ class GUNNER_API UGunnerBlueprintFunctionLibrary : public UBlueprintFunctionLibr
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Gunner|TargetData")
-	static FNexusTargetDataHandle MakeHitTargetData(float ServerTime, AActor* AgentActor, const TArray<FHitResult>& HitResults)
+	static FNexusTargetDataHandle MakeHitTargetData(AActor* AgentActor, const TArray<FHitResult>& HitResults)
 	{
 		TSharedPtr<FGunnerTargetData_Hit> HitData = MakeShared<FGunnerTargetData_Hit>();
-		HitData->TimeStamp = ServerTime;
 		HitData->AgentActor = AgentActor;
 		HitData->HitResults = HitResults;
 

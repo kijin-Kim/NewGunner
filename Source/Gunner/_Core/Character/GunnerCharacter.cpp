@@ -36,8 +36,11 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMeshComponent->bOnlyOwnerSee = true;
 	FirstPersonMeshComponent->CastShadow = false;
 	FirstPersonMeshComponent->bRenderCustomDepth = true;
+	FirstPersonMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -55,16 +58,20 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	LagCompensationComponent = CreateDefaultSubobject<UGunnerLagCompensationComponent>(TEXT("LagCompensationComponent"));
 }
 
-void AGunnerCharacter::OnConstruction(const FTransform& Transform)
+void AGunnerCharacter::PostInitializeComponents()
 {
-	Super::OnConstruction(Transform);
-	for (int i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+	Super::PostInitializeComponents();
+	ThirdPersonMaterialInstances.Empty();
+	if (GetMesh())
 	{
-		UMaterialInterface* MaterialInterface = GetMesh()->GetMaterial(i);
-		check(MaterialInterface);
-		UMaterialInstanceDynamic* MaterialInstance = UMaterialInstanceDynamic::Create(MaterialInterface, this);
-		GetMesh()->SetMaterial(i, MaterialInstance);
-		ThirdPersonMaterialInstances.Add(MaterialInstance);
+		for (int i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+		{
+			UMaterialInterface* MaterialInterface = GetMesh()->GetMaterial(i);
+			check(MaterialInterface);
+			UMaterialInstanceDynamic* MaterialInstance = UMaterialInstanceDynamic::Create(MaterialInterface, this);
+			GetMesh()->SetMaterial(i, MaterialInstance);
+			ThirdPersonMaterialInstances.Add(MaterialInstance);
+		}
 	}
 }
 

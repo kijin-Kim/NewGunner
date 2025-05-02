@@ -19,7 +19,7 @@ public:
 	virtual void NativeConstruct() override;
 
 public:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UTextBlock* TimeText;
 	
 };

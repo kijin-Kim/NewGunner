@@ -43,6 +43,12 @@ TArray<FHitResult> UGunnerAction_Fire::HitScanTrace()
 	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 
 
+	if (!bEnableDebug)
+	{
+		return HitResults;
+	}
+
+
 	TArray<AActor*> HitActors = GetUniqueActorsFromHitResults(HitResults);
 	TArray<AActor*> CharacterActors = HitActors.FilterByPredicate([](AActor* Actor)
 	{
@@ -63,19 +69,28 @@ TArray<FHitResult> UGunnerAction_Fire::HitScanTrace()
 		{
 			if (Character && Character->GetMesh())
 			{
-				TArray<FGunnerDebugHitBoxDataEntry> HitBoxData;
+				TArray<FGunnerDebugHitBoxInfo> HitBoxData;
 				for (USkeletalBodySetup* BodySetup : Character->GetMesh()->GetPhysicsAsset()->SkeletalBodySetups)
 				{
-					FGunnerDebugHitBoxDataEntry& Entry = HitBoxData.AddDefaulted_GetRef();
+					FGunnerDebugHitBoxInfo& Entry = HitBoxData.AddDefaulted_GetRef();
 					Entry.BoneName = BodySetup->BoneName;
-					Entry.BoneTransform = Character->GetMesh()->GetBoneTransform(BodySetup->BoneName);
+					Entry.BoneWorldTransform = Character->GetMesh()->GetBoneTransform(BodySetup->BoneName);
 					Entry.AggGeom = BodySetup->AggGeom;
 				}
 
 				UGunnerAction_Fire::DrawDebugHitBoxData(GetWorld(), HitBoxData, FColor::Blue, true);
-				FVector Location = Character->GetMesh()->GetComponentLocation();
-				Location.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f + 10.0f;
-				DrawDebugString(GetWorld(), Location, FString::Printf(TEXT("Client TimeStamp: %f"), GetWorld()->GetGameState()->GetServerWorldTimeSeconds()), nullptr, FColor::Blue, -1.0f, true);
+				FVector StringLocation = Character->GetMesh()->GetComponentLocation();
+				StringLocation.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f;
+				
+				float RoundTripTime = 0.0f;
+				AController* Controller = GetController();
+				if (Controller && Controller->PlayerState)
+				{
+					RoundTripTime = Controller->PlayerState->GetPingInMilliseconds() * 0.001f;
+				}
+				
+				FString DebugString = FString::Printf(TEXT("TimeStamp: %.2f"), GetWorld()->GetGameState()->GetServerWorldTimeSeconds() + RoundTripTime * 0.5f);
+				DrawDebugString(GetWorld(), StringLocation, DebugString, nullptr, FColor::Blue, -1.0f, true);
 			}
 		}
 	}
@@ -100,8 +115,15 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 		}
 	}
 
-
-	AuthOnBeginRewind(LagCompensationTargetCharacters, bEnableLagCompensation ? HitTargetData->TimeStamp : GetWorld()->GetTimeSeconds());
+	float RoundTripTime = 0.0f;
+	AController* Controller = GetController();
+	if (Controller && Controller->PlayerState)
+	{
+		RoundTripTime = Controller->PlayerState->GetPingInMilliseconds() * 0.001f;
+	}
+	
+	const float TimeStamp = GetWorld()->GetTimeSeconds() - RoundTripTime;
+	AuthOnBeginRewind(LagCompensationTargetCharacters, bEnableLagCompensation ? TimeStamp : GetWorld()->GetTimeSeconds());
 
 
 	FCollisionQueryParams CollisionQueryParams;
@@ -130,37 +152,37 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
 	if (UGunnerActionComponent* GunnerActionComponent = Cast<UGunnerActionComponent>(ActionComponent))
 	{
-		GunnerActionComponent->ClientSendDebugHitConfirmedData(DebugHitConfirmData);
-		DebugHitConfirmData.Empty();
+		GunnerActionComponent->ClientSendDebugHitConfirmedData(DebugHitConfirmInfos);
+		DebugHitConfirmInfos.Empty();
 	}
 }
 
-void UGunnerAction_Fire::DrawDebugHitBoxData(UWorld* World, const TArray<FGunnerDebugHitBoxDataEntry>& HitBoxData, const FColor& DebugDrawColor, bool bPersistentLines, float LifeTime)
+void UGunnerAction_Fire::DrawDebugHitBoxData(UWorld* World, const TArray<FGunnerDebugHitBoxInfo>& HitBoxData, const FColor& DebugDrawColor, bool bPersistentLines, float LifeTime)
 {
-	for (const FGunnerDebugHitBoxDataEntry& Entry : HitBoxData)
+	for (const FGunnerDebugHitBoxInfo& Entry : HitBoxData)
 	{
 		for (const FKBoxElem& BoxElem : Entry.AggGeom.BoxElems)
 		{
-			FTransform ElemWorldTransform = BoxElem.GetTransform() * Entry.BoneTransform;
+			FTransform ElemWorldTransform = BoxElem.GetTransform() * Entry.BoneWorldTransform;
 			FVector Extent = {BoxElem.X * 0.5f, BoxElem.Y * 0.5f, BoxElem.Z * 0.5f};
 			DrawDebugBox(World, ElemWorldTransform.GetLocation(), Extent, DebugDrawColor, bPersistentLines, LifeTime);
 		}
 
 		for (const FKSphereElem& SphereElem : Entry.AggGeom.SphereElems)
 		{
-			FTransform ElemWorldTransform = SphereElem.GetTransform() * Entry.BoneTransform;
+			FTransform ElemWorldTransform = SphereElem.GetTransform() * Entry.BoneWorldTransform;
 			DrawDebugSphere(World, ElemWorldTransform.GetLocation(), SphereElem.Radius, 12, DebugDrawColor, bPersistentLines, LifeTime);
 		}
 
 		for (const FKSphylElem& SphylElem : Entry.AggGeom.SphylElems)
 		{
-			FTransform ElemWorldTransform = SphylElem.GetTransform() * Entry.BoneTransform;
+			FTransform ElemWorldTransform = SphylElem.GetTransform() * Entry.BoneWorldTransform;
 			DrawDebugCapsule(World, ElemWorldTransform.GetLocation(), SphylElem.GetScaledHalfLength(FVector(1.0f)), SphylElem.GetScaledRadius(FVector(1.0f)), ElemWorldTransform.GetRotation(), DebugDrawColor, bPersistentLines, LifeTime);
 		}
 
 		for (const FKTaperedCapsuleElem& TaperedCapsuleElem : Entry.AggGeom.TaperedCapsuleElems)
 		{
-			FTransform ElemWorldTransform = TaperedCapsuleElem.GetTransform() * Entry.BoneTransform;
+			FTransform ElemWorldTransform = TaperedCapsuleElem.GetTransform() * Entry.BoneWorldTransform;
 			float Radius0;
 			float Radius1;
 			TaperedCapsuleElem.GetScaledRadii(FVector(1.0f), Radius0, Radius1);
@@ -217,22 +239,21 @@ TArray<AActor*> UGunnerAction_Fire::GetIgnoredActorsByTeam(APlayerState* PlayerS
 	return IgnoredActors;
 }
 
-void UGunnerAction_Fire::AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp)
+void UGunnerAction_Fire::AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TargetTimeStamp)
 {
 	for (ACharacter* TargetCharacter : LagCompensationTargetCharacters)
 	{
 		UGunnerLagCompensationComponent* LagCompensationComponent = TargetCharacter->GetComponentByClass<UGunnerLagCompensationComponent>();
 		check(LagCompensationComponent);
-		double RewoundTimeStamp;
-		const bool bFoundSnapshot = LagCompensationComponent->AuthBeginRewind(TimeStamp, RewoundTimeStamp);
-		if (bEnableDebug)
+		if (!bEnableDebug)
 		{
-			FGunnerDebugHitConfirmedDataEntry& Entry = DebugHitConfirmData.AddDefaulted_GetRef();
-			Entry.ClientClaimedHitCharacter = TargetCharacter;
-			Entry.bFoundSnapshot = bFoundSnapshot;
-			Entry.CollectHitBoxData(TargetCharacter->GetMesh()->GetPhysicsAsset()->SkeletalBodySetups);
-			Entry.ServerRewoundedTimeStamp = RewoundTimeStamp;
-			Entry.ServerLocation = TargetCharacter->GetMesh()->GetComponentLocation();
+			LagCompensationComponent->AuthBeginRewind(TargetTimeStamp);
+		}
+		else
+		{
+			FGunnerDebugHitConfirmInfo& HitConfirmInfo = DebugHitConfirmInfos.AddDefaulted_GetRef();
+			HitConfirmInfo.TargetCharacter = TargetCharacter;
+			LagCompensationComponent->AuthBeginRewind(TargetTimeStamp, &HitConfirmInfo);
 		}
 	}
 }
@@ -256,17 +277,15 @@ void UGunnerAction_Fire::AuthOnEndRewind(TArray<ACharacter*> LagCompensationTarg
 
 			if (ACharacter* HitCharacter = Cast<ACharacter>(HitResult.GetActor()))
 			{
-				FGunnerDebugHitConfirmedDataEntry* ConfirmedPtr = DebugHitConfirmData.FindByPredicate([HitCharacter](const FGunnerDebugHitConfirmedDataEntry& Entry)
+				FGunnerDebugHitConfirmInfo* ConfirmedPtr = DebugHitConfirmInfos.FindByPredicate([HitCharacter](const FGunnerDebugHitConfirmInfo& Entry)
 					{
-						return Entry.ClientClaimedHitCharacter == HitCharacter;
+						return Entry.TargetCharacter == HitCharacter;
 					}
 				);
 
 				if (ConfirmedPtr)
 				{
-					ConfirmedPtr->CollectHitBoxData(SkeletalMeshComponent->GetPhysicsAsset()->SkeletalBodySetups);
-					ConfirmedPtr->bHitConfirmed = true;
-					ConfirmedPtr->ServerLocation = SkeletalMeshComponent->GetComponentLocation();
+					ConfirmedPtr->bServerConfirmedHit = true;
 				}
 			}
 		}

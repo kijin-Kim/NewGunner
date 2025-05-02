@@ -3,15 +3,13 @@
 
 #include "GunnerGameInstance.h"
 
-#include "GunnerGameMode.h"
 #include "MoviePlayer.h"
-#include "Prediction/NexusPrediction.h"
 #include "Blueprint/UserWidget.h"
 #include "Cheat/GunnerCheatManager.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/HUD.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
+#include "Prediction/NexusPrediction.h"
 
 void UGunnerGameInstance::Init()
 {
@@ -28,6 +26,7 @@ void UGunnerGameInstance::Init()
 
 		AHUD::OnShowDebugInfo.RemoveAll(this);
 		AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
+		
 
 		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UGunnerGameInstance::OnPlayerPostLogin);
 

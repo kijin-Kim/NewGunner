@@ -5,7 +5,6 @@
 
 bool FGunnerTargetData_Hit::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
-	Ar << TimeStamp;
 	Ar << AgentActor;
 	uint8 HitResultCount = HitResults.Num();
 	Ar << HitResultCount;

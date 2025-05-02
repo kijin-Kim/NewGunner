@@ -38,8 +38,7 @@ class GUNNER_API AGunnerCharacter
 
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostInitializeComponents() override;
 	
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;

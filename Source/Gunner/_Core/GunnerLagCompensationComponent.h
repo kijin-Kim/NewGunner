@@ -8,6 +8,7 @@
 #include "GunnerLagCompensationComponent.generated.h"
 
 
+struct FGunnerDebugHitConfirmInfo;
 class URewoundSnapshotAnimInstance;
 
 USTRUCT()
@@ -35,7 +36,7 @@ public:
 	UGunnerLagCompensationComponent();
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	bool AuthBeginRewind(float TimeStamp, double& OutRewoundedTimeStamp);
+	void AuthBeginRewind(float TargetTimeStamp, FGunnerDebugHitConfirmInfo* OutDebugHitConfirmInfoPtr = nullptr);
 	void AuthEndRewind();
 
 private:
@@ -45,7 +46,7 @@ private:
 	UPROPERTY(Config)
 	TSubclassOf<URewoundSnapshotAnimInstance> PoseSnapshotAnimInstanceClass;
 	UPROPERTY(Config)
-	double MaxRewindTime = 0.3;
+	double MaxRewindTime = 0.2;
 	
 
 	UPROPERTY()

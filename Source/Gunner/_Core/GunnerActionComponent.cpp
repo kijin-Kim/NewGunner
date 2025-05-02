@@ -39,16 +39,20 @@ void UGunnerActionComponent::OnSetupActionComponent()
 	}
 }
 
-void UGunnerActionComponent::ClientSendDebugHitConfirmedData_Implementation(const TArray<FGunnerDebugHitConfirmedDataEntry>& DebugHitConfirmedData)
+void UGunnerActionComponent::ClientSendDebugHitConfirmedData_Implementation(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos)
 {
-	for (const FGunnerDebugHitConfirmedDataEntry& Entry : DebugHitConfirmedData)
+	for (const FGunnerDebugHitConfirmInfo& HitConfirmInfo : DebugHitConfirmInfos)
 	{
-		if (Entry.ClientClaimedHitCharacter)
+		if (HitConfirmInfo.TargetCharacter)
 		{
-			UGunnerAction_Fire::DrawDebugHitBoxData(GetWorld(), Entry.DebugHitBoxData, Entry.bHitConfirmed ? FColor::Green : FColor::Red, true, 0.0f);
-			FVector Location = Entry.ServerLocation;
-			Location.Z += Entry.ClientClaimedHitCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f + 20.0f;
-			DrawDebugString(GetWorld(), Location, FString::Printf(TEXT("Server Rewounded TimeStamp=%f, FoundSnapshot=%s"), Entry.ServerRewoundedTimeStamp, Entry.bFoundSnapshot ? TEXT("true") : TEXT("false")), nullptr, Entry.bHitConfirmed ? FColor::Green : FColor::Red,  -1.0f, true);
+			const FColor DebugDrawColor = HitConfirmInfo.bServerConfirmedHit ? FColor::Green : FColor::Red;
+			UGunnerAction_Fire::DrawDebugHitBoxData(GetWorld(), HitConfirmInfo.DebugHitBoxInfos, DebugDrawColor, true, 0.0f);
+
+
+			FString DebugString = FString::Printf(TEXT("TimeStamp: %.2f\nSnapshotFound: %s"), HitConfirmInfo.ServerRewindTimeStamp, HitConfirmInfo.bRewindSnapshotFound ? TEXT("true") : TEXT("false"));
+			FVector StringLocation = HitConfirmInfo.Location;
+			StringLocation.Z += HitConfirmInfo.TargetCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+			DrawDebugString(GetWorld(), StringLocation, DebugString, nullptr, DebugDrawColor, -1.0f, true);
 		}
 	}
 }

@@ -4,7 +4,8 @@
 #include "GunnerPlayerController.h"
 
 #include "Action/NexusActionComponent.h"
-#include "Camera/CameraComponent.h"
+#include "Engine/Canvas.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/_Core/GunnerGameInstance.h"
@@ -18,6 +19,18 @@ AGunnerPlayerController::AGunnerPlayerController()
 {
 	InputEventDispatcherComponent = CreateDefaultSubobject<UGunnerInputEventDispatcherComponent>(TEXT("InputEventDispatcher"));
 	bAutoManageActiveCameraTarget = false;
+}
+
+void AGunnerPlayerController::DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
+{
+	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+
+	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+	AGameStateBase* GameStateBase = GetWorld()->GetGameState();
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("ServerTime: %fsec"), GameStateBase ? GameStateBase->GetServerWorldTimeSeconds() : 0.0f));
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("Ping: %fms"), PlayerState ? PlayerState->GetPingInMilliseconds() : 0.0f));
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("RTT: %fms"), PlayerState ? PlayerState->GetPingInMilliseconds() * 0.5f : 0.0f));
 }
 
 void AGunnerPlayerController::OnPossess(APawn* InPawn)
@@ -53,6 +66,7 @@ void AGunnerPlayerController::OnRep_PlayerState()
 		TrySetParameterCollectionLocalPlayerTeamID();
 	}));
 }
+
 
 void AGunnerPlayerController::TrySetParameterCollectionLocalPlayerTeamID()
 {

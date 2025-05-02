@@ -18,8 +18,6 @@ public:
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-	float TimeStamp = 0.0f;
-	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<AActor> AgentActor;
 	UPROPERTY(BlueprintReadOnly)
 	TArray<FHitResult> HitResults;

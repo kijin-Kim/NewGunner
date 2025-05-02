@@ -27,10 +27,10 @@ public:
 	TArray<FHitResult> HitScanTrace();
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void AuthHitScanTraceConfirm(const FNexusTargetDataHandle& HitTargetDataHandle);
-	static void DrawDebugHitBoxData(UWorld* World, const TArray<FGunnerDebugHitBoxDataEntry>& HitBoxData, const FColor& DebugDrawColor, bool bPersistentLines = false, float LifeTime = -1.0f);
+	static void DrawDebugHitBoxData(UWorld* World, const TArray<FGunnerDebugHitBoxInfo>& HitBoxData, const FColor& DebugDrawColor, bool bPersistentLines = false, float LifeTime = -1.0f);
 
 protected:
-	void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TimeStamp);
+	void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TargetTimeStamp);
 	void AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters, const TArray<FHitResult>& HitResults);
 	
 	TArray<FHitResult> FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults);
@@ -55,5 +55,5 @@ protected:
 	UPROPERTY(EditAnywhere)
 	bool bEnableDebug = false;
 	UPROPERTY()
-	TArray<FGunnerDebugHitConfirmedDataEntry> DebugHitConfirmData;
+	TArray<FGunnerDebugHitConfirmInfo> DebugHitConfirmInfos;
 };
