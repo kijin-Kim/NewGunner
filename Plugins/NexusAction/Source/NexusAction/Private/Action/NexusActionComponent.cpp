@@ -712,6 +712,7 @@ void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(c
 
 void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
+	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 실행 실패: %s"), *ActionDefHandle.ToString());
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
 	ActionInstance->EndAction();
@@ -763,7 +764,7 @@ void UNexusActionComponent::OnActionEnded(const FNexusActionDefHandle& ActionDef
 		{
 			GetPredictionComponent()->AuthClearAllReplicationDelegates(ActionDefHandle, ActionInstance->GetPrimaryPredictionTag());
 		}
-		
+
 		if (FNexusSideEffectInstanceHandle* TagSideEffectInstanceHandle = TagSideEffectMap.Find(ActionDefHandle))
 		{
 			GetSideEffectComponent()->UnregisterAndRemoveSideEffect(*TagSideEffectInstanceHandle);
