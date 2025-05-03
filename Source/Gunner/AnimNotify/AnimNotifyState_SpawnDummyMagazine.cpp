@@ -9,18 +9,20 @@ void UAnimNotifyState_SpawnDummyMagazine::NotifyBegin(USkeletalMeshComponent* Me
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
+	if (!MeshComp->IsVisible())
+	{
+		return;
+	}
+
 	FTransform MagazineSocketTransform = MeshComp->GetSocketTransform(SocketName);
 
 	DummyMagazine = MeshComp->GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), MagazineSocketTransform);
-	DummyMagazine->GetStaticMeshComponent()->bOnlyOwnerSee = MeshComp->bOnlyOwnerSee;
-	DummyMagazine->GetStaticMeshComponent()->bOwnerNoSee = MeshComp->bOwnerNoSee;
 	DummyMagazine->GetStaticMeshComponent()->CastShadow = 0;
 	DummyMagazine->SetOwner(MeshComp->GetOwner());
 	DummyMagazine->SetMobility(EComponentMobility::Type::Movable);
 	DummyMagazine->GetStaticMeshComponent()->SetSimulatePhysics(true);
 	DummyMagazine->GetStaticMeshComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
 	DummyMagazine->GetStaticMeshComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	
 	DummyMagazine->SetLifeSpan(Animation->GetPlayLength());
 
 

@@ -9,9 +9,12 @@ void UAnimNotifyState_SpawnExtraDummyMagazine::NotifyBegin(USkeletalMeshComponen
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	
+	if (!MeshComp->IsVisible())
+	{
+		return;
+	}
+	
 	ExtraDummyMagazine = MeshComp->GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FTransform::Identity);
-	ExtraDummyMagazine->GetStaticMeshComponent()->bOnlyOwnerSee = MeshComp->bOnlyOwnerSee;
-	ExtraDummyMagazine->GetStaticMeshComponent()->bOwnerNoSee = MeshComp->bOwnerNoSee;
 	ExtraDummyMagazine->GetStaticMeshComponent()->CastShadow = 0;
 	ExtraDummyMagazine->SetOwner(MeshComp->GetOwner());
 	ExtraDummyMagazine->SetMobility(EComponentMobility::Type::Movable);
