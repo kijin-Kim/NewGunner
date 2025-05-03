@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GunnerAction_SlotItemBase.h"
+#include "Action/NexusAction.h"
 #include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
 #include "Gunner/_Core/Debug/GunnerDebugHitData.h"
 
@@ -18,7 +18,7 @@ struct FNexusTargetDataHandle;
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerAction_Fire : public UGunnerAction_SlotItemBase
+class GUNNER_API UGunnerAction_Fire : public UNexusAction
 {
 	GENERATED_BODY()
 

@@ -38,7 +38,7 @@ public:
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
-	
+
 	static UNexusAction* NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo, TWeakObjectPtr<UObject> InSourceObject);
 	virtual UWorld* GetWorld() const override;
 	void SetActionCurrentEventMessage(const FNexusEventMessage& InEventMessage);
@@ -88,7 +88,15 @@ public:
 	{
 		return Cast<T>(SourceObject.Get());
 	}
+
+	UFUNCTION(BlueprintPure, meta = (DeterminesOutputType = "Class"))
+	UObject* GetSourceObject(TSubclassOf<UObject> Class) const
+	{
+		return SourceObject.Get();
+	}
+
 	UObject* GetSourceObject() const { return SourceObject.Get(); }
+
 	FNexusActionDefHandle GetActionDefHandle() const { return ActionDefHandle; }
 
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }

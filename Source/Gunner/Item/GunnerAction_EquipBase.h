@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GunnerSlotItem.h"
-#include "Gunner/Action/GunnerAction_SlotItemBase.h"
+#include "Action/NexusAction.h"
 #include "SideEffect/NexusSideEffect.h"
 #include "GunnerAction_EquipBase.generated.h"
 
@@ -21,7 +21,7 @@ public:
 
 
 UCLASS(Abstract)
-class GUNNER_API UGunnerAction_EquipBase : public UGunnerAction_SlotItemBase
+class GUNNER_API UGunnerAction_EquipBase : public UNexusAction
 {
 	GENERATED_BODY()
 
