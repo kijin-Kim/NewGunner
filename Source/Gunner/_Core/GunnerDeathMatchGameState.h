@@ -6,7 +6,6 @@
 #include "GunnerGameState.h"
 #include "GunnerDeathMatchGameState.generated.h"
 
-class AGunnerHUD;
 /**
  * 
  */
@@ -15,11 +14,6 @@ class GUNNER_API AGunnerDeathMatchGameState : public AGunnerGameState
 {
 	GENERATED_BODY()
 public:
-	AGunnerDeathMatchGameState();
-	virtual void HandleMatchHasStarted() override;
-	virtual void Tick(float DeltaSeconds) override;
 	virtual TArray<int32> DetermineWinners() const override;
 
-	
-	AGunnerHUD* GunnerHUD;
 };

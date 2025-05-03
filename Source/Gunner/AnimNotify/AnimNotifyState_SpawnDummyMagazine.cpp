@@ -11,7 +11,7 @@ void UAnimNotifyState_SpawnDummyMagazine::NotifyBegin(USkeletalMeshComponent* Me
 
 	FTransform MagazineSocketTransform = MeshComp->GetSocketTransform(SocketName);
 
-	DummyMagazine = MeshComp->GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FTransform::Identity);
+	DummyMagazine = MeshComp->GetWorld()->SpawnActorDeferred<AStaticMeshActor>(AStaticMeshActor::StaticClass(), MagazineSocketTransform);
 	DummyMagazine->GetStaticMeshComponent()->bOnlyOwnerSee = MeshComp->bOnlyOwnerSee;
 	DummyMagazine->GetStaticMeshComponent()->bOwnerNoSee = MeshComp->bOwnerNoSee;
 	DummyMagazine->GetStaticMeshComponent()->CastShadow = 0;

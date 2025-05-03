@@ -246,10 +246,10 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 			}
 		}
 
+		DisplayDebugManager.SetDrawColor(FColor::White);
 		FString TagString;
 		for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
 		{
-			DisplayDebugManager.SetDrawColor(FColor::White);
 			TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
 		}
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
