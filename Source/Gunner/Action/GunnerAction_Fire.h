@@ -32,17 +32,15 @@ public:
 protected:
 	void AuthOnBeginRewind(TArray<ACharacter*> LagCompensationTargetCharacters, float TargetTimeStamp);
 	void AuthOnEndRewind(TArray<ACharacter*> LagCompensationTargetCharacters, const TArray<FHitResult>& HitResults);
-	
-	TArray<FHitResult> FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults);
 	TArray<AActor*> GetIgnoredActorsByTeam(APlayerState* PlayerState);
 	
 private:
-	
 	void AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults);
 	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal);
+	void DrawDebugHitScanTrace(const TArray<FHitResult>& HitResults);
+	void CalculateTraceStartEnd( FVector& OutTraceStart, FVector& OutTraceEnd) const;
 
-private:
 
 
 protected:

@@ -24,76 +24,26 @@
 
 TArray<FHitResult> UGunnerAction_Fire::HitScanTrace()
 {
-	APawn* AgentPawn = Cast<APawn>(GetAgentActor());
-	UWorld* World = AgentPawn->GetWorld();
-	UCameraComponent* CameraComponet = AgentPawn->GetComponentByClass<UCameraComponent>();
-	FVector CameraLocation = CameraComponet->GetComponentLocation();
-	FVector CameraForward = CameraComponet->GetForwardVector();
-
 	FCollisionQueryParams CollisionQueryParams;
+
+	APawn* AgentPawn = Cast<APawn>(GetAgentActor());
 	TArray<AActor*> IgnoredActors = {GetSourceObject<AActor>(), AgentPawn};
 
 	CollisionQueryParams.AddIgnoredActors(IgnoredActors);
 	CollisionQueryParams.AddIgnoredActors(GetIgnoredActorsByTeam(AgentPawn->GetPlayerState()));
 
 	TArray<FHitResult> HitResults;
-	World->LineTraceMultiByChannel(HitResults,
-	                               CameraLocation,
-	                               CameraLocation + CameraForward * 10000.0f, // TODO: 설정파일을 통해 설정할 수 있도록 변경
-	                               ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
+	FVector TraceStart;
+	FVector TraceEnd;
+	CalculateTraceStartEnd(TraceStart, TraceEnd);
+	GetWorld()->LineTraceMultiByChannel(HitResults, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, CollisionQueryParams, FCollisionResponseParams(ECR_Overlap));
 
 
-	if (!bEnableDebug)
+	if (bEnableDebug && !IsOwnerActorAuthoritative())
 	{
-		return HitResults;
+		DrawDebugHitScanTrace(HitResults);
 	}
 
-
-	TArray<AActor*> HitActors = GetUniqueActorsFromHitResults(HitResults);
-	TArray<AActor*> CharacterActors = HitActors.FilterByPredicate([](AActor* Actor)
-	{
-		return Actor->IsA<ACharacter>();
-	});
-
-	TArray<ACharacter*> Characters;
-	for (AActor* Actor : CharacterActors)
-	{
-		Characters.Add(Cast<ACharacter>(Actor));
-	}
-
-	if (!IsOwnerActorAuthoritative())
-	{
-		FlushPersistentDebugLines(GetWorld());
-		FlushDebugStrings(GetWorld());
-		for (ACharacter* Character : Characters)
-		{
-			if (Character && Character->GetMesh())
-			{
-				TArray<FGunnerDebugHitBoxInfo> HitBoxData;
-				for (USkeletalBodySetup* BodySetup : Character->GetMesh()->GetPhysicsAsset()->SkeletalBodySetups)
-				{
-					FGunnerDebugHitBoxInfo& Entry = HitBoxData.AddDefaulted_GetRef();
-					Entry.BoneName = BodySetup->BoneName;
-					Entry.BoneWorldTransform = Character->GetMesh()->GetBoneTransform(BodySetup->BoneName);
-					Entry.AggGeom = BodySetup->AggGeom;
-				}
-
-				UGunnerAction_Fire::DrawDebugHitBoxData(GetWorld(), HitBoxData, FColor::Blue, true);
-				FVector StringLocation = Character->GetMesh()->GetComponentLocation();
-				StringLocation.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f;
-				
-				float RoundTripTime = 0.0f;
-				AController* Controller = GetController();
-				if (Controller && Controller->PlayerState)
-				{
-					RoundTripTime = Controller->PlayerState->GetPingInMilliseconds() * 0.001f;
-				}
-				
-				FString DebugString = FString::Printf(TEXT("TimeStamp: %.2f"), GetWorld()->GetGameState()->GetServerWorldTimeSeconds() + RoundTripTime * 0.5f);
-				DrawDebugString(GetWorld(), StringLocation, DebugString, nullptr, FColor::Blue, -1.0f, true);
-			}
-		}
-	}
 
 	return HitResults;
 }
@@ -121,7 +71,7 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 	{
 		RoundTripTime = Controller->PlayerState->GetPingInMilliseconds() * 0.001f;
 	}
-	
+
 	const float TimeStamp = GetWorld()->GetTimeSeconds() - RoundTripTime;
 	AuthOnBeginRewind(LagCompensationTargetCharacters, bEnableLagCompensation ? TimeStamp : GetWorld()->GetTimeSeconds());
 
@@ -149,11 +99,14 @@ void UGunnerAction_Fire::AuthHitScanTraceConfirm(const FNexusTargetDataHandle& H
 	AuthApplyDamageByHitResults(HitResults);
 
 
-	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
-	if (UGunnerActionComponent* GunnerActionComponent = Cast<UGunnerActionComponent>(ActionComponent))
+	if (bEnableDebug)
 	{
-		GunnerActionComponent->ClientSendDebugHitConfirmedData(DebugHitConfirmInfos);
-		DebugHitConfirmInfos.Empty();
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
+		if (UGunnerActionComponent* GunnerActionComponent = Cast<UGunnerActionComponent>(ActionComponent))
+		{
+			GunnerActionComponent->ClientSendDebugHitConfirmedData(DebugHitConfirmInfos);
+			DebugHitConfirmInfos.Empty();
+		}
 	}
 }
 
@@ -191,30 +144,19 @@ void UGunnerAction_Fire::DrawDebugHitBoxData(UWorld* World, const TArray<FGunner
 	}
 }
 
-TArray<FHitResult> UGunnerAction_Fire::FilterDuplicateHitResultsByActor(const TArray<FHitResult>& HitResults)
-{
-	TArray<AActor*> HitActors;
-	TArray<FHitResult> FilteredHitResults;
-	for (const FHitResult& HitResult : HitResults)
-	{
-		if (!HitActors.Contains(HitResult.GetActor()))
-		{
-			HitActors.Add(HitResult.GetActor());
-			FilteredHitResults.Add(HitResult);
-		}
-	}
-	return FilteredHitResults;
-}
+
 
 TArray<AActor*> UGunnerAction_Fire::GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults)
 {
-	FilterDuplicateHitResultsByActor(HitResults);
-	TArray<AActor*> HitActors;
+	TSet<AActor*> UniqueActors;
 	for (const FHitResult& HitResult : HitResults)
 	{
-		HitActors.Add(HitResult.GetActor());
+		if (AActor* HitActor = HitResult.GetActor())
+		{
+			UniqueActors.Add(HitActor);
+		}
 	}
-	return HitActors;
+	return UniqueActors.Array();
 }
 
 TArray<AActor*> UGunnerAction_Fire::GetIgnoredActorsByTeam(APlayerState* PlayerState)
@@ -302,9 +244,15 @@ void UGunnerAction_Fire::AuthOnEndRewind(TArray<ACharacter*> LagCompensationTarg
 
 void UGunnerAction_Fire::AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults)
 {
-	for (const FHitResult& HitResult : FilterDuplicateHitResultsByActor(HitResults))
+	TSet<AActor*> DamagedActors;
+	for (const FHitResult& HitResult : HitResults)
 	{
-		AuthApplyDamage(HitResult.GetActor(), HitResult.BoneName, HitResult.ImpactNormal);
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor && !DamagedActors.Contains(HitActor))
+		{
+			AuthApplyDamage(HitActor, HitResult.BoneName, HitResult.ImpactNormal);
+			DamagedActors.Add(HitActor);
+		}
 	}
 }
 
@@ -334,4 +282,71 @@ void UGunnerAction_Fire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FV
 	DamageEventMessage.EventDataObject = DamageContext;
 
 	UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+}
+
+void UGunnerAction_Fire::DrawDebugHitScanTrace(const TArray<FHitResult>& HitResults)
+{
+	TArray<AActor*> HitActors = GetUniqueActorsFromHitResults(HitResults);
+	TArray<AActor*> CharacterActors = HitActors.FilterByPredicate([](AActor* Actor)
+	{
+		return Actor->IsA<ACharacter>();
+	});
+
+	TArray<ACharacter*> Characters;
+	for (AActor* Actor : CharacterActors)
+	{
+		Characters.Add(Cast<ACharacter>(Actor));
+	}
+
+	FlushPersistentDebugLines(GetWorld());
+	FlushDebugStrings(GetWorld());
+	for (ACharacter* Character : Characters)
+	{
+		if (Character && Character->GetMesh())
+		{
+			TArray<FGunnerDebugHitBoxInfo> HitBoxData;
+			for (USkeletalBodySetup* BodySetup : Character->GetMesh()->GetPhysicsAsset()->SkeletalBodySetups)
+			{
+				FGunnerDebugHitBoxInfo& Entry = HitBoxData.AddDefaulted_GetRef();
+				Entry.BoneName = BodySetup->BoneName;
+				Entry.BoneWorldTransform = Character->GetMesh()->GetBoneTransform(BodySetup->BoneName);
+				Entry.AggGeom = BodySetup->AggGeom;
+			}
+
+			UGunnerAction_Fire::DrawDebugHitBoxData(GetWorld(), HitBoxData, FColor::Blue, true);
+			FVector StringLocation = Character->GetMesh()->GetComponentLocation();
+			StringLocation.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f;
+
+			float RoundTripTime = 0.0f;
+			AController* Controller = GetController();
+			if (Controller && Controller->PlayerState)
+			{
+				RoundTripTime = Controller->PlayerState->GetPingInMilliseconds() * 0.001f;
+			}
+
+			FString DebugString = FString::Printf(TEXT("TimeStamp: %.2f"), GetWorld()->GetGameState()->GetServerWorldTimeSeconds() + RoundTripTime * 0.5f);
+			DrawDebugString(GetWorld(), StringLocation, DebugString, nullptr, FColor::Blue, -1.0f, true);
+		}
+	}
+}
+
+void UGunnerAction_Fire::CalculateTraceStartEnd(FVector& OutTraceStart, FVector& OutTraceEnd) const
+{
+	const APawn* AgentPawn = Cast<APawn>(GetAgentActor());
+	if (!AgentPawn)
+	{
+		return;
+	}
+
+	const UCameraComponent* CameraComponent = AgentPawn->GetComponentByClass<UCameraComponent>();
+	if (!CameraComponent)
+	{
+		return;
+	}
+
+
+	OutTraceStart = CameraComponent->GetComponentLocation();
+	const FVector CameraForward = CameraComponent->GetForwardVector();
+	const float MaxTraceDistance = 10000.0f;
+	OutTraceEnd = OutTraceStart + CameraForward * MaxTraceDistance;
 }
