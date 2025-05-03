@@ -150,6 +150,16 @@ void UNexusActionComponent::PopDynamicTag(const FGameplayTag& Tag)
 	GetGameplayTagComponent()->PopDynamicTag(Tag);
 }
 
+void UNexusActionComponent::PushStaticTag(const FGameplayTag& Tag)
+{
+	GetGameplayTagComponent()->PushStaticTag(Tag);
+}
+
+void UNexusActionComponent::PopStaticTag(const FGameplayTag& Tag)
+{
+	GetGameplayTagComponent()->PopStaticTag(Tag);
+}
+
 
 // ------------------------------------------------------------------------------
 // Cue

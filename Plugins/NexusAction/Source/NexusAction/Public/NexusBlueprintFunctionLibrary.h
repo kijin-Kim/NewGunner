@@ -25,9 +25,9 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable, Category = "Nexus|SideEffect")
-	static void AddDynamicTagModifier(const FNexusSideEffectInstanceDefHandle& Handle, const FNexusGameplayTagMod& TagMod)
+	static void InjectTagModifier(const FNexusSideEffectInstanceDefHandle& Handle, const FNexusGameplayTagMod& TagMod)
 	{
 		check(Handle.IsValid());
-		Handle.GetData()->DynamicTagModifiers.Add(TagMod);
+		Handle.GetData()->InjectedTagModifiers.Add(TagMod);
 	}
 };

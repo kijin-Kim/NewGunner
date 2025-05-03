@@ -12,7 +12,7 @@
 FNexusSideEffectInstanceDef::FNexusSideEffectInstanceDef() :
 	SideEffectAsset(nullptr)
 	, InjectedValues()
-	, DynamicTagModifiers()
+	, InjectedTagModifiers()
 	, AppliedOperationHandles()
 {
 }
@@ -20,7 +20,7 @@ FNexusSideEffectInstanceDef::FNexusSideEffectInstanceDef() :
 FNexusSideEffectInstanceDef::FNexusSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> InSideEffectClass) :
 	SideEffectAsset(InSideEffectClass.GetDefaultObject())
 	, InjectedValues()
-	, DynamicTagModifiers()
+	, InjectedTagModifiers()
 	, AppliedOperationHandles()
 {
 }
@@ -149,14 +149,12 @@ void FNexusSideEffectInstance::OnRemoved() const
 	{
 		for (const FNexusGameplayTagMod& TagMod : Def.SideEffectAsset->TagModifiers)
 		{
-			for (const FGameplayTag& Tag : TagMod.TagsToGrant)
-			{
-				GameplayTagComponent->PopDynamicTag(Tag);
-			}
-			for (const FGameplayTag& Tag : TagMod.TagsToRevoke)
-			{
-				GameplayTagComponent->PushDynamicTag(Tag);
-			}
+			RemoveTagModifier(TagMod);
+		}
+
+		for (const FNexusGameplayTagMod& TagMod : Def.InjectedTagModifiers)
+		{
+			RemoveTagModifier(TagMod);
 		}
 	}
 }
@@ -226,7 +224,10 @@ void FNexusSideEffectInstance::ApplyPropertyModifier(const FNexusPropertyMod& Mo
 
 void FNexusSideEffectInstance::ApplyTagModifier(const FNexusGameplayTagMod& Modifier)
 {
-	if (GameplayTagComponent.IsValid())
+	check(GameplayTagComponent.IsValid());
+
+	if ((Def.SideEffectAsset->DurationType != ENexusSideEffectDurationType::Instant && Interval <= 0.0f)
+		|| (!bHasAuthority))
 	{
 		for (const FGameplayTag& Tag : Modifier.TagsToGrant)
 		{
@@ -237,18 +238,65 @@ void FNexusSideEffectInstance::ApplyTagModifier(const FNexusGameplayTagMod& Modi
 			GameplayTagComponent->PopDynamicTag(Tag);
 		}
 	}
+	else
+	{
+		for (const FGameplayTag& Tag : Modifier.TagsToGrant)
+		{
+			GameplayTagComponent->PushStaticTag(Tag);
+		}
+		for (const FGameplayTag& Tag : Modifier.TagsToRevoke)
+		{
+			GameplayTagComponent->PopStaticTag(Tag);
+		}
+	}
+}
+
+void FNexusSideEffectInstance::RemoveTagModifier(const FNexusGameplayTagMod& Modifier) const
+{
+	check(GameplayTagComponent.IsValid());
+
+	if ((Def.SideEffectAsset->DurationType != ENexusSideEffectDurationType::Instant && Interval <= 0.0f)
+		|| (!bHasAuthority))
+	{
+		for (const FGameplayTag& Tag : Modifier.TagsToGrant)
+		{
+			GameplayTagComponent->PopDynamicTag(Tag);
+		}
+		for (const FGameplayTag& Tag : Modifier.TagsToRevoke)
+		{
+			GameplayTagComponent->PushDynamicTag(Tag);
+		}
+	}
+	else
+	{
+		for (const FGameplayTag& Tag : Modifier.TagsToGrant)
+		{
+			GameplayTagComponent->PopStaticTag(Tag);
+		}
+		for (const FGameplayTag& Tag : Modifier.TagsToRevoke)
+		{
+			GameplayTagComponent->PushStaticTag(Tag);
+		}
+	}
 }
 
 void FNexusSideEffectInstance::ApplyAllModifiers()
 {
-	NX_LOG_SUB(PropertyComponent->GetAgentActor(), LogNexusSideEffect, Verbose, TEXT("모디파이어 적용: %s"), *ToString());
 	for (const FNexusPropertyMod& Modifier : Def.SideEffectAsset->Modifiers)
 	{
+		NX_LOG_SUB(PropertyComponent->GetAgentActor(), LogNexusSideEffect, VeryVerbose, TEXT("프로퍼티 모디파이어 적용: %s"), *Modifier.ToString());
 		ApplyPropertyModifier(Modifier);
 	}
 
 	for (const FNexusGameplayTagMod& TagMod : Def.SideEffectAsset->TagModifiers)
 	{
+		NX_LOG_SUB(PropertyComponent->GetAgentActor(), LogNexusSideEffect, VeryVerbose, TEXT("태그 모디파이어 적용: %s"), *TagMod.ToString());
+		ApplyTagModifier(TagMod);
+	}
+
+	for (const FNexusGameplayTagMod& TagMod : Def.InjectedTagModifiers)
+	{
+		NX_LOG_SUB(PropertyComponent->GetAgentActor(), LogNexusSideEffect, VeryVerbose, TEXT("태그 모디파이어 적용: %s"), *TagMod.ToString());
 		ApplyTagModifier(TagMod);
 	}
 }
@@ -319,6 +367,11 @@ void FNexusSideEffectInstanceContainer::Tick(float DeltaTime)
 		PropertyComponent->EvaluateProperties();
 	}
 
+	if (GameplayTagComponent.IsValid())
+	{
+		GameplayTagComponent->EvaluateTagCounts();
+	}
+
 	if (bHasAuthority)
 	{
 		RemoveSideEffectInstanceByPredicate([](const FNexusSideEffectInstance& SideEffectInstance)
@@ -346,4 +399,3 @@ int32 FNexusSideEffectInstanceContainer::RemoveSideEffectInstanceByPredicate(con
 	}
 	return Removed;
 }
-

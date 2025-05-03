@@ -37,6 +37,19 @@ struct FNexusPropertyMod
 	{
 	}
 
+	FString ToString() const
+	{
+		FString Result = TEXT("FNexusPropertyMod={");
+		Result += TEXT("PropertyTag=") + PropertyTag.ToString() + TEXT(", ");
+		Result += TEXT("CalculationType=") + UEnum::GetValueAsString(CalculationType) + TEXT(", ");
+		Result += TEXT("Operator=") + UEnum::GetValueAsString(Operator) + TEXT(", ");
+		Result += TEXT("DirectValue=") + FString::Printf(TEXT("%.2f"), DirectValue) + TEXT(", ");
+		Result += TEXT("BaseProperty=") + BaseProperty.ToString() + TEXT(", ");
+		Result += TEXT("InjectedValueTag=") + InjectedValueTag.ToString() + TEXT(", ");
+		Result += TEXT("}");
+		return Result;
+	}
+
 	UPROPERTY(EditAnywhere, Category = "Property Operation")
 	FGameplayTag PropertyTag;
 	UPROPERTY(EditAnywhere, Category = "Property Operation")
@@ -56,6 +69,15 @@ USTRUCT(BlueprintType)
 struct FNexusGameplayTagMod
 {
 	GENERATED_BODY()
+
+	FString ToString() const
+	{
+		FString Result = TEXT("FNexusGameplayTagMod={");
+		Result += TEXT("TagsToGrant=") + TagsToGrant.ToStringSimple() + TEXT(", ");
+		Result += TEXT("TagsToRevoke=") + TagsToRevoke.ToStringSimple() + TEXT(", ");
+		Result += TEXT("}");
+		return Result;
+	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tag Operation")
 	FGameplayTagContainer TagsToGrant;

@@ -247,10 +247,10 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		}
 
 		FString TagString;
-		for (const auto& [Tag, Count] : GetGameplayTagComponent()->GetDynamicTagCountMap())
+		for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
 		{
 			DisplayDebugManager.SetDrawColor(FColor::White);
-			TagString += FString::Printf(TEXT("%s(%d) "), *Tag.ToString(), Count);
+			TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
 		}
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
 	}
@@ -665,7 +665,7 @@ void UNexusActionComponent::LocalTriggerAction(const FNexusActionDefHandle& Acti
 		SideEffectInstanceDef.SideEffectAsset = GetDefault<UNexusSideEffectInfinite>();
 		FNexusGameplayTagMod TagMod;
 		TagMod.TagsToGrant.AppendTags(ActionInstance->GetActionOwnedTags());
-		SideEffectInstanceDef.DynamicTagModifiers.Add(TagMod);
+		SideEffectInstanceDef.InjectedTagModifiers.Add(TagMod);
 		FNexusSideEffectInstanceHandle SideEffectInstanceHandle = ApplySideEffectByDef(SideEffectInstanceDef);
 		if (IsOwnerActorAuthoritative())
 		{

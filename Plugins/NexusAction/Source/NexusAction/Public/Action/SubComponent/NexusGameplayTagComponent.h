@@ -7,24 +7,28 @@
 #include "GameplayTagContainer.h"
 #include "NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
+#include "Net/Serialization/FastArraySerializer.h"
 #include "NexusGameplayTagComponent.generated.h"
 
+struct FNexusGameplayTagCountContainer;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag&, Tag);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag&, Tag);
 
 USTRUCT()
-struct FNexusGameplayTagCount
+struct NEXUSACTION_API FNexusGameplayTagCount : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
+
 	FNexusGameplayTagCount() = default;
 
-	FNexusGameplayTagCount(const FGameplayTag& InTag)
+	explicit FNexusGameplayTagCount(const FGameplayTag& InTag)
 		: Tag(InTag)
 	{
 	}
 
-	FNexusGameplayTagCount(const FGameplayTag& InTag, int32 InCount)
+	explicit FNexusGameplayTagCount(const FGameplayTag& InTag, int32 InCount)
 		: Tag(InTag)
 		  , Count(InCount)
 	{
@@ -40,10 +44,58 @@ struct FNexusGameplayTagCount
 		return !(*this == Other);
 	}
 
+	//~ Begin FFastArraySerializerItem Interface.
+	// void PostReplicatedAdd(const FNexusGameplayTagCountContainer& InArray);
+	// void PreReplicatedRemove(const FNexusGameplayTagCountContainer& InArray);
+	// void PostReplicatedChange(const FNexusGameplayTagCountContainer& InArray);
+	//~ End FFastArraySerializerItem Interface.
+
+
+	FString ToString() const { return FString::Printf(TEXT("TagCount={Tag=%s, Count=%d}"), *Tag.ToString(), Count); }
+
 	UPROPERTY()
 	FGameplayTag Tag;
 	UPROPERTY()
 	int32 Count = 0;
+};
+
+
+USTRUCT()
+struct NEXUSACTION_API FNexusGameplayTagCountContainer : public FFastArraySerializer
+{
+	GENERATED_BODY()
+
+	void Init(bool bInHasAuthority)
+	{
+		bHasAuthority = bInHasAuthority;
+	}
+
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+	{
+		return FFastArraySerializer::FastArrayDeltaSerialize<FNexusGameplayTagCount, FNexusGameplayTagCountContainer>(Items, DeltaParms, *this);
+	}
+
+	void AddTagCount(const FGameplayTag& InTag, int32 InCount);
+	void SubtractTagCount(const FGameplayTag& InTag, int32 InCount);
+	void SetTagCount(const FGameplayTag& InTag, int32 InCount);
+	int32 GetTagCount(const FGameplayTag& InTag) const;
+	void RemoveAllTagCounts();
+
+	bool Contains(const FGameplayTag& InTag) const;
+
+
+	UPROPERTY()
+	TArray<FNexusGameplayTagCount> Items;
+	bool bHasAuthority = false;
+};
+
+template <>
+struct TStructOpsTypeTraits<FNexusGameplayTagCountContainer> : public TStructOpsTypeTraitsBase2<FNexusGameplayTagCountContainer>
+{
+	enum
+	{
+		WithNetDeltaSerializer = true,
+	};
 };
 
 
@@ -54,19 +106,29 @@ class NEXUSACTION_API UNexusGameplayTagComponent : public UNexusAgentBoundCompon
 
 public:
 	UNexusGameplayTagComponent();
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void EvaluateTagCounts();
 	
+
 	void PushDynamicTag(const FGameplayTag& Tag);
 	void PopDynamicTag(const FGameplayTag& Tag);
+	void PushStaticTag(const FGameplayTag& Tag);
+	void PopStaticTag(const FGameplayTag& Tag);
+	
 
-	const TMap<FGameplayTag, int32>& GetDynamicTagCountMap() const { return DynamicTagCountMap; }
+	const FNexusGameplayTagCountContainer& GetDynamicTagCountContainer() const { return DynamicTagCountContainer; }
 
 private:
+	void OnCountMapEvaluated(const TArray<FNexusGameplayTagCount>& OldDynamicTagCountMapItems);
 	UFUNCTION()
-	void OnRep_TagCountMap();
+	void OnRep_StaticTagCountContainer();
+	UFUNCTION()
+	void OnRep_DynamicTagCountContainer(const FNexusGameplayTagCountContainer& OldDynamicTagCountContainer);
 
+	
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnNexusGameplayTagAddedSignature OnGameplayTagAddedDelegate;
@@ -74,10 +136,12 @@ public:
 	FOnNexusGameplayTagRemovedSignature OnGameplayTagRemovedDelegate;
 
 private:
-	UPROPERTY(ReplicatedUsing = OnRep_TagCountMap)
-	TArray<FNexusGameplayTagCount> TagCountMap;
-	TMap<FGameplayTag, int32> TagCountDeltas; // 곱셈, 나눗셈 연산이 없기 때문에 단순히 카운트로 관리
-	TMap<FGameplayTag, int32> DynamicTagCountMap;
-	bool bIsTagCountMapDirty = false;
-	
+	UPROPERTY(ReplicatedUsing = OnRep_StaticTagCountContainer)
+	FNexusGameplayTagCountContainer StaticTagCountContainer;
+	UPROPERTY(ReplicatedUsing = OnRep_DynamicTagCountContainer)
+	FNexusGameplayTagCountContainer DynamicTagCountContainer;
+
+	TMap<FGameplayTag, int32> DynamicTagCountDeltas;
+
+	bool bIsDirty = false;
 };

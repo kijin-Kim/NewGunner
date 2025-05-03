@@ -204,6 +204,8 @@ public:
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	void PushDynamicTag(const FGameplayTag& Tag);
 	void PopDynamicTag(const FGameplayTag& Tag);
+	void PushStaticTag(const FGameplayTag& Tag);
+	void PopStaticTag(const FGameplayTag& Tag);
 
 
 	// ------------------------------------------------------------------------------

@@ -7,20 +7,100 @@
 #include "Net/UnrealNetwork.h"
 
 
+void FNexusGameplayTagCountContainer::AddTagCount(const FGameplayTag& InTag, int32 InCount)
+{
+	int32 Index = Items.Find(FNexusGameplayTagCount{InTag});
+	if (Index == INDEX_NONE)
+	{
+		Items.Emplace(FNexusGameplayTagCount{InTag, 0});
+		Index = Items.Num() - 1;
+	}
+
+	Items[Index].Count += InCount;
+
+	if (bHasAuthority)
+	{
+		MarkItemDirty(Items[Index]);
+	}
+}
+
+
+void FNexusGameplayTagCountContainer::SubtractTagCount(const FGameplayTag& InTag, int32 InCount)
+{
+	int32 Index = Items.Find(FNexusGameplayTagCount{InTag});
+	if (Index == INDEX_NONE)
+	{
+		Items.Emplace(FNexusGameplayTagCount{InTag, 0});
+		Index = Items.Num() - 1;
+	}
+
+	Items[Index].Count -= InCount;
+
+	if (bHasAuthority)
+	{
+		MarkItemDirty(Items[Index]);
+	}
+}
+
+void FNexusGameplayTagCountContainer::SetTagCount(const FGameplayTag& InTag, int32 InCount)
+{
+	int32 Index = Items.Find(FNexusGameplayTagCount{InTag});
+	if (Index == INDEX_NONE)
+	{
+		Items.Emplace(FNexusGameplayTagCount{InTag, 0});
+		Index = Items.Num() - 1;
+	}
+
+	Items[Index].Count = InCount;
+
+	if (bHasAuthority)
+	{
+		MarkItemDirty(Items[Index]);
+	}
+}
+
+int32 FNexusGameplayTagCountContainer::GetTagCount(const FGameplayTag& InTag) const
+{
+	int32 Index = Items.Find(FNexusGameplayTagCount{InTag});
+	if (Index == INDEX_NONE)
+	{
+		return 0;
+	}
+	return Items[Index].Count;
+}
+
+void FNexusGameplayTagCountContainer::RemoveAllTagCounts()
+{
+	Items.Empty();
+	MarkArrayDirty();
+}
+
+bool FNexusGameplayTagCountContainer::Contains(const FGameplayTag& InTag) const
+{
+	return Items.Contains(FNexusGameplayTagCount{InTag});
+}
+
 // Sets default values for this component's properties
 UNexusGameplayTagComponent::UNexusGameplayTagComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UNexusGameplayTagComponent::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+	Super::PreReplication(ChangedPropertyTracker);
+	StaticTagCountContainer.Init(GetOwner()->HasAuthority());
+	DynamicTagCountContainer.Init(GetOwner()->HasAuthority());
 }
 
 void UNexusGameplayTagComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
 	TagContainer.Reset();
-	for (const auto& [Tag,Count] : DynamicTagCountMap)
+	for (const FNexusGameplayTagCount& TagCount : DynamicTagCountContainer.Items)
 	{
-		if (Count > 0)
+		if (TagCount.Count > 0)
 		{
-			TagContainer.AddTag(Tag);
+			TagContainer.AddTag(TagCount.Tag);
 		}
 	}
 }
@@ -28,110 +108,89 @@ void UNexusGameplayTagComponent::GetOwnedGameplayTags(FGameplayTagContainer& Tag
 void UNexusGameplayTagComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION_NOTIFY(UNexusGameplayTagComponent, TagCountMap, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION(UNexusGameplayTagComponent, StaticTagCountContainer, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UNexusGameplayTagComponent, DynamicTagCountContainer, COND_SimulatedOnly);
 }
 
-void UNexusGameplayTagComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UNexusGameplayTagComponent::EvaluateTagCounts()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (bIsTagCountMapDirty)
+	if (bIsDirty)
 	{
-		bIsTagCountMapDirty = false;
-		TMap<FGameplayTag, int32> OldDynamicTagCountMap = DynamicTagCountMap;
-		DynamicTagCountMap.Empty();
-		for (const FNexusGameplayTagCount& TagCount : TagCountMap)
+		bIsDirty = false;
+		DynamicTagCountDeltas = DynamicTagCountDeltas.FilterByPredicate([](const auto& Pair)
 		{
-			DynamicTagCountMap.Add(TagCount.Tag) = TagCount.Count;
+			return Pair.Value != 0;
+		});
+
+		TArray<FNexusGameplayTagCount> OldDynamicTagCountMapItems = DynamicTagCountContainer.Items;
+		DynamicTagCountContainer.RemoveAllTagCounts();
+		for (const auto& [Tag,Delta] : DynamicTagCountDeltas)
+		{
+			int32 BaseCount = StaticTagCountContainer.GetTagCount(Tag);
+			DynamicTagCountContainer.SetTagCount(Tag, BaseCount + Delta);
 		}
 
-		for (const auto& [Tag, Count] : TagCountDeltas)
-		{
-			DynamicTagCountMap.FindOrAdd(Tag) += Count;
-		}
-
-		for (const auto& [OldTag, OldCount] : OldDynamicTagCountMap)
-		{
-			if (!DynamicTagCountMap.Contains(OldTag))
-			{
-				OnGameplayTagRemovedDelegate.Broadcast(OldTag);
-			}
-		}
-
-		for (const auto& [NewTag, NewCount] : DynamicTagCountMap)
-		{
-			if (!OldDynamicTagCountMap.Contains(NewTag))
-			{
-				OnGameplayTagAddedDelegate.Broadcast(NewTag);
-			}
-		}
+		OnCountMapEvaluated(OldDynamicTagCountMapItems);
 	}
 }
 
 void UNexusGameplayTagComponent::PushDynamicTag(const FGameplayTag& Tag)
 {
+	bIsDirty = true;
 	check(Tag.IsValid());
-	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("태그 푸쉬: GameplayTag=%s"), *Tag.ToString());
-	bIsTagCountMapDirty = true;
-	if (GetOwner()->HasAuthority())
-	{
-		int32 Index = TagCountMap.Find(Tag);
-		if (Index == INDEX_NONE)
-		{
-			TagCountMap.Add({Tag, 1});
-			return;
-		}
-		if (++TagCountMap[Index].Count == 0)
-		{
-			TagCountMap.Remove(Tag);
-		}
-	}
-	else
-	{
-		if (!TagCountDeltas.Contains(Tag))
-		{
-			TagCountDeltas.Add(Tag, 1);
-			return;
-		}
-		if (++TagCountDeltas[Tag] == 0)
-		{
-			TagCountDeltas.Remove(Tag);
-		}
-	}
+	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("다이내믹 태그 푸시: GameplayTag=%s"), *Tag.ToString());
+	DynamicTagCountDeltas.FindOrAdd(Tag)++;
 }
 
 void UNexusGameplayTagComponent::PopDynamicTag(const FGameplayTag& Tag)
 {
+	bIsDirty = true;
+	check(Tag.IsValid());
+	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("다이내믹 태그 팝: GameplayTag=%s"), *Tag.ToString());
+	DynamicTagCountDeltas.FindOrAdd(Tag)--;
+}
+
+void UNexusGameplayTagComponent::PushStaticTag(const FGameplayTag& Tag)
+{
+	bIsDirty = true;
+	check(Tag.IsValid());
+	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("태그 푸시: GameplayTag=%s"), *Tag.ToString());
+	StaticTagCountContainer.AddTagCount(Tag, 1);
+}
+
+void UNexusGameplayTagComponent::PopStaticTag(const FGameplayTag& Tag)
+{
+	bIsDirty = true;
 	check(Tag.IsValid());
 	NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Verbose, TEXT("태그 팝: GameplayTag=%s"), *Tag.ToString());
-	bIsTagCountMapDirty = true;
-	if (GetOwner()->HasAuthority())
+	StaticTagCountContainer.SubtractTagCount(Tag, 1);
+}
+
+void UNexusGameplayTagComponent::OnCountMapEvaluated(const TArray<FNexusGameplayTagCount>& OldDynamicTagCountMapItems)
+{
+	for (const FNexusGameplayTagCount& TagCount : OldDynamicTagCountMapItems)
 	{
-		int32 Index = TagCountMap.Find(Tag);
-		if (Index == INDEX_NONE)
+		if (!DynamicTagCountContainer.Contains(TagCount.Tag))
 		{
-			TagCountMap.Add({Tag, -1});
-			return;
-		}
-		if (--TagCountMap[Index].Count == 0)
-		{
-			TagCountMap.Remove(Tag);
+			OnGameplayTagRemovedDelegate.Broadcast(TagCount.Tag);
 		}
 	}
-	else
+
+	for (const FNexusGameplayTagCount& TagCount : DynamicTagCountContainer.Items)
 	{
-		if (!TagCountDeltas.Contains(Tag))
+		if (!OldDynamicTagCountMapItems.Contains(FNexusGameplayTagCount{TagCount.Tag}))
 		{
-			TagCountDeltas.Add(Tag, -1);
-			return;
-		}
-		if (--TagCountDeltas[Tag] == 0)
-		{
-			TagCountDeltas.Remove(Tag);
+			OnGameplayTagAddedDelegate.Broadcast(TagCount.Tag);
 		}
 	}
 }
 
-void UNexusGameplayTagComponent::OnRep_TagCountMap()
+void UNexusGameplayTagComponent::OnRep_StaticTagCountContainer()
 {
-	bIsTagCountMapDirty = true;
+	bIsDirty = true;
+}
+
+void UNexusGameplayTagComponent::OnRep_DynamicTagCountContainer(const FNexusGameplayTagCountContainer& OldDynamicTagCountContainer)
+{
+	OnCountMapEvaluated(OldDynamicTagCountContainer.Items);
 }

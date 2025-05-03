@@ -51,7 +51,7 @@ public:
 	UPROPERTY()
 	TArray<FNexusInjectedValuePair> InjectedValues;
 	UPROPERTY()
-	TArray<FNexusGameplayTagMod> DynamicTagModifiers;
+	TArray<FNexusGameplayTagMod> InjectedTagModifiers;
 
 	TArray<FNexusPropertyOperationHandle> AppliedOperationHandles;
 };
@@ -120,6 +120,7 @@ struct FNexusSideEffectInstance : public FFastArraySerializerItem
 	void OnRemoved() const;
 	void ApplyPropertyModifier(const FNexusPropertyMod& Modifier);
 	void ApplyTagModifier(const FNexusGameplayTagMod& Modifier);
+	void RemoveTagModifier(const FNexusGameplayTagMod& Modifier) const;
 	void ApplyAllModifiers();
 	bool IsExpired() const;
 
