@@ -157,13 +157,15 @@ EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FN
 	return EGunnerHitBoxType::Body;
 }
 
-void AGunnerCharacter::NetMulticastTriggerCue_Implementation(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle)
+void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters)
 {
 	if (UNexusActionComponent* ActionComponent = GetActionComponent())
 	{
-		ActionComponent->SimTriggerCue(CueParams, CueHandle);
+		ActionComponent->SimTriggerCue(CueClass, PredictionTag, CueParameters);
 	}
 }
+
+
 
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)
 {

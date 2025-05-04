@@ -3,6 +3,7 @@
 
 #include "Action/SubComponent/NexusPredictionComponent.h"
 
+#include "NexusLog.h"
 #include "Prediction/NexusPredictionScope.h"
 #include "Net/UnrealNetwork.h"
 

@@ -3,18 +3,51 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NexusLog.h"
 #include "Net/Serialization/FastArraySerializer.h"
-#include "TargetData/NexusTargetData.h"
 #include "UObject/Object.h"
 #include "NexusCue.generated.h"
 
+struct FNexusCueParameters;
+struct FNexusAgentInfo;
 struct FNexusLoopingCue;
 class ANexusCue;
 
-DECLARE_DELEGATE_OneParam(FOnNexusCueAddedSignature, FNexusLoopingCue& /*LoopingCue*/);
-DECLARE_DELEGATE_OneParam(FOnNexusCueRemovedSignature, FNexusLoopingCue& /*LoopingCue*/);
-DECLARE_DELEGATE(FOnNexusCueDurationExpiredSignature);
+DECLARE_DELEGATE_OneParam(FOnNexusCueAddedSignature, const FNexusLoopingCue& /*LoopingCue*/);
+DECLARE_DELEGATE_OneParam(FOnNexusCueRemovedSignature, const FNexusLoopingCue& /*LoopingCue*/);
+
+
+USTRUCT(BlueprintType)
+struct NEXUSACTION_API FNexusCueParameters
+{
+	GENERATED_BODY()
+
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+
+public:
+	UPROPERTY(BlueprintReadWrite)
+	TWeakObjectPtr<AActor> Causer;
+	UPROPERTY(BlueprintReadWrite)
+	TWeakObjectPtr<AActor> Target;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector_NetQuantize Location = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector_NetQuantizeNormal Normal = FVector::ForwardVector;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FHitResult> HitResults;
+};
+
+template <>
+struct TStructOpsTypeTraits<FNexusCueParameters> : public TStructOpsTypeTraitsBase2<FNexusCueParameters>
+{
+	enum
+	{
+		WithNetSerializer = true
+	};
+};
 
 
 UENUM()
@@ -54,23 +87,32 @@ struct FNexusLoopingCue : public FFastArraySerializerItem
 
 	FNexusLoopingCue();
 
+	explicit FNexusLoopingCue(TSubclassOf<ANexusCue> InCueClass, const FNexusCueParameters& InCueParameters)
+		: CueClass(InCueClass),
+		  CueParameters(InCueParameters)
+	{
+	}
+
 	bool operator==(const FNexusLoopingCue& Other) const;
 	bool operator!=(const FNexusLoopingCue& Other) const;
 
-	void PreReplicatedRemove(const struct FNexusLoopingCueContainer& InArraySerializer);
-	void PostReplicatedAdd(const struct FNexusLoopingCueContainer& InArraySerializer);
-	void PostReplicatedChange(const struct FNexusLoopingCueContainer& InArraySerializer);
 
+	void PreReplicatedRemove(const struct FNexusLoopingCueContainer& InArraySerializer);
+
+
+	FNexusLoopingCueHandle GetHandle() const { return Handle; }
+
+	FString ToString() const;
+
+public:
 	UPROPERTY()
 	TSubclassOf<ANexusCue> CueClass;
 	UPROPERTY()
-	FNexusTargetDataHandle TargetDataHandle;
-	// 각 로컬에서만 유효한 핸들
-	UPROPERTY()
-	FNexusLoopingCueHandle Handle;
+	FNexusCueParameters CueParameters;
 
-	UPROPERTY(NotReplicated)
-	TObjectPtr<ANexusCue> CueActor;
+private:
+	// 각 로컬에서만 유효한 핸들
+	FNexusLoopingCueHandle Handle;
 };
 
 
@@ -79,22 +121,38 @@ struct FNexusLoopingCueContainer : public FFastArraySerializer
 {
 	GENERATED_USTRUCT_BODY()
 
+
+	void Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakObjectPtr<AActor> InAgentActor);
+
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
 	FNexusLoopingCueHandle AddLoopingCue(const FNexusLoopingCue& InLoopingCue, bool bHasAuthority);
 	void RemoveLoopingCue(FNexusLoopingCueHandle Handle, bool bHasAuthority);
 	void RemoveAllLoopingCues();
 
-	void OnAdded(FNexusLoopingCue& LoopingCue) const;
-	void OnRemoved(FNexusLoopingCue& LoopingCue) const;
+	void OnAdded(const FNexusLoopingCue& LoopingCue) const;
+	void OnRemoved(const FNexusLoopingCue& LoopingCue) const;
+
+	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+	void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters);
+
 
 	FNexusLoopingCue* FindLoopingCueByHandle(const FNexusLoopingCueHandle& InHandle);
+	FNexusLoopingCue* FindLoopingCueByClass(TSubclassOf<ANexusCue> InCueClass);
+
 
 	UPROPERTY()
 	TArray<FNexusLoopingCue> Items;
 
 	FOnNexusCueAddedSignature OnCueAddedDelegate;
 	FOnNexusCueRemovedSignature OnCueRemovedDelegate;
+
+	bool bInitialized = false;
+	TWeakObjectPtr<AActor> OwnerActor;
+	TWeakObjectPtr<AActor> AgentActor;
+
+	TArray<int32> AcuumulatedAddedIndices;
+	TArray<int32> PreInitAddedIndices;
 };
 
 template <>
@@ -104,6 +162,15 @@ struct TStructOpsTypeTraits<FNexusLoopingCueContainer> : public TStructOpsTypeTr
 	{
 		WithNetDeltaSerializer = true,
 	};
+};
+
+
+UENUM()
+enum class ENexusCueState : uint8
+{
+	None,
+	Triggered,
+	BecomeRelevant
 };
 
 
@@ -117,41 +184,45 @@ class NEXUSACTION_API ANexusCue : public AActor
 
 public:
 	ANexusCue();
-	void CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
-	void CallOnBecomeRelevant(const FNexusTargetDataHandle& InTargetDataHandle);
-	void CallOnCeaseRelevant();
+	void CallOnTriggered(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor);
+	void CallOnBecomeRelevant(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor);
+	void CallOnCeaseRelevant(AActor* AgentActor, AActor* OwnerActor);
 
-	UFUNCTION(BlueprintCallable)
-	void EndCue() const;
 
+	float GetDuration() const { return Duration; }
 	ENexusCueType GetCueType() const { return CueType; }
+	ENexusCueState GetCueState() const { return CueState; }
+
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnTriggered"))
-	void BP_OnTriggered();
+	void BP_OnTriggered(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor);
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnBecomeRelevant"))
-	void BP_OnBecomeRelevant();
+	void BP_OnBecomeRelevant(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor);
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnCeaseRelevant"))
-	void BP_OnCeaseRelevant();
+	void BP_OnCeaseRelevant(AActor* AgentActor, AActor* OwnerActor);
 
-	virtual void OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle);
-	virtual void OnBecomeRelevant();
-	virtual void OnCeaseRelevant();
+	virtual void OnTriggered(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor)
+	{
+	}
 
-private:
+	virtual void OnBecomeRelevant(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor)
+	{
+	}
 
-public:
-	FOnNexusCueDurationExpiredSignature OnDurationExpiredDelegate;
+	virtual void OnCeaseRelevant(AActor* AgentActor, AActor* OwnerActor)
+	{
+	}
+
+
+
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	ENexusCueType CueType = ENexusCueType::Burst;
 	// 루핑 타입의 큐의 지속시간. 0보다 작을 경우 무한 지속으로 간주
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true, EditCondition = "DurationType == ENexusCueDurationType::Duration"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true, EditCondition = "CueType == ENexusCueType::Looping"))
 	float Duration = 0.0f;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	FNexusTargetDataHandle TargetDataHandle;
-
-	FTimerHandle DurationExpiredTimerHandle;
+	ENexusCueState CueState = ENexusCueState::None;
 };

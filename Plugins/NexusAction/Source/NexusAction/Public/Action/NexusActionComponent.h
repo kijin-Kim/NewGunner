@@ -212,10 +212,10 @@ public:
 	// Cue
 	// ------------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Trigger Cue"))
-	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle);
+	static void BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusCueParameters& CueParameters);
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, meta = (DisplayName = "Auth End Cue"))
-	static void BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle);
-	void SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle);
+	void BP_AuthEndCue(TSubclassOf<ANexusCue> CueClass);
+	void SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters);
 
 
 	// ------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ private:
 
 	// 로컬 캐시 및 주입하기 쉽도록 하는 구조체 
 	TSharedPtr<FNexusAgentInfo> AgentInfo;
-	UPROPERTY(ReplicatedUsing=OnRep_AgentActor)
+	UPROPERTY(ReplicatedUsing=OnRep_AgentActor, BlueprintReadOnly, meta = (AllowPrivateAccess=true))
 	TObjectPtr<AActor> AgentActor;
 
 	UPROPERTY(Replicated)

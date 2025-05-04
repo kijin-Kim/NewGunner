@@ -13,8 +13,6 @@
 struct FNexusAgentInfo;
 
 
-
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEXUSACTION_API UNexusCueComponent : public UNexusAgentBoundComponent, public INexusCueNetworkProxyInterface
 {
@@ -24,25 +22,34 @@ public:
 	UNexusCueComponent();
 	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void TriggerCue(const FNexusTriggerCueParams& TriggerCueParams);
-	void AuthEndCue(FNexusLoopingCueHandle CueHandle);
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void TriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters);
+	void AuthEndCue(TSubclassOf<ANexusCue> CueClass);
+	void InternalAuthEndCue(FNexusLoopingCueHandle LoopingCueHandle);
 
-	void SimTriggerCue(const FNexusTriggerCueParams& TriggerCueParams, FNexusLoopingCueHandle ServerCueHandle);
+	void SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters);
 	void RemoveAllLoopingCues();
 
+	const TMap<TSubclassOf<ANexusCue>, TObjectPtr<ANexusCue>>& GetLocalLoopingCueActors() const { return LocalLoopingCueActors; }
+	const TMap<TSubclassOf<ANexusCue>, int32>& GetLocalLoopingCueActorsCount() const { return LocalLoopingCueActorsCount; }
+
 private:
-	
 	UFUNCTION(NetMulticast, Unreliable)
-	virtual void NetMulticastTriggerCue(const FNexusTriggerCueParams& TriggerCueParams, FNexusLoopingCueHandle ServerCueHandle) override;
+	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters) override;
 	INexusCueNetworkProxyInterface* GetCueNetworkProxyInterface();
-	
-	
-	void OnCueAdded(FNexusLoopingCue& NexusLoopingCue);
-	void OnCueRemoved(FNexusLoopingCue& NexusLoopingCue);
-	
+
+
+	void OnCueAdded(const FNexusLoopingCue& NexusLoopingCue);
+	void OnCueRemoved(const FNexusLoopingCue& LoopingCue);
+
+
+	ANexusCue* FindOrCreateLoopingCueActor(TSubclassOf<ANexusCue> CueClass);
+
 
 private:
 	UPROPERTY(Replicated)
 	FNexusLoopingCueContainer LoopingCues;
-
+	UPROPERTY()
+	TMap<TSubclassOf<ANexusCue>, TObjectPtr<ANexusCue>> LocalLoopingCueActors;
+	TMap<TSubclassOf<ANexusCue>, int32> LocalLoopingCueActorsCount;
 };

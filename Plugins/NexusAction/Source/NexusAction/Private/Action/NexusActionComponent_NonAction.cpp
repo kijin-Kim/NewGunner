@@ -111,7 +111,6 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	if (!ActionComponent)
 	{
 		return 0.0f;
-		
 	}
 
 	return ActionComponent->GetPropertyValue(Tag);
@@ -164,37 +163,26 @@ void UNexusActionComponent::PopStaticTag(const FGameplayTag& Tag)
 // ------------------------------------------------------------------------------
 // Cue
 // ------------------------------------------------------------------------------
-void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusTargetDataHandle& TargetDataHandle)
+void UNexusActionComponent::BP_TriggerCue(UNexusAction* Action, TSubclassOf<ANexusCue> CueClass, const FNexusCueParameters& CueParameters)
 {
 	check(Action);
 	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
 	check(ActorOwner);
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
 	{
-		FNexusTriggerCueParams TriggerCueParams;
-		TriggerCueParams.CueClass = CueClass;
-		TriggerCueParams.TargetDataHandle = TargetDataHandle;
-		TriggerCueParams.PredictionTag = ActionComponent->GetCurrentPredictionTag();
-		ActionComponent->GetCueComponent()->TriggerCue(TriggerCueParams);
+		ActionComponent->GetCueComponent()->TriggerCue(CueClass, ActionComponent->GetCurrentPredictionTag(), CueParameters);
 	}
 }
 
-void UNexusActionComponent::BP_AuthEndCue(UNexusAction* Action, FNexusLoopingCueHandle CueHandle)
+void UNexusActionComponent::BP_AuthEndCue(TSubclassOf<ANexusCue> CueClass)
 {
-	check(Action);
-	AActor* ActorOwner = Cast<AActor>(Action->GetOuter());
-	check(ActorOwner);
-	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(ActorOwner))
-	{
-		ActionComponent->GetCueComponent()->AuthEndCue(CueHandle);
-	}
+	GetCueComponent()->AuthEndCue(CueClass);
 }
 
-void UNexusActionComponent::SimTriggerCue(const FNexusTriggerCueParams& CueParams, FNexusLoopingCueHandle CueHandle)
+void UNexusActionComponent::SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters)
 {
-	GetCueComponent()->SimTriggerCue(CueParams, CueHandle);
+	GetCueComponent()->SimTriggerCue(CueClass, PredictionTag, CueParameters);
 }
-
 
 // ------------------------------------------------------------------------------
 // Event

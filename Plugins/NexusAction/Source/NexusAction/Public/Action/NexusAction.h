@@ -163,7 +163,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bIsTriggering = false;
 	FNexusPredictionTag PrimaryPredictionTag;
-	TWeakPtr<FNexusAgentInfo> AgentInfo; // 에이전트에 대한 정보. 매 실행마다 바뀌지 않는다.
+	TWeakPtr<FNexusAgentInfo> AgentInfo;
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FNexusEventMessage EventMessage;
 };

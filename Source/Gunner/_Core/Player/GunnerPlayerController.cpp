@@ -56,15 +56,19 @@ void AGunnerPlayerController::InitPlayerState()
 void AGunnerPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
-	check(ActionComponent);
-	ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+	if (PlayerState)
 	{
-		AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
-		check(GunnerHUD)
-		GunnerHUD->SetupHUD(PlayerState);
-		TrySetParameterCollectionLocalPlayerTeamID();
-	}));
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
+		check(ActionComponent);
+		ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+		{
+			AGunnerHUD* GunnerHUD = Cast<AGunnerHUD>(GetHUD());
+			check(GunnerHUD)
+			GunnerHUD->SetupHUD(PlayerState);
+			TrySetParameterCollectionLocalPlayerTeamID();
+		}));		
+	}
+
 }
 
 

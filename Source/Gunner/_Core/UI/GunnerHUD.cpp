@@ -38,19 +38,16 @@ void AGunnerHUD::SetupHUD(APlayerState* PlayerState)
 
 void AGunnerHUD::GetDebugActorList(TArray<AActor*>& InOutList)
 {
-	Super::GetDebugActorList(InOutList);
-	InOutList.RemoveAll([this](AActor* Actor)
-	{
-		return !UNexusActionComponent::GetActionComponentFromActor(Actor);
-	});
 	UWorld* World = GetWorld();
 	check(World);
+	InOutList.Empty();
+	TArray<UNexusActionComponent*> ActionComponents;
 	for (TActorIterator<AActor> It(World); It; ++It)
 	{
 		AActor* Actor = *It;
-		if (IsValid(Actor) && UNexusActionComponent::GetActionComponentFromActor(Actor) != nullptr)
+		if (UNexusActionComponent* ActionComponent = Actor->GetComponentByClass<UNexusActionComponent>())
 		{
-			InOutList.AddUnique(Actor);
+			InOutList.Add(ActionComponent->GetAgentActor() ? ActionComponent->GetAgentActor() : Actor);
 		}
 	}
 }

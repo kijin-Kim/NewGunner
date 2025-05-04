@@ -6,6 +6,42 @@
 #include "NexusLog.h"
 
 
+bool FNexusCueParameters::NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
+{
+	bOutSuccess = true;
+
+	// TODO: 유효한지 체크하고 리플리케이트. 유효 플래그 추가
+	Ar << Causer;
+	Ar << Target;
+
+	if (!Location.NetSerialize(Ar, Map, bOutSuccess))
+	{
+		return false;
+	}
+
+	if (!Normal.NetSerialize(Ar, Map, bOutSuccess))
+	{
+		return false;
+	}
+
+	uint8 HitResultCount = HitResults.Num();
+	Ar << HitResultCount;
+	if (Ar.IsLoading())
+	{
+		HitResults.SetNum(HitResultCount);
+	}
+
+	for (FHitResult& HitResult : HitResults)
+	{
+		if (!HitResult.NetSerialize(Ar, Map, bOutSuccess))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void FNexusLoopingCueHandle::GenerateNewHandle()
 {
 	static int32 HandleCounter = 1;
@@ -32,15 +68,26 @@ void FNexusLoopingCue::PreReplicatedRemove(const FNexusLoopingCueContainer& InAr
 	InArraySerializer.OnRemoved(*this);
 }
 
-void FNexusLoopingCue::PostReplicatedAdd(const FNexusLoopingCueContainer& InArraySerializer)
+FString FNexusLoopingCue::ToString() const
 {
-	InArraySerializer.OnAdded(*this);
+	return FString::Printf(TEXT("LoopingCue={Handle=%s, CueClass=%s}"), *Handle.ToString(), *CueClass->GetName());
 }
 
-void FNexusLoopingCue::PostReplicatedChange(const FNexusLoopingCueContainer& InArraySerializer)
+void FNexusLoopingCueContainer::Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakObjectPtr<AActor> InAgentActor)
 {
-	ensure(false);
-	//unimplemented();
+	check(InOwnerActor.IsValid() && InAgentActor.IsValid());
+	OwnerActor = InOwnerActor;
+	AgentActor = InAgentActor;
+	bInitialized = true;
+
+	for (const auto& AddedIndex : PreInitAddedIndices)
+	{
+		if (Items.IsValidIndex(AddedIndex))
+		{
+			OnAdded(Items[AddedIndex]);
+		}
+	}
+	PreInitAddedIndices.Empty();
 }
 
 bool FNexusLoopingCueContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -58,7 +105,7 @@ FNexusLoopingCueHandle FNexusLoopingCueContainer::AddLoopingCue(const FNexusLoop
 		MarkItemDirty(Items[Index]);
 	}
 	OnAdded(Items[Index]);
-	return Items[Index].Handle;
+	return Items[Index].GetHandle();
 }
 
 void FNexusLoopingCueContainer::RemoveLoopingCue(FNexusLoopingCueHandle Handle, bool bHasAuthority)
@@ -71,13 +118,10 @@ void FNexusLoopingCueContainer::RemoveLoopingCue(FNexusLoopingCueHandle Handle, 
 	OnRemoved(*LoopingCue);
 	int32 Removed = Items.RemoveAll([Handle](const FNexusLoopingCue& Other)
 	{
-		return Other.Handle == Handle;
+		return Other.GetHandle() == Handle;
 	});
 	check(Removed != 0);
-	if (bHasAuthority)
-	{
-		MarkArrayDirty();
-	}
+	MarkArrayDirty();
 }
 
 void FNexusLoopingCueContainer::RemoveAllLoopingCues()
@@ -90,7 +134,7 @@ void FNexusLoopingCueContainer::RemoveAllLoopingCues()
 	MarkArrayDirty();
 }
 
-void FNexusLoopingCueContainer::OnAdded(FNexusLoopingCue& LoopingCue) const
+void FNexusLoopingCueContainer::OnAdded(const FNexusLoopingCue& LoopingCue) const
 {
 	if (OnCueAddedDelegate.IsBound())
 	{
@@ -98,7 +142,7 @@ void FNexusLoopingCueContainer::OnAdded(FNexusLoopingCue& LoopingCue) const
 	}
 }
 
-void FNexusLoopingCueContainer::OnRemoved(FNexusLoopingCue& LoopingCue) const
+void FNexusLoopingCueContainer::OnRemoved(const FNexusLoopingCue& LoopingCue) const
 {
 	if (OnCueRemovedDelegate.IsBound())
 	{
@@ -106,61 +150,86 @@ void FNexusLoopingCueContainer::OnRemoved(FNexusLoopingCue& LoopingCue) const
 	}
 }
 
+void FNexusLoopingCueContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
+{
+	AcuumulatedAddedIndices.Append(AddedIndices);
+}
+
+void FNexusLoopingCueContainer::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
+{
+	// FNexusActionDefContainer::PostReplicatedReceive와 동일한 로직 수행. Causer, Target, HitResults 내부의 Actor 소환을 기다려야 함. 
+	if (!Parameters.bHasMoreUnmappedReferences)
+	{
+		for (const auto& AddedIndex : AcuumulatedAddedIndices)
+		{
+			if (ensure(Items.IsValidIndex(AddedIndex)))
+			{
+				if (bInitialized)
+				{
+					OnAdded(Items[AddedIndex]);
+				}
+				else
+				{
+					PreInitAddedIndices.Add(AddedIndex);
+				}
+			}
+		}
+		AcuumulatedAddedIndices.Empty();
+		UE_LOG(LogNexusCue, VeryVerbose, TEXT("루핑큐 추가 플러시"));
+	}
+	else
+	{
+		UE_LOG(LogNexusCue, VeryVerbose, TEXT("매핑되지 않은 레퍼런스 존재"));
+	}
+}
+
 FNexusLoopingCue* FNexusLoopingCueContainer::FindLoopingCueByHandle(const FNexusLoopingCueHandle& InHandle)
 {
 	return Items.FindByPredicate([InHandle](const FNexusLoopingCue& LoopingCue)
 	{
-		return LoopingCue.Handle == InHandle;
+		return LoopingCue.GetHandle() == InHandle;
+	});
+}
+
+FNexusLoopingCue* FNexusLoopingCueContainer::FindLoopingCueByClass(TSubclassOf<ANexusCue> InCueClass)
+{
+	return Items.FindByPredicate([InCueClass](const FNexusLoopingCue& LoopingCue)
+	{
+		return LoopingCue.CueClass == InCueClass;
 	});
 }
 
 ANexusCue::ANexusCue()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
-void ANexusCue::CallOnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
+void ANexusCue::CallOnTriggered(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor)
 {
-	TargetDataHandle = InTargetDataHandle;
-	OnTriggered(InTargetDataHandle);
-	BP_OnTriggered();
-	TargetDataHandle.Reset();
-}
-
-void ANexusCue::CallOnBecomeRelevant(const FNexusTargetDataHandle& InTargetDataHandle)
-{
-	TargetDataHandle = InTargetDataHandle;
-	OnBecomeRelevant();
-	BP_OnBecomeRelevant();
-
-	if (HasAuthority() && CueType == ENexusCueType::Looping && Duration > 0.0f)
+	if (CueState == ENexusCueState::None || CueType == ENexusCueType::Burst)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(DurationExpiredTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(DurationExpiredTimerHandle, this, &ANexusCue::EndCue, Duration, false);
+		CueState = ENexusCueState::Triggered;
+		NX_LOG_SUB(AgentActor, LogNexusCue, Display, TEXT("큐 액터 실행: %s"), *GetName());
+		OnTriggered(InCueParameters, AgentActor, OwnerActor);
+		BP_OnTriggered(InCueParameters, AgentActor, OwnerActor);
 	}
 }
 
-void ANexusCue::CallOnCeaseRelevant()
+void ANexusCue::CallOnBecomeRelevant(const FNexusCueParameters& InCueParameters, AActor* AgentActor, AActor* OwnerActor)
 {
-	OnCeaseRelevant();
-	BP_OnCeaseRelevant();
-	TargetDataHandle.Reset();
+	if (CueState != ENexusCueState::BecomeRelevant)
+	{
+		CueState = ENexusCueState::BecomeRelevant;
+		NX_LOG_SUB(AgentActor, LogNexusCue, Display, TEXT("큐 액터 연관 시작: %s"), *GetName());
+		OnBecomeRelevant(InCueParameters, AgentActor, OwnerActor);
+		BP_OnBecomeRelevant(InCueParameters, AgentActor, OwnerActor);
+	}
 }
 
-void ANexusCue::EndCue() const
+void ANexusCue::CallOnCeaseRelevant(AActor* AgentActor, AActor* OwnerActor)
 {
-	check(HasAuthority());
-	OnDurationExpiredDelegate.ExecuteIfBound();
-}
-
-void ANexusCue::OnTriggered(const FNexusTargetDataHandle& InTargetDataHandle)
-{
-}
-
-void ANexusCue::OnBecomeRelevant()
-{
-}
-
-void ANexusCue::OnCeaseRelevant()
-{
+	CueState = ENexusCueState::None;
+	NX_LOG_SUB(AgentActor, LogNexusCue, Display, TEXT("큐 연관 종료: %s"), *GetName());
+	OnCeaseRelevant(AgentActor, OwnerActor);
+	BP_OnCeaseRelevant(AgentActor, OwnerActor);
 }

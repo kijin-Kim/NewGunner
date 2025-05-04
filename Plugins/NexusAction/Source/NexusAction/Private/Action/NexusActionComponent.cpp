@@ -166,7 +166,7 @@ void UNexusActionComponent::InternalSetupActionComponent()
 
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
-	if (!AgentInfo.IsValid() || !AgentInfo->AgentActor.IsValid() || DebugTarget != AgentInfo->AgentActor.Get())
+	if (!AgentInfo.IsValid())
 	{
 		return;
 	}
@@ -174,86 +174,101 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 
-	if (HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
+	if (!HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
 	{
-		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
-		DisplayDebugManager.SetDrawColor(FColor::White);
-		FGameplayTagContainer OwnedTags;
+		return;
+	}
 
-		TMap<FGameplayTag, FString> PropertyLogs;
+	DisplayDebugManager.SetFont(GEngine->GetTinyFont());
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	FGameplayTagContainer OwnedTags;
 
-		for (const auto& SideEffectInstance : GetSideEffectComponent()->GetSideEffectInstances().SideEffectInstances)
+	TMap<FGameplayTag, FString> PropertyLogs;
+
+	for (const auto& SideEffectInstance : GetSideEffectComponent()->GetSideEffectInstances().SideEffectInstances)
+	{
+		if (SideEffectInstance.Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Instant)
 		{
-			if (SideEffectInstance.Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Instant)
+			continue;
+		}
+
+		for (const FNexusPropertyMod& Mod : SideEffectInstance.Def.SideEffectAsset->Modifiers)
+		{
+			float Value = 0.0f;
+			switch (Mod.CalculationType)
 			{
+			case ENexusPropertyCalculationType::Direct:
+				Value = Mod.DirectValue;
+				break;
+			case ENexusPropertyCalculationType::FromOutside:
+				{
+					const FNexusInjectedValuePair* PairPtr = SideEffectInstance.Def.InjectedValues.FindByPredicate([&Mod](const FNexusInjectedValuePair& InjectedValue)
+					{
+						return InjectedValue.Tag == Mod.InjectedValueTag;
+					});
+					Value = PairPtr ? PairPtr->Value : 0.0f;
+					break;
+				}
+
+			case ENexusPropertyCalculationType::PropertyBased:
+				{
+					UNexusProperty* Property = GetProperty(Mod.PropertyTag);
+					Value = Property ? Property->GetDynamicValue() : 0.0f;
+					break;
+				}
+			default:
 				continue;
 			}
-
-			for (const FNexusPropertyMod& Mod : SideEffectInstance.Def.SideEffectAsset->Modifiers)
-			{
-				float Value = 0.0f;
-				switch (Mod.CalculationType)
-				{
-				case ENexusPropertyCalculationType::Direct:
-					Value = Mod.DirectValue;
-					break;
-				case ENexusPropertyCalculationType::FromOutside:
-					{
-						const FNexusInjectedValuePair* PairPtr = SideEffectInstance.Def.InjectedValues.FindByPredicate([&Mod](const FNexusInjectedValuePair& InjectedValue)
-						{
-							return InjectedValue.Tag == Mod.InjectedValueTag;
-						});
-						Value = PairPtr ? PairPtr->Value : 0.0f;
-						break;
-					}
-
-				case ENexusPropertyCalculationType::PropertyBased:
-					{
-						UNexusProperty* Property = GetProperty(Mod.PropertyTag);
-						Value = Property ? Property->GetDynamicValue() : 0.0f;
-						break;
-					}
-				default:
-					continue;
-				}
-				FString& LogString = PropertyLogs.FindOrAdd(Mod.PropertyTag);
-				UEnum* StaticOperatorEnum = StaticEnum<ENexusPropertyOperator>();
-				check(StaticOperatorEnum);
-				FString EffectNameString = FString::Printf(TEXT("%s (%s) - "), *SideEffectInstance.Def.SideEffectAsset->GetName(), *SideEffectInstance.Handle.ToString());
-				FString ModString = FString::Printf(TEXT("%s %.2f "), *StaticOperatorEnum->GetNameStringByValue(static_cast<int64>(Mod.Operator)), Value);
-				FString TimeString = FString::Printf(TEXT("[%.2f"), SideEffectInstance.ElapsedTime);
-				FString DurationString = SideEffectInstance.Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Infinite
-					                         ? TEXT("/INF]")
-					                         : FString::Printf(TEXT("/%.2f]"), SideEffectInstance.Def.SideEffectAsset->Duration);
-				FString IntervalString = SideEffectInstance.Def.SideEffectAsset->Interval <= 0.0f
-					                         ? TEXT("")
-					                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), SideEffectInstance.Def.SideEffectAsset->Interval, SideEffectInstance.AppliedCount);
-				LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString + TEXT("\n");
-			}
+			FString& LogString = PropertyLogs.FindOrAdd(Mod.PropertyTag);
+			UEnum* StaticOperatorEnum = StaticEnum<ENexusPropertyOperator>();
+			check(StaticOperatorEnum);
+			FString EffectNameString = FString::Printf(TEXT("%s (%s) - "), *SideEffectInstance.Def.SideEffectAsset->GetName(), *SideEffectInstance.Handle.ToString());
+			FString ModString = FString::Printf(TEXT("%s %.2f "), *StaticOperatorEnum->GetNameStringByValue(static_cast<int64>(Mod.Operator)), Value);
+			FString TimeString = FString::Printf(TEXT("[%.2f"), SideEffectInstance.ElapsedTime);
+			FString DurationString = SideEffectInstance.Def.SideEffectAsset->DurationType == ENexusSideEffectDurationType::Infinite
+				                         ? TEXT("/INF]")
+				                         : FString::Printf(TEXT("/%.2f]"), SideEffectInstance.Def.SideEffectAsset->Duration);
+			FString IntervalString = SideEffectInstance.Def.SideEffectAsset->Interval <= 0.0f
+				                         ? TEXT("")
+				                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), SideEffectInstance.Def.SideEffectAsset->Interval, SideEffectInstance.AppliedCount);
+			LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString + TEXT("\n");
 		}
-
-
-		for (UNexusProperty* Property : GetPropertyComponent()->GetProperties())
-		{
-			DisplayDebugManager.SetDrawColor(FColor::White);
-			FString TagString = Property->GetTag().ToString();
-			check(TagString.RemoveFromStart(TEXT("Property.")));
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (정적 값: %.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()));
-			DisplayDebugManager.SetDrawColor(FColor::Orange);
-			if (PropertyLogs.Contains(Property->GetTag()))
-			{
-				DisplayDebugManager.DrawString(PropertyLogs[Property->GetTag()], 4.0f);
-			}
-		}
-
-		DisplayDebugManager.SetDrawColor(FColor::White);
-		FString TagString;
-		for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
-		{
-			TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
-		}
-		DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
 	}
+
+
+	for (UNexusProperty* Property : GetPropertyComponent()->GetProperties())
+	{
+		DisplayDebugManager.SetDrawColor(FColor::White);
+		FString TagString = Property->GetTag().ToString();
+		check(TagString.RemoveFromStart(TEXT("Property.")));
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (정적 값: %.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()));
+		DisplayDebugManager.SetDrawColor(FColor::Orange);
+		if (PropertyLogs.Contains(Property->GetTag()))
+		{
+			DisplayDebugManager.DrawString(PropertyLogs[Property->GetTag()], 4.0f);
+		}
+	}
+
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	FString TagString;
+	for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
+	{
+		TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
+	}
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
+
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	FString CueString;
+	const TMap<TSubclassOf<ANexusCue>, int32>& LoopingCueActorsCount = GetCueComponent()->GetLocalLoopingCueActorsCount();
+	for (const auto& [CueClass, CueActor] : GetCueComponent()->GetLocalLoopingCueActors())
+	{
+		if (CueActor)
+		{
+			const int32* CountPtr = LoopingCueActorsCount.Find(CueClass);
+			CueString += FString::Printf(TEXT("%s(%d)(%s)"), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString());
+		}
+	}
+	DisplayDebugManager.DrawString(FString::Printf(TEXT("로컬 큐 액터: %s"), *CueString));
 }
 
 void UNexusActionComponent::OnRep_AgentActor()
@@ -712,7 +727,8 @@ void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(c
 
 void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
-	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 실행 실패: %s"), *ActionDefHandle.ToString());
+	checkNoEntry(); // 현재는 액션 실패 = 오류처리. 추후에 실패하는 액션이 있을 경우 추가적인 처리 필요
+	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 예측 실행 실패: %s"), *ActionDefHandle.ToString());
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
 	ActionInstance->EndAction();
