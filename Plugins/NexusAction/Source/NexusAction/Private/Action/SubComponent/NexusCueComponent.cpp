@@ -64,47 +64,34 @@ void UNexusCueComponent::TriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredi
 	}
 
 
-	ANexusCue* CueCDO = CueClass.GetDefaultObject();
-	if (CueCDO->GetCueType() == ENexusCueType::Burst) // TODO : Looping이 아닌 경우도 처리
+	ANexusCue* CueCDO = CueClass->GetDefaultObject<ANexusCue>();
+	ANexusCue* LoopingCueActor = CueCDO->GetCueType() == ENexusCueType::Burst ? CueCDO : FindOrCreateLoopingCueActor(CueClass);
+	LoopingCueActor->CallOnTriggered(CueParameters, AgentInfo->GetAgentActor(), AgentInfo->GetOwnerActor());
+	if (IsOwnerActorAuthoritative() && GetCueNetworkProxyInterface())
 	{
-		CueCDO->CallOnTriggered(CueParameters, AgentInfo->GetAgentActor(), AgentInfo->GetOwnerActor());
-		if (IsOwnerActorAuthoritative() && GetCueNetworkProxyInterface())
-		{
-			GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, PredictionTag, CueParameters);
-		}
+		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, PredictionTag, CueParameters);
+	}
+
+	if (CueCDO->GetCueType() == ENexusCueType::Burst)
+	{
 		return;
 	}
 
-	ANexusCue* LoopingCueActor = FindOrCreateLoopingCueActor(CueClass);
-	LoopingCueActor->CallOnTriggered(CueParameters, AgentInfo->GetAgentActor(), AgentInfo->GetOwnerActor());
+
 	FNexusLoopingCue NewLoopingCue{CueClass, CueParameters};
 	FNexusLoopingCueHandle LoopingCueHandle = LoopingCues.AddLoopingCue(NewLoopingCue, IsOwnerActorAuthoritative());
-
-	if (!IsOwnerActorAuthoritative())
+	if (!IsOwnerActorAuthoritative() && PredictionTag.IsPredictable())
 	{
-		if (PredictionTag.IsPredictable())
+		FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(PredictionTag);
+		PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, LoopingCueHandle]()
 		{
-			if (CueCDO->GetCueType() == ENexusCueType::Looping)
-			{
-				if (!IsOwnerActorAuthoritative() && PredictionTag.IsPredictable())
-				{
-					FNexusPredictionEvents::FPredictionEvent& PredictionEvent = FNexusPredictionEvents::GetPredictionEvent(PredictionTag);
-					PredictionEvent.OnPredictionEnded.AddWeakLambda(this, [this, LoopingCueHandle]()
-					{
-						LoopingCues.RemoveLoopingCue(LoopingCueHandle, IsOwnerActorAuthoritative());
-					});
+			LoopingCues.RemoveLoopingCue(LoopingCueHandle, IsOwnerActorAuthoritative());
+		});
 
-					PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, LoopingCueHandle]()
-					{
-						LoopingCues.RemoveLoopingCue(LoopingCueHandle, IsOwnerActorAuthoritative());
-					});
-				}
-			}
-		}
-	}
-	else if (GetCueNetworkProxyInterface())
-	{
-		GetCueNetworkProxyInterface()->CallNetMulticastTriggerCue(CueClass, PredictionTag, CueParameters);
+		PredictionEvent.OnPredictionFailed.AddWeakLambda(this, [this, LoopingCueHandle]()
+		{
+			LoopingCues.RemoveLoopingCue(LoopingCueHandle, IsOwnerActorAuthoritative());
+		});
 	}
 }
 
