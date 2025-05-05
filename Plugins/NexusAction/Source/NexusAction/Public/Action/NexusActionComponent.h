@@ -74,10 +74,12 @@ public:
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
+protected:
+	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
 
 private:
 	void InternalSetupActionComponent();
-	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	
 	UFUNCTION()
 	void OnRep_AgentActor();
 

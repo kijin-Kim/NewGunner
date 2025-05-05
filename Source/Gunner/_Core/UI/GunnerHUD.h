@@ -31,8 +31,8 @@ class GUNNER_API AGunnerHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	void SetupHUD(APlayerState* PlayerState);
 	virtual void GetDebugActorList(TArray<AActor*>& InOutList) override;
+
 
 private:
 	void OnSlotItemActivated(EGunnerSlotType SlotType);
@@ -43,12 +43,6 @@ private:
 private:
 	UGunnerInventoryManagerComponent* GetInventoryManagerComponentChecked() const;
 
-
-public:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UGunnerOverlayWidget> OverlayWidgetClass;
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UGunnerOverlayWidget> OverlayWidget;
 
 private:
 	UPROPERTY()

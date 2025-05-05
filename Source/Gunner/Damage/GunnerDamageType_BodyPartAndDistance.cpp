@@ -43,12 +43,12 @@ float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(UGunne
 
 	const FVector InstigatorLocation = DamageContext->Instigator->GetPawn()->GetActorLocation();
 	const FVector TargetLocation = DamageContext->Target->GetActorLocation();
-	const float Distance = FVector::Dist(TargetLocation, InstigatorLocation);
+	const float Distance = FVector::Dist(TargetLocation, InstigatorLocation) * 0.01f; // m로 변환
 
 	float LastMultiplier = 1.0f;
 	for (const FDistanceDamageFallOff& FallOff : DistanceDamageFallOffs)
 	{
-		if (Distance < FallOff.StartDistance)
+		if (Distance < FallOff.StartDistanceMeter)
 		{
 			return LastMultiplier;
 		}
@@ -66,17 +66,17 @@ float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamage
 		return 1.0f;
 	}
 
-	EGunnerHitBoxType HitBoxType = EGunnerHitBoxType::Body;
+	EGunnerHitPartType HitBoxType = EGunnerHitPartType::Body;
 	if (DamageContext->Target->Implements<UGunnerHitBoxInterface>())
 	{
-		HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
+		HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
 	}
 
 	switch (HitBoxType)
 	{
-	case EGunnerHitBoxType::Head:
+	case EGunnerHitPartType::Head:
 		return HeadDamageMultiplier;
-	case EGunnerHitBoxType::Leg:
+	case EGunnerHitPartType::Leg:
 		return LegDamageMultiplier;
 	default:
 		return 1.0f;

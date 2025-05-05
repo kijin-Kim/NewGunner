@@ -145,7 +145,6 @@ void UGunnerAction_Fire::DrawDebugHitBoxData(UWorld* World, const TArray<FGunner
 }
 
 
-
 TArray<AActor*> UGunnerAction_Fire::GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults)
 {
 	TSet<AActor*> UniqueActors;
@@ -258,30 +257,27 @@ void UGunnerAction_Fire::AuthApplyDamageByHitResults(const TArray<FHitResult>& H
 
 void UGunnerAction_Fire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal)
 {
-	if (!DamageType)
+	if (DamageType)
 	{
-		return;
+		FNexusEventMessage DamageEventMessage;
+		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
+		APawn* AgentPawn = Cast<APawn>(GetAgentActor());
+		DamageEventMessage.Instigator = AgentPawn->GetController();
+
+
+		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
+
+		DamageContext->Instigator = AgentPawn->GetController();
+		DamageContext->Causer = GetSourceObject<AActor>();
+		DamageContext->Target = HitActor;
+		DamageContext->HitNormal = HitNormal;
+		DamageContext->HitBoneName = HitBoneName;
+
+		DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
+		DamageEventMessage.EventDataObject = DamageContext;
+
+		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 	}
-
-
-	FNexusEventMessage DamageEventMessage;
-	DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
-	APawn* AgentPawn = Cast<APawn>(GetAgentActor());
-	DamageEventMessage.Instigator = AgentPawn->GetController();
-
-
-	UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
-
-	DamageContext->Instigator = AgentPawn->GetController();
-	DamageContext->Causer = GetSourceObject<AActor>();
-	DamageContext->Target = HitActor;
-	DamageContext->HitNormal = HitNormal;
-	DamageContext->HitBoneName = HitBoneName;
-
-	DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
-	DamageEventMessage.EventDataObject = DamageContext;
-
-	UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 }
 
 void UGunnerAction_Fire::DrawDebugHitScanTrace(const TArray<FHitResult>& HitResults)

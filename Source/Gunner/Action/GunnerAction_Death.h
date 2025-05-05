@@ -30,7 +30,7 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TMap<EGunnerHitBoxType, FGunnerDirectionalMontageSet> DeathMontages;
+	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> DeathMontages;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerDamageContext> DamageContext;

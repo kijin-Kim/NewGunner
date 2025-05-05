@@ -5,7 +5,7 @@
 
 
 // Add default functionality here for any IGunnerHitBoxInterface functions that are not pure virtual.
-EGunnerHitDirectionType IGunnerHitBoxInterface::GetHitDirectionType(FVector CauserLocation, FVector VictimLocation, FVector VictimForward)
+EGunnerHitDirectionType IGunnerHitBoxInterface::GetHitDirectionType(const FVector& CauserLocation, const FVector& VictimLocation, const FVector& VictimForward)
 {
 	const FVector ToCauser = (CauserLocation - VictimLocation).GetSafeNormal2D();
 	

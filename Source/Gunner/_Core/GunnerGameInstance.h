@@ -18,6 +18,7 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 public:
 	
 	virtual void Init() override;
+	
 	virtual void Shutdown() override;
 
 private:
@@ -26,10 +27,7 @@ private:
 	void OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg);
 	void PlayLoadingScreen();
 	void StopLoadingScreen();
-	void OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController);
-	
-	
-	
+
 
 public:
 	UPROPERTY(EditAnywhere)

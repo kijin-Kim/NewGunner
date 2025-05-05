@@ -10,7 +10,7 @@
  * 
  */
 UCLASS(BlueprintType)
-class GUNNER_API UGunnerDamageContext : public UObject
+class GUNNER_API UGunnerDamageContext : public UObject // EventMessage의 EventDataObject로 사용하기 위해 UObject를 상속받음
 {
 	GENERATED_BODY()
 
@@ -28,6 +28,6 @@ public:
 	FVector HitNormal;
 	UPROPERTY(BlueprintReadOnly)
 	FName HitBoneName;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsAlt = false;
 };

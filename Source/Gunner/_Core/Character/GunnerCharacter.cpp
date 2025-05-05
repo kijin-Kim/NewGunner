@@ -10,6 +10,7 @@
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/Canvas.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
@@ -140,21 +141,21 @@ FOnGunnerTeamSetSignature* AGunnerCharacter::GetOnTeamSetDelegate()
 	return TeamAgentInterface ? TeamAgentInterface->GetOnTeamSetDelegate() : nullptr;
 }
 
-EGunnerHitBoxType AGunnerCharacter::GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const
+EGunnerHitPartType AGunnerCharacter::GetHitPartTypeByHitBoneName_Implementation(FName HitBoneName) const
 {
 	const static TArray<FName> HeadBoneNames = {TEXT("Head"), TEXT("Neck")};
 	const static TArray<FName> LegBoneNames = {TEXT("L_Hip"),TEXT("L_Knee"),TEXT("L_Foot"),TEXT("R_Hip"),TEXT("R_Knee"),TEXT("R_Foot")};
 	if (HeadBoneNames.Contains(HitBoneName))
 	{
-		return EGunnerHitBoxType::Head;
+		return EGunnerHitPartType::Head;
 	}
 
 	if (LegBoneNames.Contains(HitBoneName))
 	{
-		return EGunnerHitBoxType::Leg;
+		return EGunnerHitPartType::Leg;
 	}
 
-	return EGunnerHitBoxType::Body;
+	return EGunnerHitPartType::Body;
 }
 
 void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters)
@@ -164,7 +165,6 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusC
 		ActionComponent->SimTriggerCue(CueClass, PredictionTag, CueParameters);
 	}
 }
-
 
 
 void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID)

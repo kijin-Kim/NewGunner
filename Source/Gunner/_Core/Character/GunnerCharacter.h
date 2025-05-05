@@ -71,7 +71,7 @@ public:
 	//~ End IGenericTeamAgentInterface Interface.
 
 	//~ Begin IGunnerHitBoxInterface Interface.
-	virtual EGunnerHitBoxType GetHitBoxTypeByHitBoneName_Implementation(FName HitBoneName) const override;
+	virtual EGunnerHitPartType GetHitPartTypeByHitBoneName_Implementation(FName HitBoneName) const override;
 	//~ End IGunnerHitBoxInterface Interface.
 
 	//~ Begin INexusCueNetworkProxyInterface Interface.

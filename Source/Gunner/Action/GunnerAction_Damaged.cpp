@@ -20,7 +20,7 @@ UAnimMontage* UGunnerAction_Damaged::GetDesiredHitMontage(FName HitBoneName) con
 		DamageContext->Target->GetActorLocation(),
 		GetAgentActor()->GetActorForwardVector());
 	
-	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
+	EGunnerHitPartType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(GetAgentActor(), HitBoneName);
 	const FGunnerDirectionalMontageSet* HitMontageSet = HitMontages.Find(HitBoxType);
 	if (!HitMontageSet)
 	{
@@ -49,7 +49,7 @@ UAnimMontage* UGunnerAction_Damaged::GetDesiredHitMontage(FName HitBoneName) con
 
 UAnimMontage* UGunnerAction_Damaged::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
 {
-	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
+	EGunnerHitPartType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(GetAgentActor(), HitBoneName);
 
 	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoxType);
 	if (!DeathMontageSet)

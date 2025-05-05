@@ -7,7 +7,7 @@
 #include "GunnerHitBoxInterface.generated.h"
 
 UENUM()
-enum class EGunnerHitBoxType
+enum class EGunnerHitPartType
 {
 	Head,
 	Body,
@@ -41,6 +41,6 @@ class GUNNER_API IGunnerHitBoxInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	EGunnerHitBoxType GetHitBoxTypeByHitBoneName(FName HitBoneName) const;
-	static EGunnerHitDirectionType GetHitDirectionType(FVector CauserLocation, FVector VictimLocation, FVector VictimForward);
+	EGunnerHitPartType GetHitPartTypeByHitBoneName(FName HitBoneName) const;
+	static EGunnerHitDirectionType GetHitDirectionType(const FVector& CauserLocation, const FVector& VictimLocation, const FVector& VictimForward);
 };

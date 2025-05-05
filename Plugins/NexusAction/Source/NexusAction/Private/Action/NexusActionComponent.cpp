@@ -144,26 +144,6 @@ void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentSet
 	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
-void UNexusActionComponent::InternalSetupActionComponent()
-{
-	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
-	GetOwner()->GetComponents(SubComponents);
-	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
-	{
-		SubComponent->Setup(AgentInfo);
-	}
-
-
-	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
-	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
-	ActionDefs.Init();
-
-	if (GetOwner()->HasAuthority())
-	{
-		AuthRemoveAllActions();
-	}
-}
-
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
 {
 	if (!AgentInfo.IsValid())
@@ -178,6 +158,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	{
 		return;
 	}
+
 
 	DisplayDebugManager.SetFont(GEngine->GetTinyFont());
 	DisplayDebugManager.SetDrawColor(FColor::White);
@@ -241,6 +222,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		DisplayDebugManager.SetDrawColor(FColor::White);
 		FString TagString = Property->GetTag().ToString();
 		check(TagString.RemoveFromStart(TEXT("Property.")));
+
 		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (정적 값: %.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()));
 		DisplayDebugManager.SetDrawColor(FColor::Orange);
 		if (PropertyLogs.Contains(Property->GetTag()))
@@ -268,8 +250,30 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 			CueString += FString::Printf(TEXT("%s(%d)(%s)"), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString());
 		}
 	}
+
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("로컬 큐 액터: %s"), *CueString));
 }
+
+void UNexusActionComponent::InternalSetupActionComponent()
+{
+	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
+	GetOwner()->GetComponents(SubComponents);
+	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
+	{
+		SubComponent->Setup(AgentInfo);
+	}
+
+
+	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
+	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
+	ActionDefs.Init();
+
+	if (GetOwner()->HasAuthority())
+	{
+		AuthRemoveAllActions();
+	}
+}
+
 
 void UNexusActionComponent::OnRep_AgentActor()
 {

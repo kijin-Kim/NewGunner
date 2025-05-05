@@ -32,14 +32,15 @@ public:
 protected:
 	virtual void OnTriggerAction() override;
 
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TMap<EGunnerHitBoxType, FGunnerDirectionalMontageSet> HitMontages;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TMap<EGunnerHitBoxType, FGunnerDirectionalMontageSet> DeathMontages;
-
+	
+protected:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerDamageContext> DamageContext;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> HitMontages;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> DeathMontages;
+
+private:
 	mutable int32 MontageSetIndex = 0;
 };

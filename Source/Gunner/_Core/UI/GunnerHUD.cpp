@@ -12,29 +12,7 @@
 #include "Gunner/_Core/UI/GunnerOverlayWidgetController.h"
 
 
-void AGunnerHUD::SetupHUD(APlayerState* PlayerState)
-{
-	check(OverlayWidgetClass);
-	if (!OverlayWidget)
-	{
-		OverlayWidget = CreateWidget<UGunnerOverlayWidget>(GetOwningPlayerController(), OverlayWidgetClass);
-		UGunnerOverlayWidgetController* OverlayWidgetController = NewObject<UGunnerOverlayWidgetController>(GetOwningPlayerController());
-		OverlayWidgetController->InitWidgetController(PlayerState);
-		OverlayWidget->InitUserWidget(OverlayWidgetController);
-		OverlayWidget->AddToViewport();
-	}
 
-	APawn* Pawn = GetOwningPlayerController()->GetPawn();
-	check(Pawn);
-	if (Pawn)
-	{
-		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn);
-		check(ActionComponent);
-		UNexusProperty* SlotIndexProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
-		check(SlotIndexProperty);
-		SlotIndexProperty->OnDirtyDelegate.AddDynamic(this, &AGunnerHUD::HandleSlotIndexDirty);
-	}
-}
 
 void AGunnerHUD::GetDebugActorList(TArray<AActor*>& InOutList)
 {

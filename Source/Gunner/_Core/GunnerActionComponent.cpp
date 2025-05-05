@@ -3,9 +3,12 @@
 
 #include "GunnerActionComponent.h"
 
+#include "GunnerTeamAgentInterface.h"
 #include "Action/NexusAction.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/Canvas.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/HUD.h"
 #include "Gunner/Action/GunnerActionSet.h"
 #include "Gunner/Action/GunnerAction_Fire.h"
 
@@ -38,6 +41,22 @@ void UGunnerActionComponent::OnSetupActionComponent()
 		}
 	}
 }
+
+void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+{
+	if (HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
+	{
+		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
+		DisplayDebugManager.SetDrawColor(FColor::White);
+		if (IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetAgentActor()))
+		{
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("TeamID: %d"), (TeamAgentInterface->GetGenericTeamId().GetId())));
+		}
+	}
+	Super::InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
+}
+
 
 void UGunnerActionComponent::ClientSendDebugHitConfirmedData_Implementation(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos)
 {

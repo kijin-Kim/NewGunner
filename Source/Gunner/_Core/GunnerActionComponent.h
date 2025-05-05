@@ -22,6 +22,8 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientSendDebugHitConfirmedData(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos);
 
+protected:
+	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
 
 private:
 	UPROPERTY(EditAnywhere)

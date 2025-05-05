@@ -16,14 +16,14 @@ struct GUNNER_API FDistanceDamageFallOff
 
 public:
 	FDistanceDamageFallOff()
-		: StartDistance(0.0f),
+		: StartDistanceMeter(0.0f),
 		  Multiplier(1.0f)
 	{
 	}
 
 public:
 	UPROPERTY(EditAnywhere, meta = (ForceUnits = "m"))
-	int32 StartDistance;
+	int32 StartDistanceMeter;
 	UPROPERTY(EditAnywhere)
 	float Multiplier;
 };

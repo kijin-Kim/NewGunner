@@ -16,7 +16,7 @@ void UGunnerAction_Death::OnTriggerAction()
 
 UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
 {
-	EGunnerHitBoxType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitBoxTypeByHitBoneName(GetAgentActor(), HitBoneName);
+	EGunnerHitPartType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(GetAgentActor(), HitBoneName);
 
 	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoxType);
 	if (!DeathMontageSet)

@@ -1,11 +1,40 @@
 #include "GunnerGameMode.h"
 
+#include "GenericTeamAgentInterface.h"
 #include "GunnerGameState.h"
+#include "GunnerTeamAgentInterface.h"
 #include "GameFramework/PlayerState.h"
-#include "Gunner/Gunner.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
+
+void AGunnerGameMode::SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode)
+{
+	CheatTeamMode = NewCheatTeamMode;
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	switch (CheatTeamMode)
+	{
+	case ECheatTeamMode::None:
+		break;
+	case ECheatTeamMode::EveryoneHostile:
+		SetAllControllersTeam(FGenericTeamId::NoTeam);
+		break;
+	case ECheatTeamMode::EveryoneFriendly:
+		SetAllControllersTeam(AttackerTeam);
+		break;
+	case ECheatTeamMode::PingPong:
+		SetAllControllersTeamPingPong();
+		break;
+	default:
+		break;
+	}
+}
 
 void AGunnerGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
@@ -45,6 +74,25 @@ void AGunnerGameMode::RestartPlayer(AController* NewPlayer)
 		break;
 	}
 #endif
+
+
+	switch (CheatTeamMode)
+	{
+	case ECheatTeamMode::None:
+		break;
+	case ECheatTeamMode::EveryoneHostile:
+		SetTeam(NewPlayer, FGenericTeamId::NoTeam);
+		break;
+	case ECheatTeamMode::EveryoneFriendly:
+		SetTeam(NewPlayer, AttackerTeam);
+		break;
+	case ECheatTeamMode::PingPong:
+		SetTeam(NewPlayer, PingPongTeamID);
+		PingPongTeamID = PingPongTeamID == AttackerTeam ? DefenderTeam : AttackerTeam;
+		break;
+	default:
+		break;
+	}
 }
 
 void AGunnerGameMode::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
@@ -61,4 +109,40 @@ void AGunnerGameMode::HandleMatchHasEnded()
 {
 	Super::HandleMatchHasEnded();
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.1f);
+}
+
+
+void AGunnerGameMode::SetAllControllersTeam(FGenericTeamId TeamId)
+{
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PC = Iterator->Get();
+		if (PC)
+		{
+			SetTeam(PC, TeamId);
+		}
+	}
+}
+
+void AGunnerGameMode::SetAllControllersTeamPingPong()
+{
+	PingPongTeamID = AttackerTeam;
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PC = Iterator->Get();
+		if (PC)
+		{
+			SetTeam(PC, PingPongTeamID);
+			PingPongTeamID = PingPongTeamID == AttackerTeam ? DefenderTeam : AttackerTeam;
+		}
+	}
+}
+
+void AGunnerGameMode::SetTeam(AController* Controller, FGenericTeamId TeamID)
+{
+	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(Controller->PlayerState);
+	if (ensure(TeamAgentInterface))
+	{
+		TeamAgentInterface->SetGenericTeamId(TeamID);
+	}
 }

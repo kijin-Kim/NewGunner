@@ -5,7 +5,6 @@
 
 #include "MoviePlayer.h"
 #include "Blueprint/UserWidget.h"
-#include "Cheat/GunnerCheatManager.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/HUD.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
@@ -15,24 +14,14 @@ void UGunnerGameInstance::Init()
 {
 	Super::Init();
 
-	static bool bIsInitialized = false;
-	if (!bIsInitialized)
-	{
-		FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
-		FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
+	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
+	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
 
-		FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
-		FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
+	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
+	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
 
-		AHUD::OnShowDebugInfo.RemoveAll(this);
-		AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
-		
-
-		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UGunnerGameInstance::OnPlayerPostLogin);
-
-
-		bIsInitialized = true;
-	}
+	AHUD::OnShowDebugInfo.RemoveAll(this);
+	AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
 }
 
 void UGunnerGameInstance::Shutdown()
@@ -86,15 +75,4 @@ void UGunnerGameInstance::StopLoadingScreen()
 	GetMoviePlayer()->StopMovie();
 }
 
-void UGunnerGameInstance::OnPlayerPostLogin(AGameModeBase* GameModeBase, APlayerController* PlayerController)
-{
-	if (!PlayerController || !PlayerController->HasAuthority())
-	{
-		return;
-	}
 
-	if (UGunnerCheatManager* CheatManager = CastChecked<UGunnerCheatManager>(PlayerController->CheatManager))
-	{
-		CheatManager->OnPlayerPostLogin(GameModeBase, PlayerController);
-	}
-}
