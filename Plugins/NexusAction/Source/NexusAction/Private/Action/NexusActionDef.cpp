@@ -45,20 +45,12 @@ void FNexusActionDef::PreReplicatedRemove(const FNexusActionDefContainer& InArra
 FNexusActionDefContainer::~FNexusActionDefContainer()
 {
 	Items.Empty();
-	AcuumulatedAddedIndices.Empty();
 }
 
 void FNexusActionDefContainer::Init()
 {
 	bInitialized = true;
-	for (const auto& AddedIndex : PreInitAddedIndices)
-	{
-		if (Items.IsValidIndex(AddedIndex))
-		{
-			OnAdded(Items[AddedIndex]);
-		}
-	}
-	PreInitAddedIndices.Empty();
+	FlushPendingAdds();
 }
 
 void FNexusActionDefContainer::AuthAdd(const FNexusActionDef& ActionDef)
@@ -138,10 +130,19 @@ void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDef) const
 	OnActionDefRemovedDelegate.ExecuteIfBound(ActionDef);
 }
 
-void FNexusActionDefContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
+void FNexusActionDefContainer::FlushPendingAdds()
 {
-	AcuumulatedAddedIndices.Append(AddedIndices);
+	check(bInitialized);
+	for (FNexusActionDef& Item : Items)
+	{
+		if (!Item.bIsAdded)
+		{
+			Item.bIsAdded = true;
+			OnAdded(Item);
+		}
+	}
 }
+
 
 void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
 {
@@ -151,23 +152,9 @@ void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer:
 	// 3. SourceObject가 클라이언트에서 아직 소환되지 않은 액터일 경우
 
 	// 이를 위해 PostReplicatedReceive를 통해 SourceObject가 완전히 매핑된 후 액션을 추가함
-	if (!Parameters.bHasMoreUnmappedReferences)
+	if (!Parameters.bHasMoreUnmappedReferences && bInitialized)
 	{
-		for (const auto& AddedIndex : AcuumulatedAddedIndices)
-		{
-			if (ensure(Items.IsValidIndex(AddedIndex)))
-			{
-				if (bInitialized)
-				{
-					OnAdded(Items[AddedIndex]);
-				}
-				else
-				{
-					PreInitAddedIndices.Add(AddedIndex);
-				}
-			}
-		}
-		AcuumulatedAddedIndices.Empty();
+		FlushPendingAdds();
 		UE_LOG(LogNexusAction, VeryVerbose, TEXT("액션 추가 플러시"));
 	}
 	else

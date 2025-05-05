@@ -130,7 +130,7 @@ void UGunnerLagCompensationComponent::AuthSpawnDummyMesh(const FMyPoseSnapshot& 
 	DummyMeshComponent->SetSkeletalMesh(CharacterOwner->GetMesh()->GetSkeletalMeshAsset());
 	DummyMeshComponent->SetPhysicsAsset(CharacterOwner->GetMesh()->GetPhysicsAsset());
 	DummyMeshComponent->SetAnimInstanceClass(PoseSnapshotAnimInstanceClass);
-	URewoundSnapshotAnimInstance* RewoundSnapshotAnimInstance = Cast<URewoundSnapshotAnimInstance>(DummyMeshComponent->GetAnimInstance());
+	URewoundSnapshotAnimInstance* RewoundSnapshotAnimInstance = CastChecked<URewoundSnapshotAnimInstance>(DummyMeshComponent->GetAnimInstance());
 	RewoundSnapshotAnimInstance->SetBlendAlpha(Fraction);
 
 	FPoseSnapshot& DummyNearestFutureSnapshot = RewoundSnapshotAnimInstance->AddPoseSnapshot(FName("RewindSnapshot_NearestFuture"));

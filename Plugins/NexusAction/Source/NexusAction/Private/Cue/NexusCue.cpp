@@ -73,6 +73,7 @@ FString FNexusLoopingCue::ToString() const
 	return FString::Printf(TEXT("LoopingCue={Handle=%s, CueClass=%s}"), *Handle.ToString(), *CueClass->GetName());
 }
 
+
 void FNexusLoopingCueContainer::Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakObjectPtr<AActor> InAgentActor)
 {
 	check(InOwnerActor.IsValid() && InAgentActor.IsValid());
@@ -80,14 +81,7 @@ void FNexusLoopingCueContainer::Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakO
 	AgentActor = InAgentActor;
 	bInitialized = true;
 
-	for (const auto& AddedIndex : PreInitAddedIndices)
-	{
-		if (Items.IsValidIndex(AddedIndex))
-		{
-			OnAdded(Items[AddedIndex]);
-		}
-	}
-	PreInitAddedIndices.Empty();
+	FlushPendingAdds();
 }
 
 bool FNexusLoopingCueContainer::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
@@ -134,47 +128,13 @@ void FNexusLoopingCueContainer::RemoveAllLoopingCues()
 	MarkArrayDirty();
 }
 
-void FNexusLoopingCueContainer::OnAdded(const FNexusLoopingCue& LoopingCue) const
-{
-	if (OnCueAddedDelegate.IsBound())
-	{
-		OnCueAddedDelegate.Execute(LoopingCue);
-	}
-}
-
-void FNexusLoopingCueContainer::OnRemoved(const FNexusLoopingCue& LoopingCue) const
-{
-	if (OnCueRemovedDelegate.IsBound())
-	{
-		OnCueRemovedDelegate.Execute(LoopingCue);
-	}
-}
-
-void FNexusLoopingCueContainer::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
-{
-	AcuumulatedAddedIndices.Append(AddedIndices);
-}
 
 void FNexusLoopingCueContainer::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
 {
 	// FNexusActionDefContainer::PostReplicatedReceive와 동일한 로직 수행. Causer, Target, HitResults 내부의 Actor 소환을 기다려야 함. 
-	if (!Parameters.bHasMoreUnmappedReferences)
+	if (!Parameters.bHasMoreUnmappedReferences && bInitialized)
 	{
-		for (const auto& AddedIndex : AcuumulatedAddedIndices)
-		{
-			if (ensure(Items.IsValidIndex(AddedIndex)))
-			{
-				if (bInitialized)
-				{
-					OnAdded(Items[AddedIndex]);
-				}
-				else
-				{
-					PreInitAddedIndices.Add(AddedIndex);
-				}
-			}
-		}
-		AcuumulatedAddedIndices.Empty();
+		FlushPendingAdds();
 		UE_LOG(LogNexusCue, VeryVerbose, TEXT("루핑큐 추가 플러시"));
 	}
 	else
@@ -197,6 +157,36 @@ FNexusLoopingCue* FNexusLoopingCueContainer::FindLoopingCueByClass(TSubclassOf<A
 	{
 		return LoopingCue.CueClass == InCueClass;
 	});
+}
+
+void FNexusLoopingCueContainer::OnAdded(FNexusLoopingCue& LoopingCue) const
+{
+	LoopingCue.bIsAdded = true;
+	if (OnCueAddedDelegate.IsBound())
+	{
+		OnCueAddedDelegate.Execute(LoopingCue);
+	}
+}
+
+void FNexusLoopingCueContainer::OnRemoved(const FNexusLoopingCue& LoopingCue) const
+{
+	if (OnCueRemovedDelegate.IsBound())
+	{
+		OnCueRemovedDelegate.Execute(LoopingCue);
+	}
+}
+
+void FNexusLoopingCueContainer::FlushPendingAdds()
+{
+	check(bInitialized);
+	for (FNexusLoopingCue& Item : Items)
+	{
+		if (!Item.bIsAdded)
+		{
+			Item.bIsAdded = true;
+			OnAdded(Item);
+		}
+	}
 }
 
 ANexusCue::ANexusCue()

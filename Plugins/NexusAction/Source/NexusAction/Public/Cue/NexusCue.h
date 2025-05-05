@@ -91,6 +91,7 @@ struct FNexusLoopingCue : public FFastArraySerializerItem
 		: CueClass(InCueClass),
 		  CueParameters(InCueParameters)
 	{
+		Handle.GenerateNewHandle();
 	}
 
 	bool operator==(const FNexusLoopingCue& Other) const;
@@ -109,6 +110,7 @@ public:
 	TSubclassOf<ANexusCue> CueClass;
 	UPROPERTY()
 	FNexusCueParameters CueParameters;
+	bool bIsAdded = false;
 
 private:
 	// 각 로컬에서만 유효한 핸들
@@ -122,6 +124,7 @@ struct FNexusLoopingCueContainer : public FFastArraySerializer
 	GENERATED_USTRUCT_BODY()
 
 
+	
 	void Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakObjectPtr<AActor> InAgentActor);
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
@@ -129,16 +132,18 @@ struct FNexusLoopingCueContainer : public FFastArraySerializer
 	FNexusLoopingCueHandle AddLoopingCue(const FNexusLoopingCue& InLoopingCue, bool bHasAuthority);
 	void RemoveLoopingCue(FNexusLoopingCueHandle Handle, bool bHasAuthority);
 	void RemoveAllLoopingCues();
-
-	void OnAdded(const FNexusLoopingCue& LoopingCue) const;
-	void OnRemoved(const FNexusLoopingCue& LoopingCue) const;
-
-	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
+	
 	void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters);
 
 
 	FNexusLoopingCue* FindLoopingCueByHandle(const FNexusLoopingCueHandle& InHandle);
 	FNexusLoopingCue* FindLoopingCueByClass(TSubclassOf<ANexusCue> InCueClass);
+
+	void OnAdded(FNexusLoopingCue& LoopingCue) const;
+	void OnRemoved(const FNexusLoopingCue& LoopingCue) const;
+	void FlushPendingAdds();
+
+public:
 
 
 	UPROPERTY()
@@ -150,9 +155,6 @@ struct FNexusLoopingCueContainer : public FFastArraySerializer
 	bool bInitialized = false;
 	TWeakObjectPtr<AActor> OwnerActor;
 	TWeakObjectPtr<AActor> AgentActor;
-
-	TArray<int32> AcuumulatedAddedIndices;
-	TArray<int32> PreInitAddedIndices;
 };
 
 template <>
