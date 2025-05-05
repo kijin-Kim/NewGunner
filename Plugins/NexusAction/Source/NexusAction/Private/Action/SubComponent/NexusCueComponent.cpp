@@ -183,6 +183,7 @@ void UNexusCueComponent::OnCueAdded(const FNexusLoopingCue& LoopingCue)
 		{
 			LoopingCues.RemoveLoopingCue(Handle, GetOwner()->HasAuthority());
 		}, LoopingCueActor->GetDuration(), false);
+		
 	}
 	LoopingCueActor->CallOnBecomeRelevant(LoopingCue.CueParameters, AgentInfo->GetAgentActor(), AgentInfo->GetOwnerActor());
 }

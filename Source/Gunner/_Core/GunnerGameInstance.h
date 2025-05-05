@@ -19,8 +19,7 @@ public:
 	
 	virtual void Init() override;
 	virtual void Shutdown() override;
-    	UCurveTable* GetDamageCurveTable() const;
-    	UDataTable* GetWeaponDataTable() const;
+
 private:
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
 	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
@@ -33,10 +32,6 @@ private:
 	
 
 public:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UCurveTable> DamageCurveTable;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UDataTable> WeaponDataTable;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
 

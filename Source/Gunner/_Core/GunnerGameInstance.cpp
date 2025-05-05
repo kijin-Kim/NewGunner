@@ -41,17 +41,6 @@ void UGunnerGameInstance::Shutdown()
 	FNexusPredictionEvents::ResetPredictionEvents();
 }
 
-UCurveTable* UGunnerGameInstance::GetDamageCurveTable() const
-{
-	return DamageCurveTable;
-}
-
-UDataTable* UGunnerGameInstance::GetWeaponDataTable() const
-{
-	return WeaponDataTable;
-}
-
-
 void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& MapName)
 {
 	PlayLoadingScreen();
