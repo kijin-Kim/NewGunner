@@ -10,9 +10,11 @@ void UGunnerViewModel_HealthIndicator::OnCreateViewModel(const UUserWidget* User
 {
 	Super::OnCreateViewModel(UserWidget);
 	UNexusProperty* HealthProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Health);
-	check(HealthProperty);
-	HealthProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_HealthIndicator::OnHealthChanged);
-	SetHealth(HealthProperty->GetDynamicValue());
+	if (HealthProperty)
+	{
+		HealthProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_HealthIndicator::OnHealthChanged);
+		SetHealth(HealthProperty->GetDynamicValue());
+	}
 }
 
 void UGunnerViewModel_HealthIndicator::OnDestroyViewModel(const UObject* Object, const UMVVMView* View) const

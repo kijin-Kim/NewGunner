@@ -14,7 +14,12 @@
 void UGunnerInventoryViewModel_Equipment::OnCreateViewModel(const UUserWidget* UserWidget)
 {
 	Super::OnCreateViewModel(UserWidget);
-
+	
+	if(!InventoryManagerComponent)
+	{
+		 return;
+	}
+	
 	const TArray<AGunnerItem*>& Items = InventoryManagerComponent->GetInventoryItems();
 
 	for (AGunnerItem* Item : Items)

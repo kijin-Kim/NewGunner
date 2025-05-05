@@ -45,7 +45,7 @@ void AGunnerPlayerController::InitPlayerState()
 void AGunnerPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	if (IsLocalController())
+	if (IsLocalController() && GetPawn())
 	{
 		CreateMainWidget();
 	}

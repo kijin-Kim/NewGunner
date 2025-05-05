@@ -5,6 +5,7 @@
 
 #include "Action/NexusActionComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerState.h"
 
 
 UObject* UNexusActionViewModelContextResolver::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
@@ -20,7 +21,7 @@ void UNexusActionViewModelContextResolver::DestroyInstance(const UObject* ViewMo
 
 UNexusActionViewModelBase* UNexusActionViewModelBase::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View)
 {
-	UNexusActionViewModelBase* ViewModel = NewObject<UNexusActionViewModelBase>(UserWidget->GetOwningPlayerPawn(), ExpectedType);
+	UNexusActionViewModelBase* ViewModel = NewObject<UNexusActionViewModelBase>(UserWidget->GetOwningPlayerState(), ExpectedType);
 	check(ViewModel);
 	ViewModel->OnCreateViewModel(UserWidget);
 	return ViewModel;
@@ -28,5 +29,5 @@ UNexusActionViewModelBase* UNexusActionViewModelBase::CreateInstance(const UClas
 
 void UNexusActionViewModelBase::OnCreateViewModel(const UUserWidget* UserWidget)
 {
-	ActionComponent = UNexusActionComponent::GetActionComponentFromActor(UserWidget->GetOwningPlayerPawn());
+	ActionComponent = UNexusActionComponent::GetActionComponentFromActor(UserWidget->GetOwningPlayerState());
 }

@@ -74,7 +74,7 @@ FString FNexusLoopingCue::ToString() const
 }
 
 
-void FNexusLoopingCueContainer::Init(TWeakObjectPtr<AActor> InOwnerActor, TWeakObjectPtr<AActor> InAgentActor)
+void FNexusLoopingCueContainer::Init(TWeakObjectPtr<AActor> InAgentActor, TWeakObjectPtr<AActor> InOwnerActor)
 {
 	check(InOwnerActor.IsValid() && InAgentActor.IsValid());
 	OwnerActor = InOwnerActor;

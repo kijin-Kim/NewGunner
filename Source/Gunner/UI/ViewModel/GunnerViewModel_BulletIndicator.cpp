@@ -9,15 +9,19 @@
 void UGunnerViewModel_BulletIndicator::OnCreateViewModel(const UUserWidget* UserWidget)
 {
 	Super::OnCreateViewModel(UserWidget);
-	UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Bullet);
-	check(BulletProperty);
-	BulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_BulletIndicator::OnBulletCountChanged);
-	SetBulletCount(BulletProperty->GetDynamicValue());
-	
-	UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet);
-	check(MagazineBulletProperty);
-	MagazineBulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_BulletIndicator::OnMagazineBulletCountChanged);
-	SetMagazineBulletCount(MagazineBulletProperty->GetDynamicValue());
+	if (UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Bullet))
+	{
+		BulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_BulletIndicator::OnBulletCountChanged);
+		SetBulletCount(BulletProperty->GetDynamicValue());
+	}
+
+
+	if (UNexusProperty* MagazineBulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet))
+	{
+		check(MagazineBulletProperty);
+		MagazineBulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_BulletIndicator::OnMagazineBulletCountChanged);
+		SetMagazineBulletCount(MagazineBulletProperty->GetDynamicValue());
+	}
 }
 
 void UGunnerViewModel_BulletIndicator::OnDestroyViewModel(const UObject* Object, const UMVVMView* View) const

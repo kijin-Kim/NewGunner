@@ -71,7 +71,7 @@ FNexusSideEffectInstanceHandle UNexusActionComponent::ApplySideEffectByDef(const
 
 UNexusProperty* UNexusActionComponent::GetProperty(FGameplayTag Tag)
 {
-	return GetPropertyComponent()->GetProperty(Tag);
+	return GetPropertyComponent() ? GetPropertyComponent()->GetProperty(Tag) : nullptr;
 }
 
 float UNexusActionComponent::GetPropertyValue(FGameplayTag Tag)
