@@ -39,7 +39,8 @@ class GUNNER_API AGunnerCharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void PostInitializeComponents() override;
-	
+	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
+
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -56,7 +57,6 @@ public:
 	virtual UNexusActionComponent* GetActionComponent() const override;
 	//~ End IGunnerActionComponentInterface Interface.
 
-	
 
 	//~ Begin IGunnerInventoryInterface Interface.
 	virtual UGunnerInventoryManagerComponent* GetInventoryManagerComponent() const override;
@@ -95,12 +95,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNexusAnimMontagePlayerComponent> AnimMontagePlayerComponent;
-	
+
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerLagCompensationComponent> LagCompensationComponent;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
-
 };

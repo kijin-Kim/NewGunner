@@ -19,9 +19,7 @@ void UGunnerGameInstance::Init()
 
 	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
 	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
-
-	AHUD::OnShowDebugInfo.RemoveAll(this);
-	AHUD::OnShowDebugInfo.AddUObject(this, &UGunnerGameInstance::OnShowDebugInfo);
+	
 }
 
 void UGunnerGameInstance::Shutdown()
@@ -40,10 +38,6 @@ void UGunnerGameInstance::PostLoadMapWithWorld(UWorld* InLoadedWorld)
 	StopLoadingScreen();
 }
 
-void UGunnerGameInstance::OnShowDebugInfo(AHUD* Ahud, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Arg)
-{
-	UGunnerInventoryManagerComponent::OnShowDebugInfo(Ahud, Canvas, DebugDisplayInfo, X, Arg);
-}
 
 void UGunnerGameInstance::PlayLoadingScreen()
 {

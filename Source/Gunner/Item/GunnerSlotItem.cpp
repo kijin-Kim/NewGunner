@@ -10,11 +10,26 @@
 #include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
-void AGunnerSlotItem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
+
+void AGunnerSlotItem::CollectDisplayDebugString(TArray<FGunnerInventoryDisplayDebugString>& OutDisplayDebugstrings) const
 {
-	Super::OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, YL, YPos);
-	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
-	DisplayDebugManager.DrawString(FString::Printf(TEXT("슬롯 아이템: %s"), *UEnum::GetValueAsString(GetSlotType())));
+	Super::CollectDisplayDebugString(OutDisplayDebugstrings);
+
+	if (OutDisplayDebugstrings.Num() < static_cast<int32>(EGunnerSlotType::Num))
+	{
+		UEnum* SlotTypeEnum = StaticEnum<EGunnerSlotType>();
+		OutDisplayDebugstrings.SetNum(static_cast<int32>(EGunnerSlotType::Num));
+		for (int32 i = 0; i < static_cast<int32>(EGunnerSlotType::Num); i++)
+		{
+			OutDisplayDebugstrings[i].Color = FColor{255, 255, 255, 127};
+			
+			OutDisplayDebugstrings[i].DisplayDebugString = FString::Printf(TEXT("%s (None)"), *SlotTypeEnum->GetDisplayNameTextByIndex(i).ToString());
+		}
+	}
+	
+	OutDisplayDebugstrings[static_cast<int32>(SlotType)].DisplayDebugString = FString::Printf(TEXT("%s (%s)"), *UEnum::GetDisplayValueAsText(SlotType).ToString(), *GetName());
+	UNexusProperty* SlotIndexProperty = GetSlotIndexProperty();
+	OutDisplayDebugstrings[static_cast<int32>(SlotType)].Color = SlotIndexProperty && static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()) == SlotType ? FColor::Orange : FColor{255, 255, 255, 127};
 }
 
 bool AGunnerSlotItem::CanAcquire(const TArray<AGunnerItem*>& InventoryItems) const
@@ -60,7 +75,7 @@ void AGunnerSlotItem::OnRemoved()
 	{
 		return;
 	}
-	
+
 	SlotIndexProperty->OnDirtyDelegate.RemoveDynamic(this, &ThisClass::HandleSlotIndexDirty);
 	if (SlotType == static_cast<EGunnerSlotType>(SlotIndexProperty->GetDynamicValue()))
 	{

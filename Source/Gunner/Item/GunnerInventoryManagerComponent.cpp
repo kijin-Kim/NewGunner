@@ -3,6 +3,7 @@
 
 #include "GunnerInventoryManagerComponent.h"
 
+#include "DisplayDebugHelpers.h"
 #include "GunnerInventoryManagerInterface.h"
 #include "GunnerItem.h"
 #include "GunnerItemDef.h"
@@ -49,34 +50,34 @@ EDataValidationResult UGunnerInventoryManagerComponent::IsDataValid(FDataValidat
 }
 #endif
 
-void UGunnerInventoryManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
+
+void UGunnerInventoryManagerComponent::OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
-	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
-	if (!DebugTarget)
+	if (DebugDisplayInfo.IsDisplayOn( TEXT("Inventory")))
 	{
-		return;
-	}
-
-	if (UGunnerInventoryManagerComponent* InventoryManager = GetInventoryManagerComponentFromActor(DebugTarget))
-	{
-		InventoryManager->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, YL, YPos);
-	}
-}
-
-void UGunnerInventoryManagerComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
-{
-	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
-
-	if (HUD->ShouldDisplayDebug(TEXT("SlotSystem")))
-	{
+		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
+		TArray<AGunnerItem::FGunnerInventoryDisplayDebugString> InventoryDisplayDebugStrings;
 		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
-		DisplayDebugManager.SetDrawColor(FColor::Orange);
-		for (AGunnerItem* SlotItem : Items)
+		DisplayDebugManager.SetDrawColor(FColor::White);
+		DisplayDebugManager.DrawString(TEXT("\nGUNNER INVENOTORY"));
+		for (AGunnerItem* Item : Items)
 		{
-			if (SlotItem)
+			if (Item)
 			{
-				SlotItem->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, YL, YPos);
+				Item->CollectDisplayDebugString(InventoryDisplayDebugStrings);
 			}
+		}
+
+		for (const AGunnerItem::FGunnerInventoryDisplayDebugString& DebugString : InventoryDisplayDebugStrings)
+		{
+			DisplayDebugManager.SetDrawColor(DebugString.Color);
+			DisplayDebugManager.DrawString(DebugString.DisplayDebugString, 4.0f);
+		}
+
+		if (InventoryDisplayDebugStrings.IsEmpty())
+		{
+			DisplayDebugManager.SetDrawColor(FColor{255, 255, 255, 127});
+			DisplayDebugManager.DrawString(TEXT("Empty"), 4.0f);
 		}
 	}
 }

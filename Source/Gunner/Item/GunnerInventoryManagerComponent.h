@@ -30,9 +30,8 @@ public:
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
-
-	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
-	void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
+	
+	void OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UGunnerInventoryManagerComponent* GetInventoryManagerComponentFromActor(const AActor* Actor);

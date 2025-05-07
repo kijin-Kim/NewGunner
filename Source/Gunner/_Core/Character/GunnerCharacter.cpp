@@ -76,6 +76,15 @@ void AGunnerCharacter::PostInitializeComponents()
 	}
 }
 
+void AGunnerCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
+{
+	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+	if (UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent())
+	{
+		InventoryManagerComponent->OnShowDebugInfo(Canvas, DebugDisplay, YL, YPos);
+	}
+}
+
 
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {

@@ -217,7 +217,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 	}
 
 
-	DisplayDebugManager.DrawString(TEXT("NEXUS PROPERTY"));
+	DisplayDebugManager.DrawString(TEXT("\nNEXUS PROPERTY"));
 	TArray<TObjectPtr<UNexusProperty>> SortedProperties = GetPropertyComponent()->GetProperties();
 	SortedProperties.Sort([](const TObjectPtr<UNexusProperty>& Left, const TObjectPtr<UNexusProperty>& Right)
 	{
@@ -238,32 +238,52 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		}
 	}
 
-	DisplayDebugManager.SetDrawColor(FColor::White);
-	DisplayDebugManager.DrawString(TEXT("NEXUS GAMEPLAY TAG"));
-	for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
+	if (SortedProperties.IsEmpty())
 	{
-		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count), 4.0f);
+		DisplayDebugManager.SetDrawColor(FColor{255, 255, 255, 127});
+		DisplayDebugManager.DrawString(TEXT("Empty"), 4.0f);
 	}
 
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	DisplayDebugManager.DrawString(TEXT("NEXUS CUE"));
+	DisplayDebugManager.DrawString(TEXT("\nNEXUS GAMEPLAYTAG"));
+	FString TagString;
+	for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
+	{
+		TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
+	}
+
+	DisplayDebugManager.SetDrawColor(TagString.IsEmpty() ? FColor{255, 255, 255, 127} : FColor::White);
+	DisplayDebugManager.DrawString(TagString.IsEmpty() ? TEXT("Empty") : TagString, 4.0f);
+
+
+	DisplayDebugManager.SetDrawColor(FColor::White);
 	const TMap<TSubclassOf<ANexusCue>, int32>& LoopingCueActorsCount = GetCueComponent()->GetLocalLoopingCueActorsCount();
+	DisplayDebugManager.DrawString(TEXT("\nNEXUS CUE"));
+	FString CueString;
 	for (const auto& [CueClass, CueActor] : GetCueComponent()->GetLocalLoopingCueActors())
 	{
 		if (CueActor)
 		{
 			const int32* CountPtr = LoopingCueActorsCount.Find(CueClass);
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s(%d)(%s)"), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString()), 4.0f);
+			CueString += FString::Printf(TEXT("%s(%d)(%s) "), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString());
 		}
 	}
 
+	DisplayDebugManager.SetDrawColor(CueString.IsEmpty() ? FColor{255, 255, 255, 127} : FColor::White);
+	DisplayDebugManager.DrawString(CueString.IsEmpty() ? TEXT("Empty") : CueString, 4.0f);
+
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	DisplayDebugManager.DrawString(TEXT("NEXUS ACTION"));
+	DisplayDebugManager.DrawString(TEXT("\nNEXUS ACTION"));
 
 	TArray<TObjectPtr<UNexusAction>> SortedActionInstances;
 	LocalActionInstanceMap.GenerateValueArray(SortedActionInstances);
 	SortedActionInstances.Sort([](const TObjectPtr<UNexusAction>& Left, const TObjectPtr<UNexusAction>& Right)
 	{
+		if (Left->GetSourceObject() && Right->GetSourceObject())
+		{
+			return Left->GetSourceObject()->GetName() < Right->GetSourceObject()->GetName();
+		}
+		
 		return Left->GetName() < Right->GetName();
 	});
 
@@ -276,7 +296,12 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s)"), *ActionInstance->GetName(), SourceObject ? *SourceObject->GetName() : TEXT("None")), 4.0f);
 		}
 	}
-	
+
+	if (SortedActionInstances.IsEmpty())
+	{
+		DisplayDebugManager.SetDrawColor(FColor{255, 255, 255, 127});
+		DisplayDebugManager.DrawString(TEXT("Empty"), 4.0f);
+	}
 }
 
 void UNexusActionComponent::InternalSetupActionComponent()

@@ -20,14 +20,18 @@ class GUNNER_API AGunnerItem : public AActor
 	GENERATED_BODY()
 
 public:
+	struct FGunnerInventoryDisplayDebugString
+	{
+		FString DisplayDebugString;
+		FColor Color = FColor::White;
+	};
+
+public:
 	AGunnerItem();
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void InitializeItem(const UGunnerItemDef* InItemDef);
 
-	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
-	{
-	}
 
 	virtual bool CanAcquire(const TArray<AGunnerItem*>& InventoryItems) const;
 	virtual void OnAcquired(AActor* InAgentActor);
@@ -41,10 +45,15 @@ public:
 	const UGunnerItemDef* GetItemDef() const { return ItemDef; }
 	FString ToString() const { return FString::Printf(TEXT("Item={Name=%s}"), *GetName()); }
 
+
+	virtual void CollectDisplayDebugString(TArray<FGunnerInventoryDisplayDebugString>& OutDisplayDebugstrings) const
+	{
+		
+	}
+
 protected:
 	void AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
 	void AuthRemoveDesiredActions(TArray<FNexusActionDefHandle>& AddedActionHandles);
-
 
 protected:
 	UPROPERTY(EditAnywhere)
