@@ -14,7 +14,7 @@
 ANexusPlayerState::ANexusPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	bReplicates = true;
-	NetUpdateFrequency = 100.0f;
+	SetNetUpdateFrequency(100.0f);
 	ActionComponent = CreateDefaultSubobject<UNexusActionComponent>(ANexusPlayerState::ActionCompomentName);
 	CueComponent = CreateDefaultSubobject<UNexusCueComponent>(TEXT("CueComponent"));
 	CueComponent->SetIsReplicated(true);

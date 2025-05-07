@@ -42,21 +42,6 @@ void UGunnerActionComponent::OnSetupActionComponent()
 	}
 }
 
-void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
-{
-	if (HUD->ShouldDisplayDebug(TEXT("ActionSystem")))
-	{
-		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
-		DisplayDebugManager.SetFont(GEngine->GetTinyFont());
-		DisplayDebugManager.SetDrawColor(FColor::White);
-		if (IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(GetAgentActor()))
-		{
-			DisplayDebugManager.DrawString(FString::Printf(TEXT("TeamID: %d"), (TeamAgentInterface->GetGenericTeamId().GetId())));
-		}
-	}
-	Super::InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
-}
-
 
 void UGunnerActionComponent::ClientSendDebugHitConfirmedData_Implementation(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos)
 {

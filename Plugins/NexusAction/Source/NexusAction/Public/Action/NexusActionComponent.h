@@ -52,9 +52,10 @@ class NEXUSACTION_API UNexusActionComponent : public UActorComponent, public IGa
 
 public:
 	UNexusActionComponent();
-	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
@@ -75,7 +76,7 @@ public:
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
 protected:
-	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y);
+	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 
 private:
 	void InternalSetupActionComponent();
@@ -181,6 +182,7 @@ public:
 	static FNexusSideEffectInstanceDefHandle MakeSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> SideEffectClass);
 	FNexusSideEffectInstanceHandle ApplySideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	FNexusSideEffectInstanceHandle ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
+	
 
 
 	// ------------------------------------------------------------------------------
@@ -194,6 +196,7 @@ public:
 	static UNexusProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static float GetPropertyValueFromActor(AActor* Actor, FGameplayTag Tag);
+	const TArray<UNexusProperty*>& GetProperties() const;
 
 	void AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);
 	void AddDynamicOperation(FGameplayTag Tag, FNexusPropertyOperation Operation);

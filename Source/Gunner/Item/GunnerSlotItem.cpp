@@ -10,9 +10,9 @@
 #include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 
-void AGunnerSlotItem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void AGunnerSlotItem::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
-	Super::OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
+	Super::OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, YL, YPos);
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 	DisplayDebugManager.DrawString(FString::Printf(TEXT("슬롯 아이템: %s"), *UEnum::GetValueAsString(GetSlotType())));
 }

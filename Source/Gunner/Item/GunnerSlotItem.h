@@ -35,7 +35,7 @@ class GUNNER_API AGunnerSlotItem : public AGunnerItem
 	GENERATED_BODY()
 
 public:
-	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y) override;
+	virtual void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos) override;
 	virtual bool CanAcquire(const TArray<AGunnerItem*>& InventoryItems) const override;
 
 	virtual void PostOnAcquired() override;

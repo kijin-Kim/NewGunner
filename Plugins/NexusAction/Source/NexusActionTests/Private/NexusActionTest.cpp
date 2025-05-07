@@ -150,7 +150,7 @@ public:
 		AddTest(&FNexusActionTestCollection::Test_ClientTriggerEventually_ClientCheckRepAndTriggered, TEXT("ClientTriggerEventually"), 1.0f, 0.0f);
 	}
 
-	virtual uint32 GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }
+	virtual EAutomationTestFlags GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }
 	virtual FString GetBeautifiedTestName() const override { return TEXT("NexusAction"); }
 	virtual uint32 GetRequiredDeviceNum() const override { return 1; }
 

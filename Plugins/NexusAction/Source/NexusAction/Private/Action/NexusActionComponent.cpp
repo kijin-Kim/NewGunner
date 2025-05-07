@@ -33,7 +33,7 @@ UNexusActionComponent::UNexusActionComponent()
 	AgentInfo = MakeShared<FNexusAgentInfo>();
 }
 
-void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
 	if (!DebugTarget)
@@ -43,7 +43,7 @@ void UNexusActionComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FD
 
 	if (UNexusActionComponent* ActionComponent = GetActionComponentFromActor(DebugTarget))
 	{
-		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
+		ActionComponent->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, YL, YPos);
 	}
 }
 
@@ -96,6 +96,7 @@ void UNexusActionComponent::SetupActionComponent(AActor* InAgentActor)
 	UpdateAgentInfo(InAgentActor);
 	if (bSetupCompleted)
 	{
+		check(false);
 		return;
 	}
 	bSetupCompleted = true;
@@ -144,7 +145,7 @@ void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentSet
 	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
-void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	if (!AgentInfo.IsValid())
 	{
@@ -162,7 +163,6 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 	DisplayDebugManager.SetFont(GEngine->GetTinyFont());
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	FGameplayTagContainer OwnedTags;
 
 	TMap<FGameplayTag, FString> PropertyLogs;
 
@@ -212,46 +212,71 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 			FString IntervalString = SideEffectInstance.Def.SideEffectAsset->Interval <= 0.0f
 				                         ? TEXT("")
 				                         : FString::Printf(TEXT(" (Interval: %.2f Applied: %d)"), SideEffectInstance.Def.SideEffectAsset->Interval, SideEffectInstance.AppliedCount);
-			LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString + TEXT("\n");
+			LogString += EffectNameString + ModString + TimeString + DurationString + IntervalString;
 		}
 	}
 
 
-	for (UNexusProperty* Property : GetPropertyComponent()->GetProperties())
+	DisplayDebugManager.DrawString(TEXT("NEXUS PROPERTY"));
+	TArray<TObjectPtr<UNexusProperty>> SortedProperties = GetPropertyComponent()->GetProperties();
+	SortedProperties.Sort([](const TObjectPtr<UNexusProperty>& Left, const TObjectPtr<UNexusProperty>& Right)
+	{
+		return Left->GetTag() < Right->GetTag();
+	});
+
+	for (UNexusProperty* Property : SortedProperties)
 	{
 		DisplayDebugManager.SetDrawColor(FColor::White);
 		FString TagString = Property->GetTag().ToString();
 		check(TagString.RemoveFromStart(TEXT("Property.")));
 
-		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (정적 값: %.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()));
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s: %.2f (%.2f)"), *TagString, Property->GetDynamicValue(), Property->GetStaticValue()), 4.0f);
 		DisplayDebugManager.SetDrawColor(FColor::Orange);
 		if (PropertyLogs.Contains(Property->GetTag()))
 		{
-			DisplayDebugManager.DrawString(PropertyLogs[Property->GetTag()], 4.0f);
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s"), *PropertyLogs[Property->GetTag()]), 4.0f * 2.0f);
 		}
 	}
 
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	FString TagString;
+	DisplayDebugManager.DrawString(TEXT("NEXUS GAMEPLAY TAG"));
 	for (const FNexusGameplayTagCount& TagCount : GetGameplayTagComponent()->GetDynamicTagCountContainer().Items)
 	{
-		TagString += FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count);
+		DisplayDebugManager.DrawString(FString::Printf(TEXT("%s(%d) "), *TagCount.Tag.ToString(), TagCount.Count), 4.0f);
 	}
-	DisplayDebugManager.DrawString(FString::Printf(TEXT("소유 태그: %s"), *TagString));
 
 	DisplayDebugManager.SetDrawColor(FColor::White);
-	FString CueString;
+	DisplayDebugManager.DrawString(TEXT("NEXUS CUE"));
 	const TMap<TSubclassOf<ANexusCue>, int32>& LoopingCueActorsCount = GetCueComponent()->GetLocalLoopingCueActorsCount();
 	for (const auto& [CueClass, CueActor] : GetCueComponent()->GetLocalLoopingCueActors())
 	{
 		if (CueActor)
 		{
 			const int32* CountPtr = LoopingCueActorsCount.Find(CueClass);
-			CueString += FString::Printf(TEXT("%s(%d)(%s)"), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString());
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s(%d)(%s)"), *CueActor->GetName(), CountPtr ? *CountPtr : 0, *UEnum::GetDisplayValueAsText(CueActor->GetCueState()).ToString()), 4.0f);
 		}
 	}
 
-	DisplayDebugManager.DrawString(FString::Printf(TEXT("로컬 큐 액터: %s"), *CueString));
+	DisplayDebugManager.SetDrawColor(FColor::White);
+	DisplayDebugManager.DrawString(TEXT("NEXUS ACTION"));
+
+	TArray<TObjectPtr<UNexusAction>> SortedActionInstances;
+	LocalActionInstanceMap.GenerateValueArray(SortedActionInstances);
+	SortedActionInstances.Sort([](const TObjectPtr<UNexusAction>& Left, const TObjectPtr<UNexusAction>& Right)
+	{
+		return Left->GetName() < Right->GetName();
+	});
+
+	for (UNexusAction* ActionInstance : SortedActionInstances)
+	{
+		if (ActionInstance)
+		{
+			DisplayDebugManager.SetDrawColor(ActionInstance->IsTriggering() ? FColor::Orange : FColor{255, 255, 255, 127});
+			UObject* SourceObject = ActionInstance->GetSourceObject();
+			DisplayDebugManager.DrawString(FString::Printf(TEXT("%s (%s)"), *ActionInstance->GetName(), SourceObject ? *SourceObject->GetName() : TEXT("None")), 4.0f);
+		}
+	}
+	
 }
 
 void UNexusActionComponent::InternalSetupActionComponent()

@@ -49,7 +49,7 @@ EDataValidationResult UGunnerInventoryManagerComponent::IsDataValid(FDataValidat
 }
 #endif
 
-void UGunnerInventoryManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UGunnerInventoryManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	AActor* DebugTarget = HUD->GetCurrentDebugTargetActor();
 	if (!DebugTarget)
@@ -59,11 +59,11 @@ void UGunnerInventoryManagerComponent::OnShowDebugInfo(AHUD* HUD, UCanvas* Canva
 
 	if (UGunnerInventoryManagerComponent* InventoryManager = GetInventoryManagerComponentFromActor(DebugTarget))
 	{
-		InventoryManager->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, X, Y);
+		InventoryManager->InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, YL, YPos);
 	}
 }
 
-void UGunnerInventoryManagerComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& X, float& Y)
+void UGunnerInventoryManagerComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 
@@ -75,7 +75,7 @@ void UGunnerInventoryManagerComponent::InternalOnShowDebugInfo(AActor* DebugTarg
 		{
 			if (SlotItem)
 			{
-				SlotItem->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, X, Y);
+				SlotItem->OnShowDebugInfo(HUD, Canvas, DebugDisplayInfo, YL, YPos);
 			}
 		}
 	}

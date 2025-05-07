@@ -116,6 +116,11 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 	return ActionComponent->GetPropertyValue(Tag);
 }
 
+const TArray<UNexusProperty*>& UNexusActionComponent::GetProperties() const
+{
+	 return GetPropertyComponent()->GetProperties();
+}
+
 void UNexusActionComponent::AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation)
 {
 	GetPropertyComponent()->AddStaticOperation(Tag, Operation);

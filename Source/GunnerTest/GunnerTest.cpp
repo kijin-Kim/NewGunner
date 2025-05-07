@@ -143,7 +143,7 @@ public:
 		AddTest(&FGunnerTestCollection::Test_InventoryManager_RemoveItem, TEXT("TestInventory"), 0.0f, 0.2f);
 	}
 
-	virtual uint32 GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }
+	virtual EAutomationTestFlags GetTestFlags() const override { return EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter; }
 	virtual FString GetBeautifiedTestName() const override { return TEXT("Gunner.GunnerTest"); }
 	virtual uint32 GetRequiredDeviceNum() const override { return 1; }
 

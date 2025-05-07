@@ -30,8 +30,7 @@ public class NexusAction : ModuleRules
 				"EnhancedInput",
 				"GameplayTags",
 				"UMG",
-				"ModelViewViewModel",
-				"GameplayDebugger"
+				"ModelViewViewModel"
 			}
 			);
 			

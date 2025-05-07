@@ -7,6 +7,7 @@
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Action/SubComponent/NexusPropertyComponent.h"
 #include "SideEffect/NexusSideEffect.h"
+#include "NexusLog.h"
 
 
 FNexusSideEffectInstanceDef::FNexusSideEffectInstanceDef() :
