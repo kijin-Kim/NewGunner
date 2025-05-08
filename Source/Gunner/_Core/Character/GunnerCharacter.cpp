@@ -4,6 +4,8 @@
 #include "GunnerCharacter.h"
 
 #include "CameraControlComponent.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
@@ -85,12 +87,13 @@ void AGunnerCharacter::PostInitializeComponents()
 void AGunnerCharacter::SetLifeSpan(float InLifespan)
 {
 	Super::SetLifeSpan(InLifespan);
-	if (!HasAuthority() || InLifespan <= 0.0f)
+	if (InLifespan > 0.0f)
 	{
-		return;
+		if (HasAuthority())
+		{
+			AuthRemoveActionSets();
+		}
 	}
-
-	AuthRemoveActionSets();
 }
 
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
