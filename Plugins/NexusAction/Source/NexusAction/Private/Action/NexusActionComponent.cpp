@@ -283,7 +283,7 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 		{
 			return Left->GetSourceObject()->GetName() < Right->GetSourceObject()->GetName();
 		}
-		
+
 		return Left->GetName() < Right->GetName();
 	});
 
@@ -534,6 +534,11 @@ bool UNexusActionComponent::HasActionTriggerAuthority(UNexusAction* Action) cons
 
 bool UNexusActionComponent::CanTriggerAction(UNexusAction* ActionInstance, const FNexusEventMessage& EventMessage)
 {
+	if (!ActionInstance)
+	{
+		return false;
+	}
+
 	ActionInstance->SetActionCurrentEventMessage(EventMessage);
 	return InternalCanTriggerAction(ActionInstance);
 }

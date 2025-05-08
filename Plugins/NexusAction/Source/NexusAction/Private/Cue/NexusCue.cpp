@@ -178,6 +178,17 @@ void FNexusLoopingCueContainer::OnRemoved(const FNexusLoopingCue& LoopingCue) co
 
 void FNexusLoopingCueContainer::FlushPendingAdds()
 {
+	for (const auto& [OuterIndex, GuidRefeMap] : GuidReferencesMap_StructDelta)
+	{
+		for (const auto& [Index, GuidRefs] : GuidRefeMap)
+		{
+			if (GuidRefs.GetUnmappedGUIDs().Num() > 0)
+			{
+				return;
+			}
+		}
+	}
+
 	check(bInitialized);
 	for (FNexusLoopingCue& Item : Items)
 	{

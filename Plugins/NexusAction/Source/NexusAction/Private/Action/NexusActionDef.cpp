@@ -132,6 +132,17 @@ void FNexusActionDefContainer::OnRemoved(FNexusActionDef& ActionDef) const
 
 void FNexusActionDefContainer::FlushPendingAdds()
 {
+	for (const auto& [OuterIndex, GuidRefeMap] : GuidReferencesMap_StructDelta)
+	{
+		for (const auto& [Index, GuidRefs] : GuidRefeMap)
+		{
+			if (GuidRefs.GetUnmappedGUIDs().Num() > 0)
+			{
+				return;
+			}
+		}
+	}
+	
 	check(bInitialized);
 	for (FNexusActionDef& Item : Items)
 	{
@@ -162,19 +173,3 @@ void FNexusActionDefContainer::PostReplicatedReceive(const FFastArraySerializer:
 		UE_LOG(LogNexusAction, VeryVerbose, TEXT("매핑되지 않은 레퍼런스 존재"));
 	}
 }
-
-// for (const auto& [OuterIndex, GuidRefeMap] : GuidReferencesMap_StructDelta)
-// {
-// 	for (const auto& [Index, GuidRefs] : GuidRefeMap)
-// 	{
-// 		UE_LOG(LogNexusAction, Error, TEXT("PostReplicatedAdd: Index: Outer: [%d] Inner: [%d]"), OuterIndex, Index);
-// 		for (const auto& GUID : GuidRefs.UnmappedGUIDs)
-// 		{
-// 			UE_LOG(LogNexusAction, Error, TEXT("PostReplicatedAdd: Unmapped references exist: %s; %d"), *GUID.ToString(), GFrameNumber);
-// 		}
-// 		for (const auto& GUID : GuidRefs.MappedDynamicGUIDs)
-// 		{
-// 			UE_LOG(LogNexusAction, Display, TEXT("PostReplicatedAdd: Mapped dynamic references exist: %s; %d"), *GUID.ToString(), GFrameNumber);
-// 		}
-// 	}
-// }
