@@ -3,26 +3,17 @@
 
 #include "GunnerHUD.h"
 
-#include "DisplayDebugHelpers.h"
 #include "EngineUtils.h"
 
 #include "Action/NexusActionComponent.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
 
 
-void AGunnerHUD::GetDebugActorList(TArray<AActor*>& InOutList)
+void AGunnerHUD::LocalDebugTarget()
 {
-	UWorld* World = GetWorld();
-	check(World);
-	InOutList.Empty();
-	TArray<UNexusActionComponent*> ActionComponents;
-	for (TActorIterator<AActor> It(World); It; ++It)
+	if (APawn* PossessedPawn = GetOwningPawn())
 	{
-		AActor* Actor = *It;
-		if (UNexusActionComponent* ActionComponent = Actor->GetComponentByClass<UNexusActionComponent>())
-		{
-			InOutList.Add(ActionComponent->GetAgentActor() ? ActionComponent->GetAgentActor() : Actor);
-		}
+		ShowDebugTargetActor = PossessedPawn;
 	}
 }
 

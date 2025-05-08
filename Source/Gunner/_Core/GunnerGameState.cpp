@@ -55,7 +55,17 @@ void AGunnerGameState::NetMulticastBroadcastWinners_Implementation(const TArray<
 
 void AGunnerGameState::AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName)
 {
-	check(HasAuthority());
+	if (!HasAuthority())
+	{
+		GR_LOG(LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	if (!Killer || !Victim)
+	{
+		return;
+	}
+
 	FGunnerKillLog KillLog;
 	KillLog.KillerPlayerState = Killer->PlayerState;
 	KillLog.VictimPlayerState = Victim->PlayerState;

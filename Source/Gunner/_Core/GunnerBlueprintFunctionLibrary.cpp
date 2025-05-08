@@ -3,8 +3,14 @@
 
 #include "GunnerBlueprintFunctionLibrary.h"
 
+#include "GunnerActionComponent.h"
 #include "GunnerLobbyGameState.h"
+#include "Action/NexusAction.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerItem.h"
+#include "Gunner/Item/GunnerItemDef.h"
 
 bool UGunnerBlueprintFunctionLibrary::IsTeamBoxSlotValid(const FTeamBoxSlot& Slot)
 {
@@ -50,4 +56,115 @@ FGenericTeamId UGunnerBlueprintFunctionLibrary::GetTeamId(APlayerState* PlayerSt
 	}
 
 	return TeamAgentInterface->GetGenericTeamId();
+}
+
+void UGunnerBlueprintFunctionLibrary::AuthAddDesiredActions(AActor* Actor, UObject* SourceObject, const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& OutAddedActionHandles)
+{
+	if (!Actor)
+	{
+		return;
+	}
+
+	if (!Actor->HasAuthority())
+	{
+		GR_LOG_SUB(Actor, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Actor);
+	check(ActionComponent);
+
+	for (TSubclassOf<UNexusAction> ActionClass : ActionsToAdd)
+	{
+		if (ActionClass)
+		{
+			FNexusActionDefHandle AddedHandle = ActionComponent->AuthAddAction(ActionClass, SourceObject);
+			OutAddedActionHandles.Add(AddedHandle);
+		}
+	}
+}
+
+
+void UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredActions(AActor* Actor, const TArray<FNexusActionDefHandle>& AddedActionHandles)
+{
+	if (!Actor)
+	{
+		return;
+	}
+
+	if (!Actor->HasAuthority())
+	{
+		GR_LOG_SUB(Actor, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Actor);
+	if (ActionComponent)
+	{
+		for (const FNexusActionDefHandle& ActionHandle : AddedActionHandles)
+		{
+			ActionComponent->AuthRemoveAction(ActionHandle);
+		}
+	}
+}
+
+void UGunnerBlueprintFunctionLibrary::AuthAddDesiredItems(AActor* Actor, const TArray<UGunnerItemDef*>& ItemDefs, TArray<AGunnerItem*>& OutAddedItems)
+{
+	if (!Actor)
+	{
+		return;
+	}
+
+	if (!Actor->HasAuthority())
+	{
+		GR_LOG_SUB(Actor, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Actor);
+	if (!InventoryManagerComponent)
+	{
+		return;
+	}
+
+	for (UGunnerItemDef* ItemDef : ItemDefs)
+	{
+		if (ItemDef && ItemDef->ItemClass)
+		{
+			AGunnerItem* NewItem = Actor->GetWorld()->SpawnActorDeferred<AGunnerItem>(ItemDef->ItemClass, FTransform::Identity);
+			check(NewItem);
+			NewItem->InitializeItem(ItemDef);
+			NewItem->FinishSpawning(FTransform::Identity);
+			OutAddedItems.AddUnique(NewItem);
+			InventoryManagerComponent->AuthAddItem(NewItem);
+		}
+	}
+}
+
+void UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredItems(AActor* Actor, const TArray<AGunnerItem*>& ItemsToRemove, bool bDestroyItem)
+{
+	if (!Actor)
+	{
+		return;
+	}
+
+	if (!Actor->HasAuthority())
+	{
+		GR_LOG_SUB(Actor, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(Actor);
+	if (!InventoryManagerComponent)
+	{
+		return;
+	}
+	
+	for (AGunnerItem* Item : ItemsToRemove)
+	{
+		if (Item)
+		{
+			InventoryManagerComponent->AuthRemoveItem(Item, bDestroyItem);
+		}
+	}
 }

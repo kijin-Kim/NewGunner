@@ -53,7 +53,7 @@ EDataValidationResult UGunnerInventoryManagerComponent::IsDataValid(FDataValidat
 
 void UGunnerInventoryManagerComponent::OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
-	if (DebugDisplayInfo.IsDisplayOn( TEXT("Inventory")))
+	if (DebugDisplayInfo.IsDisplayOn(TEXT("Inventory")))
 	{
 		FDisplayDebugManager& DisplayDebugManager = Canvas->DisplayDebugManager;
 		TArray<AGunnerItem::FGunnerInventoryDisplayDebugString> InventoryDisplayDebugStrings;
@@ -120,29 +120,29 @@ void UGunnerInventoryManagerComponent::BeginPlay()
 		DropSlotItemActionClass = UGunnerAction_DropSlotItem::StaticClass();
 	}
 
-	ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+	ActionComponent->CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
 	{
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 		check(ActionComponent);
 
 		if (GetOwner()->HasAuthority())
 		{
-			for (const UGunnerItemDef* ItemDef : StartItemDefs)
-			{
-				if (ItemDef && ItemDef->ItemClass)
-				{
-					AGunnerItem* NewItem = GetWorld()->SpawnActorDeferred<AGunnerItem>(ItemDef->ItemClass, FTransform::Identity);
-					check(NewItem);
-					NewItem->InitializeItem(ItemDef);
-					NewItem->FinishSpawning(FTransform::Identity);
-					AuthAddItem(NewItem);
-				}
-			}
+			// for (const UGunnerItemDef* ItemDef : StartItemDefs)
+			// {
+			// 	if (ItemDef && ItemDef->ItemClass)
+			// 	{
+			// 		AGunnerItem* NewItem = GetWorld()->SpawnActorDeferred<AGunnerItem>(ItemDef->ItemClass, FTransform::Identity);
+			// 		check(NewItem);
+			// 		NewItem->InitializeItem(ItemDef);
+			// 		NewItem->FinishSpawning(FTransform::Identity);
+			// 		AuthAddItem(NewItem);
+			// 	}
+			// }
 
-			// 근접무기의 플레이스홀더를 인벤토리에 추가합니다. 이미 근접무기가 있을 경우 추가되지 않습니다
-			AGunnerItem* Placeholder = GetWorld()->SpawnActor<AGunnerItem>(AGunnerEquippable_MeleePlaceholder::StaticClass());
-			check(Placeholder);
-			AuthAddItem(Placeholder);
+			// 근접무기의 플레이스홀더를 인벤토리에 추가합니다. 이미 근접무기가 있을 경우 추가되지 않습니다 TODO: 삭제
+			// AGunnerItem* Placeholder = GetWorld()->SpawnActor<AGunnerItem>(AGunnerEquippable_MeleePlaceholder::StaticClass());
+			// check(Placeholder);
+			// AuthAddItem(Placeholder);
 		}
 		if (ActionComponent->IsAgentLocallyPlayerControlled())
 		{
@@ -222,16 +222,41 @@ void UGunnerInventoryManagerComponent::AuthAddItem(AGunnerItem* Item)
 
 void UGunnerInventoryManagerComponent::AuthRemoveItem(AGunnerItem* Item, bool bDestroyItem)
 {
-	check(Item);
-	AActor* ActorOwner = GetOwner();
-	check(ActorOwner);
-	check(ActorOwner->HasAuthority());
+	if (!GetOwner()->HasAuthority())
+	{
+		GR_LOG_SUB(GetAgentActorChecked(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	check(Item)
 	OnItemRemoved(Item);
 	if (bDestroyItem)
 	{
 		Item->Destroy();
 	}
 	check(Items.Remove(Item) > 0);
+}
+
+void UGunnerInventoryManagerComponent::AuthRemoveAllItems(bool bDestroyItem)
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		GR_LOG_SUB(GetAgentActorChecked(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	for (AGunnerItem* Item : Items)
+	{
+		if (Item)
+		{
+			OnItemRemoved(Item);
+			if (bDestroyItem)
+			{
+				Item->Destroy();
+			}
+		}
+	}
+	Items.Empty();
 }
 
 
@@ -295,8 +320,8 @@ void UGunnerInventoryManagerComponent::OnRep_Items(const TArray<AGunnerItem*>& O
 	check(ActionComponent);
 	if (!ActionComponent->IsSetupCompleted())
 	{
-		PendingRemoves = MoveTemp(RemovedItems);
-		PendingAdds = MoveTemp(AddedItems);
+		PendingRemoves.Append(RemovedItems);
+		PendingAdds.Append(AddedItems);
 		return;
 	}
 

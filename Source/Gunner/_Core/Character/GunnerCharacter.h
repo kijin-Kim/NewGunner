@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "NexusActionInterface.h"
+#include "Action/NexusActionDefHandle.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
 #include "GameFramework/Character.h"
@@ -13,6 +14,8 @@
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
 #include "GunnerCharacter.generated.h"
 
+class AGunnerItem;
+class UGunnerActionSet;
 class UCameraComponent;
 class UCameraControllerComponent;
 class UNexusAction;
@@ -39,7 +42,8 @@ class GUNNER_API AGunnerCharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void PostInitializeComponents() override;
-	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
+	
+	virtual void SetLifeSpan(float InLifespan) override;
 
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
@@ -79,8 +83,22 @@ public:
 	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters) override;
 	//~ End INexusCueNetworkProxyInterface Interface.
 
+
+
+private:
+	void AuthAddActionSets();
+	void AuthRemoveActionSets();
+	
+
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
+
+protected:
+	UPROPERTY(EditAnywhere)
+	TArray<const UGunnerActionSet*> ActionSets;
+	TArray<FNexusActionDefHandle> AddedActionHandles;
+	UPROPERTY()
+	TArray<AGunnerItem*> AddedItems;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

@@ -28,7 +28,7 @@ public:
 	void InternalAuthEndCue(FNexusLoopingCueHandle LoopingCueHandle);
 
 	void SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters);
-	void RemoveAllLoopingCues();
+	void AuthRemoveAllLoopingCues();
 
 	const TMap<TSubclassOf<ANexusCue>, TObjectPtr<ANexusCue>>& GetLocalLoopingCueActors() const { return LocalLoopingCueActors; }
 	const TMap<TSubclassOf<ANexusCue>, int32>& GetLocalLoopingCueActorsCount() const { return LocalLoopingCueActorsCount; }

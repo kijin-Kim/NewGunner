@@ -78,14 +78,14 @@ void AGunnerEquippable::OnAcquired(AActor* InAgentActor)
 	AttachToAgentActor();
 	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(AgentActor);
 	check(TeamAgentInterface);
-	if (!TeamAgentInterface)
+	if (ensure(TeamAgentInterface && TeamAgentInterface->GetOnTeamSetDelegate()))
 	{
-		return;
+		TeamAgentInterface->GetOnTeamSetDelegate()->AddWeakLambda(this, [this](FGenericTeamId OldTeamId, FGenericTeamId NewTeamId)
+		{
+			SetCustomDepthStencilValue(NewTeamId + 1);
+		});
 	}
-	TeamAgentInterface->GetOnTeamSetDelegate()->AddWeakLambda(this, [this](FGenericTeamId OldTeamId, FGenericTeamId NewTeamId)
-	{
-		SetCustomDepthStencilValue(NewTeamId + 1);
-	});
+
 
 	SetCustomDepthStencilValue(TeamAgentInterface->GetGenericTeamId() + 1);
 }
@@ -99,7 +99,7 @@ void AGunnerEquippable::OnRemoved()
 	{
 		TeamAgentInterface->GetOnTeamSetDelegate()->RemoveAll(this);
 	}
-	
+
 	Super::OnRemoved();
 }
 
@@ -134,7 +134,7 @@ void AGunnerEquippable::AttachToAgentActor() const
 void AGunnerEquippable::SetMeshVisibility(bool bVisible) const
 {
 	APawn* AgentPawn = Cast<APawn>(AgentActor);
-	if(bVisible)
+	if (bVisible)
 	{
 		if (AgentPawn->IsLocallyControlled())
 		{
@@ -161,7 +161,7 @@ void AGunnerEquippable::SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet*
 	{
 		return;
 	}
-	
+
 	USkeletalMeshComponent* OwnerFPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetFirstPersonMeshComponent(AgentActor);
 	USkeletalMeshComponent* OwnerTPMeshComponent = INexusAnimMontagePlayerInterface::Execute_GetThirdPersonMeshComponent(AgentActor);
 

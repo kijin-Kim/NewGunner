@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "NexusPlayerState.h"
+#include "Action/NexusActionDefHandle.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GunnerPlayerState.generated.h"
 
 
+class AGunnerItem;
+class UGunnerActionSet;
 class UNexusCueComponent;
 class UNexusGameplayTagComponent;
 class UNexusPropertyComponent;
@@ -27,7 +31,7 @@ class GUNNER_API AGunnerPlayerState : public ANexusPlayerState, public IGunnerTe
 
 public:
 	AGunnerPlayerState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
@@ -40,8 +44,17 @@ private:
 	UFUNCTION()
 	void OnRep_TeamID(FGenericTeamId OldTeamID);
 
+	void AuthAddActionSets();
+	void AuthRemoveActionSets();
+
+protected:
+	UPROPERTY(EditAnywhere)
+	TArray<const UGunnerActionSet*> ActionSets;
+	TArray<FNexusActionDefHandle> AddedActionHandles;
+	UPROPERTY()
+	TArray<AGunnerItem*> AddedItems;
+
 private:
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGunnerInventoryManagerComponent> InventoryManagerComponent;
 

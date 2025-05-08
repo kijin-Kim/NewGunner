@@ -166,6 +166,20 @@ void UNexusGameplayTagComponent::PopStaticTag(const FGameplayTag& Tag)
 	StaticTagCountContainer.SubtractTagCount(Tag, 1);
 }
 
+void UNexusGameplayTagComponent::AuthRemoveAllTagCounts()
+{
+	if (!GetOwner()->HasAuthority())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusGameplayTag, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	bIsDirty = true;
+	StaticTagCountContainer.RemoveAllTagCounts();
+	DynamicTagCountContainer.RemoveAllTagCounts();
+	DynamicTagCountDeltas.Empty();
+}
+
 void UNexusGameplayTagComponent::OnCountMapEvaluated(const TArray<FNexusGameplayTagCount>& OldDynamicTagCountMapItems)
 {
 	for (const FNexusGameplayTagCount& TagCount : OldDynamicTagCountMapItems)

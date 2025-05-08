@@ -44,7 +44,7 @@ public:
 	virtual void RestartPlayer(AController* NewPlayer) override;
 	
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	virtual bool ReadyToEndMatch_Implementation() override;
 	virtual void HandleMatchHasEnded() override;

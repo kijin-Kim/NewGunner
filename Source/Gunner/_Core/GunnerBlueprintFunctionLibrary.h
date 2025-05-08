@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GenericTeamAgentInterface.h"
+#include "Action/NexusActionComponent.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Actor.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_SoundBase.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GunnerBlueprintFunctionLibrary.generated.h"
 
+class UGunnerItemDef;
+class AGunnerItem;
+class UGunnerActionSet;
 struct FTeamBoxSlot;
-
-
-
 
 
 /**
@@ -37,7 +38,7 @@ public:
 
 		return Handle;
 	}
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Gunner|TargetData")
 	static FNexusTargetDataHandle MakeActorTargetData(AActor* Actor)
 	{
@@ -116,5 +117,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gunner|Team")
 	static FGenericTeamId GetTeamId(APlayerState* PlayerState);
-	
+
+
+	UFUNCTION(BlueprintCallable, Category = "Gunner|Action")
+	static void AuthAddDesiredActions(AActor* Actor, UObject* SourceObject, const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& OutAddedActionHandles);
+	UFUNCTION(BlueprintCallable, Category = "Gunner|Action")
+	static void AuthRemoveDesiredActions(AActor* Actor, const TArray<FNexusActionDefHandle>& AddedActionHandles);
+
+	UFUNCTION(BlueprintCallable, Category = "Gunner|Action")
+	static void AuthAddDesiredItems(AActor* Actor, const TArray<UGunnerItemDef*>& ItemDefs, TArray<AGunnerItem*>& OutAddedItems);
+	UFUNCTION(BlueprintCallable, Category = "Gunner|Action")
+	static void AuthRemoveDesiredItems(AActor* Actor, const TArray<AGunnerItem*>& ItemsToRemove, bool bDestroyItem = true);
 };

@@ -20,6 +20,12 @@ AGunnerPlayerController::AGunnerPlayerController()
 	bAutoManageActiveCameraTarget = false;
 }
 
+void AGunnerPlayerController::DisableInput(class APlayerController* PlayerController)
+{
+	Super::DisableInput(PlayerController);
+	 
+}
+
 void AGunnerPlayerController::DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
 {
 	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
@@ -58,7 +64,7 @@ void AGunnerPlayerController::OnRep_PlayerState()
 	{
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
 		check(ActionComponent);
-		ActionComponent->CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+		ActionComponent->CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
 		{
 			TrySetParameterCollectionLocalPlayerTeamID();
 			CreateMainWidget();
@@ -91,12 +97,12 @@ void AGunnerPlayerController::SetParameterCollectionLocalPlayerTeamID(FGenericTe
 
 void AGunnerPlayerController::CreateMainWidget()
 {
-	if (MainWidgetClass)
-	{
-		MainWidget = CreateWidget<UUserWidget>(this, MainWidgetClass);
-		if (MainWidget)
-		{
-			MainWidget->AddToViewport();
-		}
-	}
+	// if (MainWidgetClass)
+	// {
+	// 	MainWidget = CreateWidget<UUserWidget>(this, MainWidgetClass);
+	// 	if (MainWidget)
+	// 	{
+	// 		MainWidget->AddToViewport();
+	// 	}
+	// }
 }

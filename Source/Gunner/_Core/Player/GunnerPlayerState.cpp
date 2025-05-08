@@ -5,8 +5,10 @@
 
 #include "Action/NexusActionComponent.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/Action/GunnerActionSet.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
 #include "Gunner/_Core/GunnerActionComponent.h"
+#include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -17,6 +19,14 @@ AGunnerPlayerState::AGunnerPlayerState(const FObjectInitializer& ObjectInitializ
 	InventoryManagerComponent->SetIsReplicated(true);
 }
 
+void AGunnerPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (HasAuthority())
+	{
+		 AuthRemoveActionSets();
+	}
+	Super::EndPlay(EndPlayReason);
+}
 
 void AGunnerPlayerState::PostInitializeComponents()
 {
@@ -43,15 +53,49 @@ void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
 
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
-	ActionComponent->TeardownActionComponent();
-
 	if (NewPawn)
 	{
 		ActionComponent->SetupActionComponent(NewPawn);
+		if (HasAuthority())
+		{
+			AuthAddActionSets();
+		}
 	}
 }
 
 void AGunnerPlayerState::OnRep_TeamID(FGenericTeamId OldTeamID)
 {
 	OnTeamSet.Broadcast(OldTeamID, TeamID);
+}
+
+void AGunnerPlayerState::AuthAddActionSets()
+{
+	if (!HasAuthority())
+	{
+		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+
+	check(ActionComponent);
+	for (const UGunnerActionSet* ActionSet : ActionSets)
+	{
+		UGunnerBlueprintFunctionLibrary::AuthAddDesiredActions(ActionComponent->GetAgentActor(), ActionComponent->GetAgentActor(), ActionSet->ActionClasses, AddedActionHandles);
+		UGunnerBlueprintFunctionLibrary::AuthAddDesiredItems(ActionComponent->GetAgentActor(), ActionSet->ItemDefinitions, AddedItems);
+	}
+}
+
+void AGunnerPlayerState::AuthRemoveActionSets()
+{
+	if (!HasAuthority())
+	{
+		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredActions(ActionComponent->GetAgentActor(), AddedActionHandles);
+	AddedActionHandles.Empty();
+
+	UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredItems(ActionComponent->GetAgentActor(), AddedItems, true);
+	AddedItems.Empty();
 }

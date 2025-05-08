@@ -4,25 +4,53 @@
 #include "NexusCheatManager.h"
 
 #include "Action/NexusActionComponent.h"
-#include "NexusLog.h"
-#include "Action/NexusAction.h"
+#include "GameFramework/HUD.h"
 
-void UNexusCheatManager::DumpAddedActions()
+void UNexusCheatManager::SendEventToSelf(const FString& EventTagString)
 {
-	APlayerController* PlayerController = GetOuterAPlayerController();
-	APawn* Pawn = PlayerController->GetPawn();
+	APlayerController* PC = GetPlayerController();
+	if (!PC || !PC->IsLocalController())
+	{
+		return;
+	}
+
+	APawn* Pawn = PC->GetPawn();
 	if (!Pawn)
 	{
 		return;
 	}
 
-	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(Pawn))
+
+	FGameplayTag EventTag = FGameplayTag::RequestGameplayTag(*EventTagString);
+	if (EventTag.IsValid())
 	{
-		const FNexusActionDefContainer& ActionDefs = ActionComponent->GetActionDefs();
-		NX_LOG_SUB(ActionComponent->GetAgentActor(), LogNexusAction, Log, TEXT("액션 덤프: "));
-		for (int i = 0; i < ActionDefs.Items.Num(); i++)
-		{
-			NX_LOG_SUB(ActionComponent->GetAgentActor(), LogNexusAction, Log, TEXT("    %d: %s"), i, *ActionDefs.Items[i].ToString());
-		}
+		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(EventTag, FNexusEventMessage{}, Pawn);
+	}
+}
+
+void UNexusCheatManager::SendEventToTarget(const FString& EventTagString)
+{
+	APlayerController* PC = GetPlayerController();
+	if (!PC || !PC->IsLocalController())
+	{
+		return;
+	}
+
+	AHUD* HUD = PC->GetHUD();
+	if (!HUD)
+	{
+		return;
+	}
+
+	AActor* CurrentDebugTargetActor = HUD->GetCurrentDebugTargetActor();
+	if (!CurrentDebugTargetActor)
+	{
+		return;
+	}
+
+	FGameplayTag EventTag = FGameplayTag::RequestGameplayTag(*EventTagString);
+	if (EventTag.IsValid())
+	{
+		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(EventTag, FNexusEventMessage{}, CurrentDebugTargetActor);
 	}
 }

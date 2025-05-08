@@ -16,7 +16,9 @@ class NEXUSACTION_API UNexusCheatManager : public UCheatManager
 	
 public:
 	UFUNCTION(Exec)
-	void DumpAddedActions();
+	void SendEventToSelf(const FString& EventTagString);
+	UFUNCTION(Exec)
+	void SendEventToTarget(const FString& EventTagString);
 	
 };
 

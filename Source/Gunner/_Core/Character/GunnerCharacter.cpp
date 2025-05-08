@@ -5,6 +5,7 @@
 
 #include "CameraControlComponent.h"
 #include "GunnerCharacterMovementComponent.h"
+#include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
 #include "Action/SubComponent/NexusCueComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
@@ -13,7 +14,12 @@
 #include "Engine/Canvas.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Gunner/Gunner.h"
+#include "Gunner/Action/GunnerActionSet.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
+#include "Gunner/Item/GunnerItem.h"
+#include "Gunner/Item/GunnerItemDef.h"
+#include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
 #include "Gunner/_Core/Player/GunnerPlayerState.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -76,20 +82,21 @@ void AGunnerCharacter::PostInitializeComponents()
 	}
 }
 
-void AGunnerCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
+void AGunnerCharacter::SetLifeSpan(float InLifespan)
 {
-	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
-	if (UGunnerInventoryManagerComponent* InventoryManagerComponent = GetInventoryManagerComponent())
+	Super::SetLifeSpan(InLifespan);
+	if (!HasAuthority() || InLifespan <= 0.0f)
 	{
-		InventoryManagerComponent->OnShowDebugInfo(Canvas, DebugDisplay, YL, YPos);
+		return;
 	}
-}
 
+	AuthRemoveActionSets();
+}
 
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
-
+	// OnRep_PlayerState -> SetPlayerState -> OnPawnSet (폰과 플레이어스테이트가 서로 지정함) -> OnPlayerStateChanged 
 	if (NewPlayerState)
 	{
 		if (IsLocallyControlled() && IsPlayerControlled())
@@ -101,6 +108,11 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		IGunnerTeamAgentInterface* TeamAgentInterface = GetPlayerState<IGunnerTeamAgentInterface>();
 		TeamAgentInterface->GetOnTeamSetDelegate()->AddUObject(this, &AGunnerCharacter::OnTeamSetEvent);
 		OnTeamSetEvent(TeamAgentInterface->GetGenericTeamId(), TeamAgentInterface->GetGenericTeamId());
+
+		if (HasAuthority())
+		{
+			AuthAddActionSets();
+		}
 	}
 }
 
@@ -117,13 +129,13 @@ UNexusAnimMontagePlayerComponent* AGunnerCharacter::GetAnimMontagePlayer_Impleme
 
 UNexusActionComponent* AGunnerCharacter::GetActionComponent() const
 {
-	const APlayerState* PS = GetPlayerState<APlayerState>();
+	APlayerState* PS = GetPlayerState();
 	return PS ? PS->FindComponentByClass<UNexusActionComponent>() : FindComponentByClass<UNexusActionComponent>();
 }
 
 UGunnerInventoryManagerComponent* AGunnerCharacter::GetInventoryManagerComponent() const
 {
-	const APlayerState* PS = GetPlayerState<APlayerState>();
+	APlayerState* PS = GetPlayerState();
 	return PS ? PS->FindComponentByClass<UGunnerInventoryManagerComponent>() : FindComponentByClass<UGunnerInventoryManagerComponent>();
 }
 
@@ -172,6 +184,42 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusC
 	if (UNexusActionComponent* ActionComponent = GetActionComponent())
 	{
 		ActionComponent->SimTriggerCue(CueClass, PredictionTag, CueParameters);
+	}
+}
+
+void AGunnerCharacter::AuthAddActionSets()
+{
+	if (!HasAuthority())
+	{
+		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+
+	UNexusActionComponent* ActionComponent = GetActionComponent();
+	check(ActionComponent);
+	for (const UGunnerActionSet* ActionSet : ActionSets)
+	{
+		UGunnerBlueprintFunctionLibrary::AuthAddDesiredActions(ActionComponent->GetAgentActor(), ActionComponent->GetAgentActor(), ActionSet->ActionClasses, AddedActionHandles);
+		UGunnerBlueprintFunctionLibrary::AuthAddDesiredItems(ActionComponent->GetAgentActor(), ActionSet->ItemDefinitions, AddedItems);
+	}
+}
+
+void AGunnerCharacter::AuthRemoveActionSets()
+{
+	if (!HasAuthority())
+	{
+		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
+
+	if (UNexusActionComponent* ActionComponent = GetActionComponent())
+	{
+		UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredActions(ActionComponent->GetAgentActor(), AddedActionHandles);
+		AddedActionHandles.Empty();
+
+		UGunnerBlueprintFunctionLibrary::AuthRemoveDesiredItems(ActionComponent->GetAgentActor(), AddedItems, true);
+		AddedItems.Empty();
 	}
 }
 

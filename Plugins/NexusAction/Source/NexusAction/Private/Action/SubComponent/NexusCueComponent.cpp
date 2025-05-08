@@ -130,8 +130,13 @@ void UNexusCueComponent::SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPr
 	}
 }
 
-void UNexusCueComponent::RemoveAllLoopingCues()
+void UNexusCueComponent::AuthRemoveAllLoopingCues()
 {
+	if (!GetOwner()->HasAuthority())
+	{
+		NX_LOG_SUB(GetAgentActor(), LogNexusCue, Error, TEXT("권한 없는 함수 호출"));
+		return;
+	}
 	LoopingCues.RemoveAllLoopingCues();
 	LocalLoopingCueActorsCount.Empty();
 	for (auto& LoopingCueActor : LocalLoopingCueActors)
@@ -183,7 +188,6 @@ void UNexusCueComponent::OnCueAdded(const FNexusLoopingCue& LoopingCue)
 		{
 			LoopingCues.RemoveLoopingCue(Handle, GetOwner()->HasAuthority());
 		}, LoopingCueActor->GetDuration(), false);
-		
 	}
 	LoopingCueActor->CallOnBecomeRelevant(LoopingCue.CueParameters, AgentInfo->GetAgentActor(), AgentInfo->GetOwnerActor());
 }

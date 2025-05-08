@@ -11,7 +11,7 @@ void UGunnerAction_Death::OnTriggerAction()
 {
 	Super::OnTriggerAction();
 	DamageContext = Cast<UGunnerDamageContext>(GetEventMessage().EventDataObject);
-	check(DamageContext);
+	ensure(DamageContext);
 }
 
 UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
@@ -25,11 +25,16 @@ UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, boo
 	}
 
 	const FGunnerDirectionalMontage& DeathMontage = bLarge ? DeathMontageSet->MontageSet[1] : DeathMontageSet->MontageSet[0];
-	
-	const EGunnerHitDirectionType HitDirectionType = IGunnerHitBoxInterface::GetHitDirectionType(
-		DamageContext->Causer->GetActorLocation(),
-		DamageContext->Target->GetActorLocation(),
-		GetAgentActor()->GetActorForwardVector());
+
+	EGunnerHitDirectionType HitDirectionType = EGunnerHitDirectionType::Front;
+	if (DamageContext && DamageContext->Causer && DamageContext->Target)
+	{
+		HitDirectionType = IGunnerHitBoxInterface::GetHitDirectionType(
+			DamageContext->Causer->GetActorLocation(),
+			DamageContext->Target->GetActorLocation(),
+			GetAgentActor()->GetActorForwardVector());
+	}
+
 
 	switch (HitDirectionType)
 	{

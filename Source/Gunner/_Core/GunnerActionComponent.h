@@ -17,12 +17,10 @@ class GUNNER_API UGunnerActionComponent : public UNexusActionComponent
 
 public:
 	UGunnerActionComponent();
+	virtual void InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos) override;
 	virtual void OnSetupActionComponent() override;
 
 	UFUNCTION(Client, Reliable)
 	void ClientSendDebugHitConfirmedData(const TArray<FGunnerDebugHitConfirmInfo>& DebugHitConfirmInfos);
-
-private:
-	UPROPERTY(EditAnywhere)
-	TArray<TObjectPtr<UGunnerActionSet>> ActionSets;
+	
 };

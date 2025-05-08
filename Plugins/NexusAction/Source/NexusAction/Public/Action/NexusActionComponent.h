@@ -27,7 +27,8 @@ class UNexusProperty;
 class UNexusSideEffect;
 
 
-DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentSetupCompletedSignature);
+DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentOnSetupSignature);
+DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentOnPostSetupCompletedSignature);
 DECLARE_MULTICAST_DELEGATE(FOnNexusActionComponentTeardownCompletedSignature);
 
 
@@ -54,24 +55,22 @@ public:
 	UNexusActionComponent();
 	static void OnShowDebugInfo(AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
+
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusActionComponent* GetActionComponentFromActor(AActor* Actor);
 
 	void UpdateAgentInfo(AActor* InAgentActor);
 	void SetupActionComponent(AActor* InAgentActor);
-	void TeardownActionComponent();
 
 
-	virtual void OnSetupActionComponent()
-	{
-	}
+	virtual void OnSetupActionComponent();
 
-	void CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
+
+	void CallOrAddOnSetupDelegate(FOnNexusActionComponentOnSetupSignature::FDelegate&& Delegate);
+	void CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate&& Delegate);
 	void RemoveSetupCompletedDelegate(const void* Object);
-	void AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate);
+	void AddSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate&& Delegate);
 
 	bool IsSetupCompleted() const { return bSetupCompleted; }
 
@@ -80,7 +79,7 @@ protected:
 
 private:
 	void InternalSetupActionComponent();
-	
+
 	UFUNCTION()
 	void OnRep_AgentActor();
 
@@ -145,7 +144,7 @@ private:
 	UFUNCTION(Reliable, Client)
 	void ClientRemoteRequestTryTriggerAction(const FNexusActionDefHandle& ActionDefHandle, const FNexusEventMessage& EventMessage);
 
-	void LocalOnTriggerActionConfirmed(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag);
+	void LocalOnTriggerActionConfirmed(UNexusAction* ConfirmedActionInstance, FNexusPredictionTag PredictionTag);
 
 	void OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, const FNexusActionDefHandle& ActionDefHandle);
 	void OnActionEnded(const FNexusActionDefHandle& ActionDefHandle, UNexusAction* Action);
@@ -182,7 +181,6 @@ public:
 	static FNexusSideEffectInstanceDefHandle MakeSideEffectInstanceDef(TSubclassOf<UNexusSideEffect> SideEffectClass);
 	FNexusSideEffectInstanceHandle ApplySideEffect(TSubclassOf<UNexusSideEffect> SideEffectClass, UNexusAction* Action);
 	FNexusSideEffectInstanceHandle ApplySideEffectByDef(const FNexusSideEffectInstanceDef& SideEffectInstanceDef, FNexusPredictionEventSignature::FDelegate&& OnPredictionEnded = {}, FNexusPredictionEventSignature::FDelegate&& OnPredictionFailed = {}) const;
-	
 
 
 	// ------------------------------------------------------------------------------
@@ -268,10 +266,14 @@ protected:
 	UNexusGameplayTagComponent* GetGameplayTagComponent() const;
 	UNexusEventManagerComponent* GetEventManagerComponent() const;
 
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TMap<FGameplayTag, float> DefaultProperties;
+
 private:
 	bool bSetupCompleted = false;
-	FOnNexusActionComponentSetupCompletedSignature OnActionComponentSetupCompletedDelegate;
-	FOnNexusActionComponentTeardownCompletedSignature OnActionComponentTeardownCompletedDelegate;
+	FOnNexusActionComponentOnSetupSignature OnSetupDelegate;
+	FOnNexusActionComponentOnPostSetupCompletedSignature OnPostSetupCompletedDelegate;
 
 	// 로컬 캐시 및 주입하기 쉽도록 하는 구조체 
 	TSharedPtr<FNexusAgentInfo> AgentInfo;

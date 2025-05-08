@@ -11,35 +11,45 @@
 #include "GameFramework/HUD.h"
 #include "Gunner/Action/GunnerActionSet.h"
 #include "Gunner/Action/GunnerAction_Fire.h"
+#include "Gunner/Item/GunnerInventoryManagerComponent.h"
 
 UGunnerActionComponent::UGunnerActionComponent()
 {
 	SetIsReplicatedByDefault(true);
 }
 
+void UGunnerActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
+{
+	Super::InternalOnShowDebugInfo(DebugTarget, HUD, Canvas, DebugDisplayInfo, YL, YPos);
+	if (UGunnerInventoryManagerComponent* InventoryManagerComponent = UGunnerInventoryManagerComponent::GetInventoryManagerComponentFromActor(DebugTarget))
+	{
+		InventoryManagerComponent->OnShowDebugInfo(Canvas, DebugDisplayInfo, YL, YPos);
+	}
+}
+
 void UGunnerActionComponent::OnSetupActionComponent()
 {
 	Super::OnSetupActionComponent();
-	for (UGunnerActionSet* ActionSet : ActionSets)
-	{
-		if (!IsOwnerActorAuthoritative())
-		{
-			continue;
-		}
-
-		for (const auto& [Tag, Value] : ActionSet->InitialProperties)
-		{
-			AuthAddProperty(Tag, Value);
-		}
-
-		for (TSubclassOf<UNexusAction> ActionClass : ActionSet->InitialActionClasses)
-		{
-			if (ActionClass)
-			{
-				AuthAddAction(ActionClass, GetAgentActor());
-			}
-		}
-	}
+	// for (UGunnerActionSet* ActionSet : ActionSets)
+	// {
+	// 	if (!IsOwnerActorAuthoritative())
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	for (const auto& [Tag, Value] : ActionSet->Properties)
+	// 	{
+	// 		AuthAddProperty(Tag, Value);
+	// 	}
+	//
+	// 	for (TSubclassOf<UNexusAction> ActionClass : ActionSet->ActionClasses)
+	// 	{
+	// 		if (ActionClass)
+	// 		{
+	// 			AuthAddAction(ActionClass, GetAgentActor());
+	// 		}
+	// 	}
+	// }
 }
 
 

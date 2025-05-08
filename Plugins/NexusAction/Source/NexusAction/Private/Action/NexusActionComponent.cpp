@@ -54,12 +54,6 @@ void UNexusActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME(UNexusActionComponent, AgentActor);
 }
 
-void UNexusActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	TeardownActionComponent();
-	Super::EndPlay(EndPlayReason);
-}
-
 UNexusActionComponent* UNexusActionComponent::GetActionComponentFromActor(AActor* Actor)
 {
 	if (!Actor)
@@ -82,67 +76,77 @@ UNexusActionComponent* UNexusActionComponent::GetActionComponentFromActor(AActor
 
 void UNexusActionComponent::UpdateAgentInfo(AActor* InAgentActor)
 {
-	if (InAgentActor == AgentInfo->GetAgentActor())
-	{
-		return;
-	}
-
 	AgentActor = InAgentActor;
 	AgentInfo->Init(GetOwner(), InAgentActor);
+	check(AgentInfo->GetOwnerActor() && AgentInfo->GetAgentActor());
+	if (AgentInfo->GetAgentActor()->GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		check(AgentInfo->GetController());
+	}
 }
 
 void UNexusActionComponent::SetupActionComponent(AActor* InAgentActor)
 {
 	UpdateAgentInfo(InAgentActor);
-	if (bSetupCompleted)
+	if (!bSetupCompleted)
 	{
-		check(false);
-		return;
+		bSetupCompleted = true;
+		InternalSetupActionComponent();
+		OnSetupActionComponent();
 	}
-	bSetupCompleted = true;
-	InternalSetupActionComponent();
-	OnSetupActionComponent();
-	if (OnActionComponentSetupCompletedDelegate.IsBound())
+
+	if (OnSetupDelegate.IsBound())
 	{
-		OnActionComponentSetupCompletedDelegate.Broadcast();
-		OnActionComponentSetupCompletedDelegate.Clear();
+		OnSetupDelegate.Broadcast();
+		OnSetupDelegate.Clear();
+	}
+
+	if (OnPostSetupCompletedDelegate.IsBound())
+	{
+		OnPostSetupCompletedDelegate.Broadcast();
+		OnPostSetupCompletedDelegate.Clear();
 	}
 }
 
-void UNexusActionComponent::TeardownActionComponent()
+void UNexusActionComponent::OnSetupActionComponent()
 {
-	bSetupCompleted = false;
-	if (GetOwner()->HasAuthority())
-	{
-		AuthRemoveAllActions();
-		GetPropertyComponent()->AuthRemoveAllProperties();
-		GetCueComponent()->RemoveAllLoopingCues();
-	}
-
-	if (OnActionComponentTeardownCompletedDelegate.IsBound())
-	{
-		OnActionComponentTeardownCompletedDelegate.Broadcast();
-	}
 }
 
-void UNexusActionComponent::CallOrAddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate)
+void UNexusActionComponent::CallOrAddOnSetupDelegate(FOnNexusActionComponentOnSetupSignature::FDelegate&& Delegate)
 {
 	if (bSetupCompleted)
 	{
 		Delegate.ExecuteIfBound();
 		return;
 	}
-	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
+	OnSetupDelegate.Add(MoveTemp(Delegate));
+}
+
+void UNexusActionComponent::CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate&& Delegate)
+{
+	if (bSetupCompleted)
+	{
+		if (OnSetupDelegate.IsBound())
+		{
+			OnSetupDelegate.Broadcast();
+			OnSetupDelegate.Clear();
+		}
+
+		Delegate.ExecuteIfBound();
+		return;
+	}
+
+	OnPostSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
 void UNexusActionComponent::RemoveSetupCompletedDelegate(const void* Object)
 {
-	OnActionComponentSetupCompletedDelegate.RemoveAll(Object);
+	OnPostSetupCompletedDelegate.RemoveAll(Object);
 }
 
-void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentSetupCompletedSignature::FDelegate&& Delegate)
+void UNexusActionComponent::AddSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate&& Delegate)
 {
-	OnActionComponentSetupCompletedDelegate.Add(MoveTemp(Delegate));
+	OnPostSetupCompletedDelegate.Add(MoveTemp(Delegate));
 }
 
 void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* HUD, UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
@@ -306,6 +310,14 @@ void UNexusActionComponent::InternalOnShowDebugInfo(AActor* DebugTarget, AHUD* H
 
 void UNexusActionComponent::InternalSetupActionComponent()
 {
+	if (GetOwner()->HasAuthority())
+	{
+		for (const auto& [Tag, Value] : DefaultProperties)
+		{
+			AuthAddProperty(Tag, Value);
+		}
+	}
+
 	TArray<TObjectPtr<UNexusAgentBoundComponent>> SubComponents;
 	GetOwner()->GetComponents(SubComponents);
 	for (TObjectPtr<UNexusAgentBoundComponent> SubComponent : SubComponents)
@@ -313,15 +325,9 @@ void UNexusActionComponent::InternalSetupActionComponent()
 		SubComponent->Setup(AgentInfo);
 	}
 
-
 	ActionDefs.OnActionDefAddedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefAdded);
 	ActionDefs.OnActionDefRemovedDelegate.BindUObject(this, &UNexusActionComponent::OnActionDefRemoved);
 	ActionDefs.Init();
-
-	if (GetOwner()->HasAuthority())
-	{
-		AuthRemoveAllActions();
-	}
 }
 
 
@@ -730,7 +736,7 @@ void UNexusActionComponent::LocalTriggerAction(const FNexusActionDefHandle& Acti
 	ActionInstance->CallOnTriggerAction();
 	if (IsOwnerActorAuthoritative())
 	{
-		LocalOnTriggerActionConfirmed(ActionDefHandle, ActionInstance->GetPrimaryPredictionTag());
+		LocalOnTriggerActionConfirmed(ActionInstance, ActionInstance->GetPrimaryPredictionTag());
 	}
 
 	if (!ActionInstance->GetActionOwnedTags().IsEmpty())
@@ -781,7 +787,7 @@ void UNexusActionComponent::ClientTriggerAction_Implementation(const FNexusActio
 
 void UNexusActionComponent::ClientTriggerActionRequestSucceeded_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
 {
-	LocalOnTriggerActionConfirmed(ActionDefHandle, PredictionTag);
+	LocalOnTriggerActionConfirmed(FindActionInstanceByHandle(ActionDefHandle), PredictionTag);
 }
 
 void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
@@ -804,26 +810,28 @@ void UNexusActionComponent::ClientRemoteRequestTryTriggerAction_Implementation(c
 	TryTriggerAction(ActionDefHandle, EventMessage);
 }
 
-void UNexusActionComponent::LocalOnTriggerActionConfirmed(const FNexusActionDefHandle& ActionDefHandle, FNexusPredictionTag PredictionTag)
+void UNexusActionComponent::LocalOnTriggerActionConfirmed(UNexusAction* ConfirmedActionInstance, FNexusPredictionTag PredictionTag)
 {
-	UNexusAction* ConfirmedActionInstance = FindActionInstanceByHandle(ActionDefHandle);
-	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 승인: %s"), *ConfirmedActionInstance->GetName());
-
-	const FGameplayTagContainer& CancelTags = ConfirmedActionInstance->GetActionCancelTags();
-	ACTION_INSTANCE_MAP_SCOPE_LOCK();
-	for (const auto& [Handle, LocalActionInstance] : LocalActionInstanceMap)
+	if (ensure(ConfirmedActionInstance))
 	{
-		if (ConfirmedActionInstance == LocalActionInstance)
-		{
-			continue;
-		}
+		NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 승인: %s"), *ConfirmedActionInstance->GetName());
 
-		if (LocalActionInstance->GetActionOwnedTags().HasAnyExact(CancelTags))
+		const FGameplayTagContainer& CancelTags = ConfirmedActionInstance->GetActionCancelTags();
+		ACTION_INSTANCE_MAP_SCOPE_LOCK();
+		for (const auto& [Handle, LocalActionInstance] : LocalActionInstanceMap)
 		{
-			LocalActionInstance->EndAction();
+			if (ConfirmedActionInstance == LocalActionInstance)
+			{
+				continue;
+			}
+
+			if (LocalActionInstance->GetActionOwnedTags().HasAnyExact(CancelTags))
+			{
+				LocalActionInstance->EndAction();
+			}
 		}
+		ConfirmedActionInstance->CallOnConfirmAction();
 	}
-	ConfirmedActionInstance->CallOnConfirmAction();
 }
 
 void UNexusActionComponent::OnActionEventTriggered(FGameplayTag GameplayTag, const FNexusEventMessage& EventMessage, const FNexusActionDefHandle& ActionDefHandle)

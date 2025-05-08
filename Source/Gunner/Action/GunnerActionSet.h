@@ -7,6 +7,7 @@
 #include "Engine/DataAsset.h"
 #include "GunnerActionSet.generated.h"
 
+class UGunnerItemDef;
 class UNexusAction;
 class UNexusSideEffect;
 /**
@@ -19,7 +20,7 @@ class GUNNER_API UGunnerActionSet : public UDataAsset
 
 public:
 	UPROPERTY(EditAnywhere)
-	TMap<FGameplayTag, float> InitialProperties;
+	TArray<TSubclassOf<UNexusAction>> ActionClasses;
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UNexusAction>> InitialActionClasses;
+	TArray<UGunnerItemDef*> ItemDefinitions;
 };

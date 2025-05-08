@@ -44,6 +44,8 @@ public:
 	bool CanAcquireItem(AGunnerItem* Item) const;
 	void AuthAddItem(AGunnerItem* Item);
 	void AuthRemoveItem(AGunnerItem* Item, bool bDestroyItem = true);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void AuthRemoveAllItems(bool bDestroyItem = true);
 
 
 	const TArray<AGunnerItem*>& GetInventoryItems() const { return Items; }

@@ -50,15 +50,15 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 	{
 		return;
 	}
-
+	
 	UEnhancedInputComponent* InputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 	if (!InputComponent)
 	{
 		return;
 	}
-
+	
 	Subsystem->ClearAllMappings();
-	InputComponent->ClearActionBindings();
+	// InputComponent->ClearActionBindings();
 	
 	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
 	{

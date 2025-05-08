@@ -117,6 +117,7 @@ public:
 	void PopDynamicTag(const FGameplayTag& Tag);
 	void PushStaticTag(const FGameplayTag& Tag);
 	void PopStaticTag(const FGameplayTag& Tag);
+	void AuthRemoveAllTagCounts();
 	
 
 	const FNexusGameplayTagCountContainer& GetDynamicTagCountContainer() const { return DynamicTagCountContainer; }

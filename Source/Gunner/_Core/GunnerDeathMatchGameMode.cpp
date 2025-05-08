@@ -14,8 +14,12 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 {
 	Super::AuthRegisterKill(Killer, Victim, KillCauserName);
 	AGunnerGameState* GS = GetGameState<AGunnerGameState>();
-	if (GS->GetKillerInfo(Killer)->Kills >= KillLimit)
+	FGunnerKillInfo* KillInfo = GS->GetKillerInfo(Killer);
+	if (ensure(KillInfo))
 	{
-		EndMatch();
-	};
+		if (KillInfo->Kills >= KillLimit)
+		{
+			EndMatch();
+		};
+	}
 }

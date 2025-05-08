@@ -31,7 +31,8 @@ class GUNNER_API AGunnerHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	virtual void GetDebugActorList(TArray<AActor*>& InOutList) override;
+	UFUNCTION(Exec)
+	void LocalDebugTarget();
 
 
 private:
@@ -47,4 +48,6 @@ private:
 private:
 	UPROPERTY()
 	TMap<EGunnerSlotType, FGunnerSlotWidgetContainer> SlotTypeWidgetMap;
+	
+	FTimerHandle DebugTargetTimerHandle;
 };

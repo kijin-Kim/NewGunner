@@ -129,12 +129,14 @@ void UGunnerAction_EquipBase::OnEndAction()
 	Super::OnEndAction();
 	if (IsOwnerActorAuthoritative())
 	{
-		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetAgentActor());
-		check(ActionComponent);
-		for (const FNexusActionDefHandle& Handle : EquippedActionDefHandles)
+		if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwnerActor()))
 		{
-			ActionComponent->AuthRemoveAction(Handle);
+			for (const FNexusActionDefHandle& Handle : EquippedActionDefHandles)
+			{
+				ActionComponent->AuthRemoveAction(Handle);
+			}
 		}
+		
 		EquippedActionDefHandles.Empty();
 	}
 

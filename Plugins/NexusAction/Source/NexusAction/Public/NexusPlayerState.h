@@ -28,19 +28,19 @@ public:
 	static inline FName ActionCompomentName = TEXT("ActionComponent");
 
 protected:
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusActionComponent> ActionComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusPredictionComponent> PredictionComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusSideEffectComponent> SideEffectComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusPropertyComponent> PropertyComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusGameplayTagComponent> GameplayTagComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusCueComponent> CueComponent;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	
 };

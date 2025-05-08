@@ -94,9 +94,9 @@ void UNexusAction::EndAction()
 {
 	if (bIsTriggering)
 	{
+		bIsTriggering = false;
 		OnEndAction();
 		BP_OnEndAction();
-		bIsTriggering = false;
 	}
 }
 

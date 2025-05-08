@@ -51,9 +51,6 @@ public:
 		
 	}
 
-protected:
-	void AuthAddDesiredActions(const TArray<TSubclassOf<UNexusAction>>& ActionsToAdd, TArray<FNexusActionDefHandle>& AddedActionHandles);
-	void AuthRemoveDesiredActions(TArray<FNexusActionDefHandle>& AddedActionHandles);
 
 protected:
 	UPROPERTY(EditAnywhere)

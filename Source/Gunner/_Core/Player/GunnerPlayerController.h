@@ -20,6 +20,7 @@ class GUNNER_API AGunnerPlayerController : public APlayerController
 
 public:
 	AGunnerPlayerController();
+	virtual void DisableInput(class APlayerController* PlayerController) override;
 	virtual void DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 	virtual void InitPlayerState() override;
 	virtual void OnPossess(APawn* InPawn) override;
