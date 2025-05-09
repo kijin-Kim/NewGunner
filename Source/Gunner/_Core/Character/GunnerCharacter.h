@@ -84,9 +84,7 @@ public:
 	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters) override;
 	//~ End INexusCueNetworkProxyInterface Interface.
 
-
-
-private:
+	
 	void AuthAddActionSets();
 	void AuthRemoveActionSets();
 	

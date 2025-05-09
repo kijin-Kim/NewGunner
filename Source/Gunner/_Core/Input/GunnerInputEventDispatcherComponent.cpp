@@ -62,6 +62,7 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 	}
 
 	Subsystem->ClearAllMappings();
+	InputComponent->ClearActionBindings();
 
 	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
 	{

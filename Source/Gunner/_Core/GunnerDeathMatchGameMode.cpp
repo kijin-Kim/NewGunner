@@ -3,6 +3,8 @@
 
 #include "GunnerDeathMatchGameMode.h"
 #include "GunnerDeathMatchGameState.h"
+#include "Character/GunnerCharacter.h"
+#include "Gunner/Gunner.h"
 
 AGunnerDeathMatchGameMode::AGunnerDeathMatchGameMode()
 {
@@ -19,17 +21,32 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 		EndMatch();
 	}
 
-	
-	if (Victim && Victim->GetPawn())
+	if (!Victim)
 	{
+		return;
+	}
+
+	if (AGunnerCharacter* GunnerCharacter = Cast<AGunnerCharacter>(Victim->GetPawn()))
+	{
+		GunnerCharacter->AuthRemoveActionSets();
 		FTimerHandle RespawnTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, [this, Victim]()
 		{
-			if (Victim)
+			if (!Victim)
 			{
+				return;
+			}
+
+			if (IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(Victim->GetPawn()))
+			{
+				const FGenericTeamId TeamID = TeamAgentInterface->GetGenericTeamId();
+				const int32 Index = TeamID.GetId();
+				if (AActor* PlayerStart = FindPlayerStart(Victim, FString::FromInt(Index)))
+				{
+					Victim->GetPawn()->SetActorLocation(PlayerStart->GetActorLocation());
+				}
 				RestartPlayer(Victim);
 			}
 		}, RespawnDelay, false);
 	}
-	
 }

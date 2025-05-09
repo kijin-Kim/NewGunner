@@ -87,8 +87,7 @@ void AGunnerGameMode::RestartPlayer(AController* NewPlayer)
 		SetTeam(NewPlayer, AttackerTeam);
 		break;
 	case ECheatTeamMode::PingPong:
-		SetTeam(NewPlayer, PingPongTeamID);
-		PingPongTeamID = PingPongTeamID == AttackerTeam ? DefenderTeam : AttackerTeam;
+		SetAllControllersTeamPingPong();
 		break;
 	default:
 		break;
@@ -126,14 +125,12 @@ void AGunnerGameMode::SetAllControllersTeam(FGenericTeamId TeamId)
 
 void AGunnerGameMode::SetAllControllersTeamPingPong()
 {
-	PingPongTeamID = AttackerTeam;
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PC = Iterator->Get();
 		if (PC)
 		{
-			SetTeam(PC, PingPongTeamID);
-			PingPongTeamID = PingPongTeamID == AttackerTeam ? DefenderTeam : AttackerTeam;
+			SetTeam(PC, Iterator.GetIndex() % 2 == 0 ? AttackerTeam : DefenderTeam);
 		}
 	}
 }

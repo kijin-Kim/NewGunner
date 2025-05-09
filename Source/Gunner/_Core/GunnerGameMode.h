@@ -65,5 +65,4 @@ private:
 	bool bSpawnedFirstClient = false;
 #endif
 	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
-	FGenericTeamId PingPongTeamID = AttackerTeam;
 };

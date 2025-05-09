@@ -6,6 +6,7 @@
 #include "GunnerGameMode.h"
 #include "GunnerDeathMatchGameMode.generated.h"
 
+class AGunnerSpawnPointActor;
 /**
  * 
  */
@@ -18,6 +19,7 @@ public:
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
 
 
+
 protected:
 	UPROPERTY()
 	float RespawnDelay = 3.0f;
@@ -25,5 +27,4 @@ protected:
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	int32 KillLimit = 1;
-	
 };

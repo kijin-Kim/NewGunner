@@ -3,18 +3,18 @@
 
 #include "GunnerAction_Death.h"
 
+#include "Gunner/_Core/GunnerDeathMatchGameMode.h"
 #include "Gunner/_Core/GunnerDirectionalMontage.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 
 
 UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(bool bLarge) const
 {
-	
 	if (EventMessage.HitResults.IsEmpty() || !EventMessage.Instigator)
 	{
 		return nullptr;
 	}
-	
+
 
 	const FName HitBoneName = EventMessage.HitResults[0].BoneName;
 	EGunnerHitPartType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(GetAgentActor(), HitBoneName);
@@ -47,5 +47,18 @@ UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(bool bLarge) const
 		return DeathMontage.Right.Get();
 	default:
 		return nullptr;
+	}
+}
+
+void UGunnerAction_Death::OnTriggerAction()
+{
+	Super::OnTriggerAction();
+	if (IsOwnerActorAuthoritative())
+	{
+		APawn* InstigatorPawn = Cast<APawn>(EventMessage.Instigator);
+		AController* KillerController = InstigatorPawn ? InstigatorPawn->GetController() : GetController();
+		AController* VictimController = GetController();
+		AGunnerDeathMatchGameMode* DeathMatchGameMode = GetWorld()->GetAuthGameMode<AGunnerDeathMatchGameMode>();
+		DeathMatchGameMode->AuthRegisterKill(KillerController, VictimController, NAME_None);
 	}
 }

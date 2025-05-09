@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetDesiredDeathMontage(bool bLarge) const;
 
+protected:
+	virtual void OnTriggerAction() override;
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> DeathMontages;
