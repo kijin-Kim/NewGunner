@@ -23,6 +23,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	void EvaluateProperties();
+	void PostEvaluateProperties();
 
 	 
 	void AuthAddProperty(FGameplayTag Tag);
@@ -40,5 +41,6 @@ public:
 private:
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UNexusProperty>> Properties;
+	TMap<TObjectPtr<UNexusProperty>, TPair<float, float>> DirtyPropertyInfos;
 	
 };

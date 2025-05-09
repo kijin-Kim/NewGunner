@@ -380,6 +380,12 @@ void FNexusSideEffectInstanceContainer::Tick(float DeltaTime)
 			return SideEffectInstance.IsExpired();
 		});
 	}
+	
+	if (PropertyComponent.IsValid())
+	{
+		PropertyComponent->PostEvaluateProperties();
+	}
+
 }
 
 

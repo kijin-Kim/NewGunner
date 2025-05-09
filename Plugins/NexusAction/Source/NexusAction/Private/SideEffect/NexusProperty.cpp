@@ -26,11 +26,9 @@ bool UNexusProperty::Evaluate()
 {
 	if (bIsDirty)
 	{
-		float OldValue = DynamicValue;
 		EvaluateOperations(StaticOperations, StaticValue);
 		EvaluateOperations(DynamicOperations, DynamicValue);
 		bIsDirty = false;
-		OnDirtyDelegate.Broadcast(OldValue, DynamicValue);
 		return true;
 	}
 
@@ -111,9 +109,17 @@ void UNexusProperty::EvaluateOperations(const TArray<FNexusPropertyOperation>& P
 	float AdditiveOperand = 0.0f;
 	float MultiplicativeOperand = 1.0f;
 	float DivisiveOperand = 1.0f;
-
-	float OverrideOperand = 0.0f;
-	bool bShouldOverride = false;
+	
+	const FNexusPropertyOperation* Operation = PropertyOperations.FindByPredicate([](const FNexusPropertyOperation& PropertyOperation)
+		{
+			return PropertyOperation.Operator == ENexusPropertyOperator::Override;
+		}
+	);
+	if (Operation)
+	{
+		TargetValue = Operation->Operand;
+		return;
+	}
 
 
 	for (const FNexusPropertyOperation& PropertyOperation : PropertyOperations)
@@ -133,8 +139,7 @@ void UNexusProperty::EvaluateOperations(const TArray<FNexusPropertyOperation>& P
 			DivisiveOperand += PropertyOperation.Operand;
 			break;
 		case ENexusPropertyOperator::Override:
-			OverrideOperand = PropertyOperation.Operand;
-			bShouldOverride = true;
+			checkNoEntry();
 			break;
 		}
 	}
@@ -145,15 +150,7 @@ void UNexusProperty::EvaluateOperations(const TArray<FNexusPropertyOperation>& P
 		MultiplicativeOperand = 1.0f;
 	}
 
-
-	if (bShouldOverride)
-	{
-		TargetValue = OverrideOperand;
-	}
-	else
-	{
-		TargetValue = ((StaticValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
-	}
+	TargetValue = ((StaticValue + AdditiveOperand) * MultiplicativeOperand) / DivisiveOperand;
 }
 
 void UNexusProperty::OnRep_StaticValue()

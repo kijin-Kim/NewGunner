@@ -42,10 +42,22 @@ void UNexusPropertyComponent::EvaluateProperties()
 		const float OldValue = Property->GetDynamicValue();
 		if (Property->Evaluate())
 		{
-			const float NewValue = Property->GetDynamicValue();
-			NX_VLOG_SUB(GetAgentActor(), LogNexusProperty, Verbose, TEXT("프로퍼티 더티:  %.2f->%.2f; %s"), OldValue, NewValue, *Property->ToString());
+			DirtyPropertyInfos.Add(Property, TPair<float, float>(OldValue, Property->GetDynamicValue()));
 		}
 	}
+}
+
+void UNexusPropertyComponent::PostEvaluateProperties()
+{
+	for (const auto& [Property, ValueDelta] : DirtyPropertyInfos)
+	{
+		float OldValue = ValueDelta.Key;
+		float NewValue = ValueDelta.Value;
+		Property->OnDirtyDelegate.Broadcast(OldValue, NewValue);
+		NX_VLOG_SUB(GetAgentActor(), LogNexusProperty, Verbose, TEXT("프로퍼티 더티:  %.2f->%.2f; %s"), OldValue, NewValue, *Property->ToString());
+	}
+
+	DirtyPropertyInfos.Empty();
 }
 
 void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag)
