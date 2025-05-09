@@ -23,7 +23,7 @@ void AGunnerPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (HasAuthority())
 	{
-		 AuthRemoveActionSets();
+		AuthRemoveActionSets();
 	}
 	Super::EndPlay(EndPlayReason);
 }
@@ -61,6 +61,13 @@ void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, AP
 			AuthAddActionSets();
 		}
 	}
+	else
+	{
+		if (HasAuthority())
+		{
+			AuthRemoveActionSets();
+		}
+	}
 }
 
 void AGunnerPlayerState::OnRep_TeamID(FGenericTeamId OldTeamID)
@@ -75,7 +82,6 @@ void AGunnerPlayerState::AuthAddActionSets()
 		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
-
 
 	check(ActionComponent);
 	for (const UGunnerActionSet* ActionSet : ActionSets)

@@ -3,7 +3,6 @@
 
 #include "GunnerDeathMatchGameMode.h"
 #include "GunnerDeathMatchGameState.h"
-#include "GameFramework/PlayerState.h"
 
 AGunnerDeathMatchGameMode::AGunnerDeathMatchGameMode()
 {
@@ -15,11 +14,14 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 	Super::AuthRegisterKill(Killer, Victim, KillCauserName);
 	AGunnerGameState* GS = GetGameState<AGunnerGameState>();
 	FGunnerKillInfo* KillInfo = GS->GetKillerInfo(Killer);
-	if (ensure(KillInfo))
+	if (KillInfo && KillInfo->Kills >= KillLimit)
 	{
-		if (KillInfo->Kills >= KillLimit)
-		{
-			EndMatch();
-		};
+		EndMatch();
+		return;
+	}
+	
+	if (Victim)
+	{
+		RestartPlayer(Victim);
 	}
 }

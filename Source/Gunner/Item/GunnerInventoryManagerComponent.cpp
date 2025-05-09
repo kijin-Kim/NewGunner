@@ -234,7 +234,7 @@ void UGunnerInventoryManagerComponent::AuthRemoveItem(AGunnerItem* Item, bool bD
 	{
 		Item->Destroy();
 	}
-	check(Items.Remove(Item) > 0);
+	Items.Remove(Item);
 }
 
 void UGunnerInventoryManagerComponent::AuthRemoveAllItems(bool bDestroyItem)

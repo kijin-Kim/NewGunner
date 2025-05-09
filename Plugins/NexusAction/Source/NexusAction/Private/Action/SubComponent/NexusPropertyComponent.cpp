@@ -48,13 +48,12 @@ void UNexusPropertyComponent::EvaluateProperties()
 	}
 }
 
-void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag, float Value)
+void UNexusPropertyComponent::AuthAddProperty(FGameplayTag Tag)
 {
 	if (ensure(GetOwner()->HasAuthority()))
 	{
 		UNexusProperty* NewProperty = NewObject<UNexusProperty>(GetOwner());
 		NewProperty->SetTag(Tag);
-		NewProperty->SetStaticValue(Value);
 		Properties.Add(NewProperty);
 	}
 }

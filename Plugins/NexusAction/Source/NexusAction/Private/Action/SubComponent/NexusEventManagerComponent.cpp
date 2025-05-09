@@ -51,11 +51,11 @@ void UNexusEventManagerComponent::HandleEvent(FGameplayTag EventTag, const void*
 		{
 			if (Callback.MessageType != MessageType)
 			{
-				NX_VLOG_SUB(GetAgentActor(), LogNexus, Error, TEXT("메시지 타입 불일치: ExpectedMessageType=%s, MessageType=%s"), *Callback.MessageType->GetName(), *MessageType->GetName());
+				NX_VLOG_SUB(GetOwner(), LogNexus, Error, TEXT("메시지 타입 불일치: ExpectedMessageType=%s, MessageType=%s"), *Callback.MessageType->GetName(), *MessageType->GetName());
 				continue;
 			}
 
-			NX_VLOG_SUB(GetAgentActor(), LogNexus, Log, TEXT("이벤트 발생: EventTag=%s"), *EventTag.ToString());
+			NX_VLOG_SUB(GetOwner(), LogNexus, Log, TEXT("이벤트 발생: EventTag=%s"), *EventTag.ToString());
 			Callback(EventTag, Message, MessageType);
 		}
 	}
@@ -95,7 +95,7 @@ void UNexusEventManagerComponent::FEventCallbackList::IncrementCallbackListLock(
 void UNexusEventManagerComponent::FEventCallbackList::DecrementCallbackListLock()
 {
 	CallbackListScopeLockCount--;
-	if (CallbackListScopeLockCount == 0 && (CallbackPendingAdds.IsEmpty() || CallbackPendingRemoves.IsEmpty()))
+	if (CallbackListScopeLockCount == 0 && (!CallbackPendingAdds.IsEmpty() || !CallbackPendingRemoves.IsEmpty()))
 	{
 		Callbacks.Append(CallbackPendingAdds);
 		CallbackPendingAdds.Empty();

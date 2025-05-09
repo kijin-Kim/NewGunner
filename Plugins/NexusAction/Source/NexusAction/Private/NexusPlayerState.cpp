@@ -27,5 +27,4 @@ ANexusPlayerState::ANexusPlayerState(const FObjectInitializer& ObjectInitializer
 	PredictionComponent = CreateDefaultSubobject<UNexusPredictionComponent>(TEXT("PredictionComponent"));
 	PredictionComponent->SetIsReplicated(true);
 	EventManagerComponent = CreateDefaultSubobject<UNexusEventManagerComponent>(TEXT("EventManagerComponent"));
-	EventManagerComponent->SetIsReplicated(true);
 }

@@ -3,20 +3,20 @@
 
 FNexusActionListScopeLock::FNexusActionListScopeLock(UNexusActionComponent& InActionComponent): ActionComponent(InActionComponent)
 {
-	ActionComponent.IncreaseActionListLock();
+	ActionComponent.IncrementActionListLock();
 }
 
 FNexusActionListScopeLock::~FNexusActionListScopeLock()
 {
-	ActionComponent.DecreaseActionListLock();
+	ActionComponent.DecrementActionListLock();
 }
 
 FNexusLocalActionInstanceMapScopeLock::FNexusLocalActionInstanceMapScopeLock(UNexusActionComponent& InActionComponent) : ActionComponent(InActionComponent)
 {
-	ActionComponent.IncreaseLocalActionInstanceMapLock();
+	ActionComponent.IncrementLocalActionInstanceMapLock();
 }
 
 FNexusLocalActionInstanceMapScopeLock::~FNexusLocalActionInstanceMapScopeLock()
 {
-	ActionComponent.DecreaseLocalActionInstanceMapLock();
+	ActionComponent.DecrementLocalActionInstanceMapLock();
 }

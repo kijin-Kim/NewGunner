@@ -30,17 +30,17 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNexusActionComponent> ActionComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusPredictionComponent> PredictionComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusSideEffectComponent> SideEffectComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusPropertyComponent> PropertyComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusGameplayTagComponent> GameplayTagComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusCueComponent> CueComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	TObjectPtr<UNexusEventManagerComponent> EventManagerComponent;
 	
 };

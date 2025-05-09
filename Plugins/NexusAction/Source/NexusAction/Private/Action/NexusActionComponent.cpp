@@ -312,9 +312,9 @@ void UNexusActionComponent::InternalSetupActionComponent()
 {
 	if (GetOwner()->HasAuthority())
 	{
-		for (const auto& [Tag, Value] : DefaultProperties)
+		for (const FGameplayTag& Tag : DefaultProperties)
 		{
-			AuthAddProperty(Tag, Value);
+			AuthAddProperty(Tag);
 		}
 	}
 
@@ -391,15 +391,15 @@ void UNexusActionComponent::AuthRemoveAllActions()
 	ActionDefs.AuthRemoveAll();
 }
 
-void UNexusActionComponent::IncreaseActionListLock()
+void UNexusActionComponent::IncrementActionListLock()
 {
 	ActionScopeLockCount++;
 }
 
-void UNexusActionComponent::DecreaseActionListLock()
+void UNexusActionComponent::DecrementActionListLock()
 {
 	ActionScopeLockCount--;
-	if (ActionScopeLockCount == 0 && (ActionPendingAdds.IsEmpty() || ActionPendingRemoves.IsEmpty()))
+	if (ActionScopeLockCount == 0 && (!ActionPendingAdds.IsEmpty() || !ActionPendingRemoves.IsEmpty()))
 	{
 		TArray<FNexusPendingAddActionInfo> PendingAdds = MoveTemp(ActionPendingAdds);
 		TArray<FNexusActionDefHandle> PendingRemoves = MoveTemp(ActionPendingRemoves);
@@ -877,15 +877,15 @@ const FNexusActionDef* UNexusActionComponent::FindActionDefByHandle(const FNexus
 	return ActionDefs.FindActionDefByHandle(ActionDefHandle);
 }
 
-void UNexusActionComponent::IncreaseLocalActionInstanceMapLock()
+void UNexusActionComponent::IncrementLocalActionInstanceMapLock()
 {
 	LocalActionInstanceMapScopeLockCount++;
 }
 
-void UNexusActionComponent::DecreaseLocalActionInstanceMapLock()
+void UNexusActionComponent::DecrementLocalActionInstanceMapLock()
 {
 	LocalActionInstanceMapScopeLockCount--;
-	if (LocalActionInstanceMapScopeLockCount == 0)
+	if (LocalActionInstanceMapScopeLockCount == 0 && (!LocalActionInstancePendingAdds.IsEmpty() || !LocalActionInstancePendingRemoves.IsEmpty()))
 	{
 		TArray<FNexusPendingAddLocalActionInstanceInfo> PendingAdds = MoveTemp(LocalActionInstancePendingAdds);
 		TArray<FNexusActionDefHandle> PendingRemoves = MoveTemp(LocalActionInstancePendingRemoves);

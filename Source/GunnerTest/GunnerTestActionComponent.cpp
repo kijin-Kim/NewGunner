@@ -14,9 +14,9 @@ void UGunnerTestActionComponent::OnSetupActionComponent()
 
 	if (GetOwner()->HasAuthority())
 	{
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Bullet, 0);
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet, 0);
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MaxBulletPerMagazine, 0);
-		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex, static_cast<float>(EGunnerSlotType::Num));
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_Bullet);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MagazineBullet);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_MaxBulletPerMagazine);
+		AuthAddProperty(GunnerNativeGameplayTags::TAG_Property_SlotIndex);
 	}
 }

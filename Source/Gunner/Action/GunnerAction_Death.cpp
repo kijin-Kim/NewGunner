@@ -11,7 +11,6 @@ void UGunnerAction_Death::OnTriggerAction()
 {
 	Super::OnTriggerAction();
 	DamageContext = Cast<UGunnerDamageContext>(GetEventMessage().EventDataObject);
-	ensure(DamageContext);
 }
 
 UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const

@@ -106,8 +106,8 @@ public:
 	void AuthRemoveAction(const FNexusActionDefHandle& ActionDefHandle);
 	void AuthRemoveAllActions();
 
-	void IncreaseActionListLock();
-	void DecreaseActionListLock();
+	void IncrementActionListLock();
+	void DecrementActionListLock();
 
 private:
 	FNexusActionDefHandle InternalAuthAddAction(const FNexusActionDef& ActionDef);
@@ -156,8 +156,8 @@ public:
 	const FNexusActionDef* FindActionDefByHandle(const FNexusActionDefHandle& Handle) const;
 
 
-	void IncreaseLocalActionInstanceMapLock();
-	void DecreaseLocalActionInstanceMapLock();
+	void IncrementLocalActionInstanceMapLock();
+	void DecrementLocalActionInstanceMapLock();
 
 	UNexusAction* CreateActionInstance(const FNexusActionDef& ActionDef);
 	void DestroyActionInstance(const FNexusActionDefHandle& Handle);
@@ -189,7 +189,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UNexusProperty* GetProperty(FGameplayTag Tag);
 	float GetPropertyValue(FGameplayTag Tag);
-	void AuthAddProperty(FGameplayTag Tag, float Value);
+	void AuthAddProperty(FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static UNexusProperty* GetPropertyFromActor(AActor* Actor, FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -241,6 +241,7 @@ public:
 		HandleEvent(EventTag, &Message, TBaseStructure<FMessageStruct>::Get());
 	}
 
+
 	UFUNCTION(BlueprintCallable, CustomThunk, Category = "Nexus|Event", meta = (CustomStructureParam = "Message", DisplayName= "Send Event To Actor"))
 	static void BP_SendEventToActor(FGameplayTag EventTag, AActor* TargetActor, const int32& Message);
 	DECLARE_FUNCTION(execBP_SendEventToActor);
@@ -268,7 +269,7 @@ protected:
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	TMap<FGameplayTag, float> DefaultProperties;
+	TArray<FGameplayTag> DefaultProperties;
 
 private:
 	bool bSetupCompleted = false;

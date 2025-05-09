@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Action/SubComponent/NexusAgentBoundComponent.h"
 #include "Components/ActorComponent.h"
 #include "NexusEventManagerComponent.generated.h"
 
@@ -34,7 +33,7 @@ private:
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSACTION_API UNexusEventManagerComponent : public UNexusAgentBoundComponent
+class NEXUSACTION_API UNexusEventManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "NexusActionInterface.h"
 #include "Action/NexusActionDefHandle.h"
+#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
+#include "Event/NexusEventMessage.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Item/GunnerInventoryManagerInterface.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
@@ -42,9 +45,7 @@ class GUNNER_API AGunnerCharacter
 public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void PostInitializeComponents() override;
-	
-	virtual void SetLifeSpan(float InLifespan) override;
-
+	virtual void UnPossessed() override;
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -120,4 +121,5 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
+	
 };

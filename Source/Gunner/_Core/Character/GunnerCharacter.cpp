@@ -4,24 +4,19 @@
 #include "GunnerCharacter.h"
 
 #include "CameraControlComponent.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "GunnerCharacterMovementComponent.h"
 #include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
-#include "Action/SubComponent/NexusCueComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Engine/Canvas.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gunner/Gunner.h"
 #include "Gunner/Action/GunnerActionSet.h"
 #include "Gunner/Item/GunnerInventoryManagerComponent.h"
-#include "Gunner/Item/GunnerItem.h"
-#include "Gunner/Item/GunnerItemDef.h"
 #include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
+#include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/Player/GunnerPlayerState.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -84,16 +79,10 @@ void AGunnerCharacter::PostInitializeComponents()
 	}
 }
 
-void AGunnerCharacter::SetLifeSpan(float InLifespan)
+void AGunnerCharacter::UnPossessed()
 {
-	Super::SetLifeSpan(InLifespan);
-	if (InLifespan > 0.0f)
-	{
-		if (HasAuthority())
-		{
-			AuthRemoveActionSets();
-		}
-	}
+	AuthRemoveActionSets();
+	Super::UnPossessed();
 }
 
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
@@ -117,6 +106,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 			AuthAddActionSets();
 		}
 	}
+	
 }
 
 bool AGunnerCharacter::CanJumpInternal_Implementation() const
@@ -190,6 +180,7 @@ void AGunnerCharacter::NetMulticastTriggerCue_Implementation(TSubclassOf<ANexusC
 	}
 }
 
+
 void AGunnerCharacter::AuthAddActionSets()
 {
 	if (!HasAuthority())
@@ -197,8 +188,7 @@ void AGunnerCharacter::AuthAddActionSets()
 		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
-
-
+	
 	UNexusActionComponent* ActionComponent = GetActionComponent();
 	check(ActionComponent);
 	for (const UGunnerActionSet* ActionSet : ActionSets)
@@ -206,6 +196,7 @@ void AGunnerCharacter::AuthAddActionSets()
 		UGunnerBlueprintFunctionLibrary::AuthAddDesiredActions(ActionComponent->GetAgentActor(), ActionComponent->GetAgentActor(), ActionSet->ActionClasses, AddedActionHandles);
 		UGunnerBlueprintFunctionLibrary::AuthAddDesiredItems(ActionComponent->GetAgentActor(), ActionSet->ItemDefinitions, AddedItems);
 	}
+
 }
 
 void AGunnerCharacter::AuthRemoveActionSets()

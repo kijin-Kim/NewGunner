@@ -25,7 +25,7 @@ public:
 	void EvaluateProperties();
 
 	 
-	void AuthAddProperty(FGameplayTag Tag, float Value);
+	void AuthAddProperty(FGameplayTag Tag);
 	void AuthRemoveAllProperties();
 
 

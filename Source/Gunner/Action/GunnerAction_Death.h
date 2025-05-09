@@ -16,7 +16,7 @@ class UGunnerDamageContext;
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class GUNNER_API UGunnerAction_Death : public UNexusAction
 {
 	GENERATED_BODY()
