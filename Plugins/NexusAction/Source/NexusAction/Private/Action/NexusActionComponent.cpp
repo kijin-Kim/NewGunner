@@ -632,7 +632,7 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 		if (ActionNetMethod == ENexusActionNetMethod::ServerAuthoritative)
 		{
 			LocalTriggerAction(ActionDefHandle, ActionInstance);
-			ClientTriggerAction(ActionDefHandle, EventMessage, GetPredictionComponent()->GetCurrentPredictionTag());
+			ClientTriggerAction(ActionDefHandle, FNexusEventMessageReplicated{EventMessage}, GetPredictionComponent()->GetCurrentPredictionTag());
 			return;
 		}
 
@@ -656,7 +656,7 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 		if (ActionNetMethod == ENexusActionNetMethod::LocalPredicted)
 		{
 			LocalTriggerAction(ActionDefHandle, ActionInstance);
-			ServerTryTriggerAction(ActionDefHandle, EventMessage, GetPredictionComponent()->GetCurrentPredictionTag());
+			ServerTryTriggerAction(ActionDefHandle, FNexusEventMessageReplicated{EventMessage}, GetPredictionComponent()->GetCurrentPredictionTag());
 			return;
 		}
 
@@ -794,9 +794,11 @@ void UNexusActionComponent::ClientTriggerActionRequestFailed_Implementation(cons
 {
 	checkNoEntry(); // 현재는 액션 실패 = 오류처리. 추후에 실패하는 액션이 있을 경우 추가적인 처리 필요
 	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Verbose, TEXT("액션 예측 실행 실패: %s"), *ActionDefHandle.ToString());
-	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
-	check(ActionInstance);
-	ActionInstance->EndAction();
+	if (UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle))
+	{
+		ActionInstance->EndAction();
+	}
+
 	FNexusPredictionEvents::BroadcastOnPredictionFailed(PredictionTag);
 }
 

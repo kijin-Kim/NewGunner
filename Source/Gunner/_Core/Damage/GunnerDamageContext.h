@@ -9,17 +9,14 @@
 /**
  * 
  */
-UCLASS(BlueprintType)
-class GUNNER_API UGunnerDamageContext : public UObject // EventMessage의 EventDataObject로 사용하기 위해 UObject를 상속받음
+USTRUCT(BlueprintType)
+struct GUNNER_API FGunnerDamageContext
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-	float DamageAmount = 0.0f;
-	
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AController> Instigator;
+	TObjectPtr<AActor> Instigator;
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<AActor> Causer;
 	UPROPERTY(BlueprintReadOnly)

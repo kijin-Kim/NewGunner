@@ -21,16 +21,21 @@ struct NEXUSACTION_API FNexusEventMessage
 		  Instigator(nullptr),
 		  TargetActor(nullptr),
 		  InputActionValue(),
-		  EventDataObject(nullptr)
+		  Amount(0.0f),
+		  Location(FVector::ZeroVector),
+		  Normal(FVector::ForwardVector)
 	{
 	}
 
-	FNexusEventMessage(FGameplayTag InEventTag, AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+	FNexusEventMessage(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, float InAmount, FVector InLocation, FVector InNormal, const TArray<FHitResult>& InHitResults)
 		: EventTag(InEventTag),
 		  Instigator(InInstigator),
 		  TargetActor(InTargetActor),
 		  InputActionValue(InInputActionValue),
-		  EventDataObject(InEventDataObject)
+		  Amount(InAmount),
+		  Location(InLocation),
+		  Normal(InNormal),
+		  HitResults(InHitResults)
 	{
 	}
 
@@ -38,13 +43,23 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTag EventTag;
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<AController> Instigator;
+	TObjectPtr<AActor> Instigator;
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AActor> TargetActor;
 	UPROPERTY(BlueprintReadWrite)
 	FInputActionValue InputActionValue;
+
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<UObject> EventDataObject;
+	float Amount;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector_NetQuantize Location;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector_NetQuantizeNormal Normal;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FHitResult> HitResults;
 };
 
 USTRUCT()
@@ -76,42 +91,60 @@ struct NEXUSACTION_API FNexusEventMessageReplicated
 		  Instigator(nullptr),
 		  TargetActor(nullptr),
 		  ReplicatedInputActionValue(),
-		  EventDataObject(nullptr)
+		  Amount(0.0f)
+
+
 	{
 	}
 
-	FNexusEventMessageReplicated(FGameplayTag InEventTag, AController* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, UObject* InEventDataObject)
+	FNexusEventMessageReplicated(FGameplayTag InEventTag, AActor* InInstigator, AActor* InTargetActor, const FInputActionValue& InInputActionValue, float InAmount, FVector InLocation, FVector InNormal, const TArray<FHitResult>& InHitResults)
 		: EventTag(InEventTag),
 		  Instigator(InInstigator),
 		  TargetActor(InTargetActor),
 		  ReplicatedInputActionValue(InInputActionValue),
-		  EventDataObject(InEventDataObject)
+		  Amount(InAmount),
+		  Location(InLocation),
+		  Normal(InNormal),
+		  HitResults(InHitResults)
 	{
 	}
 
-	FNexusEventMessageReplicated(const FNexusEventMessage& EventMessage)
+	explicit FNexusEventMessageReplicated(const FNexusEventMessage& EventMessage)
 		: EventTag(EventMessage.EventTag),
 		  Instigator(EventMessage.Instigator),
 		  TargetActor(EventMessage.TargetActor),
 		  ReplicatedInputActionValue(EventMessage.InputActionValue),
-		  EventDataObject(EventMessage.EventDataObject)
+		  Amount(0.0f),
+		  Location(EventMessage.Location),
+		  Normal(EventMessage.Normal),
+		  HitResults(EventMessage.HitResults)
 	{
 	}
 
 	FNexusEventMessage ToEventMessage() const
 	{
-		return FNexusEventMessage(EventTag, Instigator.Get(), TargetActor.Get(), FInputActionValue(ReplicatedInputActionValue.ValueType, ReplicatedInputActionValue.Value), EventDataObject.Get());
+		return FNexusEventMessage(EventTag, Instigator, TargetActor, ReplicatedInputActionValue.Value, Amount, Location, Normal, HitResults);
 	}
 
 private:
 	UPROPERTY()
 	FGameplayTag EventTag;
 	UPROPERTY()
-	TObjectPtr<AController> Instigator;
+	TObjectPtr<AActor> Instigator;
 	UPROPERTY()
 	TObjectPtr<AActor> TargetActor;
 	UPROPERTY()
 	FNexusRepInputActionValue ReplicatedInputActionValue;
+
 	UPROPERTY()
-	TObjectPtr<UObject> EventDataObject;
+	float Amount;
+
+	UPROPERTY()
+	FVector_NetQuantize Location = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector_NetQuantizeNormal Normal = FVector::ForwardVector;
+
+	UPROPERTY()
+	TArray<FHitResult> HitResults;
 };

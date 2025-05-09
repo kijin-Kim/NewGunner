@@ -27,22 +27,21 @@ EDataValidationResult UGunnerDamageType_BodyPartAndDistance::IsDataValid(FDataVa
 }
 #endif
 
-float UGunnerDamageType_BodyPartAndDistance::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::CalculateDamageByContext(const FGunnerDamageContext& DamageContext) const
 {
-	check(DamageContext);
+	
 	return Super::CalculateDamageByContext(DamageContext) * GetBodyPartMultiplier(DamageContext) * GetDistanceFallOffMultiplier(DamageContext);
 }
 
-float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(UGunnerDamageContext* DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(const FGunnerDamageContext& DamageContext) const
 {
-	check(DamageContext);
 	if (DistanceDamageFallOffs.IsEmpty())
 	{
 		return 1.0f;
 	}
 
-	const FVector InstigatorLocation = DamageContext->Instigator->GetPawn()->GetActorLocation();
-	const FVector TargetLocation = DamageContext->Target->GetActorLocation();
+	const FVector InstigatorLocation = DamageContext.Instigator->GetActorLocation();
+	const FVector TargetLocation = DamageContext.Target->GetActorLocation();
 	const float Distance = FVector::Dist(TargetLocation, InstigatorLocation) * 0.01f; // m로 변환
 
 	float LastMultiplier = 1.0f;
@@ -57,19 +56,18 @@ float UGunnerDamageType_BodyPartAndDistance::GetDistanceFallOffMultiplier(UGunne
 	return LastMultiplier;
 }
 
-float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(UGunnerDamageContext* DamageContext) const
+float UGunnerDamageType_BodyPartAndDistance::GetBodyPartMultiplier(const FGunnerDamageContext& DamageContext) const
 {
-	check(DamageContext);
 	
-	if (!DamageContext->Target)
+	if (!DamageContext.Target)
 	{
 		return 1.0f;
 	}
 
 	EGunnerHitPartType HitBoxType = EGunnerHitPartType::Body;
-	if (DamageContext->Target->Implements<UGunnerHitBoxInterface>())
+	if (DamageContext.Target->Implements<UGunnerHitBoxInterface>())
 	{
-		HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(DamageContext->Target, DamageContext->HitBoneName);
+		HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(DamageContext.Target, DamageContext.HitBoneName);
 	}
 
 	switch (HitBoxType)

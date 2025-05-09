@@ -5,9 +5,8 @@
 
 #include "Gunner/_Core/Damage/GunnerDamageContext.h"
 
-float UGunnerDamageType_FrontOrBack::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
+float UGunnerDamageType_FrontOrBack::CalculateDamageByContext(const FGunnerDamageContext& DamageContext) const
 {
-	check(DamageContext);
 	const float Damage = Super::CalculateDamageByContext(DamageContext);
-	return DamageContext->HitNormal.Z > 0.0f ? Damage : Damage * BackDamageMultiplier;
+	return DamageContext.HitNormal.Z > 0.0f ? Damage : Damage * BackDamageMultiplier;
 }

@@ -17,11 +17,19 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 	if (KillInfo && KillInfo->Kills >= KillLimit)
 	{
 		EndMatch();
-		return;
+	}
+
+	
+	if (Victim && Victim->GetPawn())
+	{
+		FTimerHandle RespawnTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, [this, Victim]()
+		{
+			if (Victim)
+			{
+				RestartPlayer(Victim);
+			}
+		}, RespawnDelay, false);
 	}
 	
-	if (Victim)
-	{
-		RestartPlayer(Victim);
-	}
 }

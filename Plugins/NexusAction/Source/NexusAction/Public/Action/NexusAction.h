@@ -102,7 +102,6 @@ public:
 	bool IsRemoteTriggerable() const { return bAllowRemoteTrigger; }
 
 protected:
-	FNexusEventMessage GetEventMessage() const { return EventMessage; }
 
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "On Add Action"))
 	void BP_OnAddAction();
@@ -158,12 +157,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<UObject> SourceObject;
 
+	UPROPERTY(BlueprintReadOnly)
+	FNexusEventMessage EventMessage;
+
 private:
 	FNexusActionDefHandle ActionDefHandle;
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bIsTriggering = false;
 	FNexusPredictionTag PrimaryPredictionTag;
 	TWeakPtr<FNexusAgentInfo> AgentInfo;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FNexusEventMessage EventMessage;
+	
 };

@@ -6,11 +6,10 @@
 #include "Action/NexusAction.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 #include "Gunner/_Core/GunnerDirectionalMontage.h"
-#include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "GunnerAction_Damaged.generated.h"
 
 
-class UGunnerDamageContext;
+struct FGunnerDamageContext;
 
 
 /**
@@ -24,22 +23,12 @@ class GUNNER_API UGunnerAction_Damaged : public UNexusAction
 public:
 
 	UFUNCTION(BlueprintCallable)
-	UAnimMontage* GetDesiredHitMontage(FName HitBoneName) const;
-	UFUNCTION(BlueprintCallable)
-	UAnimMontage* GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const;
+	UAnimMontage* GetDesiredHitMontage() const;
 
-	
-protected:
-	virtual void OnTriggerAction() override;
 
-	
 protected:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UGunnerDamageContext> DamageContext;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> HitMontages;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TMap<EGunnerHitPartType, FGunnerDirectionalMontageSet> DeathMontages;
 
 private:
 	mutable int32 MontageSetIndex = 0;

@@ -117,20 +117,20 @@ void UGunnerAction_MeleeAttack::AuthApplyDamage(AActor* HitActor)
 		FNexusEventMessage DamageEventMessage;
 		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
 		APawn* AgentPawn = Cast<APawn>(GetAgentActor());
-		DamageEventMessage.Instigator = AgentPawn->GetController();
+		DamageEventMessage.Instigator = GetAgentActor();
+		DamageEventMessage.TargetActor = HitActor;
+		DamageEventMessage.Location = HitResultPtr->Location;
+		DamageEventMessage.Normal = HitNormal;
+		DamageEventMessage.HitResults = OutHitResults;
 
-
-		UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
-
-		DamageContext->Instigator = AgentPawn->GetController();
-		DamageContext->Causer = GetSourceObject<AActor>();
-		DamageContext->Target = HitActor;
-		DamageContext->HitNormal = HitNormal;
-		DamageContext->HitBoneName = HitBoneName;
-
-		DamageContext->DamageAmount = DamageType->CalculateDamageByContext(DamageContext);
-		DamageEventMessage.EventDataObject = DamageContext;
-
+		FGunnerDamageContext DamageContext;
+		DamageContext.Instigator = GetAgentActor();
+		DamageContext.Target = HitActor;
+		DamageContext.HitNormal = HitNormal;
+		DamageContext.HitBoneName = HitBoneName;
+		DamageEventMessage.Amount = DamageType->CalculateDamageByContext(DamageContext);
+		
+		
 		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
 	}
 }

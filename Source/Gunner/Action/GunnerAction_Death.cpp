@@ -4,17 +4,19 @@
 #include "GunnerAction_Death.h"
 
 #include "Gunner/_Core/GunnerDirectionalMontage.h"
-#include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 
-void UGunnerAction_Death::OnTriggerAction()
-{
-	Super::OnTriggerAction();
-	DamageContext = Cast<UGunnerDamageContext>(GetEventMessage().EventDataObject);
-}
 
-UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, bool bLarge) const
+UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(bool bLarge) const
 {
+	
+	if (EventMessage.HitResults.IsEmpty() || !EventMessage.Instigator)
+	{
+		return nullptr;
+	}
+	
+
+	const FName HitBoneName = EventMessage.HitResults[0].BoneName;
 	EGunnerHitPartType HitBoxType = IGunnerHitBoxInterface::Execute_GetHitPartTypeByHitBoneName(GetAgentActor(), HitBoneName);
 
 	const FGunnerDirectionalMontageSet* DeathMontageSet = DeathMontages.Find(HitBoxType);
@@ -25,15 +27,13 @@ UAnimMontage* UGunnerAction_Death::GetDesiredDeathMontage(FName HitBoneName, boo
 
 	const FGunnerDirectionalMontage& DeathMontage = bLarge ? DeathMontageSet->MontageSet[1] : DeathMontageSet->MontageSet[0];
 
-	EGunnerHitDirectionType HitDirectionType = EGunnerHitDirectionType::Front;
-	if (DamageContext && DamageContext->Causer && DamageContext->Target)
-	{
-		HitDirectionType = IGunnerHitBoxInterface::GetHitDirectionType(
-			DamageContext->Causer->GetActorLocation(),
-			DamageContext->Target->GetActorLocation(),
-			GetAgentActor()->GetActorForwardVector());
-	}
+	const FVector CauserLocation = EventMessage.Instigator->GetActorLocation();
+	const FVector TargetLocation = GetAgentActor()->GetActorLocation();
 
+	const EGunnerHitDirectionType HitDirectionType = IGunnerHitBoxInterface::GetHitDirectionType(
+		CauserLocation,
+		TargetLocation,
+		GetAgentActor()->GetActorForwardVector());
 
 	switch (HitDirectionType)
 	{

@@ -6,7 +6,7 @@
 #include "UObject/Object.h"
 #include "GunnerDamageType.generated.h"
 
-class UGunnerDamageContext;
+struct FGunnerDamageContext;
 /**
  * 
  */
@@ -22,7 +22,7 @@ public:
 	{
 	}
 
-	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const;
+	virtual float CalculateDamageByContext(const FGunnerDamageContext& DamageContext) const;
 
 public:
 	UPROPERTY(EditAnywhere, meta = (DisplayPriority = 0))

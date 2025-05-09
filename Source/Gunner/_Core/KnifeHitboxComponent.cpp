@@ -94,13 +94,13 @@ void UKnifeHitboxComponent::AuthApplyDamage(AActor* HitActor)
 	//
 	// UGunnerDamageContext* DamageContext = NewObject<UGunnerDamageContext>();
 	// AGunnerEquipment* Equipment = GetOwner<AGunnerEquipment>();
-	// DamageContext->Instigator = AgentPawn->GetController();
-	// DamageContext->Causer = Equipment;
-	// DamageContext->Target = HitActor;
-	// DamageContext->HitNormal = HitNormal;
-	// DamageContext->HitBoneName = HitBoneName;
+	// DamageContext.Instigator = AgentPawn->GetController();
+	// DamageContext.Causer = Equipment;
+	// DamageContext.Target = HitActor;
+	// DamageContext.HitNormal = HitNormal;
+	// DamageContext.HitBoneName = HitBoneName;
 	//
-	// DamageContext->DamageAmount = Equipment->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
+	// DamageContext.DamageAmount = Equipment->GetEquipmentDef()->CalculateDamageByContext(DamageContext);
 	// DamageEventMessage.EventDataObject = DamageContext;
 	//
 	// ActionComponent->SendEventToActor(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);

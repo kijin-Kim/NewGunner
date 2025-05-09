@@ -6,6 +6,7 @@
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "GunnerDamageType_BodyPartAndDistance.generated.h"
 
+struct FGunnerDamageContext;
 /**
  * 
  */
@@ -44,11 +45,11 @@ public:
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
 
-	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const override;
+	virtual float CalculateDamageByContext(const FGunnerDamageContext& DamageContext) const override;
 
 private:
-	float GetDistanceFallOffMultiplier(UGunnerDamageContext* DamageContext) const;
-	float GetBodyPartMultiplier(UGunnerDamageContext* DamageContext) const;
+	float GetDistanceFallOffMultiplier(const FGunnerDamageContext& DamageContext) const;
+	float GetBodyPartMultiplier(const FGunnerDamageContext& DamageContext) const;
 
 public:
 	// 머리 부위 피해 배율. BaseDamage를 몸통 부위에 맞았을 때의 피해로 간주합니다.

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Gunner/_Core/Damage/GunnerDamageContext.h"
 #include "Gunner/_Core/Damage/GunnerDamageType.h"
 #include "GunnerDamageType_FrontOrBack.generated.h"
 
@@ -21,7 +22,7 @@ public:
 	{
 	}
 
-	virtual float CalculateDamageByContext(UGunnerDamageContext* DamageContext) const override;
+	virtual float CalculateDamageByContext(const FGunnerDamageContext& DamageContext) const;
 
 public:
 	UPROPERTY(EditAnywhere)

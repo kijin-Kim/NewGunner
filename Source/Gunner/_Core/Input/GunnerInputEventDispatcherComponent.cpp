@@ -33,7 +33,11 @@ void UGunnerInputEventDispatcherComponent::OnInputEvent(const FInputActionValue&
 	check(InputComponent);
 	if (APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>())
 	{
-		const FNexusEventMessage EventMessage(InputTag, PlayerController, nullptr, InputActionValue, nullptr);
+		FNexusEventMessage EventMessage;
+		EventMessage.Instigator = PlayerController->GetPawn();
+		EventMessage.TargetActor = PlayerController->GetPawn();
+		EventMessage.InputActionValue = InputActionValue;
+		EventMessage.EventTag = InputTag;
 		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(InputTag, EventMessage, PlayerState);
 	}
 }
@@ -44,26 +48,26 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 	{
 		return;
 	}
-	
+
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
 	if (!Subsystem)
 	{
 		return;
 	}
-	
+
 	UEnhancedInputComponent* InputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 	if (!InputComponent)
 	{
 		return;
 	}
-	
+
 	Subsystem->ClearAllMappings();
-	
+
 	for (const auto& [IMC, Priority] : InputTagMappingData->InputContextAndPriorities)
 	{
 		Subsystem->AddMappingContext(IMC, Priority);
 	}
-	
+
 	for (const auto& [InputAction, TriggerEventMappings] : InputTagMappingData->InputTagMappings)
 	{
 		for (const auto& [TriggerEvent, InputTag] : TriggerEventMappings)

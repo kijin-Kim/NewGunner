@@ -17,7 +17,13 @@ public:
 	AGunnerDeathMatchGameMode();
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
 
+
+protected:
+	UPROPERTY()
+	float RespawnDelay = 3.0f;
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	int32 KillLimit = 1;
+	
 };

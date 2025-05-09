@@ -20,12 +20,6 @@ AGunnerPlayerController::AGunnerPlayerController()
 	bAutoManageActiveCameraTarget = false;
 }
 
-void AGunnerPlayerController::DisableInput(class APlayerController* PlayerController)
-{
-	Super::DisableInput(PlayerController);
-	 
-}
-
 void AGunnerPlayerController::DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
 {
 	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);

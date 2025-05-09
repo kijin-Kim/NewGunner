@@ -37,7 +37,7 @@ protected:
 	
 private:
 	void AuthApplyDamageByHitResults(const TArray<FHitResult>& HitResults);
-	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal);
+	void AuthApplyDamage(AActor* HitActor, FName HitBoneName, FVector HitNormal, const FHitResult& HitResult);
 	void DrawDebugHitScanTrace(const TArray<FHitResult>& HitResults);
 	void CalculateTraceStartEnd( FVector& OutTraceStart, FVector& OutTraceEnd) const;
 

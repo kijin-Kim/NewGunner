@@ -91,7 +91,8 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	// OnRep_PlayerState -> SetPlayerState -> OnPawnSet (폰과 플레이어스테이트가 서로 지정함) -> OnPlayerStateChanged 
 	if (NewPlayerState)
 	{
-		if (IsLocallyControlled() && IsPlayerControlled())
+		APlayerController* PC = GetController<APlayerController>();
+		if (PC && PC->IsLocalController())
 		{
 			CameraControllerComponent->InitCameraController();
 		}
@@ -106,7 +107,6 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 			AuthAddActionSets();
 		}
 	}
-	
 }
 
 bool AGunnerCharacter::CanJumpInternal_Implementation() const
@@ -188,7 +188,7 @@ void AGunnerCharacter::AuthAddActionSets()
 		GR_LOG_SUB(this, LogGunner, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
-	
+
 	UNexusActionComponent* ActionComponent = GetActionComponent();
 	check(ActionComponent);
 	for (const UGunnerActionSet* ActionSet : ActionSets)
@@ -196,7 +196,6 @@ void AGunnerCharacter::AuthAddActionSets()
 		UGunnerBlueprintFunctionLibrary::AuthAddDesiredActions(ActionComponent->GetAgentActor(), ActionComponent->GetAgentActor(), ActionSet->ActionClasses, AddedActionHandles);
 		UGunnerBlueprintFunctionLibrary::AuthAddDesiredItems(ActionComponent->GetAgentActor(), ActionSet->ItemDefinitions, AddedItems);
 	}
-
 }
 
 void AGunnerCharacter::AuthRemoveActionSets()

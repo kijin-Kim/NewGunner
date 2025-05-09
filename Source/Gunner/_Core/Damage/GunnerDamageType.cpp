@@ -6,8 +6,7 @@
 #include "Gunner/_Core/Damage/GunnerDamageContext.h"
 
 
-float UGunnerDamageType::CalculateDamageByContext(UGunnerDamageContext* DamageContext) const
+float UGunnerDamageType::CalculateDamageByContext( const FGunnerDamageContext& DamageContext) const
 {
-	check(DamageContext)
-	return DamageContext->bIsAlt ? BaseDamage * AltDamageMultiplier : BaseDamage;
+	return DamageContext.bIsAlt ? BaseDamage * AltDamageMultiplier : BaseDamage;
 }
