@@ -110,8 +110,15 @@ void UGunnerInventoryViewModel_SlotItem::OnItemRemoved(AGunnerItem* Item)
 	}
 
 	SlotItemHudData.Remove(SlotItem->GetSlotType());
-	CachedSlotItemWidgetClasses.Remove(SlotItem->GetSlotType());
+
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SlotItemHudData);
+
+	TSubclassOf<UUserWidget>* CachedSlotWidgetClassPtr = CachedSlotItemWidgetClasses.Find(SlotItem->GetSlotType());
+	if (CachedSlotWidgetClassPtr && *CachedSlotWidgetClassPtr == CurrentAmountWidgetClass)
+	{
+		SetCurrentAmountWidgetClass(nullptr);
+		CachedSlotItemWidgetClasses.Remove(SlotItem->GetSlotType());
+	}
 }
 
 void UGunnerInventoryViewModel_SlotItem::OnSlotIndexDirty(float OldValue, float NewValue)
@@ -120,19 +127,21 @@ void UGunnerInventoryViewModel_SlotItem::OnSlotIndexDirty(float OldValue, float 
 	{
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ActiveSlotType);
 	}
-	
+
 	if (TSubclassOf<UUserWidget>* NewWidgetClassPtr = CachedSlotItemWidgetClasses.Find(static_cast<EGunnerSlotType>(NewValue)))
 	{
-		if (UE_MVVM_SET_PROPERTY_VALUE(CurrentAmountWidgetClass, *NewWidgetClassPtr))
-		{
-			UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CurrentAmountWidgetClass);
-		}
+		SetCurrentAmountWidgetClass(*NewWidgetClassPtr);
 	}
 	else
 	{
-		if (UE_MVVM_SET_PROPERTY_VALUE(CurrentAmountWidgetClass, nullptr))
-		{
-			UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CurrentAmountWidgetClass);
-		}
+		SetCurrentAmountWidgetClass(nullptr);
+	}
+}
+
+void UGunnerInventoryViewModel_SlotItem::SetCurrentAmountWidgetClass(const TSubclassOf<UUserWidget>& WidgetClass)
+{
+	if (UE_MVVM_SET_PROPERTY_VALUE(CurrentAmountWidgetClass, WidgetClass))
+	{
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CurrentAmountWidgetClass);
 	}
 }

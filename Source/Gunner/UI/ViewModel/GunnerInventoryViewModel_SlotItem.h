@@ -65,6 +65,8 @@ private:
 	void OnItemRemoved(AGunnerItem* Item);
 	UFUNCTION()
 	void OnSlotIndexDirty(float OldValue, float NewValue);
+	
+	void SetCurrentAmountWidgetClass(const TSubclassOf<UUserWidget>& WidgetClass);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
