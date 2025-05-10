@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GunnerAction_EquipBase.h"
-#include "GunnerEquippable.h"
+#include "GunnerEquipmentItem.h"
 #include "GunnerSlotItemPlaceholder.generated.h"
 
 
@@ -21,7 +21,7 @@ public:
 
 
 UCLASS()
-class GUNNER_API AGunnerEquippable_MeleePlaceholder : public AGunnerEquippable
+class GUNNER_API AGunnerEquippable_MeleePlaceholder : public AGunnerEquipmentItem
 {
 	GENERATED_BODY()
 

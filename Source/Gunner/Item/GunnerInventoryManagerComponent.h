@@ -27,9 +27,6 @@ class GUNNER_API UGunnerInventoryManagerComponent : public UActorComponent
 
 public:
 	UGunnerInventoryManagerComponent();
-#if WITH_EDITOR
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-#endif
 	
 	void OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos);
 
@@ -62,12 +59,6 @@ private:
 	void OnRep_Items(const TArray<AGunnerItem*>& OldItems);
 
 public:
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<AGunnerItem>> StartItemClasses;
-
-	UPROPERTY(EditAnywhere)
-	TArray<TObjectPtr<const UGunnerItemDef>> StartItemDefs;
-
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UGunnerAction_DropSlotItem> DropSlotItemActionClass;

@@ -60,7 +60,7 @@ void UGunnerInputEventDispatcherComponent::SetupInputEvent(APawn* OldPawn, APawn
 	{
 		return;
 	}
-
+	
 	Subsystem->ClearAllMappings();
 	InputComponent->ClearActionBindings();
 

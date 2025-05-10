@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GunnerEquippable.h"
+#include "GunnerEquipmentItem.h"
 
 #include "Animation/NexusAnimMontagePlayerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
@@ -10,7 +10,7 @@
 
 
 // Sets default values
-AGunnerEquippable::AGunnerEquippable()
+AGunnerEquipmentItem::AGunnerEquipmentItem()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
@@ -27,7 +27,7 @@ AGunnerEquippable::AGunnerEquippable()
 	AnimMontagePlayerComponent->SetIsReplicated(true);
 }
 
-void AGunnerEquippable::OnConstruction(const FTransform& Transform)
+void AGunnerEquipmentItem::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	ThirdPersonMeshComponent = DuplicateObject(FirstPersonMeshComponent, this);
@@ -55,23 +55,23 @@ void AGunnerEquippable::OnConstruction(const FTransform& Transform)
 	}
 }
 
-UNexusAnimMontagePlayerComponent* AGunnerEquippable::GetAnimMontagePlayer_Implementation()
+UNexusAnimMontagePlayerComponent* AGunnerEquipmentItem::GetAnimMontagePlayer_Implementation()
 {
 	return AnimMontagePlayerComponent;
 }
 
-USkeletalMeshComponent* AGunnerEquippable::GetFirstPersonMeshComponent_Implementation() const
+USkeletalMeshComponent* AGunnerEquipmentItem::GetFirstPersonMeshComponent_Implementation() const
 {
 	return FirstPersonMeshComponent;
 }
 
-USkeletalMeshComponent* AGunnerEquippable::GetThirdPersonMeshComponent_Implementation() const
+USkeletalMeshComponent* AGunnerEquipmentItem::GetThirdPersonMeshComponent_Implementation() const
 {
 	return ThirdPersonMeshComponent;
 }
 
 
-void AGunnerEquippable::OnAcquired(AActor* InAgentActor)
+void AGunnerEquipmentItem::OnAcquired(AActor* InAgentActor)
 {
 	Super::OnAcquired(InAgentActor);
 	SetMeshVisibility(false);
@@ -90,7 +90,7 @@ void AGunnerEquippable::OnAcquired(AActor* InAgentActor)
 	SetCustomDepthStencilValue(TeamAgentInterface->GetGenericTeamId() + 1);
 }
 
-void AGunnerEquippable::OnRemoved()
+void AGunnerEquipmentItem::OnRemoved()
 {
 	SetMeshVisibility(false);
 
@@ -103,7 +103,7 @@ void AGunnerEquippable::OnRemoved()
 	Super::OnRemoved();
 }
 
-void AGunnerEquippable::OnActivated()
+void AGunnerEquipmentItem::OnActivated()
 {
 	Super::OnActivated();
 	SetMeshVisibility(true);
@@ -111,7 +111,7 @@ void AGunnerEquippable::OnActivated()
 	SetRenderCustomDepth(true);
 }
 
-void AGunnerEquippable::OnDeactivated()
+void AGunnerEquipmentItem::OnDeactivated()
 {
 	Super::OnDeactivated();
 	SetMeshVisibility(false);
@@ -119,7 +119,7 @@ void AGunnerEquippable::OnDeactivated()
 	SetRenderCustomDepth(false);
 }
 
-void AGunnerEquippable::AttachToAgentActor() const
+void AGunnerEquipmentItem::AttachToAgentActor() const
 {
 	if (AgentActor && AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{
@@ -131,7 +131,7 @@ void AGunnerEquippable::AttachToAgentActor() const
 	}
 }
 
-void AGunnerEquippable::SetMeshVisibility(bool bVisible) const
+void AGunnerEquipmentItem::SetMeshVisibility(bool bVisible) const
 {
 	APawn* AgentPawn = Cast<APawn>(AgentActor);
 	if (bVisible)
@@ -155,7 +155,7 @@ void AGunnerEquippable::SetMeshVisibility(bool bVisible) const
 }
 
 
-void AGunnerEquippable::SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
+void AGunnerEquipmentItem::SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet* InLocomotionAnimSet) const
 {
 	if (!AgentActor || !AgentActor->Implements<UNexusAnimMontagePlayerInterface>())
 	{
@@ -188,7 +188,7 @@ void AGunnerEquippable::SetAgentActorLocomotionAnimSet(UGunnerLocomotionAnimSet*
 	}
 }
 
-void AGunnerEquippable::SetRenderCustomDepth(bool bSetRenderCustomDepth)
+void AGunnerEquipmentItem::SetRenderCustomDepth(bool bSetRenderCustomDepth)
 {
 	ThirdPersonMeshComponent->SetRenderCustomDepth(bSetRenderCustomDepth);
 	TArray<USceneComponent*> TPChildren;
@@ -202,7 +202,7 @@ void AGunnerEquippable::SetRenderCustomDepth(bool bSetRenderCustomDepth)
 	}
 }
 
-void AGunnerEquippable::SetCustomDepthStencilValue(int32 StencilValue) const
+void AGunnerEquipmentItem::SetCustomDepthStencilValue(int32 StencilValue) const
 {
 	ThirdPersonMeshComponent->SetCustomDepthStencilValue(StencilValue);
 

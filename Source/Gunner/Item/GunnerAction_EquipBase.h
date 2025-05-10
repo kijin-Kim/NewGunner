@@ -8,6 +8,7 @@
 #include "SideEffect/NexusSideEffect.h"
 #include "GunnerAction_EquipBase.generated.h"
 
+class AGunnerEquipmentItem;
 class UNexusAnimMontagePlayerInterface;
 
 UCLASS()
@@ -52,5 +53,5 @@ protected:
 	UPROPERTY()
 	TMap<TSubclassOf<UUserWidget>, TObjectPtr<UUserWidget>> EquippedWidgetMap;
 	UPROPERTY(BlueprintReadOnly, Category = "Action")
-	TObjectPtr<AGunnerSlotItem> SlotItem;
+	TObjectPtr<AGunnerEquipmentItem> EquipmentItem;
 };

@@ -28,15 +28,15 @@ AGunnerTestPawn::AGunnerTestPawn()
 	PredictionComponent->SetIsReplicated(true);
 	EventManagerComponent = CreateDefaultSubobject<UNexusEventManagerComponent>(TEXT("EventManagerComponent"));
 	EventManagerComponent->SetIsReplicated(true);
-
+	
 
 	InventoryManagerComponent = CreateDefaultSubobject<UGunnerInventoryManagerComponent>(TEXT("InventoryManagerComponent"));
 	InventoryManagerComponent->SetIsReplicated(true);
 	InventoryManagerComponent->DropSlotItemActionClass = UGunnerActionTestDropSlotItem::StaticClass();
 	
-	static ConstructorHelpers::FObjectFinder<UGunnerItemDef> ItemDefFinder(TEXT("/Game/Developers/kijin/Test/ID_TestItem.ID_TestItem"));
-	check(ItemDefFinder.Object);
-	InventoryManagerComponent->StartItemDefs.Add(ItemDefFinder.Object);
+	// static ConstructorHelpers::FObjectFinder<UGunnerItemDef> ItemDefFinder(TEXT("/Game/Developers/kijin/Test/ID_TestItem.ID_TestItem"));
+	// check(ItemDefFinder.Object);
+	// InventoryManagerComponent->StartItemDefs.Add(ItemDefFinder.Object);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);

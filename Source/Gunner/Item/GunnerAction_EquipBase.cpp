@@ -3,6 +3,7 @@
 
 #include "GunnerAction_EquipBase.h"
 
+#include "GunnerEquipmentItem.h"
 #include "GunnerSlotItem.h"
 #include "Action/NexusActionComponent.h"
 #include "Blueprint/UserWidget.h"
@@ -57,7 +58,7 @@ UGunnerAction_EquipBase::UGunnerAction_EquipBase()
 void UGunnerAction_EquipBase::OnAddAction()
 {
 	Super::OnAddAction();
-	SlotItem = GetSourceObject<AGunnerSlotItem>();
+	EquipmentItem = GetSourceObject<AGunnerEquipmentItem>();
 }
 
 bool UGunnerAction_EquipBase::OnCanTriggerAction() const
@@ -68,7 +69,7 @@ bool UGunnerAction_EquipBase::OnCanTriggerAction() const
 		return false;
 	}
 
-	return SlotItem ? SlotItem->GetSlotType() != GetCurrentSlotType() : false;
+	return EquipmentItem ? EquipmentItem->GetSlotType() != GetCurrentSlotType() : false;
 }
 
 void UGunnerAction_EquipBase::OnTriggerAction()
@@ -85,13 +86,13 @@ void UGunnerAction_EquipBase::OnTriggerAction()
 		{
 			if (ActionClass)
 			{
-				EquippedActionDefHandles.Add(ActionComponent->AuthAddAction(ActionClass, SlotItem));
+				EquippedActionDefHandles.Add(ActionComponent->AuthAddAction(ActionClass, EquipmentItem));
 			}
 		}
 	}
 
 	FNexusSideEffectInstanceDef SideEffectInstanceDef{UGunnerSlotIndexChangeSideEffect::StaticClass()};
-	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex, static_cast<float>(SlotItem->GetSlotType())});
+	SideEffectInstanceDef.InjectedValues.Add(FNexusInjectedValuePair{GunnerNativeGameplayTags::TAG_OperationValue_SlotIndex, static_cast<float>(EquipmentItem->GetSlotType())});
 
 	ActionComponent->ApplySideEffectByDef(SideEffectInstanceDef, {}, FNexusPredictionEventSignature::FDelegate::CreateWeakLambda(this, [this]()
 	{

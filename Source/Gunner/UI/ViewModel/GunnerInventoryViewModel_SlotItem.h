@@ -4,27 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "GunnerInventoryViewModelBase.h"
+#include "Blueprint/UserWidget.h"
 #include "Gunner/Item/GunnerSlotItem.h"
-#include "GunnerInventoryViewModel_Equipment.generated.h"
+#include "GunnerInventoryViewModel_SlotItem.generated.h"
 
 class AGunnerItem;
 class UGunnerSlotItemHudComponent;
 
 USTRUCT(BlueprintType)
-struct FGunnerEquipmentHudDataEntry
+struct FGunnerSlotItemHudDataEntry
 {
 	GENERATED_BODY()
 
 public:
-	FGunnerEquipmentHudDataEntry()
+	FGunnerSlotItemHudDataEntry()
 	{
 		Reset();
 	}
 
-	explicit FGunnerEquipmentHudDataEntry(const FText& InItemNames, const FSlateBrush& InStandardIconTextures, const FSlateBrush& InSimplifiedIconTextures)
-		: ItemNames(InItemNames)
-		, StandardIconBrush(InStandardIconTextures)
-	 		, SimplifiedIconBrush(InSimplifiedIconTextures)
+	explicit FGunnerSlotItemHudDataEntry(const FText& InItemNames, const FSlateBrush& InStandardIconTextures, const FSlateBrush& InSimplifiedIconTextures)
+		: ItemNames(InItemNames),
+		  StandardIconBrush(InStandardIconTextures),
+		  SimplifiedIconBrush(InSimplifiedIconTextures)
 	{
 	}
 
@@ -49,7 +50,7 @@ public:
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerInventoryViewModel_Equipment : public UGunnerInventoryViewModelBase
+class GUNNER_API UGunnerInventoryViewModel_SlotItem : public UGunnerInventoryViewModelBase
 {
 	GENERATED_BODY()
 
@@ -67,7 +68,11 @@ private:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
-	TMap<EGunnerSlotType, FGunnerEquipmentHudDataEntry> EquipmentHudData;
+	TMap<EGunnerSlotType, FGunnerSlotItemHudDataEntry> SlotItemHudData;
+	TMap<EGunnerSlotType, TSubclassOf<UUserWidget>> CachedSlotItemWidgetClasses;
+
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
-	EGunnerSlotType EquippedSlotType = EGunnerSlotType::Num;
+	EGunnerSlotType ActiveSlotType = EGunnerSlotType::Num;
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	TSubclassOf<UUserWidget> CurrentAmountWidgetClass;
 };

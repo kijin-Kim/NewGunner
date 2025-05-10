@@ -24,31 +24,6 @@ UGunnerInventoryManagerComponent::UGunnerInventoryManagerComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-#if WITH_EDITOR
-EDataValidationResult UGunnerInventoryManagerComponent::IsDataValid(FDataValidationContext& Context) const
-{
-	EDataValidationResult ValidationResult = Super::IsDataValid(Context);
-	TArray<AGunnerItem*> TempItems;
-	for (TSubclassOf<AGunnerItem> ItemClass : StartItemClasses)
-	{
-		if (!ItemClass)
-		{
-			continue;
-		}
-
-		AGunnerItem* DefaultObject = ItemClass->GetDefaultObject<AGunnerItem>();
-		if (DefaultObject->CanAcquire(TempItems))
-		{
-			TempItems.Add(DefaultObject);
-			continue;
-		}
-
-		ValidationResult = CombineDataValidationResults(ValidationResult, EDataValidationResult::NotValidated);
-		Context.AddError(FText::Format(NSLOCTEXT("Gunner", "InvalidStartItemClass", "[{0}]가 인벤토리에 추가될 수 없습니다"), ItemClass->GetDisplayNameText()));
-	}
-	return ValidationResult;
-}
-#endif
 
 
 void UGunnerInventoryManagerComponent::OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)

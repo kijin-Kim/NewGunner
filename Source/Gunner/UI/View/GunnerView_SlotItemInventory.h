@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Gunner/Item/GunnerSlotItem.h"
-#include "GunnerView_EquipmentInventory.generated.h"
+#include "Gunner/UI/ViewModel/GunnerInventoryViewModel_SlotItem.h"
+#include "GunnerView_SlotItemInventory.generated.h"
 
 class UTextBlock;
 class UImage;
 class UVerticalBox;
 
 UCLASS()
-class GUNNER_API UGunnerEquipmentInventoryItemWidget : public UUserWidget
+class GUNNER_API UGunnerInventorySlotItemWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -40,19 +41,17 @@ public:
  * 
  */
 UCLASS()
-class GUNNER_API UGunnerView_EquipmentInventory : public UUserWidget
+class GUNNER_API UGunnerView_SlotItemInventory : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void OnEquipmentItemChanged(const TMap<EGunnerSlotType, FGunnerEquipmentHudDataEntry>& EquipmentHudData);
+	void OnSlotItemChanged(const TMap<EGunnerSlotType, FGunnerSlotItemHudDataEntry>& SlotItemHudData);
 	UFUNCTION(BlueprintCallable)
-	void OnEquippedSlotTypeChanged(EGunnerSlotType SlotType);
-
+	void OnActiveSlotItemTypeChanged(EGunnerSlotType SlotType);
 
 protected:
-
 	UPROPERTY(BlueprintReadWrite)
-	TMap<EGunnerSlotType, TObjectPtr<UUserWidget>> EquipmentWidgets;
+	TMap<EGunnerSlotType, TObjectPtr<UUserWidget>> SlotItemWidgets;
 };

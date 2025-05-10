@@ -9,6 +9,7 @@
 void UGunnerViewModel_BulletIndicator::OnCreateViewModel(const UUserWidget* UserWidget)
 {
 	Super::OnCreateViewModel(UserWidget);
+	check(ActionComponent);
 	if (UNexusProperty* BulletProperty = ActionComponent->GetProperty(GunnerNativeGameplayTags::TAG_Property_Bullet))
 	{
 		BulletProperty->OnDirtyDelegate.AddDynamic(this, &UGunnerViewModel_BulletIndicator::OnBulletCountChanged);

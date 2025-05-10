@@ -2,3 +2,8 @@
 
 
 #include "GunnerItemPartBase.h"
+
+EDataValidationResult UGunnerItemPartBase::IsDataValid(FDataValidationContext& Context) const
+{
+	return EDataValidationResult::Valid;
+}

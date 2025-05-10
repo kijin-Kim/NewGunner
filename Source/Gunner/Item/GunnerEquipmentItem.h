@@ -6,17 +6,17 @@
 #include "GunnerInventoryManagerComponent.h"
 #include "GunnerSlotItem.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
-#include "GunnerEquippable.generated.h"
+#include "GunnerEquipmentItem.generated.h"
 
 class UGunnerLocomotionAnimSet;
 
 UCLASS()
-class GUNNER_API AGunnerEquippable : public AGunnerSlotItem, public INexusAnimMontagePlayerInterface
+class GUNNER_API AGunnerEquipmentItem : public AGunnerSlotItem, public INexusAnimMontagePlayerInterface
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerEquippable();
+	AGunnerEquipmentItem();
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 	//~ Begin INexusAnimMontagePlayerInterface
