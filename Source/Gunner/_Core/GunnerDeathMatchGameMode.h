@@ -14,17 +14,14 @@ UCLASS()
 class GUNNER_API AGunnerDeathMatchGameMode : public AGunnerGameMode
 {
 	GENERATED_BODY()
+
 public:
 	AGunnerDeathMatchGameMode();
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
 
-
-
 protected:
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 	float RespawnDelay = 3.0f;
-
-private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	int32 KillLimit = 1;
 };

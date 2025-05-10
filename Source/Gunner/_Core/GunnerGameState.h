@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GunnerGameMode.h"
 #include "GameFramework/GameState.h"
 #include "GunnerGameState.generated.h"
 
@@ -56,11 +57,9 @@ class GUNNER_API AGunnerGameState : public AGameState
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void SetMatchTimeLimit(double NewTimeLimit) { MatchTimeLimit = NewTimeLimit; }
-	double GetMatchTimeLimit() const { return MatchTimeLimit; }
 	void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	FGunnerKillInfo* GetKillerInfo(AController* Killer);
-
+	
 	virtual void HandleMatchHasEnded() override;
 	virtual TArray<int32> DetermineWinners() const { return {}; }
 
@@ -68,8 +67,7 @@ public:
 	void NetMulticastBroadcastWinners(const TArray<int32>& WinnerIds);
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastBroadcastKill(const FGunnerKillLog& KillLog);
-
-
+	void SetMatchTimeLimitSeconds(double TimeLimitSeconds);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -80,9 +78,7 @@ public:
 protected:
 	UPROPERTY(Replicated)
 	TArray<FGunnerKillInfo> KillInfos;
-
-private:
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	double MatchTimeLimit = 40.0f;
 	
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly)
+	double ServerMatchTimeLimitSeconds = 40.0f;
 };

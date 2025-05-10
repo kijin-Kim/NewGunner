@@ -47,6 +47,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	virtual bool ReadyToEndMatch_Implementation() override;
+	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
 
 private:
@@ -61,8 +62,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EExclusivePawnSpawnMode ExclusivePawnSpawnMode = EExclusivePawnSpawnMode::None;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	double MatchTimeLimitSeconds = 40.0f;
+
+
 private:
 	bool bSpawnedFirstClient = false;
 #endif
 	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
+
+
+	
 };

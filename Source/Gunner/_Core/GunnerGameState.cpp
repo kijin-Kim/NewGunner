@@ -16,7 +16,7 @@ FString FGunnerKillLog::ToString() const
 void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(AGunnerGameState, MatchTimeLimit, COND_InitialOnly);
+	DOREPLIFETIME(AGunnerGameState, ServerMatchTimeLimitSeconds);
 	DOREPLIFETIME(AGunnerGameState, KillInfos);
 }
 
@@ -28,10 +28,16 @@ FGunnerKillInfo* AGunnerGameState::GetKillerInfo(AController* Killer)
 	});
 }
 
+
 void AGunnerGameState::HandleMatchHasEnded()
 {
 	Super::HandleMatchHasEnded();
 	NetMulticastBroadcastWinners(DetermineWinners());
+}
+
+void AGunnerGameState::SetMatchTimeLimitSeconds(double TimeLimitSeconds)
+{
+	ServerMatchTimeLimitSeconds = TimeLimitSeconds;
 }
 
 void AGunnerGameState::NetMulticastBroadcastKill_Implementation(const FGunnerKillLog& KillLog)

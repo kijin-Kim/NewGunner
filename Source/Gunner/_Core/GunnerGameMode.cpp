@@ -101,7 +101,13 @@ void AGunnerGameMode::AuthRegisterKill(AController* Killer, AController* Victim,
 
 bool AGunnerGameMode::ReadyToEndMatch_Implementation()
 {
-	return GetWorld()->GetTimeSeconds() >= GetGameState<AGunnerGameState>()->GetMatchTimeLimit();
+	return GetGameState<AGunnerGameState>()->ElapsedTime >= MatchTimeLimitSeconds;
+}
+
+void AGunnerGameMode::HandleMatchHasStarted()
+{
+	Super::HandleMatchHasStarted();
+	GetGameState<AGunnerGameState>()->SetMatchTimeLimitSeconds(MatchTimeLimitSeconds);
 }
 
 void AGunnerGameMode::HandleMatchHasEnded()

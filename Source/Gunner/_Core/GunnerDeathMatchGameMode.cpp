@@ -20,7 +20,7 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 	{
 		EndMatch();
 	}
-
+	
 	if (!Victim)
 	{
 		return;
