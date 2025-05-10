@@ -46,6 +46,7 @@ public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void PostInitializeComponents() override;
 	virtual void UnPossessed() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
@@ -94,10 +95,7 @@ private:
 
 	UFUNCTION()
 	void OnTagAdded(const FGameplayTag& Tag);
-	UFUNCTION()
-	void OnTagRemoved(const FGameplayTag& Tag);
-
-	void CreateOrShowCharacterWidgets(APlayerController* PC);
+	
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -106,8 +104,6 @@ protected:
 	UPROPERTY()
 	TArray<AGunnerItem*> AddedItems;
 
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UUserWidget>> CharacterWidgetClasses;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -129,7 +125,4 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
-	
-	UPROPERTY()
-	TMap<TSubclassOf<UUserWidget>, TObjectPtr<UUserWidget>> CharacterWidgets;
 };

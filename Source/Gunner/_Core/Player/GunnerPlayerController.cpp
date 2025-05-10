@@ -11,6 +11,7 @@
 #include "Gunner/_Core/GunnerGameInstance.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "Gunner/_Core/Input/GunnerInputEventDispatcherComponent.h"
+#include "Gunner/_Core/UI/GunnerHUD.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
 
 
@@ -36,32 +37,36 @@ void AGunnerPlayerController::DisplayDebug(class UCanvas* Canvas, const class FD
 void AGunnerPlayerController::InitPlayerState()
 {
 	Super::InitPlayerState();
-	if (IsLocalController())
+	if (IsLocalController() && PlayerState)
 	{
 		TrySetParameterCollectionLocalPlayerTeamID();
+
+		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
+		check(ActionComponent);
+		ActionComponent->CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
+		{
+			AGunnerHUD* GunnerHUD = GetHUD<AGunnerHUD>();
+			GunnerHUD->InitializeMainWidgets();
+		}));
 	}
 }
 
-void AGunnerPlayerController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-	if (IsLocalController() && GetPawn())
-	{
-		CreateMainWidget();
-	}
-}
 
 void AGunnerPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	if (PlayerState)
 	{
+		TrySetParameterCollectionLocalPlayerTeamID();
 		UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(PlayerState);
 		check(ActionComponent);
 		ActionComponent->CallOrAddOnPostSetupCompletedDelegate(FOnNexusActionComponentOnPostSetupCompletedSignature::FDelegate::CreateWeakLambda(this, [this]()
 		{
-			TrySetParameterCollectionLocalPlayerTeamID();
-			CreateMainWidget();
+			if (IsLocalController())
+			{
+				AGunnerHUD* GunnerHUD = GetHUD<AGunnerHUD>();
+				GunnerHUD->InitializeMainWidgets();
+			}
 		}));
 	}
 }
@@ -87,16 +92,4 @@ void AGunnerPlayerController::SetParameterCollectionLocalPlayerTeamID(FGenericTe
 	check(GameInstance->MaterialParameterCollection);
 	UMaterialParameterCollectionInstance* MaterialParameterCollectionInstance = GetWorld()->GetParameterCollectionInstance(GameInstance->MaterialParameterCollection);
 	MaterialParameterCollectionInstance->SetScalarParameterValue(TEXT("LocalPlayerTeamID"), TeamID);
-}
-
-void AGunnerPlayerController::CreateMainWidget()
-{
-	// if (MainWidgetClass)
-	// {
-	// 	MainWidget = CreateWidget<UUserWidget>(this, MainWidgetClass);
-	// 	if (MainWidget)
-	// 	{
-	// 		MainWidget->AddToViewport();
-	// 	}
-	// }
 }

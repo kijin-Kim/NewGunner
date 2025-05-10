@@ -25,7 +25,6 @@ UGunnerInventoryManagerComponent::UGunnerInventoryManagerComponent()
 }
 
 
-
 void UGunnerInventoryManagerComponent::OnShowDebugInfo(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplayInfo, float& YL, float& YPos)
 {
 	if (DebugDisplayInfo.IsDisplayOn(TEXT("Inventory")))
@@ -119,19 +118,7 @@ void UGunnerInventoryManagerComponent::BeginPlay()
 			// check(Placeholder);
 			// AuthAddItem(Placeholder);
 		}
-		if (ActionComponent->IsAgentLocallyPlayerControlled())
-		{
-			for (TSubclassOf<UUserWidget> WidgetClass : InventoryWidgetClasses)
-			{
-				if (WidgetClass)
-				{
-					UUserWidget* Widget = CreateWidget<UUserWidget>(Cast<APlayerController>(ActionComponent->GetController()), WidgetClass);
-					check(Widget);
-					InventoryWidgets.Add(Widget);
-					Widget->AddToViewport();
-				}
-			}
-		}
+
 
 		for (AGunnerItem* Item : PendingRemoves)
 		{
@@ -157,21 +144,6 @@ void UGunnerInventoryManagerComponent::BeginPlay()
 void UGunnerInventoryManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	if (UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner()))
-	{
-		ActionComponent->RemoveSetupCompletedDelegate(this);
-		if (ActionComponent->IsAgentLocallyPlayerControlled())
-		{
-			for (UUserWidget* Widget : InventoryWidgets)
-			{
-				if (Widget)
-				{
-					Widget->RemoveFromParent();
-				}
-			}
-			InventoryWidgets.Empty();
-		}
-	}
 	Items.Empty();
 }
 

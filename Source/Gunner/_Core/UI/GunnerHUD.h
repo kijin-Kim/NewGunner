@@ -4,22 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Gunner/Item/GunnerSlotItem.h"
 #include "GunnerHUD.generated.h"
-
-class UGunnerInventoryManagerComponent;
-class UGunnerOverlayWidget;
-class UGunnerUserWidget;
-
-USTRUCT()
-struct FGunnerSlotWidgetContainer
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	TArray<TObjectPtr<UUserWidget>> Widgets;
-};
 
 
 /**
@@ -33,21 +18,9 @@ class GUNNER_API AGunnerHUD : public AHUD
 public:
 	UFUNCTION(Exec)
 	void LocalDebugTarget();
+	void InitializeMainWidgets();
 
-
-private:
-	void OnSlotItemActivated(EGunnerSlotType SlotType);
-	void OnSlotItemDeactivated(EGunnerSlotType SlotType);
-	UFUNCTION()
-	void HandleSlotIndexDirty(float OldValue, float NewValue);
-
-private:
-	UGunnerInventoryManagerComponent* GetInventoryManagerComponentChecked() const;
-
-
-private:
-	UPROPERTY()
-	TMap<EGunnerSlotType, FGunnerSlotWidgetContainer> SlotTypeWidgetMap;
-	
-	FTimerHandle DebugTargetTimerHandle;
+protected:
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<UUserWidget>> MainWidgetClasses;
 };

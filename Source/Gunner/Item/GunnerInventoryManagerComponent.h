@@ -69,11 +69,6 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerItemRemovedSiganture OnItemRemovedDelegate;
 
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<UUserWidget>> InventoryWidgetClasses;
-	UPROPERTY()
-	TArray<TObjectPtr<UUserWidget>> InventoryWidgets;
-
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_Items)
 	TArray<TObjectPtr<AGunnerItem>> Items;

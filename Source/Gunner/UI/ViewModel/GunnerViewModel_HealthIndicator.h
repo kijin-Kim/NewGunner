@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "MVVM/NexusActionViewModelContextResolver.h"
 #include "GunnerViewModel_HealthIndicator.generated.h"
 
@@ -25,7 +26,15 @@ public:
 			UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(GetHealthIndicatorText);
 		}
 	}
-	
+
+	void SetShouldShowHealthIndicator(bool bInShouldShowHealthIndicator)
+	{
+		if (UE_MVVM_SET_PROPERTY_VALUE(bShouldShowHealthIndicator, bInShouldShowHealthIndicator))
+		{
+			UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bShouldShowHealthIndicator);
+		}
+	}
+
 	UFUNCTION(BlueprintPure, FieldNotify)
 	FText GetHealthIndicatorText() const
 	{
@@ -36,7 +45,14 @@ private:
 	UFUNCTION()
 	void OnHealthChanged(float OldValue, float NewValue);
 
+	UFUNCTION()
+	void OnTagAdded(const FGameplayTag& AddedTag);
+	UFUNCTION()
+	void OnTagRemoved(const FGameplayTag& RemovedTag);
+
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
 	int32 Health;
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	bool bShouldShowHealthIndicator = true;
 };

@@ -89,6 +89,16 @@ void AGunnerCharacter::UnPossessed()
 	Super::UnPossessed();
 }
 
+void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	if (UNexusActionComponent* ActionComponent = GetActionComponent())
+	{
+		FOnNexusGameplayTagChangedSignature& OnTagAddedDelegate = ActionComponent->GetOnGameplayTagAddedDelegate();
+		OnTagAddedDelegate.RemoveDynamic(this, &AGunnerCharacter::OnTagAdded);
+	}
+}
+
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
@@ -99,7 +109,6 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (PC && PC->IsLocalController())
 		{
 			CameraControllerComponent->InitCameraController();
-			CreateOrShowCharacterWidgets(PC);
 		}
 
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
@@ -117,12 +126,6 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (!OnTagAddedDelegate.IsAlreadyBound(this, &AGunnerCharacter::OnTagAdded))
 		{
 			OnTagAddedDelegate.AddDynamic(this, &AGunnerCharacter::OnTagAdded);
-		}
-
-		FOnNexusGameplayTagChangedSignature& OnTagRemovedDelegate = ActionComponent->GetOnGameplayTagRemovedDelegate();
-		if (!OnTagRemovedDelegate.IsAlreadyBound(this, &AGunnerCharacter::OnTagRemoved))
-		{
-			OnTagRemovedDelegate.AddDynamic(this, &AGunnerCharacter::OnTagRemoved);
 		}
 	}
 }
@@ -254,43 +257,5 @@ void AGunnerCharacter::OnTagAdded(const FGameplayTag& Tag)
 		{
 			AuthRemoveActionSets();
 		}
-
-		APlayerController* PC = GetController<APlayerController>();
-		if (PC && PC->IsLocalController())
-		{
-			for (const auto& [Class, Widget] : CharacterWidgets)
-			{
-				if (Widget)
-				{
-					Widget->SetVisibility(ESlateVisibility::Hidden);
-				}
-			}
-		}
-	}
-}
-
-void AGunnerCharacter::OnTagRemoved(const FGameplayTag& Tag)
-{
-	if (Tag == GunnerNativeGameplayTags::TAG_State_Dead)
-	{
-		APlayerController* PC = GetController<APlayerController>();
-		if (PC && PC->IsLocalController())
-		{
-			CreateOrShowCharacterWidgets(PC);
-		}
-	}
-}
-
-void AGunnerCharacter::CreateOrShowCharacterWidgets(APlayerController* PC)
-{
-	for (TSubclassOf<UUserWidget> CharacterWidgetClass : CharacterWidgetClasses)
-	{
-		TObjectPtr<UUserWidget>& Widget = CharacterWidgets.FindOrAdd(CharacterWidgetClass);
-		if (!Widget)
-		{
-			Widget = CreateWidget<UUserWidget>(PC, CharacterWidgetClass);
-			Widget->AddToViewport();
-		}
-		Widget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
