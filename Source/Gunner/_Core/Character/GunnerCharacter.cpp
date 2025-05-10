@@ -7,7 +7,9 @@
 #include "GunnerCharacterMovementComponent.h"
 #include "Action/NexusAction.h"
 #include "Action/NexusActionComponent.h"
+#include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
@@ -97,6 +99,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (PC && PC->IsLocalController())
 		{
 			CameraControllerComponent->InitCameraController();
+			CreateOrShowCharacterWidgets(PC);
 		}
 
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
@@ -107,6 +110,19 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (HasAuthority())
 		{
 			AuthAddActionSets();
+		}
+
+		UNexusActionComponent* ActionComponent = GetActionComponent();
+		FOnNexusGameplayTagChangedSignature& OnTagAddedDelegate = ActionComponent->GetOnGameplayTagAddedDelegate();
+		if (!OnTagAddedDelegate.IsAlreadyBound(this, &AGunnerCharacter::OnTagAdded))
+		{
+			OnTagAddedDelegate.AddDynamic(this, &AGunnerCharacter::OnTagAdded);
+		}
+
+		FOnNexusGameplayTagChangedSignature& OnTagRemovedDelegate = ActionComponent->GetOnGameplayTagRemovedDelegate();
+		if (!OnTagRemovedDelegate.IsAlreadyBound(this, &AGunnerCharacter::OnTagRemoved))
+		{
+			OnTagRemovedDelegate.AddDynamic(this, &AGunnerCharacter::OnTagRemoved);
 		}
 	}
 }
@@ -226,5 +242,55 @@ void AGunnerCharacter::OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId N
 	{
 		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("MyTeamId"), NewTeamID);
 		ThirdPersonMaterialInstances[i]->SetScalarParameterValue(FName("UseFresnel"), 1.0f);
+	}
+}
+
+
+void AGunnerCharacter::OnTagAdded(const FGameplayTag& Tag)
+{
+	if (Tag == GunnerNativeGameplayTags::TAG_State_Dead)
+	{
+		if (HasAuthority())
+		{
+			AuthRemoveActionSets();
+		}
+
+		APlayerController* PC = GetController<APlayerController>();
+		if (PC && PC->IsLocalController())
+		{
+			for (const auto& [Class, Widget] : CharacterWidgets)
+			{
+				if (Widget)
+				{
+					Widget->SetVisibility(ESlateVisibility::Hidden);
+				}
+			}
+		}
+	}
+}
+
+void AGunnerCharacter::OnTagRemoved(const FGameplayTag& Tag)
+{
+	if (Tag == GunnerNativeGameplayTags::TAG_State_Dead)
+	{
+		APlayerController* PC = GetController<APlayerController>();
+		if (PC && PC->IsLocalController())
+		{
+			CreateOrShowCharacterWidgets(PC);
+		}
+	}
+}
+
+void AGunnerCharacter::CreateOrShowCharacterWidgets(APlayerController* PC)
+{
+	for (TSubclassOf<UUserWidget> CharacterWidgetClass : CharacterWidgetClasses)
+	{
+		TObjectPtr<UUserWidget>& Widget = CharacterWidgets.FindOrAdd(CharacterWidgetClass);
+		if (!Widget)
+		{
+			Widget = CreateWidget<UUserWidget>(PC, CharacterWidgetClass);
+			Widget->AddToViewport();
+		}
+		Widget->SetVisibility(ESlateVisibility::Visible);
 	}
 }

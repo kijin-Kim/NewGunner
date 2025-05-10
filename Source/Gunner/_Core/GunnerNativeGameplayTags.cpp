@@ -39,5 +39,7 @@ namespace GunnerNativeGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_MagazineBullet, "Property.MagazineBullet");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_MaxBulletPerMagazine, "Property.MaxBulletPerMagazine");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Property_SlotIndex, "Property.SlotIndex");
+
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "State.Dead");
 }
 

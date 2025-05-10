@@ -124,18 +124,20 @@ void UNexusGameplayTagComponent::EvaluateTagCounts()
 
 		TArray<FNexusGameplayTagCount> OldDynamicTagCountMapItems = DynamicTagCountContainer.Items;
 		DynamicTagCountContainer.RemoveAllTagCounts();
-		DynamicTagCountContainer = StaticTagCountContainer;
+		for (const FNexusGameplayTagCount& TagCount : StaticTagCountContainer.Items)
+		{
+			DynamicTagCountContainer.SetTagCount(TagCount.Tag, TagCount.Count);
+		}
 		for (const auto& [Tag,Delta] : DynamicTagCountDeltas)
 		{
-			int32 BaseCount = StaticTagCountContainer.GetTagCount(Tag);
-			DynamicTagCountContainer.SetTagCount(Tag, BaseCount + Delta);
+			DynamicTagCountContainer.AddTagCount(Tag, Delta);
 		}
-
 		DynamicTagCountContainer.Items = DynamicTagCountContainer.Items.FilterByPredicate([](const FNexusGameplayTagCount& TagCount)
-			{
-				return TagCount.Count > 0;
-			}
-		);
+		{
+			return TagCount.Count > 0;
+		});
+		DynamicTagCountContainer.MarkArrayDirty();
+		 
 
 		OnCountMapEvaluated(OldDynamicTagCountMapItems);
 	}

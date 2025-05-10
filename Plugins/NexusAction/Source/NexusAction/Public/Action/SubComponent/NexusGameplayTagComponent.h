@@ -11,9 +11,8 @@
 #include "NexusGameplayTagComponent.generated.h"
 
 struct FNexusGameplayTagCountContainer;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagAddedSignature, const FGameplayTag&, Tag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagChangedSignature, const FGameplayTag&, Tag);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNexusGameplayTagRemovedSignature, const FGameplayTag&, Tag);
 
 USTRUCT()
 struct NEXUSACTION_API FNexusGameplayTagCount : public FFastArraySerializerItem
@@ -122,6 +121,7 @@ public:
 
 	const FNexusGameplayTagCountContainer& GetDynamicTagCountContainer() const { return DynamicTagCountContainer; }
 
+
 private:
 	void OnCountMapEvaluated(const TArray<FNexusGameplayTagCount>& OldDynamicTagCountMapItems);
 	UFUNCTION()
@@ -132,9 +132,9 @@ private:
 	
 public:
 	UPROPERTY(BlueprintAssignable)
-	FOnNexusGameplayTagAddedSignature OnGameplayTagAddedDelegate;
+	FOnNexusGameplayTagChangedSignature OnGameplayTagAddedDelegate;
 	UPROPERTY(BlueprintAssignable)
-	FOnNexusGameplayTagRemovedSignature OnGameplayTagRemovedDelegate;
+	FOnNexusGameplayTagChangedSignature OnGameplayTagRemovedDelegate;
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_StaticTagCountContainer)

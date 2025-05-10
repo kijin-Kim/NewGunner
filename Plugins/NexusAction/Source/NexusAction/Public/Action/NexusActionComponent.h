@@ -17,6 +17,7 @@
 #include "NexusActionComponent.generated.h"
 
 
+class FOnNexusGameplayTagChangedSignature;
 class UNexusGameplayTagComponent;
 class UNexusPropertyComponent;
 class UNexusSideEffectComponent;
@@ -209,6 +210,9 @@ public:
 	void PopDynamicTag(const FGameplayTag& Tag);
 	void PushStaticTag(const FGameplayTag& Tag);
 	void PopStaticTag(const FGameplayTag& Tag);
+	FOnNexusGameplayTagChangedSignature& GetOnGameplayTagAddedDelegate();
+	FOnNexusGameplayTagChangedSignature& GetOnGameplayTagRemovedDelegate();
+	
 
 
 	// ------------------------------------------------------------------------------

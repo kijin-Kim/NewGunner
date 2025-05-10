@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "NexusPlayerState.h"
 #include "Action/NexusActionDefHandle.h"
-#include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerTeamAgentInterface.h"
 #include "GunnerPlayerState.generated.h"
 
@@ -37,6 +37,7 @@ public:
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override { return &OnTeamSet; }
+	
 private:
 	UFUNCTION()
 	void OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);

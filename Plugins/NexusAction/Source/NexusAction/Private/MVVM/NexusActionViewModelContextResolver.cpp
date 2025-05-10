@@ -30,4 +30,5 @@ UNexusActionViewModelBase* UNexusActionViewModelBase::CreateInstance(const UClas
 void UNexusActionViewModelBase::OnCreateViewModel(const UUserWidget* UserWidget)
 {
 	ActionComponent = UNexusActionComponent::GetActionComponentFromActor(UserWidget->GetOwningPlayerPawn());
+	check(ActionComponent);
 }

@@ -46,6 +46,7 @@ public:
 	AGunnerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void PostInitializeComponents() override;
 	virtual void UnPossessed() override;
+
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -84,13 +85,19 @@ public:
 	virtual void NetMulticastTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters) override;
 	//~ End INexusCueNetworkProxyInterface Interface.
 
-	
+
 	void AuthAddActionSets();
 	void AuthRemoveActionSets();
-	
 
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
+
+	UFUNCTION()
+	void OnTagAdded(const FGameplayTag& Tag);
+	UFUNCTION()
+	void OnTagRemoved(const FGameplayTag& Tag);
+
+	void CreateOrShowCharacterWidgets(APlayerController* PC);
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -98,6 +105,9 @@ protected:
 	TArray<FNexusActionDefHandle> AddedActionHandles;
 	UPROPERTY()
 	TArray<AGunnerItem*> AddedItems;
+
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<UUserWidget>> CharacterWidgetClasses;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -120,4 +130,6 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
 	
+	UPROPERTY()
+	TMap<TSubclassOf<UUserWidget>, TObjectPtr<UUserWidget>> CharacterWidgets;
 };

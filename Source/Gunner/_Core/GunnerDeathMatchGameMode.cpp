@@ -28,7 +28,6 @@ void AGunnerDeathMatchGameMode::AuthRegisterKill(AController* Killer, AControlle
 
 	if (AGunnerCharacter* GunnerCharacter = Cast<AGunnerCharacter>(Victim->GetPawn()))
 	{
-		GunnerCharacter->AuthRemoveActionSets();
 		FTimerHandle RespawnTimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, [this, Victim]()
 		{

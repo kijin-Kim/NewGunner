@@ -118,7 +118,7 @@ float UNexusActionComponent::GetPropertyValueFromActor(AActor* Actor, FGameplayT
 
 const TArray<UNexusProperty*>& UNexusActionComponent::GetProperties() const
 {
-	 return GetPropertyComponent()->GetProperties();
+	return GetPropertyComponent()->GetProperties();
 }
 
 void UNexusActionComponent::AddStaticOperation(FGameplayTag Tag, FNexusPropertyOperation Operation)
@@ -162,6 +162,16 @@ void UNexusActionComponent::PushStaticTag(const FGameplayTag& Tag)
 void UNexusActionComponent::PopStaticTag(const FGameplayTag& Tag)
 {
 	GetGameplayTagComponent()->PopStaticTag(Tag);
+}
+
+FOnNexusGameplayTagChangedSignature& UNexusActionComponent::GetOnGameplayTagAddedDelegate()
+{
+	return GetGameplayTagComponent()->OnGameplayTagAddedDelegate;
+}
+
+FOnNexusGameplayTagChangedSignature& UNexusActionComponent::GetOnGameplayTagRemovedDelegate()
+{
+	return GetGameplayTagComponent()->OnGameplayTagRemovedDelegate;
 }
 
 
