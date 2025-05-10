@@ -199,7 +199,7 @@ void UGunnerInventoryManagerComponent::AuthRemoveItem(AGunnerItem* Item, bool bD
 {
 	if (!GetOwner()->HasAuthority())
 	{
-		GR_LOG_SUB(GetAgentActorChecked(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		GR_CLOG_SUB(GetAgentActor(), GetAgentActor(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
 
@@ -216,7 +216,7 @@ void UGunnerInventoryManagerComponent::AuthRemoveAllItems(bool bDestroyItem)
 {
 	if (!GetOwner()->HasAuthority())
 	{
-		GR_LOG_SUB(GetAgentActorChecked(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
+		GR_CLOG_SUB(GetAgentActor(), GetAgentActor(), LogGunner, Error, TEXT("권한 없는 함수 호출"));
 		return;
 	}
 
@@ -243,8 +243,8 @@ bool UGunnerInventoryManagerComponent::HasItem(AGunnerItem* Item) const
 void UGunnerInventoryManagerComponent::OnItemAcquired(AGunnerItem* Item)
 {
 	check(Item);
-	GR_VLOG_SUB(GetAgentActorChecked(), LogGunnerInventory, Display, TEXT("인벤토리 아이템 추가: Item=%s"), *Item->ToString());
-	Item->OnAcquired(GetAgentActorChecked());
+	GR_CVLOG_SUB(GetAgentActor(), GetAgentActor(), LogGunnerInventory, Display, TEXT("인벤토리 아이템 추가: Item=%s"), *Item->ToString());
+	Item->OnAcquired(GetAgentActor());
 	Item->PostOnAcquired();
 
 	OnItemAcquiredDelegate.Broadcast(Item);
@@ -255,19 +255,17 @@ void UGunnerInventoryManagerComponent::OnItemRemoved(AGunnerItem* Item)
 	check(Item);
 	Item->OnRemoved();
 	OnItemRemovedDelegate.Broadcast(Item);
-	GR_VLOG_SUB(GetAgentActorChecked(), LogGunnerInventory, Display, TEXT("인벤토리 아이템 제거: Item=%s"), *Item->ToString());
+	GR_CVLOG_SUB(GetAgentActor(), GetAgentActor(), LogGunnerInventory, Display, TEXT("인벤토리 아이템 제거: Item=%s"), *Item->ToString());
 }
 
 
-AActor* UGunnerInventoryManagerComponent::GetAgentActorChecked() const
+AActor* UGunnerInventoryManagerComponent::GetAgentActor() const
 {
 	UNexusActionComponent* ActionComponent = UNexusActionComponent::GetActionComponentFromActor(GetOwner());
 	check(ActionComponent);
 	AActor* AgentActor = ActionComponent->GetAgentActor();
-	check(AgentActor);
 	return AgentActor;
 }
-
 
 void UGunnerInventoryManagerComponent::OnRep_Items(const TArray<AGunnerItem*>& OldItems)
 {

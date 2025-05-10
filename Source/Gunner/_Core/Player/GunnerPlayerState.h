@@ -37,7 +37,6 @@ public:
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 	virtual FOnGunnerTeamSetSignature* GetOnTeamSetDelegate() override { return &OnTeamSet; }
-
 private:
 	UFUNCTION()
 	void OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);
@@ -63,4 +62,5 @@ private:
 	FGenericTeamId TeamID = 0;
 
 	FOnGunnerTeamSetSignature OnTeamSet;
+
 };

@@ -51,6 +51,7 @@ void AGunnerPlayerState::SetGenericTeamId(const FGenericTeamId& InTeamID)
 	OnTeamSet.Broadcast(OldTeamID, TeamID);
 }
 
+
 void AGunnerPlayerState::OnPawnSetEvent(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
 	if (NewPawn)

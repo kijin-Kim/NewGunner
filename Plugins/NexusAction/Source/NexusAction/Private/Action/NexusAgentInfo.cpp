@@ -24,19 +24,54 @@ void FNexusAgentInfo::Init(AActor* InOwnerActor, AActor* InAgentActor)
 
 		ActorTemp = ActorTemp->GetOwner();
 	}
+
+	if (!GetController())
+	{
+		if (APawn* AgentPawn = Cast<APawn>(AgentActor))
+		{
+			Controller = AgentPawn->GetController();
+		}
+	}
 }
 
 bool FNexusAgentInfo::IsLocallyPlayerControlled() const
 {
-	return Controller.IsValid() && Controller->IsLocalPlayerController();
+	return GetController() ? GetController()->IsLocalPlayerController() : false;
 }
 
 bool FNexusAgentInfo::IsLocallyControlled() const
 {
-	return Controller.IsValid() && Controller->IsLocalController();
+	return GetController() ? GetController()->IsLocalController() : false;
 }
 
 bool FNexusAgentInfo::IsOwnerActorAuthoritative() const
 {
-	return OwnerActor.IsValid() && OwnerActor->GetLocalRole() == ROLE_Authority;
+	return GetOwnerActor() && GetOwnerActor()->HasAuthority();
+}
+
+AController* FNexusAgentInfo::GetController() const
+{
+	if (Controller.Get() && !Controller.Get()->IsPendingKillPending())
+	{
+		return Controller.Get();
+	}
+	return nullptr;
+}
+
+AActor* FNexusAgentInfo::GetAgentActor() const
+{
+	if (AgentActor.Get() && !AgentActor.Get()->IsPendingKillPending())
+	{
+		return AgentActor.Get();
+	}
+	return nullptr;
+}
+
+AActor* FNexusAgentInfo::GetOwnerActor() const
+{
+	if (OwnerActor.Get() && !OwnerActor.Get()->IsPendingKillPending())
+	{
+		return OwnerActor.Get();
+	}
+	return nullptr;
 }

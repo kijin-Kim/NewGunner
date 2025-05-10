@@ -52,7 +52,8 @@ protected:
 	void OnItemAcquired(AGunnerItem* Item);
 	void OnItemRemoved(AGunnerItem* Item);
 
-	AActor* GetAgentActorChecked() const;
+	AActor* GetAgentActor() const;
+
 
 private:
 	UFUNCTION()

@@ -22,20 +22,22 @@ struct NEXUSACTION_API FNexusAgentInfo
 	void Init(AActor* InOwnerActor, AActor* InAgentActor);
 
 	bool operator==(const FNexusAgentInfo& Other) const = default;
-
-	UPROPERTY(BlueprintReadOnly)
-	TWeakObjectPtr<AController> Controller;
-	UPROPERTY(BlueprintReadOnly)
-	TWeakObjectPtr<AActor> AgentActor;
-	UPROPERTY(BlueprintReadOnly)
-	TWeakObjectPtr<AActor> OwnerActor;
+	
 
 	bool IsLocallyPlayerControlled() const;
 	bool IsLocallyControlled() const;
 	bool IsOwnerActorAuthoritative() const;
 
 
-	AController* GetController() const { return Controller.Get(); }
-	AActor* GetAgentActor() const { return AgentActor.Get(); }
-	AActor* GetOwnerActor() const { return OwnerActor.Get(); }
+	AController* GetController() const;
+	AActor* GetAgentActor() const;
+	AActor* GetOwnerActor() const;
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	TWeakObjectPtr<AController> Controller;
+	UPROPERTY(BlueprintReadOnly)
+	TWeakObjectPtr<AActor> AgentActor;
+	UPROPERTY(BlueprintReadOnly)
+	TWeakObjectPtr<AActor> OwnerActor;
 };

@@ -586,14 +586,14 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 		return;
 	}
 
-	check(AgentInfo->OwnerActor.IsValid());
+	check(AgentInfo->GetOwnerActor());
 
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
 	check(ActionInstance);
 
 	ensureMsgf(ActionDef, TEXT("AddAction을 통해 먼저 해당 Action을 부여해야 합니다"));
-	ensureMsgf(AgentInfo->AgentActor->GetLocalRole() != ROLE_SimulatedProxy,
-	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 액션 [%s]을(를) 실행할 수 없습니다"), *AgentInfo->AgentActor->GetName(),
+	ensureMsgf(AgentInfo->GetAgentActor()->GetLocalRole() != ROLE_SimulatedProxy,
+	           TEXT("Agent Actor: [%s]가 SimulatedProxy인 경우 액션 [%s]을(를) 실행할 수 없습니다"), *AgentInfo->GetAgentActor()->GetName(),
 	           *ActionInstance->GetName());
 
 	if (!CanTriggerAction(ActionInstance, EventMessage))
@@ -609,7 +609,7 @@ void UNexusActionComponent::TryTriggerAction(const FNexusActionDefHandle& Action
 	ActionInstance->SetPrimaryPredictionTag(GetPredictionComponent()->GetCurrentPredictionTag());
 
 
-	if (AgentInfo->OwnerActor->GetNetMode() == NM_Standalone)
+	if (AgentInfo->GetOwnerActor()->GetNetMode() == NM_Standalone)
 	{
 		LocalTriggerAction(ActionDefHandle, ActionInstance);
 		return;
@@ -856,9 +856,8 @@ void UNexusActionComponent::OnActionEnded(const FNexusActionDefHandle& ActionDef
 			TagSideEffectMap.Remove(ActionDefHandle);
 		}
 	}
-
-
-	NX_VLOG_SUB(GetAgentActor(), LogNexusAction, Display, TEXT("액션 종료: %s"), *Action->GetName());
+	
+	NX_CVLOG_SUB(GetAgentActor(), GetAgentActor(), LogNexusAction, Display, TEXT("액션 종료: %s"), *Action->GetName());
 }
 
 FNexusPendingAddActionInfo* UNexusActionComponent::FindPendingAddActionInfo(const FNexusActionDefHandle& ActionDefHandle)

@@ -87,13 +87,13 @@ public:
 	// ------------------------------------------------------------------------------
 	// AgentInfo
 	// ------------------------------------------------------------------------------
-	AActor* GetAgentActor() const { return AgentInfo->AgentActor.Get(); }
-	AActor* GetOwnerActor() const { return AgentInfo->OwnerActor.Get(); }
+	AActor* GetAgentActor() const { return AgentInfo->GetAgentActor(); }
+	AActor* GetOwnerActor() const { return AgentInfo->GetOwnerActor(); }
 	bool IsAgentLocallyControlled() const { return AgentInfo->IsLocallyControlled(); }
 	bool IsAgentLocallyPlayerControlled() const { return AgentInfo->IsLocallyPlayerControlled(); }
 	bool IsOwnerActorAuthoritative() const { return AgentInfo->IsOwnerActorAuthoritative(); }
 	TWeakPtr<FNexusAgentInfo> GetAgentInfo() const { return AgentInfo; }
-	AController* GetController() const { return AgentInfo->Controller.Get(); }
+	AController* GetController() const { return AgentInfo->GetController(); }
 
 
 	// ------------------------------------------------------------------------------

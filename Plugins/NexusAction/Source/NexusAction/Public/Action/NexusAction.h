@@ -75,13 +75,13 @@ public:
 	bool IsOwnerActorAuthoritative() const { return AgentInfo.IsValid() && AgentInfo.Pin()->IsOwnerActorAuthoritative(); }
 
 	UFUNCTION(BlueprintCallable)
-	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->OwnerActor.Get() : nullptr; }
+	AActor* GetOwnerActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->GetOwnerActor() : nullptr; }
 
 	UFUNCTION(BlueprintCallable)
-	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->AgentActor.Get() : nullptr; }
+	AActor* GetAgentActor() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->GetAgentActor() : nullptr; }
 
 	UFUNCTION(BlueprintCallable)
-	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->Controller.Get() : nullptr; }
+	AController* GetController() const { return AgentInfo.IsValid() ? AgentInfo.Pin()->GetController() : nullptr; }
 
 	template <typename T>
 	T* GetSourceObject() const

@@ -16,6 +16,7 @@ class NEXUSACTION_API UNexusAgentBoundComponent : public UActorComponent
 public:
 	virtual void Setup(TSharedPtr<FNexusAgentInfo> InAgentInfo)
 	{
+		bSetupCompleted = true;
 		AgentInfo = InAgentInfo;
 	}
 
@@ -26,7 +27,8 @@ public:
 	bool IsLocallyPlayerControlled() const { return AgentInfo.IsValid() ? AgentInfo->IsLocallyPlayerControlled() : false; }
 	bool IsLocallyControlled() const { return AgentInfo.IsValid() ? AgentInfo->IsLocallyControlled() : false; }
 	bool IsOwnerActorAuthoritative() const { return AgentInfo.IsValid() ? AgentInfo->IsOwnerActorAuthoritative() : false; }
-
+	bool IsSetupCompleted() const { return bSetupCompleted; }
 protected:
 	TSharedPtr<FNexusAgentInfo> AgentInfo;
+	bool bSetupCompleted = false;
 };

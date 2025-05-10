@@ -122,7 +122,7 @@ void UNexusCueComponent::InternalAuthEndCue(FNexusLoopingCueHandle LoopingCueHan
 
 void UNexusCueComponent::SimTriggerCue(TSubclassOf<ANexusCue> CueClass, FNexusPredictionTag PredictionTag, const FNexusCueParameters& CueParameters)
 {
-	if (!GetOwner()->HasAuthority() && !PredictionTag.IsPredictable() && CueClass)
+	if (!GetOwner()->HasAuthority() && !PredictionTag.IsPredictable() && CueClass && IsSetupCompleted())
 	{
 		ANexusCue* CueCDO = CueClass->GetDefaultObject<ANexusCue>();
 		ANexusCue* LoopingCueActor = CueCDO->GetCueType() == ENexusCueType::Burst ? CueCDO : FindOrCreateLoopingCueActor(CueClass);
@@ -160,7 +160,7 @@ INexusCueNetworkProxyInterface* UNexusCueComponent::GetCueNetworkProxyInterface(
 {
 	if (GetOwner()->bAlwaysRelevant)
 	{
-		return Cast<INexusCueNetworkProxyInterface>(AgentInfo->AgentActor);
+		return Cast<INexusCueNetworkProxyInterface>(AgentInfo->GetAgentActor());
 	}
 
 	return this;
