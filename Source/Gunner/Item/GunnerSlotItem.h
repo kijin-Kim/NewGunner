@@ -55,6 +55,6 @@ private:
 	UNexusProperty* GetSlotIndexProperty() const;
 
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EGunnerSlotType SlotType = EGunnerSlotType::Num;
 };
