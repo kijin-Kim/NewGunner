@@ -778,6 +778,11 @@ void UNexusActionComponent::ClientTriggerAction_Implementation(const FNexusActio
 {
 	check(ActionDefHandle.IsValid());
 	UNexusAction* ActionInstance = FindActionInstanceByHandle(ActionDefHandle);
+	if (!ActionInstance)
+	{
+		ClientPendingActionTriggerRequests.Add({ActionDefHandle, EventMessageReplicated.ToEventMessage()});
+		return;
+	}
 	check(ActionInstance);
 	ActionInstance->SetActionCurrentEventMessage(EventMessageReplicated.ToEventMessage());
 	FNexusPredictionScope PredictionScope(*GetPredictionComponent(), PredictionTag, TEXT("ActionTrigger"));

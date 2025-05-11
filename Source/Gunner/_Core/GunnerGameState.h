@@ -14,11 +14,14 @@ struct FGunnerKillInfo
 	GENERATED_BODY()
 
 	FGunnerKillInfo()
-		: KillerPlayerId(-1),
+		: TeamId(FGenericTeamId::NoTeam),
+		  KillerPlayerId(-1),
 		  Kills(0)
 	{
 	}
 
+	UPROPERTY()
+	FGenericTeamId TeamId;
 	UPROPERTY()
 	int32 KillerPlayerId;
 	UPROPERTY()
@@ -26,7 +29,7 @@ struct FGunnerKillInfo
 };
 
 USTRUCT(BlueprintType)
-struct FGunnerKillLog
+struct FGunnerKillFeed
 {
 	GENERATED_BODY()
 
@@ -42,9 +45,7 @@ struct FGunnerKillLog
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerMatchEndedSignature, const TArray<int32>&, WinnerIds);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerNewKillConfirmedSignature, const FGunnerKillLog&, KillLog);
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerNewKillConfirmedSignature, const FGunnerKillFeed&, KillLog);
 
 
 /**
@@ -57,17 +58,20 @@ class GUNNER_API AGunnerGameState : public AGameState
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
-	FGunnerKillInfo* GetKillerInfo(AController* Killer);
-	
-	virtual void HandleMatchHasEnded() override;
-	virtual TArray<int32> DetermineWinners() const { return {}; }
 
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastBroadcastWinners(const TArray<int32>& WinnerIds);
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticastBroadcastKill(const FGunnerKillLog& KillLog);
-	void SetMatchTimeLimitSeconds(double TimeLimitSeconds);
+	void NetMulticastBroadcastKill(const FGunnerKillFeed& KillLog);
+	virtual void HandleMatchHasEnded() override;
+
+	void SetMatchTimeLimitSeconds(double Seconds) { ServerMatchTimeLimitSeconds = Seconds; }
+
+	UFUNCTION()
+	virtual void OnRep_KillInfos();
+	void UpdateKillInfos(AController* Killer);
+	
+	const TArray<FGunnerKillInfo>& GetKillInfos() const { return KillInfos; }
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -75,10 +79,10 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerNewKillConfirmedSignature OnNewKillConfirmedDelegate;
 
-protected:
-	UPROPERTY(Replicated)
+private:
+	UPROPERTY(ReplicatedUsing = OnRep_KillInfos)
 	TArray<FGunnerKillInfo> KillInfos;
-	
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly)
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	double ServerMatchTimeLimitSeconds = 40.0f;
 };

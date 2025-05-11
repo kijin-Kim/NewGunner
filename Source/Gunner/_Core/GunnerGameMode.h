@@ -43,12 +43,15 @@ public:
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void RestartPlayer(AController* NewPlayer) override;
 	
-
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName);
 	virtual bool ReadyToEndMatch_Implementation() override;
 	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
+
+
+protected:
+	virtual TArray<int32> DetermineWinners() const;
 
 private:
 	void SetAllControllersTeam(FGenericTeamId TeamId);
@@ -70,7 +73,5 @@ private:
 	bool bSpawnedFirstClient = false;
 #endif
 	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
-
-
 	
 };

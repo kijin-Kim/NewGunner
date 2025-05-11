@@ -3,7 +3,7 @@
 
 #include "GunnerAction_Death.h"
 
-#include "Gunner/_Core/GunnerDeathMatchGameMode.h"
+#include "Gunner/_Core/GunnerTeamDeathMatchGameMode.h"
 #include "Gunner/_Core/GunnerDirectionalMontage.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
 
@@ -58,7 +58,7 @@ void UGunnerAction_Death::OnTriggerAction()
 		APawn* InstigatorPawn = Cast<APawn>(EventMessage.Instigator);
 		AController* KillerController = InstigatorPawn ? InstigatorPawn->GetController() : GetController();
 		AController* VictimController = GetController();
-		AGunnerDeathMatchGameMode* DeathMatchGameMode = GetWorld()->GetAuthGameMode<AGunnerDeathMatchGameMode>();
+		AGunnerTeamDeathMatchGameMode* DeathMatchGameMode = GetWorld()->GetAuthGameMode<AGunnerTeamDeathMatchGameMode>();
 		DeathMatchGameMode->AuthRegisterKill(KillerController, VictimController, NAME_None);
 	}
 }

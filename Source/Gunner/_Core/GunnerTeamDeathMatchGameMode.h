@@ -4,24 +4,29 @@
 
 #include "CoreMinimal.h"
 #include "GunnerGameMode.h"
-#include "GunnerDeathMatchGameMode.generated.h"
+#include "GunnerTeamDeathMatchGameMode.generated.h"
 
 class AGunnerSpawnPointActor;
+
+
+
 /**
  * 
  */
 UCLASS()
-class GUNNER_API AGunnerDeathMatchGameMode : public AGunnerGameMode
+class GUNNER_API AGunnerTeamDeathMatchGameMode : public AGunnerGameMode
 {
 	GENERATED_BODY()
 
 public:
-	AGunnerDeathMatchGameMode();
+	AGunnerTeamDeathMatchGameMode();
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
+	virtual bool ReadyToEndMatch_Implementation() override;
+
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	float RespawnDelay = 3.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	int32 KillLimit = 1;
+	int32 KillCountToWin = 1;
 };
