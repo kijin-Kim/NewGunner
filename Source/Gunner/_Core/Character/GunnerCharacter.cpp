@@ -9,7 +9,6 @@
 #include "Action/NexusActionComponent.h"
 #include "Action/SubComponent/NexusGameplayTagComponent.h"
 #include "Animation/NexusAnimMontagePlayerComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
@@ -99,6 +98,7 @@ void AGunnerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
+
 void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
@@ -109,6 +109,7 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (PC && PC->IsLocalController())
 		{
 			CameraControllerComponent->InitCameraController();
+
 		}
 
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
@@ -259,3 +260,4 @@ void AGunnerCharacter::OnTagAdded(const FGameplayTag& Tag)
 		}
 	}
 }
+

@@ -9,6 +9,7 @@
 #include "Gunner/Action/TargetData/GunnerTargetData_Hit.h"
 #include "Gunner/Action/TargetData/GunnerTargetData_SoundBase.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "UI/Minimap/GunnerMiniMapData.h"
 #include "GunnerBlueprintFunctionLibrary.generated.h"
 
 class UGunnerItemDef;
@@ -128,4 +129,10 @@ public:
 	static void AuthAddDesiredItems(AActor* Actor, const TArray<UGunnerItemDef*>& ItemDefs, TArray<AGunnerItem*>& OutAddedItems);
 	UFUNCTION(BlueprintCallable, Category = "Gunner|Action")
 	static void AuthRemoveDesiredItems(AActor* Actor, const TArray<AGunnerItem*>& ItemsToRemove, bool bDestroyItem = true);
+
+	UFUNCTION(CallInEditor, BlueprintCallable)
+	static void ImportGeometryFromJson(const FString& FilePath, UGunnerMapGeometryData* TargetData);
+
+	UFUNCTION(BlueprintPure, Category = "Gunner|Slate")
+	static double GetSlateApplicationTime();
 };

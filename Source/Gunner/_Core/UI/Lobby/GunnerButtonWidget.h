@@ -19,7 +19,6 @@ class GUNNER_API UGunnerButtonWidget : public UUserWidget
 
 public:
 	virtual void NativePreConstruct() override;
-
 	
 	virtual void NativeConstruct() override;
 

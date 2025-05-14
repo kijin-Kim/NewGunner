@@ -6,10 +6,8 @@
 #include "GameplayTagContainer.h"
 #include "NexusActionInterface.h"
 #include "Action/NexusActionDefHandle.h"
-#include "Action/SubComponent/NexusEventManagerComponent.h"
 #include "Animation/NexusAnimMontagePlayerInterface.h"
 #include "Cue/NexusCueNetworkProxyInterface.h"
-#include "Event/NexusEventMessage.h"
 #include "GameFramework/Character.h"
 #include "Gunner/Item/GunnerInventoryManagerInterface.h"
 #include "Gunner/_Core/GunnerHitBoxInterface.h"
@@ -47,7 +45,7 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual void UnPossessed() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	
 	//~ Begin ACharacter Interface.
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -92,10 +90,9 @@ public:
 
 private:
 	void OnTeamSetEvent(FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
-
 	UFUNCTION()
 	void OnTagAdded(const FGameplayTag& Tag);
-	
+
 
 protected:
 	UPROPERTY(EditAnywhere)
