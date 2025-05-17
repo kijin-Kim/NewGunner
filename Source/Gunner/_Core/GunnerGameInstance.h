@@ -7,7 +7,7 @@
 #include "GunnerGameInstance.generated.h"
 
 
-class SGunnerLoadingScreenWidget;
+
 /**
  * 
  */
@@ -17,13 +17,12 @@ class GUNNER_API UGunnerGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-	
 	virtual void Init() override;
-
 	virtual void Shutdown() override;
 
 private:
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
+	void OnPreLoadMap(const FString& String);
 	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
 	void PlayLoadingScreen();
 	void StopLoadingScreen();
@@ -35,4 +34,6 @@ public:
 protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingScreenWidget;
 };

@@ -6,6 +6,7 @@
 #include "Misc/DataValidation.h"
 
 
+#if WITH_EDITOR
 EDataValidationResult UNexusAction::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
@@ -31,6 +32,7 @@ EDataValidationResult UNexusAction::IsDataValid(FDataValidationContext& Context)
 
 	return Result;
 }
+#endif
 
 UNexusAction* UNexusAction::NewNexusActionObject(UClass* Class, const FNexusActionDefHandle& InActionDefHandle, TWeakPtr<FNexusAgentInfo> InAgentInfo, TWeakObjectPtr<UObject> InSourceObject)
 {

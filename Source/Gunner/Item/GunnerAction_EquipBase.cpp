@@ -24,6 +24,7 @@ UGunnerSlotIndexChangeSideEffect::UGunnerSlotIndexChangeSideEffect()
 	Modifiers.Add(Mod);
 }
 
+#if WITH_EDITOR
 EDataValidationResult UGunnerAction_EquipBase::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
@@ -47,6 +48,7 @@ EDataValidationResult UGunnerAction_EquipBase::IsDataValid(FDataValidationContex
 
 	return Result;
 }
+#endif
 
 UGunnerAction_EquipBase::UGunnerAction_EquipBase()
 {

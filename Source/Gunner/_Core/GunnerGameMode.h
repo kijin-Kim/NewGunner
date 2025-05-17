@@ -12,7 +12,6 @@
 class AGunnerGameState;
 
 
-#if WITH_EDITORONLY_DATA
 UENUM(BlueprintType)
 enum class EExclusivePawnSpawnMode : uint8
 {
@@ -20,7 +19,6 @@ enum class EExclusivePawnSpawnMode : uint8
 	SpawnListenServerExclusively,
 	SpawnFirstClientExclusively
 };
-#endif
 
 
 UENUM()
@@ -60,18 +58,18 @@ private:
 
 
 
-#if WITH_EDITORONLY_DATA
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EExclusivePawnSpawnMode ExclusivePawnSpawnMode = EExclusivePawnSpawnMode::None;
 
+		
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	double MatchTimeLimitSeconds = 40.0f;
 
-
 private:
 	bool bSpawnedFirstClient = false;
-#endif
 	ECheatTeamMode CheatTeamMode = ECheatTeamMode::None;
+
+
 	
 };

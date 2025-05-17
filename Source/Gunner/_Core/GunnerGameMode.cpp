@@ -40,14 +40,14 @@ void AGunnerGameMode::SetCheatTeamMode(ECheatTeamMode NewCheatTeamMode)
 void AGunnerGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
-#if !UE_BUILD_SHIPPING
+#if WITH_EDITOR
 	bSpawnedFirstClient = false;
 #endif
 }
 
 void AGunnerGameMode::RestartPlayer(AController* NewPlayer)
 {
-#if UE_BUILD_SHIPPING
+#if !WITH_EDITOR
 	Super::RestartPlayer(NewPlayer);
 #else
 

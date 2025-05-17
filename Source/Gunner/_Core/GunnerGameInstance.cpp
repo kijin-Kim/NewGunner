@@ -5,7 +5,6 @@
 
 #include "MoviePlayer.h"
 #include "Blueprint/UserWidget.h"
-
 #include "Prediction/NexusPrediction.h"
 
 void UGunnerGameInstance::Init()
@@ -14,9 +13,10 @@ void UGunnerGameInstance::Init()
 
 	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
 	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
-
+	
 	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
 	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
+	
 }
 
 void UGunnerGameInstance::Shutdown()
@@ -30,33 +30,29 @@ void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& Ma
 	PlayLoadingScreen();
 }
 
-
 void UGunnerGameInstance::PostLoadMapWithWorld(UWorld* InLoadedWorld)
 {
-	//StopLoadingScreen();
+	StopLoadingScreen();
 }
+
 
 void UGunnerGameInstance::PlayLoadingScreen()
 {
-	if (!LoadingScreenWidgetClass)
+	if (LoadingScreenWidgetClass)
 	{
-		return;
-	}
+		FLoadingScreenAttributes LoadingScreenAttributes;
+		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidgetClass);
+		LoadingScreenAttributes.WidgetLoadingScreen = LoadingScreenWidget->TakeWidget();
+		LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 5.0f;
+		LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
+		LoadingScreenAttributes.bAllowEngineTick = true;
 
-	UUserWidget* LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidgetClass);
-	
-	FLoadingScreenAttributes LoadingScreenAttributes;
-	LoadingScreenAttributes.WidgetLoadingScreen = LoadingScreenWidget->TakeWidget();
-	LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 3.0f;
-	LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
-	LoadingScreenAttributes.bMoviesAreSkippable = false;
-	LoadingScreenAttributes.bWaitForManualStop = true;
-	LoadingScreenAttributes.bAllowEngineTick = false;
-	GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
-	GetMoviePlayer()->PlayMovie();
+		GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
+		GetMoviePlayer()->PlayMovie();
+	}
 }
 
 void UGunnerGameInstance::StopLoadingScreen()
 {
-	GetMoviePlayer()->StopMovie();
+	//GetMoviePlayer()->StopMovie();
 }

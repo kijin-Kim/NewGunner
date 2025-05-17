@@ -13,6 +13,7 @@ UGunnerItemDef::UGunnerItemDef()
 	ItemClass = AGunnerItem::StaticClass();
 }
 
+#if WITH_EDITOR
 EDataValidationResult UGunnerItemDef::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
@@ -51,6 +52,7 @@ EDataValidationResult UGunnerItemDef::IsDataValid(FDataValidationContext& Contex
 
 	return Result;
 }
+#endif
 
 const UGunnerItemPartBase* UGunnerItemDef::FindItemPartByClass(TSubclassOf<UGunnerItemPartBase> ItemPartClass) const
 {
