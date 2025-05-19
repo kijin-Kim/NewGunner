@@ -47,6 +47,7 @@ void UGunnerGameInstance::PlayLoadingScreen()
 		LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
 		LoadingScreenAttributes.bAllowEngineTick = true;
 
+		
 		GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
 		GetMoviePlayer()->PlayMovie();
 	}
