@@ -1,0 +1,22 @@
+name: CI - Build Only
+
+on:
+  pull_request:
+    branches:
+    - develop
+
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Compile Unreal C++ Code
+        run: |
+          "C:\Dev\UE_5.5.4\UnrealEngine\Engine\Build\BatchFiles\Build.bat" ^
+            NewGunnerEditor Win64 Development ^
+            -project="C:\actions_runner\_work\NewGunner\NewGunner\NewGunner.uproject" ^
+            -waitmutex
