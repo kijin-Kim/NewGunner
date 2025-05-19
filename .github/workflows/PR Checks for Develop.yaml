@@ -14,10 +14,17 @@ env:
 
 jobs:
   build_pr_development_targets:
-    name: Build Dev Editor & Dev Game (PowerShell)
-    runs-on: self-hosted # 고정 경로 사용을 위해 self-hosted runner로 가정
+    name: Build Dev Editor & Dev Game
+    runs-on: self-hosted
 
     steps:
+      - name: Mark workspace directory as safe
+        shell: powershell
+        run: |
+          $workspacePath = "${{ github.workspace }}".Replace('\', '/')
+          Write-Host "Adding $workspacePath to git safe.directory"
+          git config --global --add safe.directory "$workspacePath"
+      
       - name: Checkout repository source code
         uses: actions/checkout@v4
 
