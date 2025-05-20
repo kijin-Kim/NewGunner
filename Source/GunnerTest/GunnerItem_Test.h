@@ -22,3 +22,4 @@ public:
 	UPROPERTY()
 	TObjectPtr<AActor> LastAgentActor;
 };
+ 
