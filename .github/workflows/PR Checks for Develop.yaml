@@ -46,9 +46,7 @@ jobs:
               "-WaitMutex",
               "-FromMSBuild",
               "-MaxParallelActions=2"
-            ) `
-            -Priority 'BelowNormal' `
-            -Wait
+            )
 
       - name: Compile Editor (Development)
         shell: powershell
@@ -66,9 +64,7 @@ jobs:
               "-WaitMutex",
               "-FromMSBuild",
               "-MaxParallelActions=2"
-            ) `
-            -Priority 'BelowNormal' `
-            -Wait
+            )
 
       - name: Compile Game (Development)
         shell: powershell
@@ -86,6 +82,4 @@ jobs:
               "-WaitMutex",
               "-FromMSBuild",
               "-MaxParallelActions=2"
-            ) `
-            -Priority 'BelowNormal' `
-            -Wait
+            )
