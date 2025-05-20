@@ -22,10 +22,7 @@ public:
 
 private:
 	void OnSeamlessTravelStart(UWorld* World, const FString& MapName);
-	void OnPreLoadMap(const FString& String);
-	void PostLoadMapWithWorld(UWorld* InLoadedWorld);
 	void PlayLoadingScreen();
-	void StopLoadingScreen();
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -34,6 +31,4 @@ public:
 protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
-	UPROPERTY()
-	TObjectPtr<UUserWidget> LoadingScreenWidget;
 };

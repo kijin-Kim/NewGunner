@@ -5,18 +5,15 @@
 
 #include "MoviePlayer.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Image.h"
 #include "Prediction/NexusPrediction.h"
+
 
 void UGunnerGameInstance::Init()
 {
 	Super::Init();
-
-	FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
-	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UGunnerGameInstance::PostLoadMapWithWorld);
-	
 	FWorldDelegates::OnSeamlessTravelStart.RemoveAll(this);
 	FWorldDelegates::OnSeamlessTravelStart.AddUObject(this, &UGunnerGameInstance::OnSeamlessTravelStart);
-	
 }
 
 void UGunnerGameInstance::Shutdown()
@@ -30,29 +27,18 @@ void UGunnerGameInstance::OnSeamlessTravelStart(UWorld* World, const FString& Ma
 	PlayLoadingScreen();
 }
 
-void UGunnerGameInstance::PostLoadMapWithWorld(UWorld* InLoadedWorld)
-{
-	StopLoadingScreen();
-}
-
-
 void UGunnerGameInstance::PlayLoadingScreen()
 {
 	if (LoadingScreenWidgetClass)
 	{
+		UUserWidget* LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidgetClass);
 		FLoadingScreenAttributes LoadingScreenAttributes;
-		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidgetClass);
 		LoadingScreenAttributes.WidgetLoadingScreen = LoadingScreenWidget->TakeWidget();
 		LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 5.0f;
-		LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
+		LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = true;
 		LoadingScreenAttributes.bAllowEngineTick = true;
 
 		GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
 		GetMoviePlayer()->PlayMovie();
 	}
-}
-
-void UGunnerGameInstance::StopLoadingScreen()
-{
-	//GetMoviePlayer()->StopMovie();
 }
