@@ -6,7 +6,7 @@ on:
       - develop
 
 env:
-  ENGINE_PATH: C:\Dev\UE_5.5.4
+  ENGINE_PATH: C:\Program Files\Epic Games\UE_5.5
   PROJECT_NAME: Gunner
   PROJECT_FILENAME: Gunner.uproject
   PLATFORM: Win64
@@ -27,6 +27,8 @@ jobs:
       
       - name: Checkout repository source code
         uses: actions/checkout@v4
+        with:
+          clean: false
 
       - name: Compile ShaderCompileWorker (Development)
         shell: powershell
@@ -34,7 +36,18 @@ jobs:
           Write-Host "Building ShaderCompileWorker (${{ env.CONFIGURATION_DEVELOPMENT }})..."
           Write-Host "Engine Path: ${{ env.ENGINE_PATH }}"
           Write-Host "Project File Path: ${{ github.workspace }}\${{ env.PROJECT_FILENAME }}"
-          & "${{ env.ENGINE_PATH }}\UnrealEngine\Engine\Build\BatchFiles\Build.bat" ShaderCompileWorker ${{ env.PLATFORM }} ${{ env.CONFIGURATION_DEVELOPMENT }} -Project "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}" -Quiet -WaitMutex -FromMSBuild
+          Start-Process -FilePath "${{ env.ENGINE_PATH }}\Engine\Build\BatchFiles\Build.bat" `
+            -ArgumentList @(
+              "ShaderCompileWorker",
+              "${{ env.PLATFORM }}",
+              "${{ env.CONFIGURATION_DEVELOPMENT }}",
+              "-Project", "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}",
+              "-Quiet",
+              "-WaitMutex",
+              "-FromMSBuild",
+              "-MaxParallelActions=2"
+            ) `
+            -Priority 'BelowNormal' -Wait
 
       - name: Compile Editor (Development)
         shell: powershell
@@ -42,7 +55,18 @@ jobs:
           Write-Host "Building ${{ env.PROJECT_NAME }}Editor (${{ env.CONFIGURATION_DEVELOPMENT }})..."
           Write-Host "Engine Path: ${{ env.ENGINE_PATH }}"
           Write-Host "Project File Path: ${{ github.workspace }}\${{ env.PROJECT_FILENAME }}"
-          & "${{ env.ENGINE_PATH }}\UnrealEngine\Engine\Build\BatchFiles\Build.bat" ${{ env.PROJECT_NAME }}Editor ${{ env.PLATFORM }} ${{ env.CONFIGURATION_DEVELOPMENT }} -Project "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}" -Quiet -WaitMutex -FromMSBuild
+          Start-Process -FilePath "${{ env.ENGINE_PATH }}\Engine\Build\BatchFiles\Build.bat" `
+            -ArgumentList @(
+              "${{ env.PROJECT_NAME }}Editor",
+              "${{ env.PLATFORM }}",
+              "${{ env.CONFIGURATION_DEVELOPMENT }}",
+              "-Project", "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}",
+              "-Quiet",
+              "-WaitMutex",
+              "-FromMSBuild",
+              "-MaxParallelActions=2"
+            ) `
+            -Priority 'BelowNormal' -Wait
 
       - name: Compile Game (Development)
         shell: powershell
@@ -50,4 +74,15 @@ jobs:
           Write-Host "Building ${{ env.PROJECT_NAME }} Game (${{ env.CONFIGURATION_DEVELOPMENT }})..."
           Write-Host "Engine Path: ${{ env.ENGINE_PATH }}"
           Write-Host "Project File Path: ${{ github.workspace }}\${{ env.PROJECT_FILENAME }}"
-          & "${{ env.ENGINE_PATH }}\UnrealEngine\Engine\Build\BatchFiles\Build.bat" ${{ env.PROJECT_NAME }} ${{ env.PLATFORM }} ${{ env.CONFIGURATION_DEVELOPMENT }} -Project "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}" -Quiet -WaitMutex -FromMSBuild
+          Start-Process -FilePath "${{ env.ENGINE_PATH }}\Engine\Build\BatchFiles\Build.bat" `
+            -ArgumentList @(
+              "${{ env.PROJECT_NAME }}",
+              "${{ env.PLATFORM }}",
+              "${{ env.CONFIGURATION_DEVELOPMENT }}",
+              "-Project", "${{ github.workspace }}\${{ env.PROJECT_FILENAME }}",
+              "-Quiet",
+              "-WaitMutex",
+              "-FromMSBuild",
+              "-MaxParallelActions=2"
+            ) `
+            -Priority 'BelowNormal' -Wait
