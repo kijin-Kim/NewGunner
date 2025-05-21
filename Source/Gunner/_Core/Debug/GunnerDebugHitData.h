@@ -45,7 +45,7 @@ public:
 
 		
 	UPROPERTY()
-	FVector Location;
+	FVector Location = FVector::ZeroVector;
 	UPROPERTY()
 	TArray<FGunnerDebugHitBoxInfo> DebugHitBoxInfos;
 
