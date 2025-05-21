@@ -14,9 +14,9 @@ struct FGunnerGeometryVertex
 	GENERATED_BODY();
 
 	UPROPERTY(EditAnywhere)
-	float X;
+	float X = 0.0f;
 	UPROPERTY(EditAnywhere)
-	float Y;
+	float Y = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -25,9 +25,9 @@ struct FGunnerGeometryLine
 	GENERATED_BODY();
 
 	UPROPERTY(EditAnywhere)
-	int32 Start;
+	int32 Start = 0;
 	UPROPERTY(EditAnywhere)
-	int32 End;
+	int32 End = 0;
 };
 
 USTRUCT(BlueprintType)

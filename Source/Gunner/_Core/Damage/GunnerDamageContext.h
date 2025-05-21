@@ -22,7 +22,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<AActor> Target;
 	UPROPERTY(BlueprintReadOnly)
-	FVector HitNormal;
+	FVector HitNormal = FVector::ZeroVector;
 	UPROPERTY(BlueprintReadOnly)
 	FName HitBoneName;
 	UPROPERTY(BlueprintReadOnly)

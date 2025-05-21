@@ -34,9 +34,9 @@ struct FGunnerKillFeed
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly)
-	APlayerState* KillerPlayerState;
+	TObjectPtr<APlayerState> KillerPlayerState;
 	UPROPERTY(BlueprintReadOnly)
-	APlayerState* VictimPlayerState;
+	TObjectPtr<APlayerState> VictimPlayerState;
 	UPROPERTY(BlueprintReadOnly)
 	FName KillCauserName;
 
