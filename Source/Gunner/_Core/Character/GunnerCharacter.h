@@ -15,6 +15,7 @@
 #include "Gunner/_Core/GunnerLagCompensationComponent.h"
 #include "GunnerCharacter.generated.h"
 
+class UGunnerFogOfWarComponent;
 class AGunnerItem;
 class UGunnerActionSet;
 class UCameraComponent;
@@ -122,4 +123,7 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> ThirdPersonMaterialInstances;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UGunnerFogOfWarComponent> FogOfWarComponent;
 };

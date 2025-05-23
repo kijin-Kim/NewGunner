@@ -17,10 +17,7 @@ class GUNNER_API UGunnerFogOfWarComponent : public UActorComponent
 
 public:
 	UGunnerFogOfWarComponent();
-	virtual void InitializeComponent() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UCanvasRenderTarget2D* GetRenderTarget() const { return FogRenderTarget; }
+	void SetupFogOfWar(APlayerState* PlayerState);
 
 private:
 	UFUNCTION()
@@ -28,8 +25,6 @@ private:
 
 
 protected:
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UCanvasRenderTarget2D> FogRenderTarget;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerMapGeometryData> GeometryAsset;
 	

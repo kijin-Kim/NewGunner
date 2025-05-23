@@ -3,6 +3,7 @@
 
 #include "GunnerGameState.h"
 
+#include "Engine/CanvasRenderTarget2D.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,6 +14,11 @@ FString FGunnerKillFeed::ToString() const
 	return FString::Printf(TEXT("KillLog={Killer: %s, Victim: %s, Cause: %s}"), *KillerPlayerState->GetPlayerName(), *VictimPlayerState->GetPlayerName(), *KillCauserName.ToString());
 }
 
+AGunnerGameState::AGunnerGameState()
+{
+	PrimaryActorTick.bCanEverTick = true;
+}
+
 void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -20,6 +26,23 @@ void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AGunnerGameState, ServerMatchTimeLimitSeconds);
 }
 
+void AGunnerGameState::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	for (auto& [PlayerID, RenderTarget] : PlayerFogOfWarRenderTargets)
+	{
+		if (RenderTarget)
+		{
+			RenderTarget->UpdateResource();
+		}
+	}
+}
+
+void AGunnerGameState::HandleMatchHasStarted()
+{
+	Super::HandleMatchHasStarted();
+	UE_LOG(LogGunner, Log, TEXT("Match Has Started: PlayerNum: %d"), PlayerArray.Num());
+}
 
 void AGunnerGameState::HandleMatchHasEnded()
 {
@@ -53,6 +76,18 @@ void AGunnerGameState::UpdateKillInfos(AController* Killer)
 	NewInfo.KillerPlayerId = Killer->PlayerState->GetPlayerId();
 	NewInfo.Kills = 1;
 	KillInfos.Add(NewInfo);
+}
+
+UCanvasRenderTarget2D* AGunnerGameState::FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerID)
+{
+	if (!PlayerFogOfWarRenderTargets.Contains(PlayerID))
+	{
+		UCanvasRenderTarget2D* NewFogRenderTarget = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(
+			GetWorld(), UCanvasRenderTarget2D::StaticClass(), 1024, 1024);
+		PlayerFogOfWarRenderTargets.Add(PlayerID, NewFogRenderTarget);
+	}
+
+	return PlayerFogOfWarRenderTargets[PlayerID];
 }
 
 void AGunnerGameState::NetMulticastBroadcastKill_Implementation(const FGunnerKillFeed& KillLog)

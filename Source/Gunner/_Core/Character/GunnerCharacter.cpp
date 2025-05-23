@@ -19,6 +19,7 @@
 #include "Gunner/_Core/GunnerBlueprintFunctionLibrary.h"
 #include "Gunner/_Core/GunnerNativeGameplayTags.h"
 #include "Gunner/_Core/Player/GunnerPlayerState.h"
+#include "Gunner/_Core/UI/Minimap/GunnerFogOfWarComponent.h"
 
 AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGunnerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -63,6 +64,8 @@ AGunnerCharacter::AGunnerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	LagCompensationComponent = CreateDefaultSubobject<UGunnerLagCompensationComponent>(TEXT("LagCompensationComponent"));
+
+	FogOfWarComponent = CreateDefaultSubobject<UGunnerFogOfWarComponent>(TEXT("FogOfWarComponent"));
 }
 
 void AGunnerCharacter::PostInitializeComponents()
@@ -109,7 +112,6 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		if (PC && PC->IsLocalController())
 		{
 			CameraControllerComponent->InitCameraController();
-
 		}
 
 		GetCharacterMovement<UGunnerCharacterMovementComponent>()->InitEvents();
@@ -128,6 +130,8 @@ void AGunnerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		{
 			OnTagAddedDelegate.AddDynamic(this, &AGunnerCharacter::OnTagAdded);
 		}
+
+		FogOfWarComponent->SetupFogOfWar(NewPlayerState);
 	}
 }
 
@@ -260,4 +264,3 @@ void AGunnerCharacter::OnTagAdded(const FGameplayTag& Tag)
 		}
 	}
 }
-

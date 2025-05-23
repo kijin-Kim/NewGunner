@@ -8,6 +8,8 @@
 #include "GunnerGameState.generated.h"
 
 
+class UCanvasRenderTarget2D;
+
 USTRUCT()
 struct FGunnerKillInfo
 {
@@ -57,12 +59,14 @@ class GUNNER_API AGunnerGameState : public AGameState
 	GENERATED_BODY()
 
 public:
+	AGunnerGameState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastBroadcastWinners(const TArray<int32>& WinnerIds);
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticastBroadcastKill(const FGunnerKillFeed& KillLog);
+	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
 
 	void SetMatchTimeLimitSeconds(double Seconds) { ServerMatchTimeLimitSeconds = Seconds; }
@@ -70,14 +74,21 @@ public:
 	UFUNCTION()
 	virtual void OnRep_KillInfos();
 	void UpdateKillInfos(AController* Killer);
-	
+
 	const TArray<FGunnerKillInfo>& GetKillInfos() const { return KillInfos; }
+
+	UFUNCTION(BlueprintCallable)
+	virtual UCanvasRenderTarget2D* FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerID);
 
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerMatchEndedSignature OnMatchEndedDelegate;
 	UPROPERTY(BlueprintAssignable)
 	FOnGunnerNewKillConfirmedSignature OnNewKillConfirmedDelegate;
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	TMap<int32, TObjectPtr<UCanvasRenderTarget2D>> PlayerFogOfWarRenderTargets;
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_KillInfos)

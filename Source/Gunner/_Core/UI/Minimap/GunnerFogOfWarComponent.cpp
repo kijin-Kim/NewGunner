@@ -11,33 +11,24 @@
 #include "Engine/CanvasRenderTarget2D.h"
 #include "GameFramework/MovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "Gunner/_Core/GunnerGameState.h"
+#include "Gunner/_Core/Character/GunnerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UGunnerFogOfWarComponent::UGunnerFogOfWarComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	bWantsInitializeComponent = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UGunnerFogOfWarComponent::InitializeComponent()
+void UGunnerFogOfWarComponent::SetupFogOfWar(APlayerState* PlayerState)
 {
-	Super::InitializeComponent();
-	FogRenderTarget = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(
-		GetWorld(), UCanvasRenderTarget2D::StaticClass(), 1024, 1024);
-
+	check(PlayerState);
+	AGunnerGameState* GameState = GetWorld()->GetGameStateChecked<AGunnerGameState>();
+	UCanvasRenderTarget2D* FogRenderTarget = GameState->FindOrAddPlayerFogOfWarRenderTarget(PlayerState->GetPlayerId());
 	FogRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
 }
-
-
-void UGunnerFogOfWarComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (FogRenderTarget)
-	{
-		FogRenderTarget->UpdateResource();
-	}
-}
-
 
 static bool LineSegmentIntersection(
 	const FVector2D& A, const FVector2D& B,
