@@ -17,15 +17,15 @@ class GUNNER_API UGunnerFogOfWarComponent : public UActorComponent
 
 public:
 	UGunnerFogOfWarComponent();
-	
+
 	void SetupFogOfWar(APlayerState* PlayerState);
 
 private:
 	UFUNCTION()
 	void DrawVision(UCanvas* Canvas, int32 Width, int32 Height);
+	void DrawPlayerIcon(UCanvas* Canvas, int32 Width, FVector2D ViewOrigin, FVector ForwardVector, UMaterialInterface* Material);
 	UFUNCTION()
 	void DrawInformation(UCanvas* Canvas, int32 Width, int32 Height);
-
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -33,5 +33,10 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMaterial> PlayerIconMaterial;
-	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterial> CharacterContainerMaterial;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInstanceDynamic> AllyCharacterContainerMaterialInstance;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInstanceDynamic> EnemyCharacterContainerMaterialInstance;
 };
