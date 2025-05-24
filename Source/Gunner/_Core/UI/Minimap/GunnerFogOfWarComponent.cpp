@@ -5,13 +5,11 @@
 
 #include "CanvasItem.h"
 #include "GunnerMiniMapData.h"
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Engine/Canvas.h"
 #include "Engine/CanvasRenderTarget2D.h"
-#include "GameFramework/MovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "Gunner/Gunner.h"
 #include "Gunner/_Core/GunnerGameState.h"
 #include "Gunner/_Core/Character/GunnerCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,9 +23,27 @@ UGunnerFogOfWarComponent::UGunnerFogOfWarComponent()
 void UGunnerFogOfWarComponent::SetupFogOfWar(APlayerState* PlayerState)
 {
 	check(PlayerState);
-	AGunnerGameState* GameState = GetWorld()->GetGameStateChecked<AGunnerGameState>();
-	UCanvasRenderTarget2D* FogRenderTarget = GameState->FindOrAddPlayerFogOfWarRenderTarget(PlayerState->GetPlayerId());
-	FogRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
+	IGunnerTeamAgentInterface* TeamAgentInterface = Cast<IGunnerTeamAgentInterface>(PlayerState);
+	check(TeamAgentInterface);
+	if (ensure(TeamAgentInterface && TeamAgentInterface->GetOnTeamSetDelegate()))
+	{
+		TeamAgentInterface->GetOnTeamSetDelegate()->AddWeakLambda(this, [this, PlayerState](FGenericTeamId OldTeamId, FGenericTeamId NewTeamId)
+		{
+			AGunnerGameState* GameState = GetWorld()->GetGameStateChecked<AGunnerGameState>();
+			const FGunnerFogOfWarRenderTargets& OldRenderTargets = GameState->FindOrAddPlayerFogOfWarRenderTargets(OldTeamId);
+			OldRenderTargets.VisionConeRenderTarget->OnCanvasRenderTargetUpdate.RemoveDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
+			OldRenderTargets.InformationRenderTarget->OnCanvasRenderTargetUpdate.RemoveDynamic(this, &UGunnerFogOfWarComponent::DrawInformation);
+			const FGunnerFogOfWarRenderTargets& NewRenderTargets = GameState->FindOrAddPlayerFogOfWarRenderTargets(NewTeamId);
+			NewRenderTargets.VisionConeRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
+			NewRenderTargets.InformationRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawInformation);
+		});
+
+
+		AGunnerGameState* GameState = GetWorld()->GetGameStateChecked<AGunnerGameState>();
+		const FGunnerFogOfWarRenderTargets& RenderTargets = GameState->FindOrAddPlayerFogOfWarRenderTargets(TeamAgentInterface->GetGenericTeamId());
+		RenderTargets.VisionConeRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
+		RenderTargets.InformationRenderTarget->OnCanvasRenderTargetUpdate.AddDynamic(this, &UGunnerFogOfWarComponent::DrawInformation);
+	}
 }
 
 static bool LineSegmentIntersection(
@@ -158,5 +174,72 @@ void UGunnerFogOfWarComponent::DrawVision(UCanvas* Canvas, int32 Width, int32 He
 		FCanvasTriangleItem TriangleItem(B, C, A, GWhiteTexture);
 		TriangleItem.SetColor(FLinearColor::White);
 		Canvas->DrawItem(TriangleItem);
+	}
+}
+
+void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int32 Height)
+{
+	if (!PlayerIconMaterial)
+	{
+		return;
+	}
+
+
+	FVector PlayerEyeLocation;
+	FRotator PlayerEyeRotation;
+	GetOwner()->GetActorEyesViewPoint(PlayerEyeLocation, PlayerEyeRotation);
+	FVector2D ViewOrigin = {PlayerEyeLocation.Y, -PlayerEyeLocation.X};
+	ViewOrigin = (ViewOrigin * 0.12f + Width / 2.0f) / Width;
+
+	Canvas->K2_DrawMaterial(
+		PlayerIconMaterial,
+		ViewOrigin * Width - 64.0f / 2.0f,
+		FVector2D(64.0f, 64.0f),
+		FVector2D(0.0f, 0.0f),
+		FVector2D(1.0f, 1.0f)
+	);
+
+
+	if (APawn* PawnOwner = GetOwner<APawn>())
+	{
+		TArray<AActor*> AllActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), AllActors);
+
+
+		for (AActor* Actor : AllActors)
+		{
+			FHitResult Hit;
+			FCollisionQueryParams CollisionParams;
+			CollisionParams.AddIgnoredActor(GetOwner());
+
+			FVector Toward = (Actor->GetActorLocation() - PlayerEyeLocation).GetSafeNormal();
+
+
+			FCollisionResponseParams ResponseParams;
+			GetWorld()->LineTraceSingleByChannel(
+				Hit,
+				PlayerEyeLocation,
+				Actor->GetActorLocation() + Toward * 100.0f,
+				ECC_Visibility,
+				CollisionParams,
+				ResponseParams
+			);
+
+			if (Hit.GetActor() == Actor)
+			{
+				FVector2D ActorViewOrigin = {Hit.Location.Y, -Hit.Location.X};
+				ActorViewOrigin = (ActorViewOrigin * 0.12f + Width / 2.0f) / Width;
+				Canvas->K2_DrawMaterial(
+					PlayerIconMaterial,
+					ActorViewOrigin * Width - 64.0f / 2.0f,
+					FVector2D(64.0f, 64.0f),
+					FVector2D(0.0f, 0.0f),
+					FVector2D(1.0f, 1.0f)
+				);
+				DrawDebugLine(GetWorld(), PlayerEyeLocation, Hit.Location, FColor::Green, false, 1.0f);
+				DrawDebugSphere(GetWorld(), Hit.Location, 10.0f, 16, FColor::Green, false, 1.0f);
+				GR_LOG_SUB(GetOwner(), LogGunner, Display, TEXT("Hit Actor: %s"), *Actor->GetName());
+			}
+		}
 	}
 }

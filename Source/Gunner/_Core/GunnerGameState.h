@@ -50,6 +50,18 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerMatchEndedSignature, const 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGunnerNewKillConfirmedSignature, const FGunnerKillFeed&, KillLog);
 
 
+USTRUCT(BlueprintType)
+struct FGunnerFogOfWarRenderTargets
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UCanvasRenderTarget2D> VisionConeRenderTarget;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UCanvasRenderTarget2D> InformationRenderTarget;
+};
+
+
 /**
  * 
  */
@@ -78,7 +90,7 @@ public:
 	const TArray<FGunnerKillInfo>& GetKillInfos() const { return KillInfos; }
 
 	UFUNCTION(BlueprintCallable)
-	virtual UCanvasRenderTarget2D* FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerID);
+	virtual const FGunnerFogOfWarRenderTargets& FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerID);
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -88,7 +100,7 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
-	TMap<int32, TObjectPtr<UCanvasRenderTarget2D>> PlayerFogOfWarRenderTargets;
+	TMap<int32, FGunnerFogOfWarRenderTargets> PlayerFogOfWarRenderTargets;
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_KillInfos)

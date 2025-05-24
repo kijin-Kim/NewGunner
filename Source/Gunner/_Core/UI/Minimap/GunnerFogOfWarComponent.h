@@ -17,15 +17,21 @@ class GUNNER_API UGunnerFogOfWarComponent : public UActorComponent
 
 public:
 	UGunnerFogOfWarComponent();
+	
 	void SetupFogOfWar(APlayerState* PlayerState);
 
 private:
 	UFUNCTION()
 	void DrawVision(UCanvas* Canvas, int32 Width, int32 Height);
+	UFUNCTION()
+	void DrawInformation(UCanvas* Canvas, int32 Width, int32 Height);
 
 
 protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerMapGeometryData> GeometryAsset;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterial> PlayerIconMaterial;
 	
 };

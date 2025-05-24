@@ -24,7 +24,7 @@ public:
 	virtual void OnRep_KillInfos() override;
 	virtual void HandleMatchHasEnded() override;
 	const TMap<FGenericTeamId, int32>& GetKillCountPerTeam() const { return KillCountPerTeam; }
-	virtual UCanvasRenderTarget2D* FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerId) override;
+	virtual const FGunnerFogOfWarRenderTargets& FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerId) override;
 
 
 public:

@@ -50,23 +50,26 @@ void AGunnerTeamDeathMatchGameState::HandleMatchHasEnded()
 	KillCountPerTeam.Empty();
 }
 
-UCanvasRenderTarget2D* AGunnerTeamDeathMatchGameState::FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerId)
+const FGunnerFogOfWarRenderTargets& AGunnerTeamDeathMatchGameState::FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerId)
 {
-	TObjectPtr<APlayerState>* PlayerStatePtr = PlayerArray.FindByPredicate([PlayerId](APlayerState* PlayerState)
-		{
-			return PlayerState->GetPlayerId() == PlayerId;
-		}
-	);
+	// static FGunnerFogOfWarRenderTargets NullFogOfWarRenderTargets;
+	// TObjectPtr<APlayerState>* PlayerStatePtr = PlayerArray.FindByPredicate([PlayerId](APlayerState* PlayerState)
+	// 	{
+	// 		return PlayerState->GetPlayerId() == PlayerId;
+	// 	}
+	// );
+	//
+	// if (!PlayerStatePtr)
+	// {
+	// 	return NullFogOfWarRenderTargets;
+	// }
+	//
+	// IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(*PlayerStatePtr);
+	// if (!TeamAgentInterface)
+	// {
+	// 	return NullFogOfWarRenderTargets;
+	// }
+	// return Super::FindOrAddPlayerFogOfWarRenderTargets(TeamAgentInterface->GetGenericTeamId());
 
-	if (!PlayerStatePtr)
-	{
-		return nullptr;
-	}
-
-	IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(*PlayerStatePtr);
-	if (!TeamAgentInterface)
-	{
-		return nullptr;
-	}
-	return Super::FindOrAddPlayerFogOfWarRenderTarget(TeamAgentInterface->GetGenericTeamId());
+	return Super::FindOrAddPlayerFogOfWarRenderTargets(PlayerId);
 }

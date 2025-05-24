@@ -29,11 +29,16 @@ void AGunnerGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void AGunnerGameState::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	for (auto& [PlayerID, RenderTarget] : PlayerFogOfWarRenderTargets)
+	for (auto& [PlayerID, RenderTargets] : PlayerFogOfWarRenderTargets)
 	{
-		if (RenderTarget)
+		if (RenderTargets.VisionConeRenderTarget)
 		{
-			RenderTarget->UpdateResource();
+			RenderTargets.VisionConeRenderTarget->UpdateResource();
+		}
+
+		if (RenderTargets.InformationRenderTarget)
+		{
+			RenderTargets.InformationRenderTarget->UpdateResource();
 		}
 	}
 }
@@ -78,13 +83,16 @@ void AGunnerGameState::UpdateKillInfos(AController* Killer)
 	KillInfos.Add(NewInfo);
 }
 
-UCanvasRenderTarget2D* AGunnerGameState::FindOrAddPlayerFogOfWarRenderTarget(int32 PlayerID)
+const FGunnerFogOfWarRenderTargets& AGunnerGameState::FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerID)
 {
 	if (!PlayerFogOfWarRenderTargets.Contains(PlayerID))
 	{
-		UCanvasRenderTarget2D* NewFogRenderTarget = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(
+		FGunnerFogOfWarRenderTargets NewRenderTargets;
+		NewRenderTargets.VisionConeRenderTarget = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(
 			GetWorld(), UCanvasRenderTarget2D::StaticClass(), 1024, 1024);
-		PlayerFogOfWarRenderTargets.Add(PlayerID, NewFogRenderTarget);
+		NewRenderTargets.InformationRenderTarget = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(
+			GetWorld(), UCanvasRenderTarget2D::StaticClass(), 1024, 1024);
+		PlayerFogOfWarRenderTargets.Add(PlayerID, NewRenderTargets);
 	}
 
 	return PlayerFogOfWarRenderTargets[PlayerID];
