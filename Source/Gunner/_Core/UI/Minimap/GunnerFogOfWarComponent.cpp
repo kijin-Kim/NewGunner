@@ -190,6 +190,9 @@ void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int
 	GetOwner()->GetActorEyesViewPoint(PlayerEyeLocation, PlayerEyeRotation);
 	FVector2D ViewOrigin = {PlayerEyeLocation.Y, -PlayerEyeLocation.X};
 	ViewOrigin = (ViewOrigin * 0.12f + Width / 2.0f) / Width;
+	FVector ForwardVector = PlayerEyeRotation.Vector();
+	ForwardVector.Z = 0.0f;
+	ForwardVector.Normalize();
 
 	Canvas->K2_DrawMaterial(
 		PlayerIconMaterial,
@@ -212,8 +215,17 @@ void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int
 			FCollisionQueryParams CollisionParams;
 			CollisionParams.AddIgnoredActor(GetOwner());
 
+			
 			FVector Toward = (Actor->GetActorLocation() - PlayerEyeLocation).GetSafeNormal();
-
+			
+			FVector TowardProject = Toward;
+			Toward.Z = 0.0f;
+			TowardProject.Normalize();
+			float Dot = FVector::DotProduct(ForwardVector, TowardProject);
+			if (Dot < FMath::Cos( FMath::DegreesToRadians(71.0f) / 2.0f))
+			{
+				continue;
+			}
 
 			FCollisionResponseParams ResponseParams;
 			GetWorld()->LineTraceSingleByChannel(
