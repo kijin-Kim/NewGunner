@@ -32,11 +32,12 @@ protected:
 	TObjectPtr<UGunnerMapGeometryData> GeometryAsset;
 
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterial> PlayerIconMaterial;
+	TObjectPtr<UMaterialInterface> PlayerIconMaterial;
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterial> CharacterContainerMaterial;
+	TObjectPtr<UMaterialInterface> SelfPortraitContainerMaterial;
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterialInstanceDynamic> AllyCharacterContainerMaterialInstance;
+	TObjectPtr<UMaterialInterface> AllyPortraitContainerMaterial;
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UMaterialInstanceDynamic> EnemyCharacterContainerMaterialInstance;
+	TObjectPtr<UMaterialInterface> EnemyPortraitContainerMaterial;
+	
 };

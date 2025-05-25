@@ -45,21 +45,6 @@ void UGunnerFogOfWarComponent::SetupFogOfWar(APlayerState* PlayerState)
 
 		RenderTargets.VisionConeRenderTarget->OnCanvasRenderTargetUpdate.AddUniqueDynamic(this, &UGunnerFogOfWarComponent::DrawVision);
 		RenderTargets.InformationRenderTarget->OnCanvasRenderTargetUpdate.AddUniqueDynamic(this, &UGunnerFogOfWarComponent::DrawInformation);
-
-		if (CharacterContainerMaterial)
-		{
-			if (!EnemyCharacterContainerMaterialInstance)
-			{
-				EnemyCharacterContainerMaterialInstance = UMaterialInstanceDynamic::Create(CharacterContainerMaterial, this);
-				EnemyCharacterContainerMaterialInstance->SetVectorParameterValue(TEXT("Color"), FColor::Red);
-			}
-
-			if (!AllyCharacterContainerMaterialInstance)
-			{
-				AllyCharacterContainerMaterialInstance = UMaterialInstanceDynamic::Create(CharacterContainerMaterial, this);
-				AllyCharacterContainerMaterialInstance->SetVectorParameterValue(TEXT("Color"), FColor::Cyan);
-			}
-		}
 	}
 }
 
@@ -220,7 +205,7 @@ void UGunnerFogOfWarComponent::DrawPlayerIcon(UCanvas* Canvas, int32 Width, FVec
 
 void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int32 Height)
 {
-	if (!PlayerIconMaterial || !CharacterContainerMaterial)
+	if (!PlayerIconMaterial || !SelfPortraitContainerMaterial)
 	{
 		return;
 	}
@@ -237,22 +222,13 @@ void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int
 	APawn* PawnOwner = Cast<APawn>(GetOwner());
 	if (PawnOwner && PawnOwner->IsLocallyControlled())
 	{
-		DrawPlayerIcon(Canvas, Width, ViewOrigin, ForwardVector, CharacterContainerMaterial);
+		DrawPlayerIcon(Canvas, Width, ViewOrigin, ForwardVector, SelfPortraitContainerMaterial);
 	}
 	else
 	{
-		DrawPlayerIcon(Canvas, Width, ViewOrigin, ForwardVector, AllyCharacterContainerMaterialInstance);
+		DrawPlayerIcon(Canvas, Width, ViewOrigin, ForwardVector, AllyPortraitContainerMaterial);
 	}
 
-
-	// Canvas->K2_DrawMaterial(
-	// 	CharacterContainerMaterial,
-	// 	ViewOrigin * Width,
-	// 	FVector2D(34.0f * 2.0f, 43.0f * 2.0f),
-	// 	FVector2D(0.0f, 0.0f),
-	// 	FVector2D(1.0f, 1.0f),
-	// 	ForwardVector.Rotation().Yaw
-	// );
 
 	TArray<AActor*> AllActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGunnerCharacter::StaticClass(), AllActors);
@@ -300,7 +276,7 @@ void UGunnerFogOfWarComponent::DrawInformation(UCanvas* Canvas, int32 Width, int
 			Actor->GetActorEyesViewPoint(ActorEyeLocation, ActorEyeRotation);
 			FVector ActorForward = ActorEyeRotation.Vector();
 			ActorForward.Z = 0.0f;
-			DrawPlayerIcon(Canvas, Width, ActorViewOrigin, ActorForward, EnemyCharacterContainerMaterialInstance);
+			DrawPlayerIcon(Canvas, Width, ActorViewOrigin, ActorForward, EnemyPortraitContainerMaterial);
 		}
 	}
 }
