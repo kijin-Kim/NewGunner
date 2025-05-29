@@ -17,20 +17,27 @@ class GUNNER_API UGunnerFogOfWarComponent : public UActorComponent
 
 public:
 	UGunnerFogOfWarComponent();
-	virtual void InitializeComponent() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UCanvasRenderTarget2D* GetRenderTarget() const { return FogRenderTarget; }
+	void SetupFogOfWar(APlayerState* PlayerState);
 
 private:
 	UFUNCTION()
 	void DrawVision(UCanvas* Canvas, int32 Width, int32 Height);
-
+	void DrawPlayerIcon(UCanvas* Canvas, int32 Width, FVector2D ViewOrigin, FVector ForwardVector, UMaterialInterface* Material);
+	UFUNCTION()
+	void DrawInformation(UCanvas* Canvas, int32 Width, int32 Height);
 
 protected:
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UCanvasRenderTarget2D> FogRenderTarget;
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGunnerMapGeometryData> GeometryAsset;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInterface> PlayerIconMaterial;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInterface> SelfPortraitContainerMaterial;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInterface> AllyPortraitContainerMaterial;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMaterialInterface> EnemyPortraitContainerMaterial;
 	
 };

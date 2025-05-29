@@ -3,6 +3,8 @@
 
 #include "GunnerTeamDeathMatchGameState.h"
 
+#include "GameFramework/PlayerState.h"
+
 void AGunnerTeamDeathMatchGameState::AddTeamKillCount(FGenericTeamId TeamId, int32 KillCount)
 {
 	KillCountPerTeam.FindOrAdd(TeamId)++;
@@ -46,4 +48,28 @@ void AGunnerTeamDeathMatchGameState::HandleMatchHasEnded()
 		OnTeamKillCountChanged.Broadcast(TeamID, 0);
 	}
 	KillCountPerTeam.Empty();
+}
+
+const FGunnerFogOfWarRenderTargets& AGunnerTeamDeathMatchGameState::FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerId)
+{
+	// static FGunnerFogOfWarRenderTargets NullFogOfWarRenderTargets;
+	// TObjectPtr<APlayerState>* PlayerStatePtr = PlayerArray.FindByPredicate([PlayerId](APlayerState* PlayerState)
+	// 	{
+	// 		return PlayerState->GetPlayerId() == PlayerId;
+	// 	}
+	// );
+	//
+	// if (!PlayerStatePtr)
+	// {
+	// 	return NullFogOfWarRenderTargets;
+	// }
+	//
+	// IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(*PlayerStatePtr);
+	// if (!TeamAgentInterface)
+	// {
+	// 	return NullFogOfWarRenderTargets;
+	// }
+	// return Super::FindOrAddPlayerFogOfWarRenderTargets(TeamAgentInterface->GetGenericTeamId());
+
+	return Super::FindOrAddPlayerFogOfWarRenderTargets(PlayerId);
 }

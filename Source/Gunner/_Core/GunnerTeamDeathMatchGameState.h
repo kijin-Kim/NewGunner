@@ -19,11 +19,13 @@ class GUNNER_API AGunnerTeamDeathMatchGameState : public AGunnerGameState
 
 public:
 	void AddTeamKillCount(FGenericTeamId TeamId, int32 KillCount);
-	
-	
+
+
 	virtual void OnRep_KillInfos() override;
 	virtual void HandleMatchHasEnded() override;
 	const TMap<FGenericTeamId, int32>& GetKillCountPerTeam() const { return KillCountPerTeam; }
+	virtual const FGunnerFogOfWarRenderTargets& FindOrAddPlayerFogOfWarRenderTargets(int32 PlayerId) override;
+
 
 public:
 	FOnGunnerTeamKillCountChangedSignature OnTeamKillCountChanged;
