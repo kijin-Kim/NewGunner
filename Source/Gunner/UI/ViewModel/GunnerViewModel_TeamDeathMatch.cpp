@@ -8,25 +8,6 @@
 #include "GameFramework/PlayerState.h"
 
 
-UObject* UGunnerViewModelContextResolver::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View) const
-{
-	return UGunnerViewModel_TeamDeathMatch::CreateInstance(ExpectedType, UserWidget, View);
-}
-
-void UGunnerViewModelContextResolver::DestroyInstance(const UObject* ViewModel, const UMVVMView* View) const
-{
-	Super::DestroyInstance(ViewModel, View);
-	CastChecked<UGunnerViewModel_TeamDeathMatch>(ViewModel)->OnDestroyViewModel(ViewModel, View);
-}
-
-UGunnerViewModel_TeamDeathMatch* UGunnerViewModel_TeamDeathMatch::CreateInstance(const UClass* ExpectedType, const UUserWidget* UserWidget, const UMVVMView* View)
-{
-	UGunnerViewModel_TeamDeathMatch* ViewModel = NewObject<UGunnerViewModel_TeamDeathMatch>(UserWidget->GetOwningPlayer(), ExpectedType);
-	check(ViewModel);
-	ViewModel->OnCreateViewModel(UserWidget);
-	return ViewModel;
-}
-
 void UGunnerViewModel_TeamDeathMatch::OnCreateViewModel(const UUserWidget* UserWidget)
 {
 	APlayerState* OwningPlayerState = UserWidget->GetOwningPlayerState();

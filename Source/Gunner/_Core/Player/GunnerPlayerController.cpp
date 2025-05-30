@@ -21,6 +21,17 @@ AGunnerPlayerController::AGunnerPlayerController()
 	bAutoManageActiveCameraTarget = false;
 }
 
+void AGunnerPlayerController::SetControlRotation(const FRotator& NewRotation)
+{
+	if (!ControlRotation.Equals(NewRotation, 1e-3f))
+	{
+		Super::SetControlRotation(NewRotation);
+		OnGunnerPlayerControlRotationChangedDelegate.Broadcast(NewRotation);
+		return;
+	}
+	Super::SetControlRotation(NewRotation);
+}
+
 void AGunnerPlayerController::DisplayDebug(class UCanvas* Canvas, const class FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
 {
 	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
