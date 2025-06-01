@@ -9,7 +9,6 @@
 #include "GunnerView_HitIndicatorOverlay.generated.h"
 
 class UGunnerView_HitIndicator;
-struct FGunnerHitIndictorDataEntry;
 /**
  * 
  */
