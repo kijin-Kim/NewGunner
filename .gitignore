@@ -17,6 +17,7 @@ Windows
 *.suo
 *.xcodeproj
 *.xcworkspace
+*.ps1
 
 Plugins/BlueprintAssist
 Plugins/Uiana
