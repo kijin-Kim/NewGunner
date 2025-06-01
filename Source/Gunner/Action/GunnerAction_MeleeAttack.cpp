@@ -115,7 +115,7 @@ void UGunnerAction_MeleeAttack::AuthApplyDamage(AActor* HitActor)
 
 
 		FNexusEventMessage DamageEventMessage;
-		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
+		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_ApplyDamage;
 		APawn* AgentPawn = Cast<APawn>(GetAgentActor());
 		DamageEventMessage.Instigator = GetAgentActor();
 		DamageEventMessage.TargetActor = HitActor;
@@ -131,6 +131,6 @@ void UGunnerAction_MeleeAttack::AuthApplyDamage(AActor* HitActor)
 		DamageEventMessage.Amount = DamageType->CalculateDamageByContext(DamageContext);
 		
 		
-		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_ApplyDamage, DamageEventMessage, HitActor);
 	}
 }

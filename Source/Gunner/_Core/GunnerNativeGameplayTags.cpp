@@ -24,6 +24,7 @@ namespace GunnerNativeGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Signature, "Input.ActivateSlot.Signature");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Input_ActivateSlot_Ultimate, "Input.ActivateSlot.Ultimate");
 
+	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_ApplyDamage, "GameEvent.ApplyDamage");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Damaged, "GameEvent.Damaged");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Death, "GameEvent.Death");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CycleSlot, "GameEvent.CycleSlot");

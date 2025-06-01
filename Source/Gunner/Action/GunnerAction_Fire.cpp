@@ -260,7 +260,7 @@ void UGunnerAction_Fire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FV
 	if (DamageType)
 	{
 		FNexusEventMessage DamageEventMessage;
-		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_Damaged;
+		DamageEventMessage.EventTag = GunnerNativeGameplayTags::TAG_GameEvent_ApplyDamage;
 		APawn* AgentPawn = Cast<APawn>(GetAgentActor());
 		DamageEventMessage.Instigator =  GetAgentActor();
 		DamageEventMessage.TargetActor = HitActor;
@@ -276,7 +276,7 @@ void UGunnerAction_Fire::AuthApplyDamage(AActor* HitActor, FName HitBoneName, FV
 		DamageEventMessage.Amount = DamageType->CalculateDamageByContext(DamageContext);
 
 
-		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_Damaged, DamageEventMessage, HitActor);
+		UNexusActionComponent::SendEventToActor<FNexusEventMessage>(GunnerNativeGameplayTags::TAG_GameEvent_ApplyDamage, DamageEventMessage, HitActor);
 	}
 }
 

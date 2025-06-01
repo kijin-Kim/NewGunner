@@ -7,6 +7,7 @@
 #include "MVVM/NexusActionViewModelContextResolver.h"
 #include "GunnerViewModel_PawnState.generated.h"
 
+
 /**
  * 
  */
@@ -27,6 +28,8 @@ public:
 		}
 	}
 
+	
+	
 private:
 	UFUNCTION()
 	void OnTagAdded(const FGameplayTag& GameplayTag);
