@@ -2,6 +2,7 @@
 
 #pragma once
 
+#if WITH_EDITOR
 #include "CoreMinimal.h"
 #include "Styling/SlateStyle.h"
 
@@ -29,3 +30,4 @@ private:
 
 	static TSharedPtr< class FSlateStyleSet > StyleInstance;
 };
+#endif

@@ -11,6 +11,7 @@ class UUianaDataSettings;
 
 class FUianaModule : public IModuleInterface
 {
+#if WITH_EDITOR
 public:
 
 	/** IModuleInterface implementation */
@@ -37,4 +38,5 @@ private:
 private:
 	TWeakObjectPtr<UUianaDataSettings> DataManagementSettingsObjectPtr;
 	TSharedPtr<class FUICommandList> PluginCommands;
+#endif
 };

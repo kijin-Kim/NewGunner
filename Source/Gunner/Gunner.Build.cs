@@ -8,14 +8,13 @@ public class Gunner : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		if(Target.bBuildEditor)
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull","Niagara", "AIModule", "NexusAction", "Json" });
+		if (Target.bBuildEditor)
 		{
-			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull","Niagara", "AIModule", "NexusAction", "RenderCore", "Json" });
+			PublicDependencyModuleNames.AddRange(new string[] { "RenderCore" });
 		}
-		else
-		{
-			PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG","Slate", "SlateCore", "GameplayTags", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemNull", "AIModule", "NexusAction" });
-		}
+		
 		PrivateDependencyModuleNames.AddRange(new string[] { "NetCore", "MoviePlayer", "ModelViewViewModel" });
+		
 	}
 }

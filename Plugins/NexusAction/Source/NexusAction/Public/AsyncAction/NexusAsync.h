@@ -26,18 +26,21 @@ public:
 		SelfObject->Action = InAction;
 		SelfObject->ActionComponent = UNexusActionComponent::GetActionComponentFromActor(InAction->GetOwnerActor());
 		check(SelfObject->ActionComponent.IsValid());
-		SelfObject->Action->OnActionEndedDelegate.AddWeakLambda(SelfObject, [SelfObject](const FNexusActionDefHandle&, UNexusAction*)
+		SelfObject->ActionEndedDelegateHandle = SelfObject->Action->OnActionEndedDelegate.AddWeakLambda(SelfObject, [SelfObject](const FNexusActionDefHandle&, UNexusAction*)
 		{
 			SelfObject->Cancel();
-			SelfObject->Action->OnActionEndedDelegate.RemoveAll(SelfObject);
+			if (SelfObject->Action.IsValid())
+			{
+				SelfObject->Action->OnActionEndedDelegate.Remove(SelfObject->ActionEndedDelegateHandle);
+			}
 		});
 		return SelfObject;
 	}
 
 	virtual bool ShouldBroadcastDelegates() const override;
 
-
 protected:
 	TWeakObjectPtr<UNexusAction> Action;
 	TWeakObjectPtr<UNexusActionComponent> ActionComponent;
+	FDelegateHandle ActionEndedDelegateHandle;
 };

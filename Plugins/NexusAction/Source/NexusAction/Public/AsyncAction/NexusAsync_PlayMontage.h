@@ -41,4 +41,5 @@ private:
 	float PlayRate;
 	FName StartSectionName;
 	bool bStopWhenActionEnds;
+	FDelegateHandle MontageEndedDelegateHandle;
 };

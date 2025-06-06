@@ -31,4 +31,8 @@ public:
 protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> LoadingScreenWidgetClass;
+
+private:
+	UPROPERTY()
+	UUserWidget* LoadingScreenWidget;
 };

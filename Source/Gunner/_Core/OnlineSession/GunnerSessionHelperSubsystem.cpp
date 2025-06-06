@@ -67,8 +67,7 @@ void UGunnerSessionHelperSubsystem::CreateSession(FString LobbyName, FString Map
 	OnlineSessionSettings.bAllowJoinViaPresence = false;
 	OnlineSessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, LobbyName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	OnlineSessionSettings.Set(SETTING_MAPNAME, MapName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-
-
+	
 	GetSessionInterface()->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 	if (!GetSessionInterface()->CreateSession(0, NAME_GameSession, OnlineSessionSettings))
 	{
@@ -82,7 +81,6 @@ void UGunnerSessionHelperSubsystem::FindSessions(FString LobbyName)
 	OnlineSessionSearch->bIsLanQuery = Online::GetSubsystem(GetWorld())->GetSubsystemName() == "NULL";
 	OnlineSessionSearch->MaxSearchResults = 10;
 	OnlineSessionSearch->PingBucketSize = 50;
-	OnlineSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	OnlineSessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 	SearchLobbyName = LobbyName;
 

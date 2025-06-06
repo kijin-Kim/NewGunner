@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "Framework/Commands/Commands.h"
 #include "UianaStyle.h"
@@ -21,3 +23,4 @@ public:
 public:
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
 };
+#endif

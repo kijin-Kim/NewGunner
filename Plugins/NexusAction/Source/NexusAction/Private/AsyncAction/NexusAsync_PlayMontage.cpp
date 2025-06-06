@@ -47,7 +47,7 @@ void UNexusAsync_PlayMontage::Activate()
 
 	if (bStopWhenActionEnds)
 	{
-		Action->OnActionEndedDelegate.AddWeakLambda(this, [this, MontagePlayerComponent](const FNexusActionDefHandle&, UNexusAction*)
+		MontageEndedDelegateHandle = Action->OnActionEndedDelegate.AddWeakLambda(this, [this, MontagePlayerComponent](const FNexusActionDefHandle&, UNexusAction*)
 		{
 			MontagePlayerComponent->StopMontage(MontageToPlay.Get(), bIsThirdPerson);
 			Cancel();
@@ -95,8 +95,8 @@ void UNexusAsync_PlayMontage::Activate()
 void UNexusAsync_PlayMontage::SetReadyToDestroy()
 {
 	Super::SetReadyToDestroy();
-	if (Action.IsValid())
+	if (bStopWhenActionEnds && Action.IsValid())
 	{
-		Action->OnActionEndedDelegate.RemoveAll(this);
+		Action->OnActionEndedDelegate.Remove(MontageEndedDelegateHandle);
 	}
 }

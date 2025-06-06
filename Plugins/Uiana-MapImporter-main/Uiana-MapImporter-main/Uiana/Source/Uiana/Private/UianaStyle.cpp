@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UianaStyle.h"
+#if WITH_EDITOR
 #include "Uiana.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -59,3 +60,5 @@ const ISlateStyle& FUianaStyle::Get()
 {
 	return *StyleInstance;
 }
+
+#endif

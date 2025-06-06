@@ -36,8 +36,6 @@ public class Uiana : ModuleRules
 			{
 				"Projects",
 				"InputCore",
-				"EditorFramework",
-				"UnrealEd",
 				"ToolMenus",
 				"CoreUObject",
 				"Engine",
@@ -45,12 +43,22 @@ public class Uiana : ModuleRules
 				"Slate",
 				"RenderCore",
                 "WorkspaceMenuStructure",
-				"PythonScriptPlugin",
 				"SlateCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
 		
+		if(Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"UnrealEd",
+					"PythonScriptPlugin",
+					"EditorFramework",
+				}
+				);
+		}
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]

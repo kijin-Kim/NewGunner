@@ -2,6 +2,7 @@
 
 #include "Engine/EngineTypes.h"
 #include "UianaDataSettings.generated.h"
+
 UENUM()
 enum WeaponRole
 {
@@ -22,8 +23,8 @@ enum WeaponRole
 	Kasbah   UMETA(DisplayName = "Kasbah"),
 	Piazza   UMETA(DisplayName = "Piazza")
 };
-UCLASS(config = Engine, defaultconfig,transient)
 
+UCLASS(config = Engine, defaultconfig,transient)
 class UIANA_API UUianaDataSettings : public UObject
 {
 	GENERATED_BODY()
@@ -49,5 +50,4 @@ public:
 		bool ImportBlueprints;
 	UPROPERTY(config, EditAnywhere, Category = "Import Settings", meta=(ClampMin=0.01, ClampMax=5))
 		float LightmapResolutionMultiplier;
-
 };
