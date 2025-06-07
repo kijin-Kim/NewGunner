@@ -288,6 +288,6 @@ void UGunnerSessionHelperSubsystem::OnUpdateSessionComplete(FName SessionName, b
 
 void UGunnerSessionHelperSubsystem::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& FailureString)
 {
-	GR_LOG_SUB(World->GetFirstPlayerController(), LogGunnerSession, Error, TEXT("네트워크 실패: FailureType=%s, FailureString=%s"), ToString(FailureType), *FailureString);
+	UE_LOG(LogGunnerSession, Error, TEXT("네트워크 실패: FailureType=%s, FailureString=%s"), ToString(FailureType), *FailureString);
 	DestroySession();
 }
