@@ -40,6 +40,7 @@ void AGunnerTeamDeathMatchGameMode::AuthRegisterKill(AController* Killer, AContr
 				RestartPlayer(Victim);
 			}
 		}, RespawnDelay, false);
+		RespawnTimerHandles.Add(RespawnTimerHandle);
 	}
 
 	AGunnerTeamDeathMatchGameState* TdmGameState = GetGameState<AGunnerTeamDeathMatchGameState>();
@@ -67,4 +68,14 @@ bool AGunnerTeamDeathMatchGameMode::ReadyToEndMatch_Implementation()
 	}
 
 	return false;
+}
+
+void AGunnerTeamDeathMatchGameMode::HandleMatchHasEnded()
+{
+	Super::HandleMatchHasEnded();
+	for (FTimerHandle TimerHandle : RespawnTimerHandles)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+	}
+	RespawnTimerHandles.Empty();
 }

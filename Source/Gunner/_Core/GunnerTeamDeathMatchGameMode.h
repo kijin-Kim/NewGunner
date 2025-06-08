@@ -22,6 +22,7 @@ public:
 	AGunnerTeamDeathMatchGameMode();
 	virtual void AuthRegisterKill(AController* Killer, AController* Victim, FName KillCauserName) override;
 	virtual bool ReadyToEndMatch_Implementation() override;
+	virtual void HandleMatchHasEnded() override;
 
 
 protected:
@@ -29,4 +30,7 @@ protected:
 	float RespawnDelay = 3.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	int32 KillCountToWin = 1;
+
+private:
+	TArray<FTimerHandle> RespawnTimerHandles;
 };
