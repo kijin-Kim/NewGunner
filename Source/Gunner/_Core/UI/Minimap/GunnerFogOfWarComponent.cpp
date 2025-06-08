@@ -10,7 +10,9 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Gunner/Gunner.h"
+#include "Gunner/_Core/GunnerFogOfWarData.h"
 #include "Gunner/_Core/GunnerGameState.h"
+#include "Gunner/_Core/GunnerWorldSettings.h"
 #include "Gunner/_Core/Character/GunnerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -86,7 +88,15 @@ static bool LineSegmentIntersection(
 void UGunnerFogOfWarComponent::DrawVision(UCanvas* Canvas, int32 Width, int32 Height)
 {
 	check(Width == Height);
-	if (!Canvas || !GeometryAsset)
+
+	AGunnerWorldSettings* WorldSettings = Cast<AGunnerWorldSettings>(GetWorld()->GetWorldSettings());
+	if (!WorldSettings)
+	{
+		return;
+	}
+
+	UGunnerFogOfWarData* FogOfWarData = WorldSettings->GetFogOfWarData();
+	if (!Canvas || !FogOfWarData || !FogOfWarData->GeometryAsset)
 	{
 		return;
 	}
@@ -104,7 +114,7 @@ void UGunnerFogOfWarComponent::DrawVision(UCanvas* Canvas, int32 Width, int32 He
 
 	// 차단 Edge 수집
 	TArray<FGunnerEdgeSegment> EdgeSegments;
-	for (const FGunnerGeometryGroup& Group : GeometryAsset->Groups)
+	for (const FGunnerGeometryGroup& Group : FogOfWarData->GeometryAsset->Groups)
 	{
 		for (const FGunnerGeometryLine& Line : Group.Lines)
 		{

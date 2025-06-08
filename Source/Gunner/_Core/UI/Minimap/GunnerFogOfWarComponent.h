@@ -28,9 +28,7 @@ private:
 	void DrawInformation(UCanvas* Canvas, int32 Width, int32 Height);
 
 protected:
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UGunnerMapGeometryData> GeometryAsset;
-
+	
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UMaterialInterface> PlayerIconMaterial;
 	UPROPERTY(EditAnywhere)

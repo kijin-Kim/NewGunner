@@ -34,7 +34,7 @@ void UGunnerGameInstance::PlayLoadingScreen()
 		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidgetClass);
 		FLoadingScreenAttributes LoadingScreenAttributes;
 		LoadingScreenAttributes.WidgetLoadingScreen = LoadingScreenWidget->TakeWidget();
-		LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 20.0f;
+		LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 5.0f;
 		LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = true;
 		LoadingScreenAttributes.bAllowEngineTick = true;
 		LoadingScreenAttributes.bAllowInEarlyStartup = false;

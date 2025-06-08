@@ -8,6 +8,7 @@
 #include "Gunner/Gunner.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "OnlineSession/GunnerSessionHelperSubsystem.h"
 
 FString FGunnerKillFeed::ToString() const
 {
@@ -112,6 +113,9 @@ void AGunnerGameState::NetMulticastBroadcastWinners_Implementation(const TArray<
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
 		{
+			UGunnerSessionHelperSubsystem* SessionHelperSubsystem = GetGameInstance()->GetSubsystem<UGunnerSessionHelperSubsystem>();
+			check(SessionHelperSubsystem);
+			SessionHelperSubsystem->DestroySession();
 			UGameplayStatics::OpenLevel(GetWorld(), TEXT("/Game/Maps/MainMenu"));
 		}, 5.f * UGameplayStatics::GetGlobalTimeDilation(GetWorld()), false);
 	}

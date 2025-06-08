@@ -48,25 +48,25 @@ void AGunnerGameMode::InitGame(const FString& MapName, const FString& Options, F
 void AGunnerGameMode::RestartPlayer(AController* NewPlayer)
 {
 #if !WITH_EDITOR
-	Super::RestartPlayer(NewPlayer);
+	InternalRestartPlayer(NewPlayer);
 #else
 
 	switch (ExclusivePawnSpawnMode)
 	{
 	case EExclusivePawnSpawnMode::None:
-		Super::RestartPlayer(NewPlayer);
+		InternalRestartPlayer(NewPlayer);
 		break;
 	case EExclusivePawnSpawnMode::SpawnListenServerExclusively:
 		if (NewPlayer->IsLocalController())
 		{
-			Super::RestartPlayer(NewPlayer);
+			InternalRestartPlayer(NewPlayer);
 		}
 		break;
 	case EExclusivePawnSpawnMode::SpawnFirstClientExclusively:
 		if (!NewPlayer->IsLocalController() && !bSpawnedFirstClient)
 		{
 			bSpawnedFirstClient = true;
-			Super::RestartPlayer(NewPlayer);
+			InternalRestartPlayer(NewPlayer);
 			break;
 		}
 		break;
@@ -118,7 +118,6 @@ void AGunnerGameMode::AuthRegisterKill(AController* Killer, AController* Victim,
 
 
 	GunnerGameState->UpdateKillInfos(Killer);
-
 }
 
 bool AGunnerGameMode::ReadyToEndMatch_Implementation()
@@ -157,6 +156,39 @@ TArray<int32> AGunnerGameMode::DetermineWinners() const
 		}
 	}
 	return {WinnerID};
+}
+
+void AGunnerGameMode::InternalRestartPlayer(AController* NewPlayer)
+{
+#if WITH_EDITOR
+	Super::RestartPlayer(NewPlayer);
+#else
+	if (NewPlayer == nullptr || NewPlayer->IsPendingKillPending())
+	{
+		return;
+	}
+
+	FString IncomingName;
+	if (IGunnerTeamAgentInterface* TeamAgentInterface = NewPlayer->GetPlayerState<IGunnerTeamAgentInterface>())
+	{
+		const FGenericTeamId TeamID = TeamAgentInterface->GetGenericTeamId();
+		IncomingName = FString::FromInt(TeamID.GetId());
+	}
+	AActor* StartSpot = FindPlayerStart(NewPlayer, IncomingName);
+
+	// If a start spot wasn't found,
+	if (StartSpot == nullptr)
+	{
+		// Check for a previously assigned spot
+		if (NewPlayer->StartSpot != nullptr)
+		{
+			StartSpot = NewPlayer->StartSpot.Get();
+			UE_LOG(LogGameMode, Warning, TEXT("RestartPlayer: Player start not found, using last start spot"));
+		}
+	}
+
+	RestartPlayerAtPlayerStart(NewPlayer, StartSpot);
+#endif
 }
 
 void AGunnerGameMode::SetAllControllersTeam(FGenericTeamId TeamId)

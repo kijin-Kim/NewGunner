@@ -47,9 +47,11 @@ public:
 	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
 
-
 protected:
 	virtual TArray<int32> DetermineWinners() const;
+
+private:
+	void InternalRestartPlayer(AController* NewPlayer);
 
 private:
 	void SetAllControllersTeam(FGenericTeamId TeamId);
