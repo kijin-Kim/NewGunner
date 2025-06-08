@@ -10,7 +10,7 @@ class UImage;
 /**
  * 
  */
-UCLASS()
+UCLASS(meta =(DisableNativeTick))
 class GUNNER_API UGunnerMinimapWidget : public UUserWidget
 {
 	GENERATED_BODY()
