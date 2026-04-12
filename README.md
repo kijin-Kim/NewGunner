@@ -73,17 +73,18 @@ public:
 > **① 한 쪽에서만 실행 (`LocalOnly` / `ServerOnly`)**  
 > 서버나 클라이언트 중 한 곳에서만 실행되며, 다른 쪽과 통신이 필요 없는 방식입니다.
 >
-> ![각각 클라이언트와 서버에서 독자적으로 실행합니다.](docs/images/LocalOnlyServerOnly.png)
+> <img width="1440" height="294" alt="Image" src="https://github.com/user-attachments/assets/1e860f19-f652-4442-8142-b35d1202de29" />
 >
 > **② 클라이언트 예측 실행 (`LocalPredicted`)**  
 > 클라이언트가 먼저 실행하고 서버에 알려주는 방식입니다.
 >
-> ![클라이언트에서 실행 후 서버에 RPC를 보낸 후 서버에서도 동일하게 실행합니다.](docs/images/LocalPredicted.png)
+> <img width="2403" height="645" alt="Image" src="https://github.com/user-attachments/assets/443016a6-ec83-4015-9955-31b41b3bc044" />
 >
 > **③ 서버 승인 실행 (`ServerAuthoritative`)**  
 > 클라이언트가 서버에 실행 허가를 요청하고, 서버가 승인한 후에 실행되는 방식입니다.
 >
-> ![클라이언트에서 액션을 실행하기 전 서버로 RPC를 보낸 후, 서버에서 다시 승인 RPC를 받은 후 실행합니다.](docs/images/ServerAuthoritative.png)
+> <img width="2886" height="645" alt="Image" src="https://github.com/user-attachments/assets/5e297927-d118-4694-8da6-f0b66f02c29f" />
+
 
 ---
 
@@ -101,7 +102,7 @@ public:
 
 예를 들어, 클라이언트는 연사 입력에 즉각 반응하기 위해 총알 수를 예측적으로 감소시킵니다 (30발 → 29발 → ... → 25발). 이 도중 서버로부터 총알이 29발이라는 복제 값이 도착하면, 예측된 25발을 무작정 29발로 덮어써야 합니다. 그 결과 총알이 갑자기 늘어나거나 서버와 불일치가 발생합니다.
 
-![Override 문제 설명](docs/images/Override.png)
+<img width="1173" height="807" alt="Image" src="https://github.com/user-attachments/assets/3f85127c-39eb-464a-9455-829d63a44eba" />
 
 > `#1` 클라이언트가 총알 개수를 30개 → 29개로 줄이고 서버에 알림  
 > `#2` 클라이언트가 예측하여 25개까지 줄어든 상황에서, 서버로부터 이전에 보냈던 29개 정보가 도착  
@@ -111,7 +112,7 @@ public:
 
 클라이언트가 예측적으로 총알을 감소시켰는데 서버가 이 사격 행위를 거절했을 경우, 클라이언트에서 줄어든 총알 수를 원래대로 되돌리는 로직이 필요합니다. 서버는 변수가 변경될 때만 클라이언트에게 알리므로 요청이 거절되어도 클라이언트는 이를 알 수 없습니다.
 
-![Undo 문제 설명](docs/images/Undo.png)
+<img width="1188" height="807" alt="Image" src="https://github.com/user-attachments/assets/c3bbf783-0d29-4dc2-b0ee-650a7a8f2a93" />
 
 > `#1` 클라이언트가 총알을 30개 → 29개로 줄이고 서버에 변경 요청  
 > `#2` 서버가 이 요청을 거절하고 서버에서는 총알을 30개로 유지
@@ -132,7 +133,6 @@ public:
 
 SideEffect는 체력 감소, 마나 회복 등 특정 속성(Nexus Property)에 대한 모든 종류의 변화를 정의하고 캡슐화한 데이터 단위입니다. SideEffect는 어떤 속성을, 얼마만큼, 어떤 방식으로 변화시킬지에 대한 모든 규칙을 포함합니다. 복잡한 수치 계산이나 네트워크 동기화 코드를 직접 작성하는 대신, 해당 규칙이 정의된 SideEffect를 '적용(Apply)'하기만 하면 됩니다. 이 SideEffect 자체는 서버에서 다시 적용되고 실행한 클라이언트로 복제됩니다.
 
-![SideEffect를 블루프린트에서 설정하는 예시](docs/images/SideEffect_blueprint.png)
 
 **2. PredictionTag를 활용한 속성 변화의 프레임워크 관리**
 
@@ -196,7 +196,8 @@ PredictionTag는 클라이언트의 예측된 행동과 서버의 확정된 행�
 
 > 모든 클라이언트에 애니메이션 몽타주가 잘 출력되는 모습
 
-https://github.com/user-attachments/assets/YOUR_VIDEO_ASSET_ID
-
+[https://github.com/user-attachments/assets/YOUR_VIDEO_ASSET_ID
+](https://github.com/user-attachments/assets/61cff391-160a-42ba-b0cc-4ead2a76db5c
+)
 <!-- 영상은 GitHub 이슈 텍스트창에 mp4를 드래그앤드롭하여 생성된 URL로 교체하세요. -->
 <!-- 예시: <video src="https://github.com/user-attachments/assets/xxxx" controls width="700"></video> -->
